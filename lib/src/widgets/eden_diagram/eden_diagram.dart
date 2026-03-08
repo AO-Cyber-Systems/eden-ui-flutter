@@ -304,20 +304,7 @@ class _EdenDiagramState extends State<EdenDiagram> {
                             : SystemMouseCursors.basic,
                 child: CustomPaint(
                   size: Size.infinite,
-                  painter: EdenDiagramPainter(
-                    data: widget.data,
-                    theme: theme,
-                    selectedNodeId: _selectedNodeId,
-                    hoveredNodeId: _hoveredNodeId,
-                    dragEdgeStart: _dragEdgeStart != null
-                        ? _dragEdgeStart! * _scale + _panOffset
-                        : null,
-                    dragEdgeEnd: _dragEdgeEnd != null
-                        ? _dragEdgeEnd! * _scale + _panOffset
-                        : null,
-                    gridEnabled: widget.gridEnabled,
-                  ),
-                  foregroundPainter: _TransformPainter(
+                  painter: _TransformPainter(
                     data: widget.data,
                     theme: theme,
                     selectedNodeId: _selectedNodeId,
