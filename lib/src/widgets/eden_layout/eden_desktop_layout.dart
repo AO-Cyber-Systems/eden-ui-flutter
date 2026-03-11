@@ -62,6 +62,15 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   }
 
   @override
+  void didUpdateWidget(covariant EdenDesktopLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync collapse state when the parent forces a change (e.g. responsive resize).
+    if (widget.initiallyCollapsed != oldWidget.initiallyCollapsed) {
+      _collapsed = widget.initiallyCollapsed;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -100,27 +109,44 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                     ),
                     children: [
                       for (final item in widget.navItems) ...[
-                        if (item.children.isNotEmpty && !_collapsed) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 12, top: 16, bottom: 4,
-                            ),
-                            child: Text(
-                              item.label.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                color: theme.colorScheme.onSurfaceVariant,
+                        if (item.children.isNotEmpty) ...[
+                          if (!_collapsed)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12, top: 16, bottom: 4,
+                              ),
+                              child: Text(
+                                item.label.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ),
-                          ),
-                          for (final child in item.children)
+                          if (!_collapsed)
+                            for (final child in item.children)
+                              _NavTile(
+                                item: child,
+                                isSelected: child.id == widget.selectedId,
+                                collapsed: _collapsed,
+                                onTap: () => widget.onNavChanged(child.id),
+                              )
+                          else
+                            // Collapsed: render parent icon but use first child's
+                            // ID for navigation and selection matching.
                             _NavTile(
-                              item: child,
-                              isSelected: child.id == widget.selectedId,
+                              item: EdenNavItem(
+                                id: item.children.first.id,
+                                label: item.label,
+                                icon: item.icon,
+                                activeIcon: item.activeIcon ?? item.children.first.activeIcon,
+                                badge: item.children.first.badge,
+                              ),
+                              isSelected: item.children.any((c) => c.id == widget.selectedId),
                               collapsed: _collapsed,
-                              onTap: () => widget.onNavChanged(child.id),
+                              onTap: () => widget.onNavChanged(item.children.first.id),
                             ),
                         ] else
                           _NavTile(
