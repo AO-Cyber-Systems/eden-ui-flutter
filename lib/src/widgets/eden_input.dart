@@ -23,6 +23,7 @@ class EdenInput extends StatelessWidget {
     this.keyboardType,
     this.maxLines = 1,
     this.autofocus = false,
+    this.autofillHints,
   });
 
   final TextEditingController? controller;
@@ -40,6 +41,7 @@ class EdenInput extends StatelessWidget {
   final TextInputType? keyboardType;
   final int maxLines;
   final bool autofocus;
+  final Iterable<String>? autofillHints;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +70,7 @@ class EdenInput extends StatelessWidget {
           keyboardType: keyboardType,
           maxLines: maxLines,
           autofocus: autofocus,
+          autofillHints: autofillHints,
           style: TextStyle(fontSize: sizing.fontSize),
           decoration: InputDecoration(
             hintText: hint,
