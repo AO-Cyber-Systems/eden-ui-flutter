@@ -139,3 +139,6 @@ export 'src/widgets/eden_avatar_upload.dart';
 export 'src/widgets/eden_clipboard.dart';
 export 'src/widgets/eden_button_group.dart';
 export 'src/widgets/eden_device_mockup.dart';
+
+// Layout patterns
+export 'src/widgets/eden_split_panel.dart';
