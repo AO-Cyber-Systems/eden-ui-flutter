@@ -113,3 +113,29 @@ export 'src/widgets/eden_activity_feed_item.dart';
 export 'src/widgets/eden_checklist_item.dart';
 export 'src/widgets/eden_filter_chip_row.dart';
 export 'src/widgets/eden_offline_banner.dart';
+
+// Auth forms (E02-01)
+export 'src/widgets/eden_sign_in_form.dart';
+export 'src/widgets/eden_sign_up_form.dart';
+export 'src/widgets/eden_forgot_password_form.dart';
+export 'src/widgets/eden_reset_password_form.dart';
+export 'src/widgets/eden_two_factor_form.dart';
+export 'src/widgets/eden_edit_profile_form.dart';
+
+// Settings + CRUD + Landing (E02-02)
+export 'src/widgets/eden_crud_modal.dart';
+export 'src/widgets/eden_delete_confirm.dart';
+export 'src/widgets/eden_hero_section.dart';
+export 'src/widgets/eden_cta_section.dart';
+export 'src/widgets/eden_feature_section.dart';
+export 'src/widgets/eden_pricing_section.dart';
+export 'src/widgets/eden_faq_section.dart';
+export 'src/widgets/eden_testimonial_section.dart';
+export 'src/widgets/eden_newsletter_section.dart';
+
+// Media + Utilities (E02-03)
+export 'src/widgets/eden_image_gallery.dart';
+export 'src/widgets/eden_avatar_upload.dart';
+export 'src/widgets/eden_clipboard.dart';
+export 'src/widgets/eden_button_group.dart';
+export 'src/widgets/eden_device_mockup.dart';
