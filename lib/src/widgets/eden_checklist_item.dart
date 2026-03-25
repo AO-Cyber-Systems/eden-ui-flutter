@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 ///
 /// Used in checklist/task views. Calls [onToggle] when the checkbox
 /// is tapped. Shows overdue styling when the due date has passed and
-/// the task is not yet complete. Supports required flag and description.
+/// the task is not yet complete. Supports required flag, description,
+/// blocked/N-A states, and an optional trailing widget.
 ///
 /// ```dart
 /// EdenChecklistItem(
@@ -23,23 +24,47 @@ class EdenChecklistItem extends StatelessWidget {
     required this.isCompleted,
     required this.onToggle,
     this.isRequired = false,
+    this.isBlocked = false,
+    this.isNa = false,
     this.assignedTo,
     this.dueDate,
     this.description,
+    this.blockedReason,
+    this.naReason,
     this.enabled = true,
+    this.onLongPress,
+    this.trailing,
   });
 
   final String title;
   final bool isCompleted;
   final ValueChanged<bool> onToggle;
   final bool isRequired;
+
+  /// Whether this task is blocked (renders a lock icon instead of checkbox).
+  final bool isBlocked;
+
+  /// Whether this task is not applicable (renders a dash icon instead of checkbox).
+  final bool isNa;
+
   final String? assignedTo;
   final DateTime? dueDate;
   final String? description;
+
+  /// Reason this task is blocked (e.g. "PO #1234").
+  final String? blockedReason;
+
+  /// Reason this task was marked N/A.
+  final String? naReason;
+
   final bool enabled;
+  final VoidCallback? onLongPress;
+
+  /// Widget displayed after the title row (e.g. a PO badge or spinner).
+  final Widget? trailing;
 
   bool get _isOverdue =>
-      !isCompleted && dueDate != null && DateTime.now().isAfter(dueDate!);
+      !isCompleted && !isNa && dueDate != null && DateTime.now().isAfter(dueDate!);
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -58,31 +83,29 @@ class EdenChecklistItem extends StatelessWidget {
         theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5);
     final activeColor = theme.colorScheme.onSurface;
 
-    final textColor = isCompleted
+    final textColor = isCompleted || isNa
         ? completedColor
-        : _isOverdue
+        : isBlocked
             ? overdueColor
-            : activeColor;
+            : _isOverdue
+                ? overdueColor
+                : activeColor;
 
     return InkWell(
-      onTap: enabled ? () => onToggle(!isCompleted) : null,
+      onTap: enabled && !isBlocked && !isNa
+          ? () => onToggle(!isCompleted)
+          : null,
+      onLongPress: onLongPress,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: Checkbox(
-                value: isCompleted,
-                onChanged: enabled ? (v) => onToggle(v ?? false) : null,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
+            // Leading icon / checkbox
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: _buildLeadingIcon(context),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -99,13 +122,13 @@ class EdenChecklistItem extends StatelessWidget {
                             decoration: isCompleted
                                 ? TextDecoration.lineThrough
                                 : null,
-                            fontWeight: isRequired && !isCompleted
+                            fontWeight: isRequired && !isCompleted && !isNa
                                 ? FontWeight.w600
                                 : FontWeight.normal,
                           ),
                         ),
                       ),
-                      if (isRequired && !isCompleted)
+                      if (isRequired && !isCompleted && !isNa)
                         Container(
                           margin: const EdgeInsets.only(left: 6),
                           padding: const EdgeInsets.symmetric(
@@ -123,6 +146,10 @@ class EdenChecklistItem extends StatelessWidget {
                             ),
                           ),
                         ),
+                      if (trailing != null) ...[
+                        const SizedBox(width: 6),
+                        trailing!,
+                      ],
                     ],
                   ),
                   if (description != null && description!.isNotEmpty) ...[
@@ -136,46 +163,47 @@ class EdenChecklistItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                  if (assignedTo != null || dueDate != null) ...[
+                  // Metadata row
+                  if (assignedTo != null ||
+                      dueDate != null ||
+                      blockedReason != null ||
+                      naReason != null) ...[
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 4,
                       children: [
-                        if (assignedTo != null) ...[
-                          Icon(Icons.person_outline,
-                              size: 13,
-                              color: theme.colorScheme.onSurfaceVariant),
-                          const SizedBox(width: 3),
-                          Text(
-                            assignedTo!,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                        if (assignedTo != null)
+                          _MetaLabel(
+                            icon: Icons.person_outline,
+                            label: assignedTo!,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
-                        ],
-                        if (assignedTo != null && dueDate != null)
-                          const SizedBox(width: 10),
-                        if (dueDate != null) ...[
-                          Icon(
-                            _isOverdue
+                        if (dueDate != null)
+                          _MetaLabel(
+                            icon: _isOverdue
                                 ? Icons.warning_amber_outlined
                                 : Icons.calendar_today_outlined,
-                            size: 13,
+                            label: _formatDate(dueDate!),
                             color: _isOverdue
                                 ? overdueColor
                                 : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: _isOverdue
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
-                          const SizedBox(width: 3),
-                          Text(
-                            _formatDate(dueDate!),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: _isOverdue
-                                  ? overdueColor
-                                  : theme.colorScheme.onSurfaceVariant,
-                              fontWeight:
-                                  _isOverdue ? FontWeight.w600 : FontWeight.normal,
-                            ),
+                        if (blockedReason != null)
+                          _MetaLabel(
+                            icon: Icons.lock_outline,
+                            label: blockedReason!,
+                            color: theme.colorScheme.error,
                           ),
-                        ],
+                        if (naReason != null)
+                          _MetaLabel(
+                            icon: Icons.info_outline,
+                            label: naReason!,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                       ],
                     ),
                   ],
@@ -185,6 +213,65 @@ class EdenChecklistItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLeadingIcon(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (isBlocked) {
+      return Icon(Icons.lock, size: 20, color: theme.colorScheme.error);
+    }
+
+    if (isNa) {
+      return Icon(Icons.remove_circle_outline,
+          size: 20, color: theme.colorScheme.onSurfaceVariant);
+    }
+
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: Checkbox(
+        value: isCompleted,
+        onChanged: enabled ? (v) => onToggle(v ?? false) : null,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaLabel extends StatelessWidget {
+  const _MetaLabel({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.fontWeight,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final FontWeight? fontWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: color,
+            fontWeight: fontWeight,
+          ),
+        ),
+      ],
     );
   }
 }
