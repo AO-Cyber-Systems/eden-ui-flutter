@@ -61,3 +61,9 @@ export 'src/widgets/eden_indicator.dart';
 export 'src/widgets/eden_carousel.dart';
 export 'src/widgets/eden_diagram/eden_diagram_exports.dart';
 export 'src/widgets/eden_layout/eden_layout_exports.dart';
+
+// AOHealth components (feature/aohealth-components)
+export 'src/widgets/eden_progress_ring.dart';
+export 'src/widgets/eden_chip.dart';
+export 'src/widgets/eden_segmented_control.dart';
+export 'src/widgets/eden_settings_tile.dart';
