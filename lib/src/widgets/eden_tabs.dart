@@ -49,7 +49,10 @@ class EdenTabs extends StatelessWidget {
             final tab = entry.value;
             final isSelected = index == selectedIndex;
 
-            return GestureDetector(
+            return Semantics(
+              label: tab.label,
+              selected: isSelected,
+              child: GestureDetector(
               onTap: () => onChanged(index),
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -110,6 +113,7 @@ class EdenTabs extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
             );
           }).toList(),
         ),

@@ -66,12 +66,16 @@ class _EdenModalContent extends StatelessWidget {
                     Expanded(
                       child: Text(title!, style: theme.textTheme.titleLarge),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Icon(
-                        Icons.close,
-                        size: 20,
-                        color: theme.colorScheme.onSurfaceVariant,
+                    Semantics(
+                      label: 'Close',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
