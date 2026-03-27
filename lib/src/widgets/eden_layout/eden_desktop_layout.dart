@@ -54,6 +54,7 @@ class EdenDesktopLayout extends StatefulWidget {
 
 class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   late bool _collapsed;
+  final Set<String> _expanded = {};
 
   @override
   void initState() {
@@ -68,6 +69,15 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
     if (widget.initiallyCollapsed != oldWidget.initiallyCollapsed) {
       _collapsed = widget.initiallyCollapsed;
     }
+  }
+
+  /// Recursively checks if any descendant nav item is currently selected.
+  bool _isAnyChildSelected(EdenNavItem item) {
+    for (final child in item.children) {
+      if (child.id == widget.selectedId) return true;
+      if (child.children.isNotEmpty && _isAnyChildSelected(child)) return true;
+    }
+    return false;
   }
 
   @override
@@ -109,7 +119,19 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                     ),
                     children: [
                       for (final item in widget.navItems) ...[
-                        if (item.children.isNotEmpty) ...[
+                        // Divider sentinel
+                        if (item.isDivider)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: _collapsed ? 4 : 12,
+                            ),
+                            child: Divider(
+                              height: 1,
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                          )
+                        else if (item.children.isNotEmpty) ...[
                           if (!_collapsed)
                             Padding(
                               padding: const EdgeInsets.only(
@@ -127,12 +149,40 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                             ),
                           if (!_collapsed)
                             for (final child in item.children)
-                              _NavTile(
-                                item: child,
-                                isSelected: child.id == widget.selectedId,
-                                collapsed: _collapsed,
-                                onTap: () => widget.onNavChanged(child.id),
-                              )
+                              // 2-level nesting: child with its own children
+                              if (child.children.isNotEmpty) ...[
+                                _ExpandableNavTile(
+                                  item: child,
+                                  isExpanded: _expanded.contains(child.id),
+                                  isAnyChildSelected: child.children.any(
+                                    (sub) => sub.id == widget.selectedId,
+                                  ),
+                                  onToggle: () => setState(() {
+                                    if (_expanded.contains(child.id)) {
+                                      _expanded.remove(child.id);
+                                    } else {
+                                      _expanded.add(child.id);
+                                    }
+                                  }),
+                                ),
+                                if (_expanded.contains(child.id))
+                                  for (final sub in child.children)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: _NavTile(
+                                        item: sub,
+                                        isSelected: sub.id == widget.selectedId,
+                                        collapsed: false,
+                                        onTap: () => widget.onNavChanged(sub.id),
+                                      ),
+                                    ),
+                              ] else
+                                _NavTile(
+                                  item: child,
+                                  isSelected: child.id == widget.selectedId,
+                                  collapsed: _collapsed,
+                                  onTap: () => widget.onNavChanged(child.id),
+                                )
                           else
                             // Collapsed: render parent icon but use first child's
                             // ID for navigation and selection matching.
@@ -144,7 +194,7 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                 activeIcon: item.activeIcon ?? item.children.first.activeIcon,
                                 badge: item.children.first.badge,
                               ),
-                              isSelected: item.children.any((c) => c.id == widget.selectedId),
+                              isSelected: _isAnyChildSelected(item),
                               collapsed: _collapsed,
                               onTap: () => widget.onNavChanged(item.children.first.id),
                             ),
@@ -326,6 +376,80 @@ class _NavTile extends StatelessWidget {
               ),
             ),
             if (item.badge != null) _Badge(text: item.badge!),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Expandable nav tile (for 2-level nesting)
+// ---------------------------------------------------------------------------
+
+class _ExpandableNavTile extends StatelessWidget {
+  const _ExpandableNavTile({
+    required this.item,
+    required this.isExpanded,
+    required this.isAnyChildSelected,
+    required this.onToggle,
+  });
+
+  final EdenNavItem item;
+  final bool isExpanded;
+  final bool isAnyChildSelected;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isHighlighted = isAnyChildSelected;
+
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        height: 40,
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: isHighlighted
+              ? theme.colorScheme.primary.withValues(alpha: 0.05)
+              : null,
+          borderRadius: EdenRadii.borderRadiusMd,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isHighlighted ? (item.activeIcon ?? item.icon) : item.icon,
+              size: 20,
+              color: isHighlighted
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight:
+                      isHighlighted ? FontWeight.w600 : FontWeight.w500,
+                  color: isHighlighted
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            AnimatedRotation(
+              turns: isExpanded ? 0.25 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.chevron_right,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),

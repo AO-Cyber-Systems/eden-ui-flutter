@@ -9,7 +9,18 @@ class EdenNavItem {
     this.activeIcon,
     this.badge,
     this.children = const [],
+    this.isDivider = false,
   });
+
+  /// Creates a visual divider separator between nav groups.
+  const EdenNavItem.divider()
+      : id = '__divider__',
+        label = '',
+        icon = Icons.horizontal_rule,
+        activeIcon = null,
+        badge = null,
+        children = const [],
+        isDivider = true;
 
   final String id;
   final String label;
@@ -17,6 +28,7 @@ class EdenNavItem {
   final IconData? activeIcon;
   final String? badge; // e.g. "3" or "new"
   final List<EdenNavItem> children; // sub-items for grouped nav
+  final bool isDivider; // true = renders as a horizontal divider
 }
 
 /// Configuration for the top bar / app bar.
