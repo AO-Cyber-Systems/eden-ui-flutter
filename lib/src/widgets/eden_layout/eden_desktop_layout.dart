@@ -134,6 +134,7 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                         else if (item.children.isNotEmpty) ...[
                           if (!_collapsed)
                             Padding(
+                              key: item.widgetKey,
                               padding: const EdgeInsets.only(
                                 left: 12, top: 16, bottom: 4,
                               ),
@@ -408,6 +409,7 @@ class _ExpandableNavTile extends StatelessWidget {
     final isHighlighted = isAnyChildSelected;
 
     return GestureDetector(
+      key: item.widgetKey,
       onTap: onToggle,
       child: Container(
         height: 40,
