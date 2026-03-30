@@ -257,34 +257,36 @@ class _SidebarHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    if (collapsed) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onToggle,
+        child: SizedBox(
+          height: 56,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              collapsedLogo ?? logo ?? Icon(Icons.apps, color: theme.colorScheme.primary),
+              const SizedBox(height: 2),
+              Icon(Icons.chevron_right, size: 14, color: theme.colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 56,
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: collapsed ? 0 : EdenSpacing.space4,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
         child: Row(
           children: [
-            if (collapsed)
-              Expanded(
-                child: Center(
-                  child: collapsedLogo ?? logo ?? Icon(Icons.apps, color: theme.colorScheme.primary),
-                ),
-              )
-            else ...[
-              logo ?? Text('App', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-              const Spacer(),
-            ],
-            if (!collapsed)
-              GestureDetector(
-                onTap: onToggle,
-                child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
-              )
-            else
-              GestureDetector(
-                onTap: onToggle,
-                child: Container(), // tapping entire header expands
-              ),
+            logo ?? Text('App', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            const Spacer(),
+            GestureDetector(
+              onTap: onToggle,
+              child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+            ),
           ],
         ),
       ),

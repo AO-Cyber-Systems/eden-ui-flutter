@@ -89,7 +89,10 @@ class _AccordionPanel extends StatelessWidget {
 
     return Column(
       children: [
-        GestureDetector(
+        Semantics(
+          label: item.title,
+          button: true,
+          child: GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Padding(
@@ -118,6 +121,7 @@ class _AccordionPanel extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
         AnimatedCrossFade(
           firstChild: const SizedBox(width: double.infinity),

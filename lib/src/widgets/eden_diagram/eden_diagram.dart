@@ -34,6 +34,7 @@ class EdenDiagram extends StatefulWidget {
     this.showToolbar = true,
     this.showMinimap = false,
     this.gridEnabled = true,
+    this.interactiveZoom = true,
     this.width,
     this.height,
   });
@@ -44,6 +45,12 @@ class EdenDiagram extends StatefulWidget {
   final bool showToolbar;
   final bool showMinimap;
   final bool gridEnabled;
+
+  /// Whether scroll-wheel events should zoom the diagram.
+  /// Set to false when the diagram is embedded inside a scrollable container
+  /// (e.g. a chat message list) so scroll events pass through to the parent.
+  final bool interactiveZoom;
+
   final double? width;
   final double? height;
 
@@ -246,6 +253,7 @@ class _EdenDiagramState extends State<EdenDiagram> {
   }
 
   void _onPointerSignal(PointerSignalEvent event) {
+    if (!widget.interactiveZoom) return;
     if (event is PointerScrollEvent) {
       final delta = event.scrollDelta.dy;
       final newScale = (_scale * (1 - delta / 500)).clamp(0.25, 3.0);

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'mermaid_parser.dart';
+
 /// Shape types for diagram nodes.
 enum EdenNodeShape { rectangle, roundedRect, diamond, circle, pill, cylinder, hexagon, parallelogram }
 
@@ -209,4 +211,14 @@ class EdenDiagramData {
 
   factory EdenDiagramData.fromJsonString(String jsonStr) =>
       EdenDiagramData.fromJson(json.decode(jsonStr) as Map<String, dynamic>);
+
+  /// Parse a Mermaid flowchart string into an [EdenDiagramData].
+  ///
+  /// Supports `graph`/`flowchart` with TD/TB/LR/RL direction, node shapes
+  /// (`[text]`, `(text)`, `{text}`, `((text))`), edge types (`-->`, `---`,
+  /// `-.->`, `==>`), and edge labels (`-->|label|`).
+  ///
+  /// Returns an empty diagram if the source cannot be parsed.
+  factory EdenDiagramData.fromMermaid(String source) =>
+      EdenMermaidParser.parse(source);
 }

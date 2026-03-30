@@ -39,9 +39,12 @@ class EdenDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _showMenu(context),
-      child: child,
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: () => _showMenu(context),
+        child: child,
+      ),
     );
   }
 
