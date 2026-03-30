@@ -7,20 +7,29 @@ import 'layout_data.dart';
 /// Standard mobile layout with app bar, bottom navigation, and drawer.
 ///
 /// ```
-/// ┌──────────────────────────────────┐
-/// │  App Bar (title, actions)        │
-/// ├──────────────────────────────────┤
-/// │                                  │
-/// │  Content                         │
-/// │                                  │
-/// │                                  │
-/// ├──────────────────────────────────┤
-/// │  Bottom Nav (up to 5 items)      │
-/// └──────────────────────────────────┘
+/// +----------------------------------+
+/// |  App Bar (title, actions)        |
+/// +----------------------------------+
+/// |                                  |
+/// |  Content                         |
+/// |                                  |
+/// |                                  |
+/// +----------------------------------+
+/// |  Bottom Nav (up to 5 items)      |
+/// +----------------------------------+
 /// ```
 ///
-/// Overflow nav items (beyond 5) go into a "More" drawer.
-class EdenMobileLayout extends StatelessWidget {
+/// When [bottomNavItems] is provided, those exact items are used for the
+/// bottom nav bar (typically 5 items with a `__more__` sentinel). When null,
+/// falls back to auto-flattening [navItems] for backward compatibility.
+///
+/// The `__more__` sentinel item auto-opens the drawer when tapped.
+///
+/// The drawer supports:
+/// - Dividers between nav groups (via [EdenNavItem.isDivider])
+/// - Expandable sub-menus for items with nested children
+/// - Group headers rendered as uppercase section labels
+class EdenMobileLayout extends StatefulWidget {
   const EdenMobileLayout({
     super.key,
     required this.navItems,
@@ -32,22 +41,53 @@ class EdenMobileLayout extends StatelessWidget {
     this.logo,
     this.floatingAction,
     this.maxBottomItems = 5,
+    this.bottomNavItems,
   });
 
+  /// Full grouped navigation items for the drawer.
   final List<EdenNavItem> navItems;
+
+  /// Currently selected nav item ID.
   final String selectedId;
+
+  /// Callback when a nav item is selected.
   final ValueChanged<String> onNavChanged;
+
+  /// Main content body.
   final Widget body;
+
+  /// Top bar configuration.
   final EdenTopBarConfig? topBar;
+
+  /// User info for drawer header.
   final EdenLayoutUser? user;
+
+  /// Logo widget for drawer header.
   final Widget? logo;
+
+  /// Optional FAB.
   final Widget? floatingAction;
+
+  /// Max items in bottom nav (only used when [bottomNavItems] is null).
   final int maxBottomItems;
 
-  /// Flatten grouped nav items for display.
+  /// Explicit bottom nav items. When provided, these are used instead of
+  /// auto-flattening [navItems]. Include an item with id `__more__` to
+  /// auto-open the drawer.
+  final List<EdenNavItem>? bottomNavItems;
+
+  @override
+  State<EdenMobileLayout> createState() => _EdenMobileLayoutState();
+}
+
+class _EdenMobileLayoutState extends State<EdenMobileLayout> {
+  final Set<String> _expandedDrawerIds = {};
+
+  /// Flatten grouped nav items for display (legacy behavior).
   List<EdenNavItem> get _flatItems {
     final flat = <EdenNavItem>[];
-    for (final item in navItems) {
+    for (final item in widget.navItems) {
+      if (item.isDivider) continue;
       if (item.children.isNotEmpty) {
         flat.addAll(item.children);
       } else {
@@ -57,27 +97,61 @@ class EdenMobileLayout extends StatelessWidget {
     return flat;
   }
 
+  /// Check if any descendant is selected.
+  bool _isAnyDescendantSelected(EdenNavItem item) {
+    for (final child in item.children) {
+      if (child.id == widget.selectedId) return true;
+      if (child.children.isNotEmpty && _isAnyDescendantSelected(child)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final flat = _flatItems;
-    final showMore = flat.length > maxBottomItems;
-    final bottomItems = showMore ? flat.take(maxBottomItems - 1).toList() : flat;
-    final overflowItems = showMore ? flat.skip(maxBottomItems - 1).toList() : <EdenNavItem>[];
-    final selectedIndex = bottomItems.indexWhere((i) => i.id == selectedId);
-    final isOverflowSelected = selectedIndex == -1 && flat.any((i) => i.id == selectedId);
+
+    // Determine bottom nav items
+    final List<EdenNavItem> bottomItems;
+    final bool hasMore;
+    final List<EdenNavItem> overflowItems;
+
+    if (widget.bottomNavItems != null) {
+      // Explicit bottom nav items -- use as-is
+      bottomItems = widget.bottomNavItems!;
+      hasMore = bottomItems.any((i) => i.id == '__more__');
+      overflowItems = const [];
+    } else {
+      // Legacy: auto-flatten
+      final flat = _flatItems;
+      final showMore = flat.length > widget.maxBottomItems;
+      bottomItems = showMore
+          ? flat.take(widget.maxBottomItems - 1).toList()
+          : flat;
+      overflowItems = showMore
+          ? flat.skip(widget.maxBottomItems - 1).toList()
+          : <EdenNavItem>[];
+      hasMore = showMore;
+    }
+
+    final selectedIndex = bottomItems.indexWhere((i) => i.id == widget.selectedId);
+    final isOverflowSelected = selectedIndex == -1 &&
+        (widget.bottomNavItems != null
+            ? true // When using explicit items, "More" highlights if selected isn't in bottom
+            : _flatItems.any((i) => i.id == widget.selectedId));
 
     return Scaffold(
-      appBar: topBar != null
-          ? _buildAppBar(context, theme)
-          : null,
-      drawer: _buildDrawer(context, theme, flat),
-      body: body,
-      floatingActionButton: floatingAction,
+      appBar: widget.topBar != null ? _buildAppBar(context, theme) : null,
+      drawer: _buildDrawer(context, theme),
+      body: widget.body,
+      floatingActionButton: widget.floatingAction,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant)),
+          border: Border(
+            top: BorderSide(color: theme.colorScheme.outlineVariant),
+          ),
         ),
         child: SafeArea(
           child: SizedBox(
@@ -85,14 +159,29 @@ class EdenMobileLayout extends StatelessWidget {
             child: Row(
               children: [
                 for (final item in bottomItems)
+                  if (item.id == '__more__')
+                    _BottomItem(
+                      item: item,
+                      isSelected: isOverflowSelected,
+                      onTap: () {
+                        // Auto-open the drawer for __more__
+                        Scaffold.of(context).openDrawer();
+                      },
+                    )
+                  else
+                    _BottomItem(
+                      item: item,
+                      isSelected: item.id == widget.selectedId,
+                      onTap: () => widget.onNavChanged(item.id),
+                    ),
+                // Legacy "More" for auto-flatten mode
+                if (hasMore && widget.bottomNavItems == null)
                   _BottomItem(
-                    item: item,
-                    isSelected: item.id == selectedId,
-                    onTap: () => onNavChanged(item.id),
-                  ),
-                if (showMore)
-                  _BottomItem(
-                    item: const EdenNavItem(id: '__more__', label: 'More', icon: Icons.more_horiz),
+                    item: const EdenNavItem(
+                      id: '__more__',
+                      label: 'More',
+                      icon: Icons.more_horiz,
+                    ),
                     isSelected: isOverflowSelected,
                     onTap: () => _showMoreSheet(context, theme, overflowItems),
                   ),
@@ -106,111 +195,41 @@ class EdenMobileLayout extends StatelessWidget {
 
   PreferredSizeWidget _buildAppBar(BuildContext context, ThemeData theme) {
     return AppBar(
-      leading: topBar!.leading ??
+      leading: widget.topBar!.leading ??
           Builder(
             builder: (ctx) => IconButton(
               icon: const Icon(Icons.menu),
               onPressed: () => Scaffold.of(ctx).openDrawer(),
             ),
           ),
-      title: topBar!.titleWidget ??
-          (topBar!.title != null ? Text(topBar!.title!) : null),
+      title: widget.topBar!.titleWidget ??
+          (widget.topBar!.title != null ? Text(widget.topBar!.title!) : null),
       actions: [
-        ...topBar!.actions,
-        if (topBar!.trailing != null)
+        ...widget.topBar!.actions,
+        if (widget.topBar!.trailing != null)
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: topBar!.trailing!,
+            child: widget.topBar!.trailing!,
           ),
       ],
     );
   }
 
-  Widget _buildDrawer(BuildContext context, ThemeData theme, List<EdenNavItem> flat) {
-    final isDark = theme.brightness == Brightness.dark;
-
+  Widget _buildDrawer(BuildContext context, ThemeData theme) {
     return Drawer(
       child: SafeArea(
         child: Column(
           children: [
             // Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(EdenSpacing.space4),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: theme.colorScheme.outlineVariant)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (logo != null) logo!
-                  else Text('Menu', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                  if (user != null) ...[
-                    const SizedBox(height: EdenSpacing.space4),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                          child: user!.initials != null
-                              ? Text(user!.initials!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.colorScheme.primary))
-                              : Icon(Icons.person, size: 20, color: theme.colorScheme.primary),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(user!.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                              if (user!.email != null)
-                                Text(user!.email!, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            _DrawerHeader(logo: widget.logo, user: widget.user),
             // Nav items
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space2, horizontal: EdenSpacing.space2),
-                children: [
-                  for (final group in navItems)
-                    if (group.children.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16, top: 16, bottom: 4),
-                        child: Text(
-                          group.label.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      for (final child in group.children)
-                        _DrawerTile(
-                          item: child,
-                          isSelected: child.id == selectedId,
-                          onTap: () {
-                            onNavChanged(child.id);
-                            Navigator.pop(context);
-                          },
-                        ),
-                    ] else
-                      _DrawerTile(
-                        item: group,
-                        isSelected: group.id == selectedId,
-                        onTap: () {
-                          onNavChanged(group.id);
-                          Navigator.pop(context);
-                        },
-                      ),
-                ],
+                padding: const EdgeInsets.symmetric(
+                  vertical: EdenSpacing.space2,
+                  horizontal: EdenSpacing.space2,
+                ),
+                children: _buildDrawerItems(context, theme),
               ),
             ),
           ],
@@ -219,7 +238,119 @@ class EdenMobileLayout extends StatelessWidget {
     );
   }
 
-  void _showMoreSheet(BuildContext context, ThemeData theme, List<EdenNavItem> items) {
+  List<Widget> _buildDrawerItems(BuildContext context, ThemeData theme) {
+    final widgets = <Widget>[];
+
+    for (final item in widget.navItems) {
+      // Divider
+      if (item.isDivider) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            child: Divider(
+              height: 1,
+              color: theme.colorScheme.outlineVariant,
+            ),
+          ),
+        );
+        continue;
+      }
+
+      // Leaf item (no children)
+      if (item.children.isEmpty) {
+        widgets.add(
+          _DrawerTile(
+            item: item,
+            isSelected: item.id == widget.selectedId,
+            onTap: () {
+              widget.onNavChanged(item.id);
+              Navigator.pop(context);
+            },
+          ),
+        );
+        continue;
+      }
+
+      // Group with children: render group header + children
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(left: 16, top: 16, bottom: 4),
+          child: Text(
+            item.label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+
+      for (final child in item.children) {
+        if (child.children.isNotEmpty) {
+          // Expandable sub-menu
+          final isExpanded = _expandedDrawerIds.contains(child.id);
+          final isChildSelected = _isAnyDescendantSelected(child);
+
+          widgets.add(
+            _ExpandableDrawerTile(
+              item: child,
+              isExpanded: isExpanded,
+              isAnyChildSelected: isChildSelected,
+              onToggle: () {
+                setState(() {
+                  if (_expandedDrawerIds.contains(child.id)) {
+                    _expandedDrawerIds.remove(child.id);
+                  } else {
+                    _expandedDrawerIds.add(child.id);
+                  }
+                });
+              },
+            ),
+          );
+
+          if (isExpanded) {
+            for (final sub in child.children) {
+              widgets.add(
+                Padding(
+                  padding: const EdgeInsets.only(left: 20),
+                  child: _DrawerTile(
+                    item: sub,
+                    isSelected: sub.id == widget.selectedId,
+                    onTap: () {
+                      widget.onNavChanged(sub.id);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              );
+            }
+          }
+        } else {
+          // Regular leaf child
+          widgets.add(
+            _DrawerTile(
+              item: child,
+              isSelected: child.id == widget.selectedId,
+              onTap: () {
+                widget.onNavChanged(child.id);
+                Navigator.pop(context);
+              },
+            ),
+          );
+        }
+      }
+    }
+
+    return widgets;
+  }
+
+  void _showMoreSheet(
+    BuildContext context,
+    ThemeData theme,
+    List<EdenNavItem> items,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -236,36 +367,53 @@ class EdenMobileLayout extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: EdenSpacing.space3),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.3),
                   borderRadius: EdenRadii.borderRadiusFull,
                 ),
               ),
               for (final item in items)
                 ListTile(
                   leading: Icon(
-                    item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
-                    color: item.id == selectedId ? theme.colorScheme.primary : null,
+                    item.id == widget.selectedId
+                        ? (item.activeIcon ?? item.icon)
+                        : item.icon,
+                    color: item.id == widget.selectedId
+                        ? theme.colorScheme.primary
+                        : null,
                   ),
                   title: Text(
                     item.label,
                     style: TextStyle(
-                      fontWeight: item.id == selectedId ? FontWeight.w600 : FontWeight.w500,
-                      color: item.id == selectedId ? theme.colorScheme.primary : null,
+                      fontWeight: item.id == widget.selectedId
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: item.id == widget.selectedId
+                          ? theme.colorScheme.primary
+                          : null,
                     ),
                   ),
                   trailing: item.badge != null
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primary,
                             borderRadius: EdenRadii.borderRadiusFull,
                           ),
-                          child: Text(item.badge!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                          child: Text(
+                            item.badge!,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                         )
                       : null,
                   onTap: () {
                     Navigator.pop(ctx);
-                    onNavChanged(item.id);
+                    widget.onNavChanged(item.id);
                   },
                 ),
             ],
@@ -277,11 +425,98 @@ class EdenMobileLayout extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Drawer header
+// ---------------------------------------------------------------------------
+
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader({this.logo, this.user});
+  final Widget? logo;
+  final EdenLayoutUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(EdenSpacing.space4),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (logo != null)
+            logo!
+          else
+            Text(
+              'Menu',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          if (user != null) ...[
+            const SizedBox(height: EdenSpacing.space4),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor:
+                      theme.colorScheme.primary.withValues(alpha: 0.15),
+                  child: user!.initials != null
+                      ? Text(
+                          user!.initials!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      : Icon(Icons.person,
+                          size: 20, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user!.name,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      if (user!.email != null)
+                        Text(
+                          user!.email!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Bottom nav item
 // ---------------------------------------------------------------------------
 
 class _BottomItem extends StatelessWidget {
-  const _BottomItem({required this.item, required this.isSelected, required this.onTap});
+  const _BottomItem({
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
+
   final EdenNavItem item;
   final bool isSelected;
   final VoidCallback onTap;
@@ -303,19 +538,29 @@ class _BottomItem extends StatelessWidget {
                 Icon(
                   isSelected ? (item.activeIcon ?? item.icon) : item.icon,
                   size: 22,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 if (item.badge != null)
                   Positioned(
                     top: -4,
                     right: -8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.error,
                         borderRadius: EdenRadii.borderRadiusFull,
                       ),
-                      child: Text(item.badge!, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                      child: Text(
+                        item.badge!,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -326,7 +571,9 @@ class _BottomItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -341,7 +588,12 @@ class _BottomItem extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _DrawerTile extends StatelessWidget {
-  const _DrawerTile({required this.item, required this.isSelected, required this.onTap});
+  const _DrawerTile({
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
+
   final EdenNavItem item;
   final bool isSelected;
   final VoidCallback onTap;
@@ -357,7 +609,9 @@ class _DrawerTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 2),
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+              : null,
           borderRadius: EdenRadii.borderRadiusMd,
         ),
         child: Row(
@@ -365,7 +619,9 @@ class _DrawerTile extends StatelessWidget {
             Icon(
               isSelected ? (item.activeIcon ?? item.icon) : item.icon,
               size: 20,
-              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -374,19 +630,102 @@ class _DrawerTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
                 ),
               ),
             ),
             if (item.badge != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   borderRadius: EdenRadii.borderRadiusFull,
                 ),
-                child: Text(item.badge!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                child: Text(
+                  item.badge!,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Expandable drawer tile (for nested sub-menus)
+// ---------------------------------------------------------------------------
+
+class _ExpandableDrawerTile extends StatelessWidget {
+  const _ExpandableDrawerTile({
+    required this.item,
+    required this.isExpanded,
+    required this.isAnyChildSelected,
+    required this.onToggle,
+  });
+
+  final EdenNavItem item;
+  final bool isExpanded;
+  final bool isAnyChildSelected;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isHighlighted = isAnyChildSelected;
+
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        height: 44,
+        margin: const EdgeInsets.only(bottom: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: isHighlighted
+              ? theme.colorScheme.primary.withValues(alpha: 0.05)
+              : null,
+          borderRadius: EdenRadii.borderRadiusMd,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isHighlighted ? (item.activeIcon ?? item.icon) : item.icon,
+              size: 20,
+              color: isHighlighted
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                item.label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight:
+                      isHighlighted ? FontWeight.w600 : FontWeight.w500,
+                  color: isHighlighted
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+            AnimatedRotation(
+              turns: isExpanded ? 0.25 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),

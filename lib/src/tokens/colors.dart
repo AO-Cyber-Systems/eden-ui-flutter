@@ -136,6 +136,20 @@ class EdenColors {
   static const Color auroraCyan = Color(0xFF06B6D4);
   static const Color auroraEmerald = Color(0xFF10B981);
 
+  static const MaterialColor cyan = MaterialColor(0xFF06B6D4, <int, Color>{
+    50: Color(0xFFECFEFF),
+    100: Color(0xFFCFFAFE),
+    200: Color(0xFFA5F3FC),
+    300: Color(0xFF67E8F9),
+    400: Color(0xFF22D3EE),
+    500: Color(0xFF06B6D4),
+    600: Color(0xFF0891B2),
+    700: Color(0xFF0E7490),
+    800: Color(0xFF155E75),
+    900: Color(0xFF164E63),
+    950: Color(0xFF083344),
+  });
+
   /// All brand presets keyed by name.
   static const Map<String, MaterialColor> presets = {
     'gold': gold,
@@ -144,5 +158,81 @@ class EdenColors {
     'purple': purple,
     'red': red,
     'slate': slate,
+    'cyan': cyan,
   };
+}
+
+/// AOHealth-specific gradient definitions matching wireframe CSS.
+///
+/// Usage: `Container(decoration: BoxDecoration(gradient: AOHealthGradients.goldPrimary))`
+class AOHealthGradients {
+  AOHealthGradients._();
+
+  /// Gold calorie ring, primary buttons: gold-400 → gold-600
+  static const LinearGradient goldPrimary = LinearGradient(
+    colors: [Color(0xFFE59A3C), Color(0xFFC49545)],
+  );
+
+  /// Accent cards: gold-500 → aurora-purple (135deg)
+  static const LinearGradient goldAccent = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFD4A853), Color(0xFFA855F7)],
+  );
+
+  /// Blue macro bars: aurora-blue → aurora-cyan
+  static const LinearGradient blueCyan = LinearGradient(
+    colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
+  );
+
+  /// Emerald macro bars: aurora-emerald → aurora-cyan
+  static const LinearGradient emeraldCyan = LinearGradient(
+    colors: [Color(0xFF10B981), Color(0xFF06B6D4)],
+  );
+
+  /// Purple progress: aurora-purple → aurora-blue
+  static const LinearGradient purpleBlue = LinearGradient(
+    colors: [Color(0xFFA855F7), Color(0xFF3B82F6)],
+  );
+
+  /// Live workout dark header: zinc-900 → zinc-800
+  static const LinearGradient darkHeader = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF18181B), Color(0xFF27272A)],
+  );
+
+  /// Profile gradient header: gold-500 → gold-700
+  static const LinearGradient profileHeader = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFD4A853), Color(0xFFA67A38)],
+  );
+}
+
+/// AOHealth-specific semantic colors for wireframe UI patterns.
+class AOHealthColors {
+  AOHealthColors._();
+
+  /// Glass morphism background: rgba(255,255,255,0.6)
+  static const Color glassBackground = Color(0x99FFFFFF);
+
+  /// Glass morphism border: rgba(255,255,255,0.3)
+  static const Color glassBorder = Color(0x4DFFFFFF);
+
+  /// AI Insight card background: gold-50
+  static const Color insightBg = Color(0xFFFDF8EF);
+
+  /// AI Insight card border: gold-200
+  static const Color insightBorder = Color(0xFFF4D5AA);
+
+  /// Shadow glow for hover effects: rgba(212,168,83,0.15)
+  static const Color shadowGlow = Color(0x26D4A853);
+
+  /// Stat card gradient top borders (3px)
+  static const List<LinearGradient> statTopBorders = [
+    LinearGradient(colors: [Color(0xFFE59A3C), Color(0xFFC49545)]), // gold
+    LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)]), // blue→cyan
+    LinearGradient(colors: [Color(0xFF06B6D4), Color(0xFF10B981)]), // cyan→emerald
+  ];
 }

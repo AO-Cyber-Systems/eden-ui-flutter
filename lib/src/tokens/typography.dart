@@ -78,4 +78,24 @@ class EdenTypography {
 
   static TextStyle codeSmall(BuildContext context) =>
       GoogleFonts.jetBrainsMono(fontSize: 12, fontWeight: FontWeight.w400, height: 1.5);
+
+  // ---------------------------------------------------------------------------
+  // AOHealth wireframe-specific styles
+  // ---------------------------------------------------------------------------
+
+  /// Card section title: UPPERCASE, 13px, w600, 0.5px spacing (Outfit)
+  static TextStyle cardTitle(BuildContext context) =>
+      GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.5, height: 1.4);
+
+  /// Stat card large value: 22px, w700 (Outfit)
+  static TextStyle statValue(BuildContext context) =>
+      GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700);
+
+  /// Calorie ring center value: 28px, w700 (Outfit)
+  static TextStyle ringValue(BuildContext context) =>
+      GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.w700);
+
+  /// Settings section label: 12px, w600, 0.5px spacing (Outfit)
+  static TextStyle sectionLabel(BuildContext context) =>
+      GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5);
 }
