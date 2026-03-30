@@ -142,3 +142,24 @@ export 'src/widgets/eden_device_mockup.dart';
 
 // Layout patterns
 export 'src/widgets/eden_split_panel.dart';
+
+// Business patterns (promoted from trades-flutter — Wave 1)
+export 'src/widgets/eden_severity_badge.dart';
+export 'src/widgets/eden_stat_grid.dart';
+export 'src/widgets/eden_pipeline_bar.dart';
+
+// Scaffolds & hierarchy (promoted from trades-flutter — Wave 2)
+export 'src/widgets/eden_detail_scaffold.dart';
+export 'src/widgets/eden_list_scaffold.dart';
+export 'src/widgets/eden_hierarchy_tree.dart';
+
+// Canvas & process components (promoted from trades-flutter — Wave 3)
+export 'src/widgets/eden_canvas_toolbar.dart';
+export 'src/widgets/eden_swimlane_chart.dart';
+export 'src/widgets/eden_rule_tree.dart';
+export 'src/widgets/eden_phase_checklist.dart';
+
+// Agent builder components (promoted from trades-flutter — Wave 4)
+export 'src/widgets/eden_catalog_picker.dart';
+export 'src/widgets/eden_approval_flow.dart';
+export 'src/widgets/eden_execution_log.dart';
