@@ -110,6 +110,7 @@ class EdenSwimlaneChart extends StatelessWidget {
       transformationController: transformationController,
       minScale: minScale,
       maxScale: maxScale,
+      constrained: false,
       boundaryMargin: const EdgeInsets.all(200),
       child: Container(
         color: bg,
@@ -117,19 +118,15 @@ class EdenSwimlaneChart extends StatelessWidget {
           painter: showDotGrid ? _DotGridPainter() : null,
           child: Padding(
             padding: const EdgeInsets.all(32),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: IntrinsicWidth(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (int i = 0; i < phases.length; i++) ...[
-                      _PhaseRow(phase: phases[i]),
-                      if (i < phases.length - 1) const _PhaseConnector(),
-                    ],
-                  ],
-                ),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < phases.length; i++) ...[
+                  _PhaseRow(phase: phases[i]),
+                  if (i < phases.length - 1) const _PhaseConnector(),
+                ],
+              ],
             ),
           ),
         ),
@@ -152,13 +149,14 @@ class _PhaseRow extends StatelessWidget {
     final phaseColor =
         phase.color ?? Theme.of(context).colorScheme.primary;
 
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Vertical phase label
-          Container(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Vertical phase label — uses IntrinsicHeight only for itself
+        IntrinsicHeight(
+          child: Container(
             width: 40,
+            constraints: const BoxConstraints(minHeight: 80),
             decoration: BoxDecoration(
               color: phaseColor.withValues(alpha: 0.1),
               border: Border(
@@ -186,24 +184,24 @@ class _PhaseRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Group cards
-          Flexible(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (int i = 0; i < phase.groups.length; i++) ...[
-                    _GroupCard(group: phase.groups[i], phaseColor: phaseColor),
-                    if (i < phase.groups.length - 1) _groupArrow(),
-                  ],
+        ),
+        const SizedBox(width: 12),
+        // Group cards — unconstrained vertical sizing
+        Flexible(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (int i = 0; i < phase.groups.length; i++) ...[
+                  _GroupCard(group: phase.groups[i], phaseColor: phaseColor),
+                  if (i < phase.groups.length - 1) _groupArrow(),
                 ],
-              ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

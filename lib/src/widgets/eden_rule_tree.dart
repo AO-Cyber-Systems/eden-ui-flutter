@@ -132,6 +132,7 @@ class EdenRuleTree extends StatelessWidget {
       transformationController: transformationController,
       minScale: minScale,
       maxScale: maxScale,
+      constrained: false,
       boundaryMargin: const EdgeInsets.all(200),
       child: Container(
         color: bg,
@@ -139,17 +140,15 @@ class EdenRuleTree extends StatelessWidget {
           painter: showDotGrid ? _DotGridPainter() : null,
           child: Padding(
             padding: const EdgeInsets.all(32),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (int i = 0; i < roots.length; i++) ...[
-                    _buildNodeTree(roots[i]),
-                    if (i < roots.length - 1) const SizedBox(height: 24),
-                  ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (int i = 0; i < roots.length; i++) ...[
+                  _buildNodeTree(roots[i]),
+                  if (i < roots.length - 1) const SizedBox(height: 24),
                 ],
-              ),
+              ],
             ),
           ),
         ),
