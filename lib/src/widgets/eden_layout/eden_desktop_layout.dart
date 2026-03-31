@@ -587,7 +587,7 @@ class _TopBar extends StatelessWidget {
             Text(config.title!, style: theme.textTheme.titleMedium),
           if (config.showSearch) ...[
             const SizedBox(width: EdenSpacing.space4),
-            Expanded(
+            Flexible(
               child: Container(
                 height: 36,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -616,6 +616,7 @@ class _TopBar extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: EdenSpacing.space3),
           ] else
             const Spacer(),
           ...config.actions,
