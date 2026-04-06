@@ -78,7 +78,7 @@ class EdenCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-            child: Image(image: image!, width: 140, height: double.infinity, fit: BoxFit.cover),
+            child: Image(image: image!, width: 140, height: double.infinity, fit: BoxFit.cover, excludeFromSemantics: true),
           ),
           Expanded(child: Padding(
             padding: padding ?? const EdgeInsets.all(EdenSpacing.space4),
@@ -93,7 +93,7 @@ class EdenCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image(image: image!, width: double.infinity, height: 180, fit: BoxFit.cover),
+            child: Image(image: image!, width: double.infinity, height: 180, fit: BoxFit.cover, excludeFromSemantics: true),
           ),
           Padding(
             padding: padding ?? const EdgeInsets.all(EdenSpacing.space4),

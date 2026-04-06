@@ -102,7 +102,7 @@ class EdenTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: EdenRadii.borderRadiusLg),
-        color: isDark ? EdenColors.neutral[800] : colorScheme.surface,
+        color: colorScheme.surface,
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,

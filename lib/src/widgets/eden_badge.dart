@@ -55,9 +55,13 @@ class EdenBadge extends StatelessWidget {
           ),
           if (onDismiss != null) ...[
             SizedBox(width: sizing.gap),
-            GestureDetector(
-              onTap: onDismiss,
-              child: Icon(Icons.close, size: sizing.iconSize, color: colors.foreground),
+            Semantics(
+              label: 'Remove $label',
+              button: true,
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: Icon(Icons.close, size: sizing.iconSize, color: colors.foreground),
+              ),
             ),
           ],
         ],

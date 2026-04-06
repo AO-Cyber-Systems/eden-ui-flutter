@@ -53,7 +53,10 @@ class EdenConversationTile extends StatelessWidget {
         ? EdenColors.neutral[800]!.withValues(alpha: 0.5)
         : EdenColors.neutral[100]!;
 
-    return Material(
+    return Semantics(
+      button: onTap != null,
+      label: data.title,
+      child: Material(
       color: isSelected ? selectedBg : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -75,14 +78,18 @@ class EdenConversationTile extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
   Widget _buildAvatar(ThemeData theme) {
     if (data.avatarUrl != null) {
-      return CircleAvatar(
-        radius: 20,
-        backgroundImage: NetworkImage(data.avatarUrl!),
+      return Semantics(
+        excludeSemantics: true,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundImage: NetworkImage(data.avatarUrl!),
+        ),
       );
     }
     return CircleAvatar(

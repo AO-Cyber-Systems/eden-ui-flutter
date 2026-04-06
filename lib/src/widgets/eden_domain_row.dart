@@ -83,7 +83,10 @@ class EdenDomainRow extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return InkWell(
+    return Semantics(
+      label: 'Domain: $domain',
+      button: onTap != null,
+      child: InkWell(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -141,6 +144,7 @@ class EdenDomainRow extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

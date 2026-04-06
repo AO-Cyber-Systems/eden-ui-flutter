@@ -176,17 +176,21 @@ class _KillButton extends StatelessWidget {
       );
     }
 
-    return Tooltip(
-      message: 'Kill process',
-      child: InkWell(
-        onTap: onKill,
-        borderRadius: EdenRadii.borderRadiusSm,
-        child: Padding(
-          padding: EdgeInsets.all(EdenSpacing.space1),
-          child: Icon(
-            Icons.close_rounded,
-            size: 18,
-            color: EdenColors.error,
+    return Semantics(
+      label: 'Kill process',
+      button: true,
+      child: Tooltip(
+        message: 'Kill process',
+        child: InkWell(
+          onTap: onKill,
+          borderRadius: EdenRadii.borderRadiusSm,
+          child: Padding(
+            padding: EdgeInsets.all(EdenSpacing.space1),
+            child: Icon(
+              Icons.close_rounded,
+              size: 18,
+              color: EdenColors.error,
+            ),
           ),
         ),
       ),

@@ -287,11 +287,15 @@ class BatchActionBar extends StatelessWidget {
             const SizedBox(width: EdenSpacing.space2),
             SmallActionButton(label: 'Changes', icon: Icons.edit_outlined, color: EdenColors.info, onTap: onRequestChanges),
             const SizedBox(width: EdenSpacing.space3),
-            GestureDetector(
-              onTap: onClear,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Icon(Icons.clear, size: 18, color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500]),
+            Semantics(
+              button: true,
+              label: 'Clear selection',
+              child: GestureDetector(
+                onTap: onClear,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Icon(Icons.clear, size: 18, color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500]),
+                ),
               ),
             ),
           ],
@@ -317,24 +321,28 @@ class SmallActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space3, vertical: EdenSpacing.space1),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: EdenRadii.borderRadiusFull,
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: EdenSpacing.space1),
-              Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
-            ],
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space3, vertical: EdenSpacing.space1),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: EdenRadii.borderRadiusFull,
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 14, color: color),
+                const SizedBox(width: EdenSpacing.space1),
+                Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+              ],
+            ),
           ),
         ),
       ),

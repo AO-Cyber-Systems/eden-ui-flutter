@@ -350,13 +350,17 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
                       : EdenColors.neutral[500],
                 ),
               ),
-              GestureDetector(
-                onTap: _loading ? null : widget.onSignUpTap,
-                child: Text(
-                  'Sign up',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+              Semantics(
+                button: true,
+                label: 'Sign up',
+                child: GestureDetector(
+                  onTap: _loading ? null : widget.onSignUpTap,
+                  child: Text(
+                    'Sign up',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

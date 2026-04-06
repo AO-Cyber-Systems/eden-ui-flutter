@@ -174,9 +174,12 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
   Widget _buildHeader(ThemeData theme) {
     return Column(
       children: [
-        GestureDetector(
-          onTap: widget.onAvatarTap,
-          child: Stack(
+        Semantics(
+          button: true,
+          label: 'Change profile photo',
+          child: GestureDetector(
+            onTap: widget.onAvatarTap,
+            child: Stack(
             children: [
               EdenAvatar(
                 size: EdenAvatarSize.xl,
@@ -208,6 +211,7 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
                 ),
             ],
           ),
+        ),
         ),
         const SizedBox(height: EdenSpacing.space3),
         Text(

@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
-class BadgesAlertsScreen extends StatelessWidget {
+class BadgesAlertsScreen extends StatefulWidget {
   const BadgesAlertsScreen({super.key});
+
+  @override
+  State<BadgesAlertsScreen> createState() => _BadgesAlertsScreenState();
+}
+
+class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
+  EdenBadgeVariant _badgeVariant = EdenBadgeVariant.primary;
+  EdenAlertVariant _alertVariant = EdenAlertVariant.info;
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +21,34 @@ class BadgesAlertsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          InteractivePlayground(
+            title: 'Badge Explorer',
+            preview: EdenBadge(label: 'Preview', variant: _badgeVariant),
+            controls: [
+              EnumSelector<EdenBadgeVariant>(
+                values: EdenBadgeVariant.values,
+                selected: _badgeVariant,
+                onChanged: (v) => setState(() => _badgeVariant = v),
+              ),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space3),
+          InteractivePlayground(
+            title: 'Alert Explorer',
+            preview: EdenAlert(
+              title: 'Alert Preview',
+              message: 'This is a preview alert message.',
+              variant: _alertVariant,
+            ),
+            controls: [
+              EnumSelector<EdenAlertVariant>(
+                values: EdenAlertVariant.values,
+                selected: _alertVariant,
+                onChanged: (v) => setState(() => _alertVariant = v),
+              ),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space4),
           Section(
             title: 'Badge Variants',
             child: Wrap(

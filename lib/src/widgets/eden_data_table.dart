@@ -83,10 +83,14 @@ class EdenDataTable extends StatelessWidget {
             );
 
             if (hoverable || onRowTap != null) {
-              rowWidget = InkWell(
-                onTap: onRowTap != null ? () => onRowTap!(index) : null,
-                hoverColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
-                child: rowWidget,
+              rowWidget = Semantics(
+                button: onRowTap != null,
+                label: 'Row ${index + 1}',
+                child: InkWell(
+                  onTap: onRowTap != null ? () => onRowTap!(index) : null,
+                  hoverColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
+                  child: rowWidget,
+                ),
               );
             }
 

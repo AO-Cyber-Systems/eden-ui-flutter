@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
-class ButtonsScreen extends StatelessWidget {
+class ButtonsScreen extends StatefulWidget {
   const ButtonsScreen({super.key});
+
+  @override
+  State<ButtonsScreen> createState() => _ButtonsScreenState();
+}
+
+class _ButtonsScreenState extends State<ButtonsScreen> {
+  EdenButtonVariant _selectedVariant = EdenButtonVariant.primary;
+  EdenButtonSize _selectedSize = EdenButtonSize.md;
+  bool _isOutline = false;
+  bool _isPill = false;
+  bool _isDisabled = false;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +25,39 @@ class ButtonsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          // Interactive playground
+          InteractivePlayground(
+            title: 'Interactive Explorer',
+            preview: EdenButton(
+              label: 'Button',
+              variant: _selectedVariant,
+              size: _selectedSize,
+              outline: _isOutline,
+              pill: _isPill,
+              disabled: _isDisabled,
+              loading: _isLoading,
+              onPressed: () {},
+            ),
+            controls: [
+              EnumSelector<EdenButtonVariant>(
+                values: EdenButtonVariant.values,
+                selected: _selectedVariant,
+                onChanged: (v) => setState(() => _selectedVariant = v),
+              ),
+              EnumSelector<EdenButtonSize>(
+                values: EdenButtonSize.values,
+                selected: _selectedSize,
+                onChanged: (v) => setState(() => _selectedSize = v),
+              ),
+              ToggleControl(label: 'Outline', value: _isOutline, onChanged: (v) => setState(() => _isOutline = v)),
+              ToggleControl(label: 'Pill', value: _isPill, onChanged: (v) => setState(() => _isPill = v)),
+              ToggleControl(label: 'Disabled', value: _isDisabled, onChanged: (v) => setState(() => _isDisabled = v)),
+              ToggleControl(label: 'Loading', value: _isLoading, onChanged: (v) => setState(() => _isLoading = v)),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space4),
+
+          // Existing static sections
           Section(
             title: 'Variants',
             child: Wrap(

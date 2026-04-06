@@ -23,31 +23,39 @@ class EdenRating extends StatelessWidget {
   Widget build(BuildContext context) {
     final starSize = _resolveSize();
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(max, (i) {
-        final starValue = i + 1;
-        final isFull = value >= starValue;
-        final isHalf = !isFull && value >= starValue - 0.5;
+    return Semantics(
+      label: 'Rating: ${value % 1 == 0 ? value.toInt() : value} out of $max',
+      value: '${value % 1 == 0 ? value.toInt() : value}',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(max, (i) {
+          final starValue = i + 1;
+          final isFull = value >= starValue;
+          final isHalf = !isFull && value >= starValue - 0.5;
 
-        return GestureDetector(
-          onTap: onChanged != null ? () => onChanged!(starValue.toDouble()) : null,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 2),
-            child: Icon(
-              isFull
-                  ? Icons.star_rounded
-                  : isHalf
-                      ? Icons.star_half_rounded
-                      : Icons.star_outline_rounded,
-              size: starSize,
-              color: isFull || isHalf
-                  ? const Color(0xFFFCD34D) // yellow-300
-                  : Colors.grey[400],
+          return Semantics(
+            button: onChanged != null,
+            label: 'Rate $starValue ${starValue == 1 ? "star" : "stars"}',
+            child: GestureDetector(
+              onTap: onChanged != null ? () => onChanged!(starValue.toDouble()) : null,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 2),
+                child: Icon(
+                  isFull
+                      ? Icons.star_rounded
+                      : isHalf
+                          ? Icons.star_half_rounded
+                          : Icons.star_outline_rounded,
+                  size: starSize,
+                  color: isFull || isHalf
+                      ? const Color(0xFFFCD34D) // yellow-300
+                      : Colors.grey[400],
+                ),
+              ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 

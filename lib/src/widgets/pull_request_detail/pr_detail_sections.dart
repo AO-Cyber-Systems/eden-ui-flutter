@@ -154,27 +154,32 @@ class PrTabButton extends StatelessWidget {
     final inactiveColor =
         isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: EdenSpacing.space3,
-          vertical: EdenSpacing.space2,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isActive ? activeColor : Colors.transparent,
-              width: 2,
+    return Semantics(
+      button: true,
+      label: _label(),
+      selected: isActive,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: EdenSpacing.space3,
+            vertical: EdenSpacing.space2,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isActive ? activeColor : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
-        ),
-        child: Text(
-          _label(),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            color: isActive ? activeColor : inactiveColor,
+          child: Text(
+            _label(),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              color: isActive ? activeColor : inactiveColor,
+            ),
           ),
         ),
       ),
@@ -369,30 +374,34 @@ class ReviewerRow extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(bottom: EdenSpacing.space1),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: EdenRadii.borderRadiusSm,
-        child: Row(
-          children: [
-            PrAvatarCircle(initial: reviewer.initial, isDark: isDark),
-            SizedBox(width: EdenSpacing.space2),
-            Expanded(
-              child: Text(
-                reviewer.name,
-                style: theme.textTheme.bodySmall,
-                overflow: TextOverflow.ellipsis,
+      child: Semantics(
+        button: onTap != null,
+        label: 'Reviewer: ${reviewer.name}',
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: EdenRadii.borderRadiusSm,
+          child: Row(
+            children: [
+              PrAvatarCircle(initial: reviewer.initial, isDark: isDark),
+              SizedBox(width: EdenSpacing.space2),
+              Expanded(
+                child: Text(
+                  reviewer.name,
+                  style: theme.textTheme.bodySmall,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            Icon(
-              reviewer.approved
-                  ? Icons.check_circle_outline
-                  : Icons.access_time,
-              size: 14,
-              color: reviewer.approved
-                  ? EdenColors.success
-                  : EdenColors.neutral[400],
-            ),
-          ],
+              Icon(
+                reviewer.approved
+                    ? Icons.check_circle_outline
+                    : Icons.access_time,
+                size: 14,
+                color: reviewer.approved
+                    ? EdenColors.success
+                    : EdenColors.neutral[400],
+              ),
+            ],
+          ),
         ),
       ),
     );

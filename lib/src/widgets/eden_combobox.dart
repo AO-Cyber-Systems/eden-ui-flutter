@@ -287,11 +287,15 @@ class _EdenComboboxState<T> extends State<EdenCombobox<T>> {
                         ),
                       ),
                     if (widget.clearable && hasValue && !widget.loading)
-                      GestureDetector(
-                        onTap: _clearSelection,
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 4),
-                          child: Icon(Icons.close, size: 18),
+                      Semantics(
+                        button: true,
+                        label: 'Clear selection',
+                        child: GestureDetector(
+                          onTap: _clearSelection,
+                          child: const Padding(
+                            padding: EdgeInsets.only(right: 4),
+                            child: Icon(Icons.close, size: 18),
+                          ),
                         ),
                       ),
                     Icon(

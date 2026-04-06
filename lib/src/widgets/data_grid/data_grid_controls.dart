@@ -103,26 +103,39 @@ class PaginationButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback onTap;
 
+  String get _semanticLabel {
+    if (icon == Icons.first_page) return 'First page';
+    if (icon == Icons.chevron_left) return 'Previous page';
+    if (icon == Icons.chevron_right) return 'Next page';
+    if (icon == Icons.last_page) return 'Last page';
+    return 'Page navigation';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-          borderRadius: EdenRadii.borderRadiusSm,
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          icon,
-          size: 16,
-          color: enabled
-              ? theme.colorScheme.onSurface
-              : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: _semanticLabel,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+            borderRadius: EdenRadii.borderRadiusSm,
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            icon,
+            size: 16,
+            color: enabled
+                ? theme.colorScheme.onSurface
+                : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+          ),
         ),
       ),
     );

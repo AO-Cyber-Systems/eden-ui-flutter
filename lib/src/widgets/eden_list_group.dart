@@ -110,7 +110,11 @@ class _ListItem extends StatelessWidget {
     );
 
     if (item.onTap != null) {
-      return InkWell(onTap: item.onTap, child: content);
+      return Semantics(
+        label: item.title,
+        button: true,
+        child: InkWell(onTap: item.onTap, child: content),
+      );
     }
     return content;
   }

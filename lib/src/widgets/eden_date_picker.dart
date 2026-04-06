@@ -129,46 +129,53 @@ class _EdenDatePickerState extends State<EdenDatePicker> {
           ),
           const SizedBox(height: 6),
         ],
-        GestureDetector(
-          onTap: _openPicker,
-          child: InputDecorator(
-            decoration: InputDecoration(
-              hintText: widget.hint ?? (widget.includeTime ? 'Select date & time' : 'Select date'),
-              errorText: widget.errorText,
-              errorStyle: const TextStyle(fontSize: 12),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+        Semantics(
+          button: true,
+          label: hasValue
+              ? '${widget.label ?? "Date"}: ${_formatDate(widget.value!)}'
+              : widget.label ?? (widget.includeTime ? 'Select date and time' : 'Select date'),
+          child: GestureDetector(
+            onTap: _openPicker,
+            child: InputDecorator(
+              decoration: InputDecoration(
+                hintText: widget.hint ?? (widget.includeTime ? 'Select date & time' : 'Select date'),
+                errorText: widget.errorText,
+                errorStyle: const TextStyle(fontSize: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                prefixIcon: Icon(
+                  widget.includeTime ? Icons.event : Icons.calendar_today,
+                  size: 20,
+                ),
+                suffixIcon: hasValue && widget.clearable && widget.enabled
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        tooltip: 'Clear date',
+                        onPressed: () => widget.onChanged?.call(null),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      )
+                    : null,
+                enabled: widget.enabled,
               ),
-              prefixIcon: Icon(
-                widget.includeTime ? Icons.event : Icons.calendar_today,
-                size: 20,
-              ),
-              suffixIcon: hasValue && widget.clearable && widget.enabled
-                  ? IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: () => widget.onChanged?.call(null),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+              isEmpty: !hasValue,
+              child: hasValue
+                  ? Text(
+                      _formatDate(widget.value!),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: widget.enabled
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                     )
                   : null,
-              enabled: widget.enabled,
             ),
-            isEmpty: !hasValue,
-            child: hasValue
-                ? Text(
-                    _formatDate(widget.value!),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: widget.enabled
-                          ? theme.colorScheme.onSurface
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  )
-                : null,
           ),
         ),
         if (widget.helperText != null && !hasError) ...[
@@ -284,44 +291,51 @@ class _EdenDateRangePickerState extends State<EdenDateRangePicker> {
           ),
           const SizedBox(height: 6),
         ],
-        GestureDetector(
-          onTap: _openPicker,
-          child: InputDecorator(
-            decoration: InputDecoration(
-              hintText: widget.hint ?? 'Select date range',
-              errorText: widget.errorText,
-              errorStyle: const TextStyle(fontSize: 12),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+        Semantics(
+          button: true,
+          label: display != null
+              ? '${widget.label ?? "Date range"}: $display'
+              : widget.label ?? 'Select date range',
+          child: GestureDetector(
+            onTap: _openPicker,
+            child: InputDecorator(
+              decoration: InputDecoration(
+                hintText: widget.hint ?? 'Select date range',
+                errorText: widget.errorText,
+                errorStyle: const TextStyle(fontSize: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                prefixIcon: const Icon(Icons.date_range, size: 20),
+                suffixIcon: hasValue && widget.clearable && widget.enabled
+                    ? IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        tooltip: 'Clear date range',
+                        onPressed: () =>
+                            widget.onChanged?.call(null, null),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                      )
+                    : null,
+                enabled: widget.enabled,
               ),
-              prefixIcon: const Icon(Icons.date_range, size: 20),
-              suffixIcon: hasValue && widget.clearable && widget.enabled
-                  ? IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      onPressed: () =>
-                          widget.onChanged?.call(null, null),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+              isEmpty: display == null,
+              child: display != null
+                  ? Text(
+                      display,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: widget.enabled
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                     )
                   : null,
-              enabled: widget.enabled,
             ),
-            isEmpty: display == null,
-            child: display != null
-                ? Text(
-                    display,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: widget.enabled
-                          ? theme.colorScheme.onSurface
-                          : theme.colorScheme.onSurfaceVariant,
-                    ),
-                  )
-                : null,
           ),
         ),
         if (widget.helperText != null && !hasError) ...[

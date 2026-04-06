@@ -66,7 +66,7 @@ class EdenButton extends StatelessWidget {
           Icon(icon, size: sizing.iconSize),
           SizedBox(width: sizing.gap),
         ],
-        Flexible(child: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1)),
+        Text(label),
         if (trailingIcon != null) ...[
           SizedBox(width: sizing.gap),
           Icon(trailingIcon, size: sizing.iconSize),
@@ -127,8 +127,8 @@ class EdenButton extends StatelessWidget {
         return _ButtonColors(EdenColors.warning, Colors.white);
       case EdenButtonVariant.ghost:
         return _ButtonColors(
-          isDark ? EdenColors.neutral[100]! : EdenColors.neutral[900]!,
-          isDark ? EdenColors.neutral[100]! : EdenColors.neutral[900]!,
+          isDark ? EdenColors.neutral[800]! : EdenColors.neutral[100]!,
+          isDark ? EdenColors.neutral[200]! : EdenColors.neutral[700]!,
         );
       case EdenButtonVariant.dark:
         return _ButtonColors(

@@ -187,7 +187,10 @@ class _EdenFileUploadState extends State<EdenFileUpload> {
         widget.onFilesSelected?.call();
       },
       builder: (context, candidateData, rejectedData) {
-        return GestureDetector(
+        return Semantics(
+          label: 'Upload files',
+          button: true,
+          child: GestureDetector(
           onTap: widget.enabled && _canAddMore
               ? widget.onFilesSelected
               : null,
@@ -251,6 +254,7 @@ class _EdenFileUploadState extends State<EdenFileUpload> {
               ),
             ),
           ),
+        ),
         );
       },
     );
@@ -264,36 +268,40 @@ class _EdenFileUploadState extends State<EdenFileUpload> {
             ? EdenColors.neutral[600]!
             : EdenColors.neutral[300]!;
 
-    return GestureDetector(
-      onTap: widget.enabled && _canAddMore ? widget.onFilesSelected : null,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: EdenSpacing.space3,
-          vertical: EdenSpacing.space2,
-        ),
-        decoration: BoxDecoration(
-          border: Border.all(color: borderColor),
-          borderRadius: EdenRadii.borderRadiusMd,
-          color: isDark ? EdenColors.neutral[900]! : EdenColors.neutral[50]!,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.attach_file,
-              size: 18,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: EdenSpacing.space2),
-            Text(
-              widget.files.isEmpty
-                  ? 'Choose files...'
-                  : '${widget.files.length} file${widget.files.length == 1 ? '' : 's'}',
-              style: theme.textTheme.bodyMedium?.copyWith(
+    return Semantics(
+      label: 'Choose files',
+      button: true,
+      child: GestureDetector(
+        onTap: widget.enabled && _canAddMore ? widget.onFilesSelected : null,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: EdenSpacing.space3,
+            vertical: EdenSpacing.space2,
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(color: borderColor),
+            borderRadius: EdenRadii.borderRadiusMd,
+            color: isDark ? EdenColors.neutral[900]! : EdenColors.neutral[50]!,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.attach_file,
+                size: 18,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-            ),
-          ],
+              const SizedBox(width: EdenSpacing.space2),
+              Text(
+                widget.files.isEmpty
+                    ? 'Choose files...'
+                    : '${widget.files.length} file${widget.files.length == 1 ? '' : 's'}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -437,6 +445,7 @@ class _EdenFileUploadState extends State<EdenFileUpload> {
           width: 40,
           height: 40,
           fit: BoxFit.cover,
+          excludeFromSemantics: true,
           errorBuilder: (_, __, ___) => _buildFileIcon(theme, file),
         ),
       );

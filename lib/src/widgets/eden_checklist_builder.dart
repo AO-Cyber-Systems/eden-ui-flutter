@@ -551,17 +551,20 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              if (isCollapsed) {
-                _collapsedSections.remove(item.id);
-              } else {
-                _collapsedSections.add(item.id);
-              }
-            });
-          },
-          child: Container(
+        Semantics(
+          button: true,
+          label: '${item.sectionHeader}${isCollapsed ? ", collapsed" : ", expanded"}',
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                if (isCollapsed) {
+                  _collapsedSections.remove(item.id);
+                } else {
+                  _collapsedSections.add(item.id);
+                }
+              });
+            },
+            child: Container(
             padding: EdgeInsets.symmetric(
               horizontal: EdenSpacing.space3,
               vertical: EdenSpacing.space2,
@@ -609,6 +612,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
               ],
             ),
           ),
+        ),
         ),
         if (!isCollapsed)
           ...item.children.asMap().entries.map((entry) {

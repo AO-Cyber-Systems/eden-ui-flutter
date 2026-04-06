@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
 class InputsScreen extends StatefulWidget {
@@ -12,6 +13,8 @@ class InputsScreen extends StatefulWidget {
 class _InputsScreenState extends State<InputsScreen> {
   bool _toggleValue = true;
   bool _toggle2 = false;
+  bool _inputEnabled = true;
+  bool _inputShowError = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +23,20 @@ class _InputsScreenState extends State<InputsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          InteractivePlayground(
+            title: 'Interactive Explorer',
+            preview: EdenInput(
+              label: 'Demo Input',
+              hint: 'Type something...',
+              enabled: _inputEnabled,
+              errorText: _inputShowError ? 'This field has an error.' : null,
+            ),
+            controls: [
+              ToggleControl(label: 'Enabled', value: _inputEnabled, onChanged: (v) => setState(() => _inputEnabled = v)),
+              ToggleControl(label: 'Error', value: _inputShowError, onChanged: (v) => setState(() => _inputShowError = v)),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space4),
           Section(
             title: 'Basic Input',
             child: EdenInput(

@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
-class CardsScreen extends StatelessWidget {
+class CardsScreen extends StatefulWidget {
   const CardsScreen({super.key});
+
+  @override
+  State<CardsScreen> createState() => _CardsScreenState();
+}
+
+class _CardsScreenState extends State<CardsScreen> {
+  bool _isClickable = false;
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +20,18 @@ class CardsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          InteractivePlayground(
+            title: 'Interactive Explorer',
+            preview: EdenCard(
+              title: 'Preview Card',
+              subtitle: 'Tap to interact',
+              onTap: _isClickable ? () {} : null,
+            ),
+            controls: [
+              ToggleControl(label: 'Clickable', value: _isClickable, onChanged: (v) => setState(() => _isClickable = v)),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space4),
           Section(
             title: 'Standard Card',
             child: EdenCard(

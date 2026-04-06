@@ -96,12 +96,16 @@ class _EdenLabelBadgeState extends State<EdenLabelBadge> {
     );
 
     if (widget.onTap != null) {
-      badge = Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(EdenRadii.full),
-          child: badge,
+      badge = Semantics(
+        label: widget.label,
+        button: true,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onTap,
+            borderRadius: BorderRadius.circular(EdenRadii.full),
+            child: badge,
+          ),
         ),
       );
     }
@@ -132,20 +136,24 @@ class _RemoveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 16,
-      height: 16,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(EdenRadii.full),
-        child: InkWell(
-          onTap: onTap,
+    return Semantics(
+      label: 'Remove label',
+      button: true,
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: Material(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(EdenRadii.full),
-          child: Center(
-            child: Icon(
-              Icons.close,
-              size: 12,
-              color: color,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(EdenRadii.full),
+            child: Center(
+              child: Icon(
+                Icons.close,
+                size: 12,
+                color: color,
+              ),
             ),
           ),
         ),

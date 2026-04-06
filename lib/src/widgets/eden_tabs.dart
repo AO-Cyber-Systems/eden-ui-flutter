@@ -50,6 +50,7 @@ class EdenTabs extends StatelessWidget {
             final isSelected = index == selectedIndex;
 
             return Semantics(
+              button: true,
               label: tab.label,
               selected: isSelected,
               child: GestureDetector(

@@ -680,6 +680,12 @@ class _PieChartPainter extends CustomPainter {
 
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
+
+    if (donut) {
+      // Use saveLayer so dstOut composites correctly on any background
+      canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), Paint());
+    }
+
     final rect = Rect.fromCircle(center: center, radius: radius);
 
     double startAngle = -math.pi / 2;
@@ -691,52 +697,44 @@ class _PieChartPainter extends CustomPainter {
             .withValues(alpha: isHl ? 1.0 : (highlighted != null ? 0.5 : 1.0))
         ..style = PaintingStyle.fill;
 
-      canvas.drawArc(rect, startAngle, sweep, !donut, paint);
+      canvas.drawArc(rect, startAngle, sweep, true, paint);
 
-      // Segment label
+      // Segment label — position in the middle of the arc ring
       if (showLabels) {
         final midAngle = startAngle + sweep / 2;
-        final labelR = radius * 0.65;
+        final labelR = donut ? radius - donutWidth / 2 : radius * 0.65;
         final lx = center.dx + labelR * math.cos(midAngle);
         final ly = center.dy + labelR * math.sin(midAngle);
         final pct = (data[i].value / total * 100).toStringAsFixed(0);
         if (sweep > 0.3) {
-          _drawText(canvas, '$pct%', Offset(lx - 10, ly - 6), Colors.white, 10,
-              fontWeight: FontWeight.w600);
+          final tp = TextPainter(
+            text: TextSpan(text: '$pct%', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          tp.paint(canvas, Offset(lx - tp.width / 2, ly - tp.height / 2));
         }
       }
 
       startAngle += sweep;
     }
 
-    // Donut hole
+    // Donut hole — punch out the center using dstOut inside saveLayer
     if (donut) {
       canvas.drawCircle(
         center,
         radius - donutWidth,
-        Paint()..color = Colors.transparent,
+        Paint()..blendMode = BlendMode.clear,
       );
-      canvas.drawCircle(
-        center,
-        radius - donutWidth,
-        Paint()
-          ..color = Colors.black
-          ..blendMode = BlendMode.dstOut,
-      );
-      // Draw the center over as the canvas background to "cut out" the donut.
-      // Use saveLayer/restore to handle transparency properly.
+      canvas.restore();
     }
 
     // Center label
     if (donut && centerLabel != null) {
-      _drawText(
-        canvas,
-        centerLabel!,
-        Offset(center.dx - 16, center.dy - 7),
-        labelColor,
-        13,
-        fontWeight: FontWeight.w700,
-      );
+      final tp = TextPainter(
+        text: TextSpan(text: centerLabel!, style: TextStyle(color: labelColor, fontSize: 13, fontWeight: FontWeight.w700)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
     }
   }
 

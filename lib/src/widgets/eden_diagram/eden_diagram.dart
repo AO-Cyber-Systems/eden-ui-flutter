@@ -522,21 +522,25 @@ class _ToolButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.15) : null,
-            borderRadius: EdenRadii.borderRadiusSm,
-          ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isActive ? theme.colorScheme.primary.withValues(alpha: 0.15) : null,
+              borderRadius: EdenRadii.borderRadiusSm,
+            ),
+            child: Icon(
+              icon,
+              size: 18,
+              color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),

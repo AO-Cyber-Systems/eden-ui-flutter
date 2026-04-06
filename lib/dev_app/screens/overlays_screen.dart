@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
 class OverlaysScreen extends StatefulWidget {
@@ -19,6 +20,33 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          InteractivePlayground(
+            title: 'Overlay Explorer',
+            preview: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 8,
+              children: [
+                EdenButton(
+                  label: 'Show Modal',
+                  variant: EdenButtonVariant.primary,
+                  onPressed: () => EdenModal.show(
+                    context,
+                    title: 'Demo Modal',
+                    child: const Text('This is an interactive modal preview.'),
+                  ),
+                ),
+                EdenButton(
+                  label: 'Show Toast',
+                  variant: EdenButtonVariant.secondary,
+                  onPressed: () => EdenToast.show(context, message: 'Demo toast!'),
+                ),
+              ],
+            ),
+            controls: [
+              Text('Tap buttons to trigger overlays', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space4),
           // Banners
           Section(
             title: 'Banners',

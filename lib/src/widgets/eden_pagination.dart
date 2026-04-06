@@ -38,26 +38,31 @@ class EdenPagination extends StatelessWidget {
           final isActive = page == currentPage;
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: GestureDetector(
-              onTap: isActive ? null : () => onPageChanged(page),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
-                  borderRadius: EdenRadii.borderRadiusMd,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$page',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+            child: Semantics(
+              button: true,
+              label: 'Page $page',
+              selected: isActive,
+              child: GestureDetector(
+                onTap: isActive ? null : () => onPageChanged(page),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
                     color: isActive
-                        ? Colors.white
-                        : theme.colorScheme.onSurfaceVariant,
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
+                    borderRadius: EdenRadii.borderRadiusMd,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$page',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isActive
+                          ? Colors.white
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -106,7 +111,11 @@ class _NavButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: icon == Icons.chevron_left ? 'Previous page' : 'Next page',
+      enabled: enabled,
+      child: GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
         width: 36,
@@ -123,6 +132,7 @@ class _NavButton extends StatelessWidget {
               ? theme.colorScheme.onSurface
               : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
         ),
+      ),
       ),
     );
   }

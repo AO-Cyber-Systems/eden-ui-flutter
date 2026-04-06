@@ -46,7 +46,11 @@ class EdenBottomNav extends StatelessWidget {
           final isActive = i == selectedIndex;
 
           return Expanded(
-            child: GestureDetector(
+            child: Semantics(
+              button: true,
+              label: item.label,
+              selected: isActive,
+              child: GestureDetector(
               onTap: () => onChanged(i),
               behavior: HitTestBehavior.opaque,
               child: Column(
@@ -68,6 +72,7 @@ class EdenBottomNav extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             ),
           );
         }).toList(),

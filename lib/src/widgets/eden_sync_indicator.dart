@@ -308,17 +308,21 @@ class _EdenSyncStatusBarState extends State<EdenSyncStatusBar>
               ),
             if (widget.onDismiss != null &&
                 widget.status != EdenSyncStatus.syncing)
-              GestureDetector(
-                onTap: () {
-                  setState(() => _dismissed = true);
-                  widget.onDismiss?.call();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: EdenSpacing.space2),
-                  child: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: fgColor.withValues(alpha: 0.7),
+              Semantics(
+                label: 'Dismiss',
+                button: true,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _dismissed = true);
+                    widget.onDismiss?.call();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: EdenSpacing.space2),
+                    child: Icon(
+                      Icons.close,
+                      size: 16,
+                      color: fgColor.withValues(alpha: 0.7),
+                    ),
                   ),
                 ),
               ),
@@ -528,14 +532,18 @@ class EdenConflictCard extends StatelessWidget {
                   ),
                 ),
                 if (onDismiss != null)
-                  GestureDetector(
-                    onTap: onDismiss,
-                    child: Icon(
-                      Icons.close,
-                      size: 16,
-                      color: isDark
-                          ? EdenColors.neutral[400]
-                          : EdenColors.neutral[500],
+                  Semantics(
+                    label: 'Dismiss',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: onDismiss,
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: isDark
+                            ? EdenColors.neutral[400]
+                            : EdenColors.neutral[500],
+                      ),
                     ),
                   ),
               ],
@@ -906,14 +914,18 @@ class EdenStaleDataWarning extends StatelessWidget {
             ),
           if (onDismiss != null) ...[
             const SizedBox(width: EdenSpacing.space1),
-            GestureDetector(
-              onTap: onDismiss,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  Icons.close,
-                  size: 14,
-                  color: EdenColors.warning.withValues(alpha: 0.7),
+            Semantics(
+              label: 'Dismiss',
+              button: true,
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: EdenColors.warning.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
             ),

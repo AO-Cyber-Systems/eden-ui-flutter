@@ -89,7 +89,10 @@ class EdenFileListTile extends StatelessWidget {
     final color = colorForMimeType(mimeType);
     final fileIcon = iconForMimeType(mimeType);
 
-    return Material(
+    return Semantics(
+      label: 'File: $fileName',
+      button: onTap != null,
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -114,6 +117,7 @@ class EdenFileListTile extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

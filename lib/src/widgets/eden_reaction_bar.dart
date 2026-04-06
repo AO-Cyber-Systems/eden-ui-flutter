@@ -49,23 +49,27 @@ class EdenReactionBar extends StatelessWidget {
                 : null,
           ),
         if (onAddReaction != null)
-          GestureDetector(
-            onTap: onAddReaction,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? EdenColors.neutral[800]!.withValues(alpha: 0.6)
-                    : EdenColors.neutral[100],
-                borderRadius: EdenRadii.borderRadiusFull,
-                border: Border.all(
-                  color: isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!,
+          Semantics(
+            label: 'Add reaction',
+            button: true,
+            child: GestureDetector(
+              onTap: onAddReaction,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? EdenColors.neutral[800]!.withValues(alpha: 0.6)
+                      : EdenColors.neutral[100],
+                  borderRadius: EdenRadii.borderRadiusFull,
+                  border: Border.all(
+                    color: isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!,
+                  ),
                 ),
-              ),
-              child: Icon(
-                Icons.add,
-                size: 14,
-                color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
+                child: Icon(
+                  Icons.add,
+                  size: 14,
+                  color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
+                ),
               ),
             ),
           ),
@@ -91,39 +95,44 @@ class _ReactionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: reaction.isSelected
-              ? primaryColor.withValues(alpha: 0.1)
-              : (isDark
-                  ? EdenColors.neutral[800]!.withValues(alpha: 0.6)
-                  : EdenColors.neutral[100]),
-          borderRadius: EdenRadii.borderRadiusFull,
-          border: Border.all(
+    return Semantics(
+      label: '${reaction.emoji} reaction, ${reaction.count}',
+      button: onTap != null,
+      toggled: reaction.isSelected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
             color: reaction.isSelected
-                ? primaryColor.withValues(alpha: 0.4)
-                : (isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(reaction.emoji, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 4),
-            Text(
-              '${reaction.count}',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: reaction.isSelected
-                    ? primaryColor
-                    : onSurface.withValues(alpha: 0.7),
-              ),
+                ? primaryColor.withValues(alpha: 0.1)
+                : (isDark
+                    ? EdenColors.neutral[800]!.withValues(alpha: 0.6)
+                    : EdenColors.neutral[100]),
+            borderRadius: EdenRadii.borderRadiusFull,
+            border: Border.all(
+              color: reaction.isSelected
+                  ? primaryColor.withValues(alpha: 0.4)
+                  : (isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!),
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(reaction.emoji, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 4),
+              Text(
+                '${reaction.count}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: reaction.isSelected
+                      ? primaryColor
+                      : onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

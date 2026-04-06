@@ -189,6 +189,32 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     }
   }
 
+  /// Redistribute column widths based on flex when the available width is known.
+  void _applyFlexWidths(double availableWidth) {
+    double fixedTotal = 0;
+    double flexTotal = 0;
+    if (widget.selectable) fixedTotal += 48;
+    if (widget.rowActions != null) fixedTotal += 120;
+    for (final col in _orderedVisibleColumns) {
+      if (col.width != null) {
+        fixedTotal += col.width!;
+      } else if (col.flex != null) {
+        flexTotal += col.flex!;
+      } else {
+        fixedTotal += _columnWidths[col.id] ?? 150;
+      }
+    }
+    final remainingWidth = availableWidth - fixedTotal;
+    if (remainingWidth > 0 && flexTotal > 0) {
+      for (final col in _orderedVisibleColumns) {
+        if (col.width == null && col.flex != null) {
+          final flexWidth = (remainingWidth * col.flex! / flexTotal);
+          _columnWidths[col.id] = flexWidth.clamp(col.minWidth.toDouble(), double.infinity);
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
     _horizontalScroll.dispose();
@@ -348,6 +374,9 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
       clipBehavior: widget.bordered ? Clip.antiAlias : Clip.none,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          if (constraints.hasBoundedWidth) {
+            _applyFlexWidths(constraints.maxWidth);
+          }
           final hasBoundedHeight = constraints.hasBoundedHeight;
           final gridBody = Stack(
             children: [
@@ -621,13 +650,26 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     final width = _columnWidths[col.id] ?? col.minWidth;
     final isSorted = widget.sort?.columnId == col.id;
 
+    final String sortDirection;
+    if (isSorted) {
+      sortDirection = widget.sort!.ascending ? 'ascending' : 'descending';
+    } else {
+      sortDirection = 'none';
+    }
+
     Widget headerContent = SizedBox(
       width: width,
       child: Stack(
         children: [
-          InkWell(
-            onTap: col.sortable ? () => _handleSort(col) : null,
-            child: Padding(
+          Semantics(
+            button: col.sortable,
+            enabled: col.sortable,
+            label: col.sortable
+                ? 'Sort by ${col.label}, currently $sortDirection'
+                : col.label,
+            child: InkWell(
+              onTap: col.sortable ? () => _handleSort(col) : null,
+              child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space3,
               ),
@@ -671,26 +713,30 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
               ),
             ),
           ),
+          ),
           // Resize handle
           if (col.resizable)
             Positioned(
               right: 0,
               top: 0,
               bottom: 0,
-              child: GestureDetector(
-                onHorizontalDragUpdate: (details) {
-                  setState(() {
-                    final current = _columnWidths[col.id] ?? col.minWidth;
-                    final next = (current + details.delta.dx)
-                        .clamp(col.minWidth, double.infinity);
-                    _columnWidths[col.id] = next;
-                  });
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.resizeColumn,
-                  child: Container(
-                    width: 6,
-                    color: Colors.transparent,
+              child: Semantics(
+                label: 'Resize column ${col.label}',
+                child: GestureDetector(
+                  onHorizontalDragUpdate: (details) {
+                    setState(() {
+                      final current = _columnWidths[col.id] ?? col.minWidth;
+                      final next = (current + details.delta.dx)
+                          .clamp(col.minWidth, double.infinity);
+                      _columnWidths[col.id] = next;
+                    });
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.resizeColumn,
+                    child: Container(
+                      width: 6,
+                      color: Colors.transparent,
+                    ),
                   ),
                 ),
               ),
@@ -739,7 +785,9 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
 
         return Stack(
           children: [
-            LongPressDraggable<String>(
+            Semantics(
+              label: 'Draggable column ${col.label}',
+              child: LongPressDraggable<String>(
               data: col.id,
               delay: const Duration(milliseconds: 150),
               axis: Axis.horizontal,
@@ -809,6 +857,7 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
                 }
               },
               child: headerContent,
+            ),
             ),
             // Drop indicator — vertical blue line
             if (isTarget)
@@ -918,17 +967,21 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredRow = index),
       onExit: (_) => setState(() => _hoveredRow = null),
-      child: GestureDetector(
-        onTap: () {
-          if (widget.selectable) {
-            _handleSelectRow(index, !isSelected);
-          }
-          widget.onRowTap?.call(row);
-        },
-        onDoubleTap: widget.onRowDoubleTap != null
-            ? () => widget.onRowDoubleTap!(row)
-            : null,
-        child: Container(
+      child: Semantics(
+        button: widget.onRowTap != null || widget.selectable,
+        selected: isSelected,
+        label: 'Row ${index + 1}',
+        child: GestureDetector(
+          onTap: () {
+            if (widget.selectable) {
+              _handleSelectRow(index, !isSelected);
+            }
+            widget.onRowTap?.call(row);
+          },
+          onDoubleTap: widget.onRowDoubleTap != null
+              ? () => widget.onRowDoubleTap!(row)
+              : null,
+          child: Container(
           color: bgColor,
           padding: EdgeInsets.symmetric(vertical: _cellVerticalPadding),
           child: Row(
@@ -971,6 +1024,7 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
             ],
           ),
         ),
+      ),
       ),
     );
   }

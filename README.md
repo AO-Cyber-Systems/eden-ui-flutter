@@ -1,17 +1,22 @@
 # eden_ui_flutter
 
-A new Flutter project.
+Shared UI/design-system package for Eden Flutter apps.
 
-## Getting Started
+It contains:
 
-This project is a starting point for a Flutter application.
+- theme and token definitions
+- reusable widgets
+- layout primitives
+- a visual dev catalog under `lib/dev_app`
 
-A few resources to get you started if this is your first Flutter project:
+## Run The Catalog
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter run -t lib/main.dart
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Boundaries
+
+- Keep this package transport-agnostic.
+- Backend contracts and generated API clients belong in `eden-platform-api-dart`.
+- App/session orchestration belongs in `eden-platform-flutter`.

@@ -341,7 +341,10 @@ class _PhotoTileState extends State<_PhotoTile> {
             ? EdenColors.neutral[700]!
             : EdenColors.neutral[200]!;
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: widget.photo.caption ?? 'Photo',
+      child: GestureDetector(
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
       child: AnimatedContainer(
@@ -368,6 +371,7 @@ class _PhotoTileState extends State<_PhotoTile> {
               Image(
                 image: widget.photo.resolvedThumbnail,
                 fit: BoxFit.cover,
+                excludeFromSemantics: true,
                 frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
                   if (wasSynchronouslyLoaded || frame != null) {
                     if (!_loaded) {
@@ -448,6 +452,7 @@ class _PhotoTileState extends State<_PhotoTile> {
           ),
         ),
       ),
+    ),
     );
   }
 }
@@ -535,19 +540,23 @@ class _AddPhotoTile extends StatelessWidget {
     final iconColor =
         isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
 
-    return Material(
-      color: bgColor,
-      borderRadius: EdenRadii.borderRadiusMd,
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      label: 'Add photo',
+      child: Material(
+        color: bgColor,
         borderRadius: EdenRadii.borderRadiusMd,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: EdenRadii.borderRadiusMd,
-            border: Border.all(color: borderColor, style: BorderStyle.solid),
-          ),
-          child: Center(
-            child: Icon(Icons.add_a_photo_outlined, color: iconColor, size: 28),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: EdenRadii.borderRadiusMd,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: EdenRadii.borderRadiusMd,
+              border: Border.all(color: borderColor, style: BorderStyle.solid),
+            ),
+            child: Center(
+              child: Icon(Icons.add_a_photo_outlined, color: iconColor, size: 28),
+            ),
           ),
         ),
       ),
@@ -724,6 +733,7 @@ class _EdenLightboxState extends State<_EdenLightbox> {
                   child: Image(
                     image: widget.photos[index].resolvedImage,
                     fit: BoxFit.contain,
+                    semanticLabel: widget.photos[index].caption ?? 'Photo ${index + 1}',
                     errorBuilder: (_, __, ___) {
                       return Icon(
                         Icons.broken_image_outlined,
@@ -861,16 +871,20 @@ class _NavArrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.black38,
-          borderRadius: EdenRadii.borderRadiusFull,
+    return Semantics(
+      button: true,
+      label: icon == Icons.chevron_left ? 'Previous photo' : 'Next photo',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.black38,
+            borderRadius: EdenRadii.borderRadiusFull,
+          ),
+          child: Icon(icon, color: Colors.white, size: 28),
         ),
-        child: Icon(icon, color: Colors.white, size: 28),
       ),
     );
   }

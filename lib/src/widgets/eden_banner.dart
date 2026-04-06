@@ -58,24 +58,32 @@ class EdenBanner extends StatelessWidget {
             action!,
           ] else if (actionLabel != null && onAction != null) ...[
             const SizedBox(width: EdenSpacing.space2),
-            GestureDetector(
-              onTap: onAction,
-              child: Text(
-                actionLabel!,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: colors.foreground,
-                  decoration: TextDecoration.underline,
+            Semantics(
+              label: actionLabel,
+              button: true,
+              child: GestureDetector(
+                onTap: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colors.foreground,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ),
             ),
           ],
           if (dismissible) ...[
             const SizedBox(width: EdenSpacing.space2),
-            GestureDetector(
-              onTap: onDismiss,
-              child: Icon(Icons.close, size: 18, color: colors.foreground),
+            Semantics(
+              label: 'Dismiss banner',
+              button: true,
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: Icon(Icons.close, size: 18, color: colors.foreground),
+              ),
             ),
           ],
         ],

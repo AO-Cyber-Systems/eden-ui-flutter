@@ -121,12 +121,15 @@ class EdenProjectCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: EdenRadii.borderRadiusLg,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: EdenRadii.borderRadiusLg,
-          child: Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
-            child: Column(
+        child: Semantics(
+          button: onTap != null,
+          label: '$name project',
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: EdenRadii.borderRadiusLg,
+            child: Padding(
+              padding: EdgeInsets.all(EdenSpacing.space4),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -216,6 +219,7 @@ class EdenProjectCard extends StatelessWidget {
             ),
           ),
         ),
+        ),
       ),
     );
   }
@@ -304,23 +308,27 @@ class _ActionIconButton extends StatelessWidget {
     final iconColor =
         isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
 
-    return Tooltip(
-      message: tooltip,
-      child: SizedBox(
-        width: 28,
-        height: 28,
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: EdenRadii.borderRadiusSm,
-          child: InkWell(
-            onTap: onPressed,
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Material(
+            color: Colors.transparent,
             borderRadius: EdenRadii.borderRadiusSm,
-            hoverColor: hoverColor,
-            child: Center(
-              child: Icon(
-                icon,
-                size: 16,
-                color: onPressed != null ? iconColor : iconColor.withValues(alpha: 0.4),
+            child: InkWell(
+              onTap: onPressed,
+              borderRadius: EdenRadii.borderRadiusSm,
+              hoverColor: hoverColor,
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 16,
+                  color: onPressed != null ? iconColor : iconColor.withValues(alpha: 0.4),
+                ),
               ),
             ),
           ),

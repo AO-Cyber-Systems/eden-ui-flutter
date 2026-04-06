@@ -16,10 +16,10 @@ import 'chat_screen.dart';
 import 'compound_screen.dart';
 import 'diagram_screen.dart';
 import 'layouts_screen.dart';
-import 'business_screen.dart';
-import 'scaffolds_screen.dart';
-import 'process_screen.dart';
-import 'agent_screen.dart';
+import 'devflow_infra_screen.dart';
+import 'devflow_project_screen.dart';
+import 'devflow_tools_screen.dart';
+import 'trades_screen.dart';
 
 /// Root screen showing all component categories.
 class HomeScreen extends StatelessWidget {
@@ -300,27 +300,27 @@ final _categories = [
     builder: (_) => const LayoutsScreen(),
   ),
   _Category(
-    icon: Icons.business_outlined,
-    title: 'Business Patterns',
-    subtitle: 'Severity badges, stat grids, pipeline bars',
-    builder: (_) => const BusinessScreen(),
+    icon: Icons.dns_outlined,
+    title: 'DevFlow — Infrastructure',
+    subtitle: 'Services, ports, domains, certs, health checks',
+    builder: (_) => const DevflowInfraScreen(),
   ),
   _Category(
-    icon: Icons.dashboard_customize_outlined,
-    title: 'Scaffolds & Trees',
-    subtitle: 'Detail scaffold, list scaffold, hierarchy tree',
-    builder: (_) => const ScaffoldsScreen(),
+    icon: Icons.rocket_launch_outlined,
+    title: 'DevFlow — Projects & Workflow',
+    subtitle: 'Project cards, objectives, stepper, logs, terminal',
+    builder: (_) => const DevflowProjectScreen(),
   ),
   _Category(
-    icon: Icons.account_tree_outlined,
-    title: 'Process & Canvas',
-    subtitle: 'Swimlane chart, rule tree, phase checklist, toolbar',
-    builder: (_) => const ProcessScreen(),
+    icon: Icons.build_outlined,
+    title: 'DevFlow — Tools & Config',
+    subtitle: 'Accounts, packages, env editor, email, polling',
+    builder: (_) => const DevflowToolsScreen(),
   ),
   _Category(
-    icon: Icons.smart_toy_outlined,
-    title: 'Agent Builder',
-    subtitle: 'Catalog picker, approval flow, execution log',
-    builder: (_) => const AgentScreen(),
+    icon: Icons.construction_outlined,
+    title: 'Trades — Enterprise Components',
+    subtitle: 'Scheduler, approvals, checklists, maps, sync, signatures',
+    builder: (_) => const TradesScreen(),
   ),
 ];

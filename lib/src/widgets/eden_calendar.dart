@@ -301,10 +301,14 @@ class _EdenCalendarState extends State<EdenCalendar> {
 
     return Row(
       children: [
-        GestureDetector(
-          onTap: onPrev,
-          child: Icon(Icons.chevron_left,
-              size: 20, color: theme.colorScheme.onSurfaceVariant),
+        Semantics(
+          button: true,
+          label: 'Previous',
+          child: GestureDetector(
+            onTap: onPrev,
+            child: Icon(Icons.chevron_left,
+                size: 20, color: theme.colorScheme.onSurfaceVariant),
+          ),
         ),
         const SizedBox(width: EdenSpacing.space2),
         Expanded(
@@ -313,27 +317,35 @@ class _EdenCalendarState extends State<EdenCalendar> {
               textAlign: TextAlign.center),
         ),
         if (widget.showTodayButton) ...[
-          GestureDetector(
-            onTap: _goToToday,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: EdenSpacing.space2, vertical: EdenSpacing.space1),
-              decoration: BoxDecoration(
-                borderRadius: EdenRadii.borderRadiusSm,
-                border: Border.all(color: theme.colorScheme.outlineVariant),
+          Semantics(
+            button: true,
+            label: 'Go to today',
+            child: GestureDetector(
+              onTap: _goToToday,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: EdenSpacing.space2, vertical: EdenSpacing.space1),
+                decoration: BoxDecoration(
+                  borderRadius: EdenRadii.borderRadiusSm,
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                ),
+                child: Text('Today',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600)),
               ),
-              child: Text('Today',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(width: EdenSpacing.space2),
         ],
-        GestureDetector(
-          onTap: onNext,
-          child: Icon(Icons.chevron_right,
-              size: 20, color: theme.colorScheme.onSurfaceVariant),
+        Semantics(
+          button: true,
+          label: 'Next',
+          child: GestureDetector(
+            onTap: onNext,
+            child: Icon(Icons.chevron_right,
+                size: 20, color: theme.colorScheme.onSurfaceVariant),
+          ),
         ),
       ],
     );
@@ -347,9 +359,13 @@ class _EdenCalendarState extends State<EdenCalendar> {
     Widget chip(String label, EdenCalendarView v) {
       final selected = _view == v;
       return Expanded(
-        child: GestureDetector(
-          onTap: () => _setView(v),
-          child: Container(
+        child: Semantics(
+          button: true,
+          label: '$label view',
+          selected: selected,
+          child: GestureDetector(
+            onTap: () => _setView(v),
+            child: Container(
             padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space1),
             decoration: BoxDecoration(
               color: selected
@@ -369,6 +385,7 @@ class _EdenCalendarState extends State<EdenCalendar> {
               ),
             ),
           ),
+        ),
         ),
       );
     }
@@ -453,15 +470,21 @@ class _EdenCalendarState extends State<EdenCalendar> {
                   : <EdenCalendarEvent>[];
 
               return Expanded(
-                child: GestureDetector(
-                  onTap: isCurrentMonth
-                      ? () {
-                          setState(() => _selectedDate = date);
-                          widget.onDateSelected?.call(date);
-                        }
-                      : null,
-                  child: Container(
-                    height: 40,
+                child: Semantics(
+                  button: isCurrentMonth,
+                  selected: isSelected,
+                  label: isCurrentMonth
+                      ? '${_monthNames[_currentMonth.month - 1]} $dayIndex'
+                      : '',
+                  child: GestureDetector(
+                    onTap: isCurrentMonth
+                        ? () {
+                            setState(() => _selectedDate = date);
+                            widget.onDateSelected?.call(date);
+                          }
+                        : null,
+                    child: Container(
+                      height: 40,
                     margin: const EdgeInsets.all(1),
                     decoration: BoxDecoration(
                       color: isSelected
@@ -514,6 +537,7 @@ class _EdenCalendarState extends State<EdenCalendar> {
                       ],
                     ),
                   ),
+                ),
                 ),
               );
             }),
@@ -587,13 +611,16 @@ class _EdenCalendarState extends State<EdenCalendar> {
                   children: [
                     Positioned(
                       left: left + 2,
-                      child: GestureDetector(
-                        onTap: widget.onEventTap != null
-                            ? () => widget.onEventTap!(event)
-                            : null,
-                        child: Container(
-                          width: barWidth.clamp(0, constraints.maxWidth),
-                          height: 14,
+                      child: Semantics(
+                        button: widget.onEventTap != null,
+                        label: event.title ?? 'Event',
+                        child: GestureDetector(
+                          onTap: widget.onEventTap != null
+                              ? () => widget.onEventTap!(event)
+                              : null,
+                          child: Container(
+                            width: barWidth.clamp(0, constraints.maxWidth),
+                            height: 14,
                           decoration: BoxDecoration(
                             color: (event.color ?? theme.colorScheme.primary)
                                 .withValues(alpha: 0.8),
@@ -613,6 +640,7 @@ class _EdenCalendarState extends State<EdenCalendar> {
                                 )
                               : null,
                         ),
+                      ),
                       ),
                     ),
                   ],
@@ -648,9 +676,12 @@ class _EdenCalendarState extends State<EdenCalendar> {
   }
 
   Widget _buildEventListTile(ThemeData theme, EdenCalendarEvent event) {
-    return GestureDetector(
-      onTap: widget.onEventTap != null ? () => widget.onEventTap!(event) : null,
-      child: Padding(
+    return Semantics(
+      button: widget.onEventTap != null,
+      label: event.title ?? 'Event',
+      child: GestureDetector(
+        onTap: widget.onEventTap != null ? () => widget.onEventTap!(event) : null,
+        child: Padding(
         padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space1),
         child: Row(
           children: [
@@ -699,6 +730,7 @@ class _EdenCalendarState extends State<EdenCalendar> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -736,14 +768,18 @@ class _EdenCalendarState extends State<EdenCalendar> {
               final isSelected =
                   _selectedDate != null && _sameDay(d, _selectedDate!);
               return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedDate = d);
-                    widget.onDateSelected?.call(d);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: EdenSpacing.space1),
+                child: Semantics(
+                  button: true,
+                  selected: isSelected,
+                  label: '${_dayNames[days.indexOf(d)]} ${d.day}',
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedDate = d);
+                      widget.onDateSelected?.call(d);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: EdenSpacing.space1),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? theme.colorScheme.primary.withValues(alpha: 0.1)
@@ -786,6 +822,7 @@ class _EdenCalendarState extends State<EdenCalendar> {
                       ],
                     ),
                   ),
+                ),
                 ),
               );
             }),
@@ -963,16 +1000,19 @@ class _EdenCalendarState extends State<EdenCalendar> {
           child: SizedBox(
             width: colWidth - 4,
             height: height,
-            child: GestureDetector(
-              onTap: widget.onEventTap != null
-                  ? () => widget.onEventTap!(event)
-                  : null,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: (event.color ?? theme.colorScheme.primary)
-                      .withValues(alpha: 0.85),
-                  borderRadius: EdenRadii.borderRadiusSm,
-                ),
+            child: Semantics(
+              button: widget.onEventTap != null,
+              label: event.title ?? 'Event',
+              child: GestureDetector(
+                onTap: widget.onEventTap != null
+                    ? () => widget.onEventTap!(event)
+                    : null,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: (event.color ?? theme.colorScheme.primary)
+                        .withValues(alpha: 0.85),
+                    borderRadius: EdenRadii.borderRadiusSm,
+                  ),
                 padding: const EdgeInsets.symmetric(
                     horizontal: EdenSpacing.space1,
                     vertical: 2),
@@ -1000,6 +1040,7 @@ class _EdenCalendarState extends State<EdenCalendar> {
                   ],
                 ),
               ),
+            ),
             ),
           ),
         );

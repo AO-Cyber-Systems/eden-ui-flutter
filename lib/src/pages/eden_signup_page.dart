@@ -265,13 +265,17 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
                               : EdenColors.neutral[600],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: widget.onTermsTap,
-                        child: Text(
-                          'Terms of Service',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
+                      Semantics(
+                        button: true,
+                        label: 'Terms of Service',
+                        child: GestureDetector(
+                          onTap: widget.onTermsTap,
+                          child: Text(
+                            'Terms of Service',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -283,13 +287,17 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
                               : EdenColors.neutral[600],
                         ),
                       ),
-                      GestureDetector(
-                        onTap: widget.onPrivacyTap,
-                        child: Text(
-                          'Privacy Policy',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
+                      Semantics(
+                        button: true,
+                        label: 'Privacy Policy',
+                        child: GestureDetector(
+                          onTap: widget.onPrivacyTap,
+                          child: Text(
+                            'Privacy Policy',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
@@ -336,13 +344,17 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
                       : EdenColors.neutral[500],
                 ),
               ),
-              GestureDetector(
-                onTap: _loading ? null : widget.onLoginTap,
-                child: Text(
-                  'Sign in',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
+              Semantics(
+                button: true,
+                label: 'Sign in',
+                child: GestureDetector(
+                  onTap: _loading ? null : widget.onLoginTap,
+                  child: Text(
+                    'Sign in',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

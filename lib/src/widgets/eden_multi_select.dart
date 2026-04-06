@@ -208,9 +208,16 @@ class _EdenMultiSelectState<T> extends State<EdenMultiSelect<T>> {
         ],
         CompositedTransformTarget(
           link: _layerLink,
-          child: GestureDetector(
-            onTap: _toggleOverlay,
-            child: Container(
+          child: Semantics(
+            button: true,
+            label: widget.label != null
+                ? '${widget.label}, ${widget.values.isEmpty ? (widget.hint ?? "Select...") : "${widget.values.length} selected"}'
+                : widget.values.isEmpty
+                    ? (widget.hint ?? 'Select...')
+                    : '${widget.values.length} selected',
+            child: GestureDetector(
+              onTap: _toggleOverlay,
+              child: Container(
               constraints: const BoxConstraints(minHeight: 44),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
@@ -263,6 +270,7 @@ class _EdenMultiSelectState<T> extends State<EdenMultiSelect<T>> {
                 ],
               ),
             ),
+          ),
           ),
         ),
         if (hasError) ...[
@@ -463,13 +471,17 @@ class _OverlayContent<T> extends StatelessWidget {
                           ),
                         ),
                         if (values.isNotEmpty)
-                          GestureDetector(
-                            onTap: onClearAll,
-                            child: Text(
-                              'Clear all',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w500,
+                          Semantics(
+                            button: true,
+                            label: 'Clear all selections',
+                            child: GestureDetector(
+                              onTap: onClearAll,
+                              child: Text(
+                                'Clear all',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
@@ -502,30 +514,35 @@ class _CheckboxTile<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: Row(
-          children: [
-            Checkbox(
-              value: selected,
-              onChanged: enabled ? (_) => onTap() : null,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                option.label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: enabled
-                      ? theme.colorScheme.onSurface
-                      : theme.colorScheme.onSurfaceVariant,
+    return Semantics(
+      checked: selected,
+      enabled: enabled,
+      label: option.label,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          child: Row(
+            children: [
+              Checkbox(
+                value: selected,
+                onChanged: enabled ? (_) => onTap() : null,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  option.label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: enabled
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

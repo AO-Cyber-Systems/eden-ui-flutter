@@ -184,27 +184,32 @@ class ViewToggle extends StatelessWidget {
             EdenSchedulerView.week => 'Week',
             EdenSchedulerView.day => 'Day',
           };
-          return GestureDetector(
-            onTap: () => onChanged(v),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isActive ? selectedBg : Colors.transparent,
-                  border: v != EdenSchedulerView.values.first
-                      ? Border(left: BorderSide(color: borderColor))
-                      : null,
-                ),
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive
-                        ? theme.colorScheme.onSurface
-                        : theme.colorScheme.onSurfaceVariant,
+          return Semantics(
+            button: true,
+            label: '$label view',
+            selected: isActive,
+            child: GestureDetector(
+              onTap: () => onChanged(v),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isActive ? selectedBg : Colors.transparent,
+                    border: v != EdenSchedulerView.values.first
+                        ? Border(left: BorderSide(color: borderColor))
+                        : null,
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: isActive
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),

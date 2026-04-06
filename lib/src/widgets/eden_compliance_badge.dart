@@ -106,7 +106,10 @@ class _EdenComplianceBadgeState extends State<EdenComplianceBadge>
       mainAxisSize: MainAxisSize.min,
       children: [
         // Compact badge
-        GestureDetector(
+        Semantics(
+          label: '$passedCount of $totalCount compliance rules passed, ${_isExpanded ? 'collapse' : 'expand'}',
+          button: true,
+          child: GestureDetector(
           onTap: _toggleExpanded,
           child: Container(
             padding: const EdgeInsets.symmetric(
@@ -159,6 +162,7 @@ class _EdenComplianceBadgeState extends State<EdenComplianceBadge>
               ],
             ),
           ),
+        ),
         ),
 
         // Expandable detail

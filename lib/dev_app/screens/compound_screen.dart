@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
 /// Showcase screen for batch 3 compound / application-level components.

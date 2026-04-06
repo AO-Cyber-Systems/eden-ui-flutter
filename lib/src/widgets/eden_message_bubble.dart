@@ -189,19 +189,26 @@ class _EdenMessageBubbleState extends State<EdenMessageBubble>
         : bubbleContent;
 
     if (widget.actions != null && widget.actions!.isNotEmpty) {
-      bubble = GestureDetector(
-        onTap: widget.onTap,
-        onLongPress: () {
-          widget.onLongPress?.call();
-          _showContextMenu(context);
-        },
-        child: bubble,
+      bubble = Semantics(
+        label: 'Message${widget.author != null ? ' from ${widget.author}' : ''}',
+        button: true,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          onLongPress: () {
+            widget.onLongPress?.call();
+            _showContextMenu(context);
+          },
+          child: bubble,
+        ),
       );
     } else {
-      bubble = GestureDetector(
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
-        child: bubble,
+      bubble = Semantics(
+        label: 'Message${widget.author != null ? ' from ${widget.author}' : ''}',
+        child: GestureDetector(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          child: bubble,
+        ),
       );
     }
 

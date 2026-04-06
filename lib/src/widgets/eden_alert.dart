@@ -58,11 +58,15 @@ class EdenAlert extends StatelessWidget {
             ),
           ),
           if (dismissible)
-            GestureDetector(
-              onTap: onDismiss,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(Icons.close, size: 18, color: colors.foreground),
+            Semantics(
+              label: 'Dismiss alert',
+              button: true,
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: Icon(Icons.close, size: 18, color: colors.foreground),
+                ),
               ),
             ),
         ],

@@ -62,14 +62,17 @@ class WeekView extends StatelessWidget {
               ...days.map((d) {
                 final isToday = d == today;
                 return Expanded(
-                  child: GestureDetector(
-                    onTap: onDateSelected != null
-                        ? () => onDateSelected!(d)
-                        : null,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: EdenSpacing.space2),
-                      child: Column(
+                  child: Semantics(
+                    button: onDateSelected != null,
+                    label: '${_shortDays[d.weekday - 1]} ${d.day}',
+                    child: GestureDetector(
+                      onTap: onDateSelected != null
+                          ? () => onDateSelected!(d)
+                          : null,
+                      child: Container(
+                        padding:
+                            EdgeInsets.symmetric(vertical: EdenSpacing.space2),
+                        child: Column(
                         children: [
                           Text(
                             _shortDays[d.weekday - 1],
@@ -108,6 +111,7 @@ class WeekView extends StatelessWidget {
                         ],
                       ),
                     ),
+                  ),
                   ),
                 );
               }),
@@ -508,25 +512,28 @@ class EventBlock extends StatelessWidget {
     final bgColor = isDark ? color.withAlpha(50) : color.withAlpha(30);
     final textColor = color;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: MouseRegion(
-        cursor: onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 1),
-          padding: EdgeInsets.symmetric(
-            horizontal: EdenSpacing.space2,
-            vertical: EdenSpacing.space1,
-          ),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: EdenRadii.borderRadiusSm,
-            border: Border(
-              left: BorderSide(color: color, width: 3),
+    return Semantics(
+      button: onTap != null,
+      label: 'Event: ${event.title}',
+      child: GestureDetector(
+        onTap: onTap,
+        child: MouseRegion(
+          cursor: onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            padding: EdgeInsets.symmetric(
+              horizontal: EdenSpacing.space2,
+              vertical: EdenSpacing.space1,
             ),
-          ),
-          clipBehavior: Clip.hardEdge,
-          child: Column(
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: EdenRadii.borderRadiusSm,
+              border: Border(
+                left: BorderSide(color: color, width: 3),
+              ),
+            ),
+            clipBehavior: Clip.hardEdge,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -595,6 +602,7 @@ class EventBlock extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

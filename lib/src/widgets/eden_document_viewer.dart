@@ -402,7 +402,10 @@ class _EdenDocumentViewerState extends State<EdenDocumentViewer> {
           final isSelected = index == _currentPage;
           return Padding(
             padding: const EdgeInsets.only(bottom: EdenSpacing.space2),
-            child: GestureDetector(
+            child: Semantics(
+              button: true,
+              label: 'Go to page ${index + 1}',
+              child: GestureDetector(
               onTap: () => _goToPage(index),
               child: Container(
                 width: widget.thumbnailWidth,
@@ -425,6 +428,7 @@ class _EdenDocumentViewerState extends State<EdenDocumentViewer> {
                 ),
               ),
             ),
+          ),
           );
         },
       ),
@@ -531,10 +535,14 @@ class _EdenDocumentViewerState extends State<EdenDocumentViewer> {
                   top: annotation.rect.top * h,
                   width: annotation.rect.width * w,
                   height: annotation.rect.height * h,
-                  child: GestureDetector(
-                    onTap: () =>
-                        widget.onAnnotationTap?.call(annotation),
-                    child: _AnnotationWidget(annotation: annotation),
+                  child: Semantics(
+                    button: widget.onAnnotationTap != null,
+                    label: annotation.text ?? 'Annotation',
+                    child: GestureDetector(
+                      onTap: () =>
+                          widget.onAnnotationTap?.call(annotation),
+                      child: _AnnotationWidget(annotation: annotation),
+                    ),
                   ),
                 ),
               ],
@@ -685,16 +693,20 @@ class _ToolbarIconButton extends StatelessWidget {
         ? (isDark ? EdenColors.neutral[600]! : EdenColors.neutral[300]!)
         : (isDark ? EdenColors.neutral[300]! : EdenColors.neutral[600]!);
 
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: EdenRadii.borderRadiusSm,
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.all(EdenSpacing.space1),
-            child: Icon(icon, size: 20, color: color),
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: EdenRadii.borderRadiusSm,
+            onTap: onPressed,
+            child: Padding(
+              padding: const EdgeInsets.all(EdenSpacing.space1),
+              child: Icon(icon, size: 20, color: color),
+            ),
           ),
         ),
       ),

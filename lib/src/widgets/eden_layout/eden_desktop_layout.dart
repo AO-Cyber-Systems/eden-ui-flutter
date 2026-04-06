@@ -26,6 +26,7 @@ class EdenDesktopLayout extends StatefulWidget {
     required this.onNavChanged,
     required this.body,
     this.topBar,
+    this.globalTopBar,
     this.user,
     this.logo,
     this.collapsedLogo,
@@ -40,6 +41,8 @@ class EdenDesktopLayout extends StatefulWidget {
   final ValueChanged<String> onNavChanged;
   final Widget body;
   final EdenTopBarConfig? topBar;
+  /// Full-width bar rendered above the sidebar + content row.
+  final Widget? globalTopBar;
   final EdenLayoutUser? user;
   final Widget? logo;
   final Widget? collapsedLogo;
@@ -54,7 +57,6 @@ class EdenDesktopLayout extends StatefulWidget {
 
 class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   late bool _collapsed;
-  final Set<String> _expanded = {};
 
   @override
   void initState() {
@@ -71,15 +73,6 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
     }
   }
 
-  /// Recursively checks if any descendant nav item is currently selected.
-  bool _isAnyChildSelected(EdenNavItem item) {
-    for (final child in item.children) {
-      if (child.id == widget.selectedId) return true;
-      if (child.children.isNotEmpty && _isAnyChildSelected(child)) return true;
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -87,7 +80,11 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
     final sideW = _collapsed ? widget.collapsedWidth : widget.sidebarWidth;
 
     return Scaffold(
-      body: Row(
+      body: Column(
+        children: [
+          if (widget.globalTopBar != null) widget.globalTopBar!,
+          Expanded(
+            child: Row(
         children: [
           // Sidebar
           AnimatedContainer(
@@ -119,19 +116,7 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                     ),
                     children: [
                       for (final item in widget.navItems) ...[
-                        // Divider sentinel
-                        if (item.isDivider)
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: _collapsed ? 4 : 12,
-                            ),
-                            child: Divider(
-                              height: 1,
-                              color: theme.colorScheme.outlineVariant,
-                            ),
-                          )
-                        else if (item.children.isNotEmpty) ...[
+                        if (item.children.isNotEmpty) ...[
                           if (!_collapsed)
                             Padding(
                               key: item.widgetKey,
@@ -150,40 +135,12 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                             ),
                           if (!_collapsed)
                             for (final child in item.children)
-                              // 2-level nesting: child with its own children
-                              if (child.children.isNotEmpty) ...[
-                                _ExpandableNavTile(
-                                  item: child,
-                                  isExpanded: _expanded.contains(child.id),
-                                  isAnyChildSelected: child.children.any(
-                                    (sub) => sub.id == widget.selectedId,
-                                  ),
-                                  onToggle: () => setState(() {
-                                    if (_expanded.contains(child.id)) {
-                                      _expanded.remove(child.id);
-                                    } else {
-                                      _expanded.add(child.id);
-                                    }
-                                  }),
-                                ),
-                                if (_expanded.contains(child.id))
-                                  for (final sub in child.children)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 20),
-                                      child: _NavTile(
-                                        item: sub,
-                                        isSelected: sub.id == widget.selectedId,
-                                        collapsed: false,
-                                        onTap: () => widget.onNavChanged(sub.id),
-                                      ),
-                                    ),
-                              ] else
-                                _NavTile(
-                                  item: child,
-                                  isSelected: child.id == widget.selectedId,
-                                  collapsed: _collapsed,
-                                  onTap: () => widget.onNavChanged(child.id),
-                                )
+                              _NavTile(
+                                item: child,
+                                isSelected: child.id == widget.selectedId,
+                                collapsed: _collapsed,
+                                onTap: () => widget.onNavChanged(child.id),
+                              )
                           else
                             // Collapsed: render parent icon but use first child's
                             // ID for navigation and selection matching.
@@ -195,7 +152,7 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                 activeIcon: item.activeIcon ?? item.children.first.activeIcon,
                                 badge: item.children.first.badge,
                               ),
-                              isSelected: _isAnyChildSelected(item),
+                              isSelected: item.children.any((c) => c.id == widget.selectedId),
                               collapsed: _collapsed,
                               onTap: () => widget.onNavChanged(item.children.first.id),
                             ),
@@ -233,6 +190,9 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
           ),
         ],
       ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -259,18 +219,22 @@ class _SidebarHeader extends StatelessWidget {
     final theme = Theme.of(context);
 
     if (collapsed) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onToggle,
-        child: SizedBox(
-          height: 56,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              collapsedLogo ?? logo ?? Icon(Icons.apps, color: theme.colorScheme.primary),
-              const SizedBox(height: 2),
-              Icon(Icons.chevron_right, size: 14, color: theme.colorScheme.onSurfaceVariant),
-            ],
+      return Semantics(
+        button: true,
+        label: 'Expand sidebar',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onToggle,
+          child: SizedBox(
+            height: 56,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                collapsedLogo ?? logo ?? Icon(Icons.apps, color: theme.colorScheme.primary),
+                const SizedBox(height: 2),
+                Icon(Icons.chevron_right, size: 14, color: theme.colorScheme.onSurfaceVariant),
+              ],
+            ),
           ),
         ),
       );
@@ -284,9 +248,13 @@ class _SidebarHeader extends StatelessWidget {
           children: [
             logo ?? Text('App', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
             const Spacer(),
-            GestureDetector(
-              onTap: onToggle,
-              child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+            Semantics(
+              button: true,
+              label: 'Collapse sidebar',
+              child: GestureDetector(
+                onTap: onToggle,
+                child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+              ),
             ),
           ],
         ),
@@ -323,59 +291,69 @@ class _NavTile extends StatelessWidget {
     );
 
     if (collapsed) {
-      return Tooltip(
-        message: item.label,
-        preferBelow: false,
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: double.infinity,
-            height: 44,
-            margin: const EdgeInsets.only(bottom: 2),
-            decoration: BoxDecoration(
-              color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
-              borderRadius: EdenRadii.borderRadiusMd,
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                icon,
-                if (item.badge != null)
-                  Positioned(
-                    top: 6,
-                    right: 10,
-                    child: _Badge(text: item.badge!),
-                  ),
-              ],
+      return Semantics(
+        button: true,
+        label: item.label,
+        selected: isSelected,
+        child: Tooltip(
+          message: item.label,
+          preferBelow: false,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              width: double.infinity,
+              height: 44,
+              margin: const EdgeInsets.only(bottom: 2),
+              decoration: BoxDecoration(
+                color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+                borderRadius: EdenRadii.borderRadiusMd,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  icon,
+                  if (item.badge != null)
+                    Positioned(
+                      top: 6,
+                      right: 10,
+                      child: _Badge(text: item.badge!),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       );
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        margin: const EdgeInsets.only(bottom: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
-          borderRadius: EdenRadii.borderRadiusMd,
-        ),
-        child: Row(
-          children: [
-            icon,
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+    return Semantics(
+      button: true,
+      label: item.label,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 40,
+          margin: const EdgeInsets.only(bottom: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+            borderRadius: EdenRadii.borderRadiusMd,
+          ),
+          child: Row(
+            children: [
+              icon,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
             ),
             if (item.badge != null) _Badge(text: item.badge!),
@@ -514,10 +492,13 @@ class _UserTile extends StatelessWidget {
           : Icon(Icons.person, size: collapsed ? 16 : 18, color: theme.colorScheme.primary),
     );
 
-    return GestureDetector(
-      onTap: user.onTap,
-      child: Padding(
-        padding: EdgeInsets.all(collapsed ? 12 : EdenSpacing.space3),
+    return Semantics(
+      button: user.onTap != null,
+      label: 'User profile: ${user.name}',
+      child: GestureDetector(
+        onTap: user.onTap,
+        child: Padding(
+          padding: EdgeInsets.all(collapsed ? 12 : EdenSpacing.space3),
         child: collapsed
             ? Center(child: avatar)
             : Row(
@@ -545,6 +526,7 @@ class _UserTile extends StatelessWidget {
                   Icon(Icons.unfold_more, size: 16, color: theme.colorScheme.onSurfaceVariant),
                 ],
               ),
+      ),
       ),
     );
   }
@@ -575,9 +557,13 @@ class _TopBar extends StatelessWidget {
           if (onMenuTap != null)
             Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: GestureDetector(
-                onTap: onMenuTap,
-                child: Icon(Icons.menu, size: 22, color: theme.colorScheme.onSurface),
+              child: Semantics(
+                button: true,
+                label: 'Open menu',
+                child: GestureDetector(
+                  onTap: onMenuTap,
+                  child: Icon(Icons.menu, size: 22, color: theme.colorScheme.onSurface),
+                ),
               ),
             ),
           if (config.leading != null) config.leading!,

@@ -114,7 +114,11 @@ class _EdenTaskItem extends StatelessWidget {
     );
 
     if (data.onTap != null) {
-      return InkWell(onTap: data.onTap, child: content);
+      return Semantics(
+        label: data.title,
+        button: true,
+        child: InkWell(onTap: data.onTap, child: content),
+      );
     }
     return content;
   }

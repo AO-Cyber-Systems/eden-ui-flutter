@@ -66,7 +66,10 @@ class EdenEmailRow extends StatelessWidget {
         ? theme.colorScheme.primary.withValues(alpha: 0.03)
         : null;
 
-    return InkWell(
+    return Semantics(
+      label: '$subject from $from',
+      button: onTap != null,
+      child: InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(EdenSpacing.space3),
@@ -186,6 +189,7 @@ class EdenEmailRow extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

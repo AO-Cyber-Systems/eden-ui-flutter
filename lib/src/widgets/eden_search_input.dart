@@ -33,9 +33,13 @@ class EdenSearchInput extends StatelessWidget {
         hintText: hint,
         prefixIcon: const Icon(Icons.search, size: 20),
         suffixIcon: onClear != null
-            ? GestureDetector(
-                onTap: onClear,
-                child: const Icon(Icons.close, size: 18),
+            ? Semantics(
+                button: true,
+                label: 'Clear search',
+                child: GestureDetector(
+                  onTap: onClear,
+                  child: const Icon(Icons.close, size: 18),
+                ),
               )
             : null,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),

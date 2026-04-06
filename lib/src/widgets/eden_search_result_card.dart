@@ -40,7 +40,10 @@ class EdenSearchResultCard extends StatelessWidget {
         ? EdenColors.neutral[700]!.withValues(alpha: 0.5)
         : EdenColors.neutral[100]!;
 
-    return Material(
+    return Semantics(
+      label: 'Search result: $title',
+      button: onTap != null,
+      child: Material(
       color: cardBg,
       borderRadius: EdenRadii.borderRadiusMd,
       child: InkWell(
@@ -63,6 +66,7 @@ class EdenSearchResultCard extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 

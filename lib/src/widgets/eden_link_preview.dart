@@ -27,7 +27,10 @@ class EdenLinkPreview extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return GestureDetector(
+    return Semantics(
+      button: onTap != null,
+      label: 'Link preview: $title',
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -99,6 +102,7 @@ class EdenLinkPreview extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -114,6 +118,7 @@ class EdenLinkPreview extends StatelessWidget {
           width: 80,
           height: 80,
           fit: BoxFit.cover,
+          excludeFromSemantics: true,
         ),
       );
     }

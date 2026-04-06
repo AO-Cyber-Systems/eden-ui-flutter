@@ -54,7 +54,10 @@ class EdenAttachmentPreview extends StatelessWidget {
   }
 
   Widget _buildImagePreview(ThemeData theme, bool isDark) {
-    return GestureDetector(
+    return Semantics(
+      button: onTap != null,
+      label: 'Image attachment: ${attachment.name}',
+      child: GestureDetector(
       onTap: onTap,
       child: Stack(
         children: [
@@ -102,13 +105,17 @@ class EdenAttachmentPreview extends StatelessWidget {
             ),
         ],
       ),
+    ),
     );
   }
 
   Widget _buildFilePreview(ThemeData theme, bool isDark) {
     final fileStyle = _resolveFileStyle(attachment.name, attachment.type);
 
-    return GestureDetector(
+    return Semantics(
+      button: onTap != null,
+      label: 'File attachment: ${attachment.name}',
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(EdenSpacing.space3),
@@ -192,6 +199,7 @@ class EdenAttachmentPreview extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -265,7 +273,10 @@ class EdenAttachmentChip extends StatelessWidget {
       attachment.type,
     );
 
-    return GestureDetector(
+    return Semantics(
+      button: onTap != null,
+      label: 'Attachment: ${attachment.name}',
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -303,18 +314,23 @@ class EdenAttachmentChip extends StatelessWidget {
             ),
             if (onRemove != null) ...[
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: onRemove,
-                child: Icon(
-                  Icons.close,
-                  size: 14,
-                  color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
+              Semantics(
+                button: true,
+                label: 'Remove attachment',
+                child: GestureDetector(
+                  onTap: onRemove,
+                  child: Icon(
+                    Icons.close,
+                    size: 14,
+                    color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
+                  ),
                 ),
               ),
             ],
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -326,16 +342,20 @@ class _RemoveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 20,
-        height: 20,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.6),
-          shape: BoxShape.circle,
+    return Semantics(
+      button: true,
+      label: 'Remove',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.6),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.close, size: 12, color: Colors.white),
         ),
-        child: const Icon(Icons.close, size: 12, color: Colors.white),
       ),
     );
   }

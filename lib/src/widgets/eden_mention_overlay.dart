@@ -91,7 +91,10 @@ class _MentionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Semantics(
+      label: 'Mention ${suggestion.displayName}',
+      button: true,
+      child: InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -131,6 +134,7 @@ class _MentionTile extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

@@ -69,17 +69,20 @@ class EdenKanbanCard extends StatelessWidget {
 
     return Opacity(
       opacity: opacity,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(EdenSpacing.space3),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: EdenRadii.borderRadiusLg,
-            border: Border.all(color: theme.colorScheme.outlineVariant),
-          ),
-          child: Column(
+      child: Semantics(
+        button: onTap != null,
+        label: title,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(EdenSpacing.space3),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: EdenRadii.borderRadiusLg,
+              border: Border.all(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -176,6 +179,7 @@ class EdenKanbanCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -407,36 +411,40 @@ class _AddCardButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: EdenRadii.borderRadiusLg,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space2),
-        decoration: BoxDecoration(
-          borderRadius: EdenRadii.borderRadiusLg,
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add,
-              size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
+    return Semantics(
+      button: true,
+      label: 'Add card',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: EdenRadii.borderRadiusLg,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space2),
+          decoration: BoxDecoration(
+            borderRadius: EdenRadii.borderRadiusLg,
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant,
             ),
-            const SizedBox(width: 4),
-            Text(
-              'Add card',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add,
+                size: 16,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-            ),
-          ],
+              const SizedBox(width: 4),
+              Text(
+                'Add card',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -730,16 +738,19 @@ class _DraggableCard extends StatelessWidget {
         return false; // We accept at the column level, not card level.
       },
       builder: (context, candidateData, rejectedData) {
-        return LongPressDraggable<_KanbanDragData>(
-          data: dragData,
-          delay: const Duration(milliseconds: 200),
-          hapticFeedbackOnStart: true,
-          feedback: card.buildDragFeedback(context, feedbackWidth),
-          childWhenDragging: Opacity(
-            opacity: 0.3,
+        return Semantics(
+          label: 'Draggable card: ${card.title}',
+          child: LongPressDraggable<_KanbanDragData>(
+            data: dragData,
+            delay: const Duration(milliseconds: 200),
+            hapticFeedbackOnStart: true,
+            feedback: card.buildDragFeedback(context, feedbackWidth),
+            childWhenDragging: Opacity(
+              opacity: 0.3,
+              child: card,
+            ),
             child: card,
           ),
-          child: card,
         );
       },
     );

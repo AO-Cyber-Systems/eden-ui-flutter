@@ -79,11 +79,15 @@ class EdenNotificationList extends StatelessWidget {
                 ],
                 const Spacer(),
                 if (onMarkAllRead != null)
-                  GestureDetector(
-                    onTap: onMarkAllRead,
-                    child: Text(
-                      'Mark all read',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: theme.colorScheme.primary),
+                  Semantics(
+                    label: 'Mark all read',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: onMarkAllRead,
+                      child: Text(
+                        'Mark all read',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: theme.colorScheme.primary),
+                      ),
                     ),
                   ),
               ],
@@ -95,14 +99,18 @@ class EdenNotificationList extends StatelessWidget {
           // Footer
           if (onViewAll != null) ...[
             Divider(height: 1, color: theme.colorScheme.outlineVariant),
-            GestureDetector(
-              onTap: onViewAll,
-              child: Padding(
-                padding: const EdgeInsets.all(EdenSpacing.space3),
-                child: Center(
-                  child: Text(
-                    'View all notifications',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: theme.colorScheme.primary),
+            Semantics(
+              label: 'View all notifications',
+              button: true,
+              child: GestureDetector(
+                onTap: onViewAll,
+                child: Padding(
+                  padding: const EdgeInsets.all(EdenSpacing.space3),
+                  child: Center(
+                    child: Text(
+                      'View all notifications',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: theme.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
@@ -186,7 +194,11 @@ class _NotificationItem extends StatelessWidget {
     );
 
     if (data.onTap != null) {
-      return InkWell(onTap: data.onTap, child: content);
+      return Semantics(
+        label: data.title,
+        button: true,
+        child: InkWell(onTap: data.onTap, child: content),
+      );
     }
     return content;
   }

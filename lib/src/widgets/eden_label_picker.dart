@@ -176,12 +176,16 @@ class _EdenLabelPickerContentState extends State<_EdenLabelPickerContent> {
                 Expanded(
                   child: Text('Labels', style: theme.textTheme.titleMedium),
                 ),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Icon(
-                    Icons.close,
-                    size: 20,
-                    color: theme.colorScheme.onSurfaceVariant,
+                Semantics(
+                  label: 'Close',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Icon(
+                      Icons.close,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -303,7 +307,11 @@ class _LabelItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Semantics(
+      label: label.name,
+      button: true,
+      toggled: label.isSelected,
+      child: InkWell(
       onTap: onTap,
       borderRadius: EdenRadii.borderRadiusMd,
       child: Padding(
@@ -344,6 +352,7 @@ class _LabelItem extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -399,7 +408,11 @@ class _CreateForm extends StatelessWidget {
             runSpacing: EdenSpacing.space2,
             children: EdenLabelPicker.presetColors.map((color) {
               final isSelected = color == selectedColor;
-              return GestureDetector(
+              return Semantics(
+                label: 'Select color',
+                button: true,
+                selected: isSelected,
+                child: GestureDetector(
                 onTap: () => onColorChanged(color),
                 child: Container(
                   width: 28,
@@ -418,6 +431,7 @@ class _CreateForm extends StatelessWidget {
                       ? const Icon(Icons.check, size: 14, color: Colors.white)
                       : null,
                 ),
+              ),
               );
             }).toList(),
           ),

@@ -59,14 +59,18 @@ class SyncQueueItem extends StatelessWidget {
           ),
           if (operation.status == EdenSyncOperationStatus.failed &&
               onRetry != null)
-            GestureDetector(
-              onTap: onRetry,
-              child: const Padding(
-                padding: EdgeInsets.all(4),
-                child: Icon(
-                  Icons.refresh,
-                  size: 16,
-                  color: EdenColors.error,
+            Semantics(
+              button: true,
+              label: 'Retry ${operation.label}',
+              child: GestureDetector(
+                onTap: onRetry,
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.refresh,
+                    size: 16,
+                    color: EdenColors.error,
+                  ),
                 ),
               ),
             ),

@@ -82,6 +82,10 @@ class _BreadcrumbChip extends StatelessWidget {
 
     if (isCurrent || item.onTap == null) return child;
 
-    return GestureDetector(onTap: item.onTap, child: child);
+    return Semantics(
+      button: true,
+      label: item.label,
+      child: GestureDetector(onTap: item.onTap, child: child),
+    );
   }
 }

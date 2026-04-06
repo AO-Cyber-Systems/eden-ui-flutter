@@ -143,7 +143,10 @@ class _TagRow extends StatelessWidget {
     final mutedText =
         isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
 
-    return Material(
+    return Semantics(
+      label: 'Tag: ${tag.name}',
+      button: onTap != null,
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -210,22 +213,26 @@ class _TagRow extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: EdenSpacing.space2),
-                    SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: Material(
-                        color: Colors.transparent,
-                        borderRadius: EdenRadii.borderRadiusSm,
-                        child: InkWell(
-                          onTap: onCopyDigest,
+                    Semantics(
+                      label: isCopied ? 'Digest copied' : 'Copy digest',
+                      button: true,
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: Material(
+                          color: Colors.transparent,
                           borderRadius: EdenRadii.borderRadiusSm,
-                          child: Center(
-                            child: Icon(
-                              isCopied ? Icons.check : Icons.copy_outlined,
-                              size: 14,
-                              color: isCopied
-                                  ? EdenColors.success
-                                  : mutedText,
+                          child: InkWell(
+                            onTap: onCopyDigest,
+                            borderRadius: EdenRadii.borderRadiusSm,
+                            child: Center(
+                              child: Icon(
+                                isCopied ? Icons.check : Icons.copy_outlined,
+                                size: 14,
+                                color: isCopied
+                                    ? EdenColors.success
+                                    : mutedText,
+                              ),
                             ),
                           ),
                         ),
@@ -239,6 +246,7 @@ class _TagRow extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

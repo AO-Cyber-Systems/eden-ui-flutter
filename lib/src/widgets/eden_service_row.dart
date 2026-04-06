@@ -292,14 +292,18 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: EdenRadii.borderRadiusSm,
-        child: Padding(
-          padding: EdgeInsets.all(EdenSpacing.space1),
-          child: Icon(icon, size: 18, color: color),
+    return Semantics(
+      label: tooltip,
+      button: true,
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: EdenRadii.borderRadiusSm,
+          child: Padding(
+            padding: EdgeInsets.all(EdenSpacing.space1),
+            child: Icon(icon, size: 18, color: color),
+          ),
         ),
       ),
     );

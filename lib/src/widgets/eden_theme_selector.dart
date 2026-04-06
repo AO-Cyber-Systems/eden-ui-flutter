@@ -84,7 +84,11 @@ class _Segment extends StatelessWidget {
     final selectedFg = isDark ? EdenColors.neutral[100]! : EdenColors.neutral[900]!;
     final unselectedFg = isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
 
-    return GestureDetector(
+    return Semantics(
+      label: '$label theme',
+      button: true,
+      selected: isSelected,
+      child: GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -125,6 +129,7 @@ class _Segment extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

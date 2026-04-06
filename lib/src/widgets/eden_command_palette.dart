@@ -311,12 +311,16 @@ class _EdenCommandPaletteState extends State<EdenCommandPalette> {
     final selectedBg =
         isDark ? EdenColors.neutral[700]! : EdenColors.neutral[100]!;
 
-    return InkWell(
-      onTap: () => _selectItem(item),
-      onHover: (hovering) {
-        if (hovering) setState(() => _selectedIndex = index);
-      },
-      child: Container(
+    return Semantics(
+      button: true,
+      label: item.label,
+      selected: isSelected,
+      child: InkWell(
+        onTap: () => _selectItem(item),
+        onHover: (hovering) {
+          if (hovering) setState(() => _selectedIndex = index);
+        },
+        child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: EdenSpacing.space4,
           vertical: EdenSpacing.space2,
@@ -396,6 +400,7 @@ class _EdenCommandPaletteState extends State<EdenCommandPalette> {
             ],
           ],
         ),
+      ),
       ),
     );
   }

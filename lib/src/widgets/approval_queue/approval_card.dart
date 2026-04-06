@@ -44,11 +44,14 @@ class ApprovalCard extends StatelessWidget {
         : (isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!);
     final subtextColor = isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: MouseRegion(
-        cursor: onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
-        child: AnimatedContainer(
+    return Semantics(
+      button: onTap != null,
+      label: 'Approval item: ${item.title}',
+      child: GestureDetector(
+        onTap: onTap,
+        child: MouseRegion(
+          cursor: onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.all(EdenSpacing.space4),
           decoration: BoxDecoration(
@@ -137,6 +140,7 @@ class ApprovalCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

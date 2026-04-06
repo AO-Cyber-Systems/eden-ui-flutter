@@ -110,33 +110,37 @@ class EdenCodeBlock extends StatelessWidget {
                     ),
                   const Spacer(),
                   if (copyable && !streaming)
-                    GestureDetector(
-                      onTap: () {
-                        Clipboard.setData(ClipboardData(text: code));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Copied!'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.copy,
-                            size: 14,
-                            color: EdenColors.neutral[400],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Copy',
-                            style: TextStyle(
-                              fontSize: 12,
+                    Semantics(
+                      label: 'Copy code',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: code));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Copied!'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.copy,
+                              size: 14,
                               color: EdenColors.neutral[400],
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              'Copy',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: EdenColors.neutral[400],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                 ],

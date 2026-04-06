@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
 class NavigationScreen extends StatefulWidget {
@@ -19,6 +20,22 @@ class _NavigationScreenState extends State<NavigationScreen> {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          InteractivePlayground(
+            title: 'Tab Explorer',
+            preview: EdenTabs(
+              tabs: const [
+                EdenTabItem(label: 'Overview'),
+                EdenTabItem(label: 'Details'),
+                EdenTabItem(label: 'Settings'),
+              ],
+              selectedIndex: _tabIndex % 3,
+              onChanged: (i) => setState(() => _tabIndex = i),
+            ),
+            controls: [
+              Text('Tap tabs to change selection', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: EdenSpacing.space4),
           // Tabs
           Section(
             title: 'Tabs',

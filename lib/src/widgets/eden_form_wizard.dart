@@ -596,11 +596,15 @@ class _StepIndicator extends StatelessWidget {
     );
 
     if (onTap != null) {
-      circle = GestureDetector(
-        onTap: onTap,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: circle,
+      circle = Semantics(
+        button: true,
+        label: 'Go to step ${index + 1}: ${step.title}',
+        child: GestureDetector(
+          onTap: onTap,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: circle,
+          ),
         ),
       );
     }

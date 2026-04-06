@@ -24,8 +24,6 @@ class EdenInput extends StatelessWidget {
     this.maxLines = 1,
     this.autofocus = false,
     this.autofillHints,
-    this.textInputAction,
-    this.focusNode,
   });
 
   final TextEditingController? controller;
@@ -44,8 +42,6 @@ class EdenInput extends StatelessWidget {
   final int maxLines;
   final bool autofocus;
   final Iterable<String>? autofillHints;
-  final TextInputAction? textInputAction;
-  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -67,13 +63,11 @@ class EdenInput extends StatelessWidget {
         ],
         TextField(
           controller: controller,
-          focusNode: focusNode,
           obscureText: obscureText,
           enabled: enabled,
           onChanged: onChanged,
           onSubmitted: onSubmitted,
           keyboardType: keyboardType,
-          textInputAction: textInputAction,
           maxLines: maxLines,
           autofocus: autofocus,
           autofillHints: autofillHints,

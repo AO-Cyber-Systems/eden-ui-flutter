@@ -180,11 +180,14 @@ class MonthDayCell extends StatelessWidget {
         ? theme.colorScheme.primary.withAlpha(30)
         : theme.colorScheme.primary.withAlpha(20);
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        decoration: BoxDecoration(
+    return Semantics(
+      button: true,
+      label: 'Select ${date.month}/${date.day}/${date.year}',
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          decoration: BoxDecoration(
           color: isFocused ? focusBg : null,
           border: showRightBorder
               ? Border(right: BorderSide(color: borderColor))
@@ -225,14 +228,18 @@ class MonthDayCell extends StatelessWidget {
                 runSpacing: 3,
                 alignment: WrapAlignment.center,
                 children: events.take(5).map((e) {
-                  return GestureDetector(
-                    onTap: onEventTap != null ? () => onEventTap!(e) : null,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: e.color ?? theme.colorScheme.primary,
-                        shape: BoxShape.circle,
+                  return Semantics(
+                    button: onEventTap != null,
+                    label: 'Event: ${e.title}',
+                    child: GestureDetector(
+                      onTap: onEventTap != null ? () => onEventTap!(e) : null,
+                      child: Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: e.color ?? theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                   );
@@ -251,6 +258,7 @@ class MonthDayCell extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }

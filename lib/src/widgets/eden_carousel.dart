@@ -116,10 +116,14 @@ class _EdenCarouselState extends State<EdenCarousel> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(count, (i) {
               final isActive = i == _currentPage;
-              return GestureDetector(
-                onTap: () => _controller.animateToPage(i,
-                    duration: const Duration(milliseconds: 300), curve: Curves.easeInOut),
-                child: AnimatedContainer(
+              return Semantics(
+                button: true,
+                label: 'Go to slide ${i + 1}',
+                selected: isActive,
+                child: GestureDetector(
+                  onTap: () => _controller.animateToPage(i,
+                      duration: const Duration(milliseconds: 300), curve: Curves.easeInOut),
+                  child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: isActive ? 24 : 8,
@@ -131,6 +135,7 @@ class _EdenCarouselState extends State<EdenCarousel> {
                         : theme.colorScheme.onSurface.withValues(alpha: 0.2),
                   ),
                 ),
+              ),
               );
             }),
           ),
@@ -147,19 +152,24 @@ class _ArrowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.black.withValues(alpha: 0.4),
-        ),
-        child: Icon(
-          icon,
-          color: onTap != null ? Colors.white : Colors.white38,
-          size: 24,
+    final isNext = icon == Icons.chevron_right;
+    return Semantics(
+      label: isNext ? 'Next slide' : 'Previous slide',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black.withValues(alpha: 0.4),
+          ),
+          child: Icon(
+            icon,
+            color: onTap != null ? Colors.white : Colors.white38,
+            size: 24,
+          ),
         ),
       ),
     );

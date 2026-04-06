@@ -117,7 +117,10 @@ class _EdenSourcesFooterState extends State<EdenSourcesFooter>
   }
 
   Widget _buildHeader(ThemeData theme, bool isDark) {
-    return InkWell(
+    return Semantics(
+      label: '${widget.title}, ${_isExpanded ? 'collapse' : 'expand'}',
+      button: true,
+      child: InkWell(
       onTap: _toggle,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -163,6 +166,7 @@ class _EdenSourcesFooterState extends State<EdenSourcesFooter>
           ],
         ),
       ),
+    ),
     );
   }
 }
@@ -184,7 +188,10 @@ class _SourceItem extends StatelessWidget {
     final hasUrl = source.url != null;
     final defaultIcon = hasUrl ? Icons.language : Icons.description_outlined;
 
-    return InkWell(
+    return Semantics(
+      label: 'Source: ${source.title}',
+      button: onTap != null,
+      child: InkWell(
       onTap: onTap != null ? () => onTap!(source) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -256,6 +263,7 @@ class _SourceItem extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

@@ -135,37 +135,41 @@ class CategoryHeaderRow extends StatelessWidget {
           // Category label with collapse toggle
           SizedBox(
             width: labelWidth,
-            child: InkWell(
-              onTap: onToggleCollapse,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: EdenSpacing.space3,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      collapsed
-                          ? Icons.chevron_right
-                          : Icons.expand_more,
-                      size: 18,
-                      color: isDark
-                          ? EdenColors.neutral[400]
-                          : EdenColors.neutral[500],
-                    ),
-                    const SizedBox(width: EdenSpacing.space1),
-                    Expanded(
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            child: Semantics(
+              button: true,
+              label: '${collapsed ? 'Expand' : 'Collapse'} $category',
+              child: InkWell(
+                onTap: onToggleCollapse,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: EdenSpacing.space3,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        collapsed
+                            ? Icons.chevron_right
+                            : Icons.expand_more,
+                        size: 18,
+                        color: isDark
+                            ? EdenColors.neutral[400]
+                            : EdenColors.neutral[500],
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: EdenSpacing.space1),
+                      Expanded(
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -204,19 +208,23 @@ class CategoryToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: allGranted ? 'Deselect all' : 'Select all',
-      child: InkWell(
-        borderRadius: EdenRadii.borderRadiusSm,
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Text(
-            allGranted ? 'Clear' : 'All',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: roleColor,
+    return Semantics(
+      button: true,
+      label: allGranted ? 'Deselect all permissions' : 'Select all permissions',
+      child: Tooltip(
+        message: allGranted ? 'Deselect all' : 'Select all',
+        child: InkWell(
+          borderRadius: EdenRadii.borderRadiusSm,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Text(
+              allGranted ? 'Clear' : 'All',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: roleColor,
+              ),
             ),
           ),
         ),
