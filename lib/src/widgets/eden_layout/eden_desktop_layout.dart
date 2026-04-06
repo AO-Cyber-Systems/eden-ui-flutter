@@ -355,9 +355,9 @@ class _NavTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-            if (item.badge != null) _Badge(text: item.badge!),
-          ],
+              if (item.badge != null) _Badge(text: item.badge!),
+            ],
+          ),
         ),
       ),
     );
