@@ -51,5 +51,50 @@ void main() {
       // Should have a CircleAvatar with backgroundImage
       expect(find.byType(CircleAvatar), findsOneWidget);
     });
+
+    testWidgets('truncates initials to 2 characters', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenAvatar(initials: 'ABC'),
+      ));
+      expect(find.text('AB'), findsOneWidget);
+    });
+
+    testWidgets('renders single character initials', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenAvatar(initials: 'J'),
+      ));
+      expect(find.text('J'), findsOneWidget);
+    });
+
+    testWidgets('renders with status indicator', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenAvatar(initials: 'JD', status: EdenAvatarStatus.online),
+      ));
+      // With status, the avatar wraps CircleAvatar + Positioned in a Stack
+      expect(find.byType(Positioned), findsOneWidget);
+    });
+
+    testWidgets('renders all status types without error', (tester) async {
+      for (final status in EdenAvatarStatus.values) {
+        await tester.pumpWidget(wrap(
+          EdenAvatar(initials: 'JD', status: status),
+        ));
+        expect(find.byType(Positioned), findsOneWidget);
+      }
+    });
+
+    testWidgets('no status indicator when no status', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenAvatar(initials: 'JD'),
+      ));
+      expect(find.byType(Positioned), findsNothing);
+    });
+
+    testWidgets('renders with custom background color', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenAvatar(initials: 'AB', backgroundColor: Colors.red),
+      ));
+      expect(find.text('AB'), findsOneWidget);
+    });
   });
 }

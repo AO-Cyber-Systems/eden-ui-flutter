@@ -76,5 +76,75 @@ void main() {
       await tester.tap(find.text('Loading'));
       expect(tapped, false);
     });
+
+    testWidgets('outline renders OutlinedButton', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(label: 'Outlined', outline: true, onPressed: () {}),
+      ));
+      expect(find.byType(OutlinedButton), findsOneWidget);
+    });
+
+    testWidgets('non-outline renders ElevatedButton', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(label: 'Solid', onPressed: () {}),
+      ));
+      expect(find.byType(ElevatedButton), findsOneWidget);
+    });
+
+    testWidgets('pill shape renders without error', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(label: 'Pill', pill: true, onPressed: () {}),
+      ));
+      expect(find.text('Pill'), findsOneWidget);
+    });
+
+    testWidgets('fullWidth renders without error', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(label: 'Full', fullWidth: true, onPressed: () {}),
+      ));
+      expect(find.text('Full'), findsOneWidget);
+    });
+
+    testWidgets('renders each size variant without error', (tester) async {
+      for (final size in EdenButtonSize.values) {
+        await tester.pumpWidget(wrap(
+          EdenButton(label: 'Btn', size: size, onPressed: () {}),
+        ));
+        expect(find.text('Btn'), findsOneWidget);
+      }
+    });
+
+    testWidgets('danger variant renders', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(
+          label: 'Delete',
+          variant: EdenButtonVariant.danger,
+          onPressed: () {},
+        ),
+      ));
+      expect(find.text('Delete'), findsOneWidget);
+    });
+
+    testWidgets('success variant renders', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(
+          label: 'Save',
+          variant: EdenButtonVariant.success,
+          onPressed: () {},
+        ),
+      ));
+      expect(find.text('Save'), findsOneWidget);
+    });
+
+    testWidgets('ghost variant renders', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenButton(
+          label: 'Ghost',
+          variant: EdenButtonVariant.ghost,
+          onPressed: () {},
+        ),
+      ));
+      expect(find.text('Ghost'), findsOneWidget);
+    });
   });
 }

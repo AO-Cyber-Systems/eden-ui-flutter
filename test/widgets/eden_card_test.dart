@@ -51,5 +51,39 @@ void main() {
       ));
       expect(find.text('Glass'), findsOneWidget);
     });
+
+    testWidgets('renders with custom border color', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenCard(title: 'Bordered', borderColor: Colors.red),
+      ));
+      expect(find.text('Bordered'), findsOneWidget);
+    });
+
+    testWidgets('renders with custom padding', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenCard(
+          title: 'Padded',
+          padding: EdgeInsets.all(32),
+        ),
+      ));
+      expect(find.text('Padded'), findsOneWidget);
+    });
+
+    testWidgets('renders title-only without subtitle', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenCard(title: 'Title Only'),
+      ));
+      expect(find.text('Title Only'), findsOneWidget);
+    });
+
+    testWidgets('renders in dark theme without error', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: const EdenCard(title: 'Dark Card'),
+        ),
+      ));
+      expect(find.text('Dark Card'), findsOneWidget);
+    });
   });
 }

@@ -52,5 +52,61 @@ void main() {
       final textField = tester.widget<TextField>(find.byType(TextField));
       expect(textField.enabled, false);
     });
+
+    testWidgets('hides helper text when error is present', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(helperText: 'Helper', errorText: 'Error'),
+      ));
+      expect(find.text('Error'), findsOneWidget);
+      expect(find.text('Helper'), findsNothing);
+    });
+
+    testWidgets('renders prefix icon', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(prefixIcon: Icons.email),
+      ));
+      expect(find.byIcon(Icons.email), findsOneWidget);
+    });
+
+    testWidgets('renders suffix icon', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(suffixIcon: Icons.visibility),
+      ));
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+    });
+
+    testWidgets('works with controller', (tester) async {
+      final controller = TextEditingController(text: 'preset');
+      await tester.pumpWidget(wrap(
+        EdenInput(controller: controller),
+      ));
+      expect(find.text('preset'), findsOneWidget);
+      controller.dispose();
+    });
+
+    testWidgets('renders each size variant without error', (tester) async {
+      for (final size in EdenInputSize.values) {
+        await tester.pumpWidget(wrap(
+          EdenInput(hint: 'Size ${size.name}', size: size),
+        ));
+        expect(find.text('Size ${size.name}'), findsOneWidget);
+      }
+    });
+
+    testWidgets('multiline maxLines works', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(maxLines: 5, hint: 'Multiline'),
+      ));
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.maxLines, 5);
+    });
+
+    testWidgets('obscureText hides input', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(obscureText: true),
+      ));
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.obscureText, true);
+    });
   });
 }

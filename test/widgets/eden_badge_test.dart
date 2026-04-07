@@ -32,5 +32,39 @@ void main() {
         expect(find.text('Sized'), findsOneWidget);
       }
     });
+
+    testWidgets('renders with icon', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenBadge(label: 'Status', icon: Icons.check_circle),
+      ));
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(find.text('Status'), findsOneWidget);
+    });
+
+    testWidgets('renders dismiss button when onDismiss provided',
+        (tester) async {
+      var dismissed = false;
+      await tester.pumpWidget(wrap(
+        EdenBadge(label: 'Tag', onDismiss: () => dismissed = true),
+      ));
+      expect(find.byIcon(Icons.close), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close));
+      expect(dismissed, true);
+    });
+
+    testWidgets('does not show dismiss button without onDismiss',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenBadge(label: 'Tag'),
+      ));
+      expect(find.byIcon(Icons.close), findsNothing);
+    });
+
+    testWidgets('has semantic label for dismiss button', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenBadge(label: 'Filter', onDismiss: () {}),
+      ));
+      expect(find.bySemanticsLabel('Remove Filter'), findsOneWidget);
+    });
   });
 }
