@@ -38,6 +38,8 @@ class _EdenToursTabState extends State<EdenToursTab> {
     Future.delayed(EdenDurations.normal, () {
       try {
         ShowcaseView.get().startShowCase(tour.steps);
+        // Notify consumer that the tour was launched so they can track it.
+        widget.config.onTourComplete?.call(tour.id);
       } catch (e) {
         // ShowcaseView not registered in this context.
         if (mounted) {
