@@ -61,6 +61,7 @@ export 'src/widgets/eden_indicator.dart';
 export 'src/widgets/eden_carousel.dart';
 export 'src/widgets/eden_diagram/eden_diagram_exports.dart';
 export 'src/widgets/eden_layout/eden_layout_exports.dart';
+export 'src/widgets/support_panel/eden_support_panel_exports.dart';
 
 // Advanced widgets
 export 'src/widgets/eden_data_grid.dart';
