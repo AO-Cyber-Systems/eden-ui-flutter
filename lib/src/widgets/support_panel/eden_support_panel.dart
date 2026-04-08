@@ -171,9 +171,12 @@ class _EdenSupportPanelState extends State<EdenSupportPanel> {
                     // Tab content
                     // ----------------------------------------
                     Expanded(
-                      child: IndexedStack(
-                        index: safeTab,
-                        children: views,
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: IndexedStack(
+                          index: safeTab,
+                          children: views,
+                        ),
                       ),
                     ),
                   ],
