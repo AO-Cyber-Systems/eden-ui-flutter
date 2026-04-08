@@ -65,7 +65,10 @@ class _EdenSupportPanelState extends State<EdenSupportPanel> {
     }
     if (widget.config.showToursTab) {
       tabs.add(const EdenTabItem(label: 'Tours', icon: Icons.map_outlined));
-      views.add(EdenToursTab(config: widget.config));
+      views.add(EdenToursTab(
+        config: widget.config,
+        onClosePanel: _closePanel,
+      ));
     }
 
     return (tabs: tabs, views: views);
