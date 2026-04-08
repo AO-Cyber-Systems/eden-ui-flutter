@@ -12,6 +12,7 @@ dependencies:
   google_fonts: ^6.1.0
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0
+  showcaseview: ^5.0.1
 
 dev_dependencies:
   flutter_test:
