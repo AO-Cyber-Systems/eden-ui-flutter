@@ -34,6 +34,7 @@ class EdenDesktopLayout extends StatefulWidget {
     this.sidebarWidth = 260,
     this.collapsedWidth = 72,
     this.sidebarFooter,
+    this.supportPanel,
   });
 
   final List<EdenNavItem> navItems;
@@ -50,6 +51,18 @@ class EdenDesktopLayout extends StatefulWidget {
   final double sidebarWidth;
   final double collapsedWidth;
   final Widget? sidebarFooter;
+
+  /// Optional support panel rendered in the Row after the main content area.
+  ///
+  /// Pass an [EdenSupportPanel] configured in slot mode (no child required):
+  /// ```dart
+  /// EdenDesktopLayout(
+  ///   supportPanel: EdenSupportPanel(config: myCfg),
+  ///   body: myBody,
+  ///   ...
+  /// )
+  /// ```
+  final Widget? supportPanel;
 
   @override
   State<EdenDesktopLayout> createState() => _EdenDesktopLayoutState();
@@ -188,6 +201,10 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
               ],
             ),
           ),
+          // Optional support panel slot — rendered after main content area.
+          // EdenSupportPanel manages its own open/close state and AnimatedContainer
+          // width, so the layout does not need to track panel state.
+          if (widget.supportPanel != null) widget.supportPanel!,
         ],
       ),
           ),
