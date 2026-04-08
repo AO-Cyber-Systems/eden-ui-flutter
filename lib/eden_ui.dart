@@ -224,6 +224,7 @@ export 'src/widgets/eden_map_view.dart';
 export 'src/widgets/eden_barcode_scanner.dart';
 
 // Pages
+export 'src/pages/eden_support_panel_demo_page.dart';
 export 'src/pages/eden_profile_page.dart';
 export 'src/pages/eden_settings_page.dart';
 export 'src/pages/eden_splash_page.dart';
