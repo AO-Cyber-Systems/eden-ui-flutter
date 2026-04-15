@@ -92,7 +92,12 @@ class EdenMobileLayout extends StatelessWidget {
                   ),
                 if (showMore)
                   _BottomItem(
-                    item: const EdenNavItem(id: '__more__', label: 'More', icon: Icons.more_horiz),
+                    item: const EdenNavItem(
+                      id: '__more__',
+                      label: 'More',
+                      icon: Icons.more_horiz,
+                      semanticsIdentifier: 'eden-nav-more',
+                    ),
                     isSelected: isOverflowSelected,
                     onTap: () => _showMoreSheet(context, theme, overflowItems),
                   ),
@@ -241,32 +246,38 @@ class EdenMobileLayout extends StatelessWidget {
                 ),
               ),
               for (final item in items)
-                ListTile(
-                  leading: Icon(
-                    item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
-                    color: item.id == selectedId ? theme.colorScheme.primary : null,
-                  ),
-                  title: Text(
-                    item.label,
-                    style: TextStyle(
-                      fontWeight: item.id == selectedId ? FontWeight.w600 : FontWeight.w500,
+                Semantics(
+                  identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
+                  button: true,
+                  label: item.label,
+                  selected: item.id == selectedId,
+                  child: ListTile(
+                    leading: Icon(
+                      item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
                       color: item.id == selectedId ? theme.colorScheme.primary : null,
                     ),
+                    title: Text(
+                      item.label,
+                      style: TextStyle(
+                        fontWeight: item.id == selectedId ? FontWeight.w600 : FontWeight.w500,
+                        color: item.id == selectedId ? theme.colorScheme.primary : null,
+                      ),
+                    ),
+                    trailing: item.badge != null
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: EdenRadii.borderRadiusFull,
+                            ),
+                            child: Text(item.badge!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                          )
+                        : null,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      onNavChanged(item.id);
+                    },
                   ),
-                  trailing: item.badge != null
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: EdenRadii.borderRadiusFull,
-                          ),
-                          child: Text(item.badge!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
-                        )
-                      : null,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    onNavChanged(item.id);
-                  },
                 ),
             ],
           ),
