@@ -292,6 +292,7 @@ class _BottomItem extends StatelessWidget {
 
     return Expanded(
       child: Semantics(
+        identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
         button: true,
         label: item.label,
         selected: isSelected,
@@ -356,6 +357,7 @@ class _DrawerTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
       button: true,
       label: item.label,
       selected: isSelected,

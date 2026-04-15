@@ -309,6 +309,7 @@ class _NavTile extends StatelessWidget {
 
     if (collapsed) {
       return Semantics(
+        identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
         button: true,
         label: item.label,
         selected: isSelected,
@@ -344,6 +345,7 @@ class _NavTile extends StatelessWidget {
     }
 
     return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
       button: true,
       label: item.label,
       selected: isSelected,
@@ -510,6 +512,7 @@ class _UserTile extends StatelessWidget {
     );
 
     return Semantics(
+      identifier: 'eden-topbar-user-menu',
       button: user.onTap != null,
       label: 'User profile: ${user.name}',
       child: GestureDetector(
@@ -603,16 +606,20 @@ class _TopBar extends StatelessWidget {
                     Icon(Icons.search, size: 18, color: theme.colorScheme.onSurfaceVariant),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: config.searchHint,
-                          hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
+                      child: Semantics(
+                        identifier: 'eden-topbar-search',
+                        textField: true,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: config.searchHint,
+                            hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          style: const TextStyle(fontSize: 13),
+                          onChanged: config.onSearch,
                         ),
-                        style: const TextStyle(fontSize: 13),
-                        onChanged: config.onSearch,
                       ),
                     ),
                   ],
