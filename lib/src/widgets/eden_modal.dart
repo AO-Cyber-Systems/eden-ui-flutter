@@ -22,6 +22,13 @@ class EdenModal {
     return showDialog<T>(
       context: context,
       barrierDismissible: dismissible,
+      // Use the nearest navigator (not the root one) so that callers who
+      // pass action widgets closing over their own BuildContext can call
+      // `Navigator.pop(context)` and have it pop the dialog instead of the
+      // underlying shell route. Under GoRouter with a ShellRoute, the root
+      // and shell navigators are different, and the default showDialog
+      // behavior otherwise causes page-level navigation instead.
+      useRootNavigator: false,
       builder: (context) => _EdenModalContent(
         title: title,
         size: size,
