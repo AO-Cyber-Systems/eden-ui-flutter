@@ -36,6 +36,17 @@ class EdenTheme {
       onSurfaceVariant: EdenColors.neutral[500]!,
       outline: EdenColors.neutral[300]!,
       outlineVariant: EdenColors.neutral[200]!,
+      // Explicit container tones so widgets that read
+      // `surfaceContainerHighest` (e.g. assistant chat bubbles) get a known
+      // value instead of Material 3's tonal-palette default. The auto-
+      // derived default in dark mode sits within a few L* of `surface`
+      // itself, which flattens contrast against `onSurface` text — see
+      // finding C8.K.1.
+      surfaceContainerLowest: Colors.white,
+      surfaceContainerLow: EdenColors.neutral[50]!,
+      surfaceContainer: EdenColors.neutral[100]!,
+      surfaceContainerHigh: EdenColors.neutral[200]!,
+      surfaceContainerHighest: EdenColors.neutral[200]!,
       error: EdenColors.error,
       onError: Colors.white,
     );
@@ -61,6 +72,17 @@ class EdenTheme {
       onSurfaceVariant: EdenColors.neutral[400]!,
       outline: EdenColors.neutral[700]!,
       outlineVariant: EdenColors.neutral[800]!,
+      // C8.K.1: explicit container tones. The auto-derived
+      // `surfaceContainerHighest` in dark mode was nearly indistinguishable
+      // from `surface`, which made the assistant chat bubble (reads
+      // `surfaceContainerHighest`) read as near-zero-contrast against the
+      // page background. Locking it to `neutral[800]` gives neutral[100]
+      // text a ~14:1 contrast ratio (WCAG AAA).
+      surfaceContainerLowest: EdenColors.neutral[950]!,
+      surfaceContainerLow: EdenColors.neutral[900]!,
+      surfaceContainer: const Color(0xFF1E1E22), // neutral[850]
+      surfaceContainerHigh: EdenColors.neutral[800]!,
+      surfaceContainerHighest: EdenColors.neutral[800]!,
       error: EdenColors.error,
       onError: Colors.white,
     );
