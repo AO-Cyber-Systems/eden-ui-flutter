@@ -1,5 +1,5 @@
 /// Eden UI for Flutter — a component library ported from the Eden UI Rails framework.
-library eden_ui;
+library;
 
 // Tokens
 export 'src/tokens/colors.dart';

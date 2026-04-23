@@ -32,7 +32,7 @@ class _CardsScreenState extends State<CardsScreen> {
             ],
           ),
           const SizedBox(height: EdenSpacing.space4),
-          Section(
+          const Section(
             title: 'Standard Card',
             child: EdenCard(
               title: 'Card Title',
@@ -57,7 +57,7 @@ class _CardsScreenState extends State<CardsScreen> {
               ),
             ),
           ),
-          Section(
+          const Section(
             title: 'Gradient Card',
             child: EdenCard(
               gradient: true,
@@ -65,7 +65,7 @@ class _CardsScreenState extends State<CardsScreen> {
               subtitle: 'A card with a primary color gradient background.',
             ),
           ),
-          Section(
+          const Section(
             title: 'Glass Card',
             child: EdenCard(
               glass: true,

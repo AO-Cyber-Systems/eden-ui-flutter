@@ -16,11 +16,11 @@ class ColorsScreen extends StatelessWidget {
             title: entry.key[0].toUpperCase() + entry.key.substring(1),
             child: _ColorSwatches(swatch: entry.value),
           )),
-          Section(
+          const Section(
             title: 'Neutral (Zinc)',
             child: _ColorSwatches(swatch: EdenColors.neutral),
           ),
-          Section(
+          const Section(
             title: 'Status Colors',
             child: Wrap(
               spacing: 8,
@@ -33,7 +33,7 @@ class ColorsScreen extends StatelessWidget {
               ],
             ),
           ),
-          Section(
+          const Section(
             title: 'Aurora Gradients',
             child: Wrap(
               spacing: 8,

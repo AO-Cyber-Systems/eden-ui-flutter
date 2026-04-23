@@ -116,7 +116,7 @@ class _EdenTerraformStateCardState extends State<EdenTerraformStateCard> {
                         widget.lockedBy != null
                             ? 'Locked by ${widget.lockedBy}'
                             : 'State is locked',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: EdenColors.warning,
                           fontWeight: FontWeight.w500,
@@ -126,7 +126,7 @@ class _EdenTerraformStateCardState extends State<EdenTerraformStateCard> {
                     if (widget.onUnlock != null)
                       GestureDetector(
                         onTap: widget.onUnlock,
-                        child: Text(
+                        child: const Text(
                           'Unlock',
                           style: TextStyle(
                             fontSize: 12,

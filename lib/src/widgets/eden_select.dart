@@ -55,7 +55,7 @@ class EdenSelect<T> extends StatelessWidget {
           const SizedBox(height: 6),
         ],
         DropdownButtonFormField<T>(
-          value: value,
+          initialValue: value,
           items: options
               .map((opt) => DropdownMenuItem<T>(
                     value: opt.value,
@@ -79,11 +79,11 @@ class EdenSelect<T> extends StatelessWidget {
   _SelectSizing _resolveSizing() {
     switch (size) {
       case EdenSelectSize.sm:
-        return _SelectSizing(const EdgeInsets.symmetric(horizontal: 12, vertical: 8), 13);
+        return const _SelectSizing(EdgeInsets.symmetric(horizontal: 12, vertical: 8), 13);
       case EdenSelectSize.md:
-        return _SelectSizing(const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 14);
+        return const _SelectSizing(EdgeInsets.symmetric(horizontal: 16, vertical: 12), 14);
       case EdenSelectSize.lg:
-        return _SelectSizing(const EdgeInsets.symmetric(horizontal: 16, vertical: 14), 16);
+        return const _SelectSizing(EdgeInsets.symmetric(horizontal: 16, vertical: 14), 16);
     }
   }
 }

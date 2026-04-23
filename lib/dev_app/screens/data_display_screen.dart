@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
-import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
 class DataDisplayScreen extends StatefulWidget {
@@ -21,7 +20,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
           // Stat Cards
-          Section(
+          const Section(
             title: 'Stat Cards',
             child: Column(
               children: [
@@ -37,7 +36,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                         trendLabel: 'vs last month',
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: EdenStatCard(
                         label: 'Active Users',
@@ -50,7 +49,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -63,7 +62,7 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
                         variant: EdenColors.error,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: EdenStatCard(
                         label: 'Avg. Session',
@@ -115,11 +114,11 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
           ),
 
           // Description List
-          Section(
+          const Section(
             title: 'Description List',
             child: EdenCard(
               child: EdenDescriptionList(
-                items: const [
+                items: [
                   EdenDescriptionItem(label: 'Full Name', value: 'Justin Doe'),
                   EdenDescriptionItem(label: 'Email', value: 'justin@example.com'),
                   EdenDescriptionItem(label: 'Role', value: 'Administrator'),

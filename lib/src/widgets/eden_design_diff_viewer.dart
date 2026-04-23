@@ -139,7 +139,7 @@ class _EdenDesignDiffViewerState extends State<EdenDesignDiffViewer> {
     Color mutedText,
   ) {
     final activeBg = EdenColors.info.withValues(alpha: 0.12);
-    final activeColor = EdenColors.info;
+    const activeColor = EdenColors.info;
     final inactiveColor = mutedText;
 
     return Padding(
@@ -370,7 +370,7 @@ class _EdenDesignDiffViewerState extends State<EdenDesignDiffViewer> {
                   child: Container(
                     width: 28,
                     height: 28,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: EdenColors.info,
                       shape: BoxShape.circle,
                     ),

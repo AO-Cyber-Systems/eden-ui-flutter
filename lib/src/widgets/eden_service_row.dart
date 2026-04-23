@@ -84,7 +84,7 @@ class EdenServiceRow extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
@@ -100,7 +100,7 @@ class EdenServiceRow extends StatelessWidget {
       child: Row(
         children: [
           _StatusDot(status: status),
-          SizedBox(width: EdenSpacing.space3),
+          const SizedBox(width: EdenSpacing.space3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +113,7 @@ class EdenServiceRow extends StatelessWidget {
                   ),
                 ),
                 if (description != null) ...[
-                  SizedBox(height: EdenSpacing.space1),
+                  const SizedBox(height: EdenSpacing.space1),
                   Text(
                     description!,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -125,10 +125,10 @@ class EdenServiceRow extends StatelessWidget {
             ),
           ),
           if (version != null) ...[
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
             _VersionBadge(version: version!, isDark: isDark),
           ],
-          SizedBox(width: EdenSpacing.space3),
+          const SizedBox(width: EdenSpacing.space3),
           if (loading)
             SizedBox(
               width: 16,
@@ -207,7 +207,7 @@ class _VersionBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1,
       ),
@@ -263,7 +263,7 @@ class _ActionButtons extends StatelessWidget {
               onPressed: onStop!,
             ),
           if (onRestart != null) ...[
-            SizedBox(width: EdenSpacing.space1),
+            const SizedBox(width: EdenSpacing.space1),
             _ActionButton(
               icon: Icons.refresh_rounded,
               color: EdenColors.warning,
@@ -301,7 +301,7 @@ class _ActionButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: EdenRadii.borderRadiusSm,
           child: Padding(
-            padding: EdgeInsets.all(EdenSpacing.space1),
+            padding: const EdgeInsets.all(EdenSpacing.space1),
             child: Icon(icon, size: 18, color: color),
           ),
         ),

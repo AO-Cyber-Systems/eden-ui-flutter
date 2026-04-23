@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../eden_ui.dart';
-import '../widgets/section.dart';
 
 /// Showcase screen for the EdenDiagram component.
 class DiagramScreen extends StatefulWidget {

@@ -5,7 +5,7 @@ import '../../tokens/spacing.dart';
 import '../eden_permission_matrix.dart';
 
 class RoleHeaderRow extends StatelessWidget {
-  const RoleHeaderRow({
+  const RoleHeaderRow({super.key, 
     required this.roles,
     required this.isDark,
     required this.theme,
@@ -89,7 +89,7 @@ class RoleHeaderRow extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class CategoryHeaderRow extends StatelessWidget {
-  const CategoryHeaderRow({
+  const CategoryHeaderRow({super.key, 
     required this.category,
     required this.roles,
     required this.collapsed,
@@ -196,7 +196,7 @@ class CategoryHeaderRow extends StatelessWidget {
 }
 
 class CategoryToggleButton extends StatelessWidget {
-  const CategoryToggleButton({
+  const CategoryToggleButton({super.key, 
     required this.allGranted,
     required this.roleColor,
     required this.onTap,
@@ -238,7 +238,7 @@ class CategoryToggleButton extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class PermissionRow extends StatelessWidget {
-  const PermissionRow({
+  const PermissionRow({super.key, 
     required this.permission,
     required this.roles,
     required this.isDark,
@@ -323,7 +323,7 @@ class PermissionRow extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class PermissionCell extends StatelessWidget {
-  const PermissionCell({
+  const PermissionCell({super.key, 
     required this.state,
     required this.changed,
     required this.width,

@@ -128,7 +128,7 @@ class EdenProjectCard extends StatelessWidget {
             onTap: onTap,
             borderRadius: EdenRadii.borderRadiusLg,
             child: Padding(
-              padding: EdgeInsets.all(EdenSpacing.space4),
+              padding: const EdgeInsets.all(EdenSpacing.space4),
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -144,7 +144,7 @@ class EdenProjectCard extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Expanded(
                       child: Text(
                         name,
@@ -155,20 +155,20 @@ class EdenProjectCard extends StatelessWidget {
                       ),
                     ),
                     if (framework != null) ...[
-                      SizedBox(width: EdenSpacing.space2),
+                      const SizedBox(width: EdenSpacing.space2),
                       _FrameworkBadge(
                         label: framework!,
                         color: _frameworkBadgeColor(),
                       ),
                     ],
                     if (hasDevflow) ...[
-                      SizedBox(width: EdenSpacing.space2),
+                      const SizedBox(width: EdenSpacing.space2),
                       _DevflowBadge(isDark: isDark),
                     ],
                   ],
                 ),
 
-                SizedBox(height: EdenSpacing.space2),
+                const SizedBox(height: EdenSpacing.space2),
 
                 // Path row
                 Text(
@@ -181,7 +181,7 @@ class EdenProjectCard extends StatelessWidget {
                   maxLines: 1,
                 ),
 
-                SizedBox(height: EdenSpacing.space3),
+                const SizedBox(height: EdenSpacing.space3),
 
                 // Bottom row: quick action icon buttons
                 Row(
@@ -192,21 +192,21 @@ class EdenProjectCard extends StatelessWidget {
                       onPressed: onOpenTerminal,
                       isDark: isDark,
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     _ActionIconButton(
                       icon: Icons.code,
                       tooltip: 'Open Editor',
                       onPressed: onOpenEditor,
                       isDark: isDark,
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     _ActionIconButton(
                       icon: Icons.folder_open,
                       tooltip: 'Open Finder',
                       onPressed: onOpenFinder,
                       isDark: isDark,
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     _ActionIconButton(
                       icon: Icons.article_outlined,
                       tooltip: 'Open Logs',
@@ -237,7 +237,7 @@ class _FrameworkBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -265,9 +265,9 @@ class _DevflowBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = EdenColors.info;
+    const color = EdenColors.info;
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space1,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -275,7 +275,7 @@ class _DevflowBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.12),
         borderRadius: EdenRadii.borderRadiusSm,
       ),
-      child: Text(
+      child: const Text(
         'DF',
         style: TextStyle(
           fontSize: 10,

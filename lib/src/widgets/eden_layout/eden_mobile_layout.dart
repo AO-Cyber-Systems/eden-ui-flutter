@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import 'layout_data.dart';
@@ -132,8 +131,6 @@ class EdenMobileLayout extends StatelessWidget {
   }
 
   Widget _buildDrawer(BuildContext context, ThemeData theme, List<EdenNavItem> flat) {
-    final isDark = theme.brightness == Brightness.dark;
-
     return Drawer(
       child: SafeArea(
         child: Column(

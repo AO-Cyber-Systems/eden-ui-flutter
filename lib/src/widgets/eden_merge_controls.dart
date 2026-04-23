@@ -181,7 +181,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
 
           // Merge button row
           Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
+            padding: const EdgeInsets.all(EdenSpacing.space4),
             child: Row(
               children: [
                 Expanded(
@@ -192,7 +192,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
                     onPressed: widget.onMerge,
                   ),
                 ),
-                SizedBox(width: 1),
+                const SizedBox(width: 1),
                 _StrategyDropdownButton(
                   enabled: canMerge,
                   isOpen: _strategyDropdownOpen,
@@ -210,7 +210,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
           if (_strategyDropdownOpen) ...[
             Divider(color: borderColor, height: 1),
             Padding(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space4,
                 vertical: EdenSpacing.space2,
               ),
@@ -237,7 +237,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
           // Disabled reason
           if (!canMerge && _disabledReason() != null) ...[
             Padding(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space4,
               ),
               child: Text(
@@ -248,14 +248,14 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
                 ),
               ),
             ),
-            SizedBox(height: EdenSpacing.space3),
+            const SizedBox(height: EdenSpacing.space3),
           ],
 
           Divider(color: borderColor, height: 1),
 
           // Requirements checklist
           Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
+            padding: const EdgeInsets.all(EdenSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -270,7 +270,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: EdenSpacing.space2),
+                const SizedBox(height: EdenSpacing.space2),
 
                 // CI status
                 _RequirementRow(
@@ -311,7 +311,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
           if (widget.onAutoMergeToggled != null) ...[
             Divider(color: borderColor, height: 1),
             Padding(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space4,
                 vertical: EdenSpacing.space3,
               ),
@@ -328,7 +328,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        SizedBox(height: EdenSpacing.space1 / 2),
+                        const SizedBox(height: EdenSpacing.space1 / 2),
                         Text(
                           'Merge automatically when all requirements are met',
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -341,7 +341,7 @@ class _EdenMergeControlsState extends State<EdenMergeControls> {
                       ],
                     ),
                   ),
-                  SizedBox(width: EdenSpacing.space2),
+                  const SizedBox(width: EdenSpacing.space2),
                   SizedBox(
                     height: 24,
                     child: Switch(
@@ -371,25 +371,25 @@ class _ConflictBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
       decoration: BoxDecoration(
         color: EdenColors.warning.withValues(alpha: isDark ? 0.12 : 0.08),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(EdenRadii.lg),
           topRight: Radius.circular(EdenRadii.lg),
         ),
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.warning_amber_rounded,
             size: 18,
             color: EdenColors.warning,
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
           Expanded(
             child: Text(
               'This branch has conflicts that must be resolved',
@@ -435,18 +435,18 @@ class _MergeButton extends StatelessWidget {
 
     return Material(
       color: bgColor,
-      borderRadius: BorderRadius.only(
+      borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(EdenRadii.md),
         bottomLeft: Radius.circular(EdenRadii.md),
       ),
       child: InkWell(
         onTap: enabled ? onPressed : null,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(EdenRadii.md),
           bottomLeft: Radius.circular(EdenRadii.md),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space4,
             vertical: EdenSpacing.space2,
           ),
@@ -459,10 +459,10 @@ class _MergeButton extends StatelessWidget {
                 size: 16,
                 color: Colors.white,
               ),
-              SizedBox(width: EdenSpacing.space2),
+              const SizedBox(width: EdenSpacing.space2),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -493,18 +493,18 @@ class _StrategyDropdownButton extends StatelessWidget {
 
     return Material(
       color: bgColor,
-      borderRadius: BorderRadius.only(
+      borderRadius: const BorderRadius.only(
         topRight: Radius.circular(EdenRadii.md),
         bottomRight: Radius.circular(EdenRadii.md),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topRight: Radius.circular(EdenRadii.md),
           bottomRight: Radius.circular(EdenRadii.md),
         ),
         child: Container(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space2,
             vertical: EdenSpacing.space2,
           ),
@@ -551,7 +551,7 @@ class _StrategyOption extends StatelessWidget {
         onTap: onTap,
         borderRadius: EdenRadii.borderRadiusSm,
         child: Padding(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space2,
             vertical: EdenSpacing.space2,
           ),
@@ -568,7 +568,7 @@ class _StrategyOption extends StatelessWidget {
                         ? EdenColors.neutral[400]!
                         : EdenColors.neutral[500]!),
               ),
-              SizedBox(width: EdenSpacing.space2),
+              const SizedBox(width: EdenSpacing.space2),
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -597,7 +597,7 @@ class _RequirementRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: EdenSpacing.space2),
+      padding: const EdgeInsets.only(bottom: EdenSpacing.space2),
       child: Row(
         children: [
           Icon(
@@ -605,7 +605,7 @@ class _RequirementRow extends StatelessWidget {
             size: 16,
             color: passed ? EdenColors.success : EdenColors.error,
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
           Expanded(
             child: Text(
               label,

@@ -50,7 +50,7 @@ class AvatarsScreen extends StatelessWidget {
                 EdenAvatar(initials: 'CD', backgroundColor: EdenColors.emerald[100]),
                 EdenAvatar(initials: 'EF', backgroundColor: EdenColors.purple[100]),
                 EdenAvatar(initials: 'GH', backgroundColor: EdenColors.red[100]),
-                EdenAvatar(initials: '?'),
+                const EdenAvatar(initials: '?'),
               ],
             ),
           ),

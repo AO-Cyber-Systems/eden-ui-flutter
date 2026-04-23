@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
-import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
 /// Showcase screen for batch 3 compound / application-level components.
@@ -29,7 +28,7 @@ class _CompoundScreenState extends State<CompoundScreen> {
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
           // Kanban
-          Section(
+          const Section(
             title: 'KANBAN BOARD',
             child: SizedBox(
               height: 400,
@@ -87,7 +86,7 @@ class _CompoundScreenState extends State<CompoundScreen> {
           ),
 
           // Timeline
-          Section(
+          const Section(
             title: 'TIMELINE',
             child: EdenTimeline(
               items: [
@@ -163,9 +162,9 @@ class _CompoundScreenState extends State<CompoundScreen> {
           ),
 
           // Code Block
-          Section(
+          const Section(
             title: 'CODE BLOCK',
-            child: const EdenCodeBlock(
+            child: EdenCodeBlock(
               language: 'dart',
               code: 'void main() {\n  runApp(const MyApp());\n}\n\nclass MyApp extends StatelessWidget {\n  const MyApp({super.key});\n\n  @override\n  Widget build(BuildContext context) {\n    return MaterialApp(\n      home: Scaffold(),\n    );\n  }\n}',
               lineNumbers: true,
@@ -173,13 +172,13 @@ class _CompoundScreenState extends State<CompoundScreen> {
           ),
 
           // Kbd
-          Section(
+          const Section(
             title: 'KEYBOARD SHORTCUTS',
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
-              children: const [
+              children: [
                 EdenKbd('⌘'),
                 EdenKbd('K'),
                 SizedBox(width: 16),
@@ -193,12 +192,12 @@ class _CompoundScreenState extends State<CompoundScreen> {
           ),
 
           // Indicator
-          Section(
+          const Section(
             title: 'STATUS INDICATOR',
             child: Wrap(
               spacing: 24,
               runSpacing: 12,
-              children: const [
+              children: [
                 EdenIndicator(variant: EdenIndicatorVariant.success, label: 'Online'),
                 EdenIndicator(variant: EdenIndicatorVariant.warning, label: 'Away'),
                 EdenIndicator(variant: EdenIndicatorVariant.danger, label: 'Busy', ping: true),
@@ -220,9 +219,9 @@ class _CompoundScreenState extends State<CompoundScreen> {
           ),
 
           // Typing Indicator
-          Section(
+          const Section(
             title: 'TYPING INDICATOR',
-            child: const EdenTypingIndicator(),
+            child: EdenTypingIndicator(),
           ),
 
           // Notification List
@@ -230,14 +229,14 @@ class _CompoundScreenState extends State<CompoundScreen> {
             title: 'NOTIFICATION LIST',
             child: EdenNotificationList(
               notifications: [
-                EdenNotificationItemData(
+                const EdenNotificationItemData(
                   title: 'New comment on your post',
                   body: 'John replied to your discussion thread.',
                   time: '2m ago',
                   icon: Icons.comment,
                   variant: EdenNotificationVariant.info,
                 ),
-                EdenNotificationItemData(
+                const EdenNotificationItemData(
                   title: 'Deployment successful',
                   body: 'v2.1.0 deployed to production.',
                   time: '15m ago',
@@ -245,7 +244,7 @@ class _CompoundScreenState extends State<CompoundScreen> {
                   variant: EdenNotificationVariant.success,
                   read: true,
                 ),
-                EdenNotificationItemData(
+                const EdenNotificationItemData(
                   title: 'Storage limit warning',
                   body: 'You have used 90% of your storage.',
                   time: '1h ago',
@@ -259,7 +258,7 @@ class _CompoundScreenState extends State<CompoundScreen> {
           ),
 
           // Carousel
-          Section(
+          const Section(
             title: 'CAROUSEL',
             child: EdenCarousel(
               height: 180,

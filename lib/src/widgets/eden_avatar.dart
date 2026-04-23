@@ -90,15 +90,15 @@ class EdenAvatar extends StatelessWidget {
   _AvatarSizing _resolveSizing() {
     switch (size) {
       case EdenAvatarSize.xs:
-        return _AvatarSizing(12, 10, 8);
+        return const _AvatarSizing(12, 10, 8);
       case EdenAvatarSize.sm:
-        return _AvatarSizing(16, 11, 10);
+        return const _AvatarSizing(16, 11, 10);
       case EdenAvatarSize.md:
-        return _AvatarSizing(20, 13, 12);
+        return const _AvatarSizing(20, 13, 12);
       case EdenAvatarSize.lg:
-        return _AvatarSizing(24, 15, 14);
+        return const _AvatarSizing(24, 15, 14);
       case EdenAvatarSize.xl:
-        return _AvatarSizing(32, 18, 16);
+        return const _AvatarSizing(32, 18, 16);
     }
   }
 }

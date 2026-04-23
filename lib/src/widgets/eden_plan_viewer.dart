@@ -184,7 +184,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
         borderRadius: EdenRadii.borderRadiusLg,
       ),
       child: Padding(
-        padding: EdgeInsets.all(EdenSpacing.space4),
+        padding: const EdgeInsets.all(EdenSpacing.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -197,7 +197,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: EdenSpacing.space2),
+              const SizedBox(height: EdenSpacing.space2),
             ],
 
             // Progress bar
@@ -212,12 +212,12 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                       backgroundColor: isDark
                           ? EdenColors.neutral[700]
                           : EdenColors.neutral[200],
-                      valueColor: AlwaysStoppedAnimation<Color>(
+                      valueColor: const AlwaysStoppedAnimation<Color>(
                           EdenColors.success),
                     ),
                   ),
                 ),
-                SizedBox(width: EdenSpacing.space2),
+                const SizedBox(width: EdenSpacing.space2),
                 Text(
                   '${_completedCount()} / ${widget.steps.length}',
                   style: theme.textTheme.bodySmall
@@ -226,7 +226,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
               ],
             ),
 
-            SizedBox(height: EdenSpacing.space4),
+            const SizedBox(height: EdenSpacing.space4),
 
             // Step list
             ...widget.steps.map((step) => _buildStep(
@@ -239,7 +239,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
 
             // Action buttons
             if (widget.onApprove != null || widget.onReject != null) ...[
-              SizedBox(height: EdenSpacing.space4),
+              const SizedBox(height: EdenSpacing.space4),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -252,7 +252,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                       filled: false,
                     ),
                   if (widget.onReject != null && widget.onApprove != null)
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                   if (widget.onApprove != null)
                     _PlanActionButton(
                       label: 'Approve Plan',
@@ -303,7 +303,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
               },
               borderRadius: EdenRadii.borderRadiusSm,
               child: Padding(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   vertical: EdenSpacing.space1,
                   horizontal: EdenSpacing.space1,
                 ),
@@ -313,7 +313,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                     // Status icon
                     Icon(_statusIcon(step.status),
                         size: 18, color: statusColor),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
 
                     // Step number
                     Text(
@@ -323,7 +323,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                         color: statusColor,
                       ),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
 
                     // Title and meta
                     Expanded(
@@ -342,7 +342,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                             ),
                           ),
                           if (step.description != null) ...[
-                            SizedBox(height: EdenSpacing.space1 / 2),
+                            const SizedBox(height: EdenSpacing.space1 / 2),
                             Text(
                               step.description!,
                               style: theme.textTheme.bodySmall
@@ -350,7 +350,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
                             ),
                           ],
                           if (step.dependencies.isNotEmpty) ...[
-                            SizedBox(height: EdenSpacing.space1 / 2),
+                            const SizedBox(height: EdenSpacing.space1 / 2),
                             Text(
                               'depends on ${step.dependencies.map((d) => '#$d').join(', ')}',
                               style: TextStyle(
@@ -366,9 +366,9 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
 
                     // Effort badge
                     if (step.estimatedEffort != null) ...[
-                      SizedBox(width: EdenSpacing.space2),
+                      const SizedBox(width: EdenSpacing.space2),
                       Container(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: EdenSpacing.space2,
                           vertical: EdenSpacing.space1 / 2,
                         ),
@@ -389,7 +389,7 @@ class _EdenPlanViewerState extends State<EdenPlanViewer> {
 
                     // Expand/collapse chevron
                     if (hasSubsteps) ...[
-                      SizedBox(width: EdenSpacing.space1),
+                      const SizedBox(width: EdenSpacing.space1),
                       Icon(
                         isExpanded
                             ? Icons.expand_less
@@ -447,7 +447,7 @@ class _PlanActionButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: EdenRadii.borderRadiusSm,
         child: Container(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space3,
             vertical: EdenSpacing.space2,
           ),

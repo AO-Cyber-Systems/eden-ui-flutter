@@ -27,7 +27,7 @@ class _DevflowToolsScreenState extends State<DevflowToolsScreen> {
     ),
   ];
 
-  String _secretValue = 'sk-ant-1234567890abcdef';
+  final String _secretValue = 'sk-ant-1234567890abcdef';
   String _customToken = '';
 
   @override
@@ -99,7 +99,7 @@ class _DevflowToolsScreenState extends State<DevflowToolsScreen> {
             title: 'PACKAGES',
             child: Column(
               children: [
-                EdenPackageRow(
+                const EdenPackageRow(
                   name: 'ruby',
                   currentVersion: '3.3.0',
                   type: EdenPackageType.formula,
@@ -113,7 +113,7 @@ class _DevflowToolsScreenState extends State<DevflowToolsScreen> {
                   outdated: true,
                   onUpgrade: () {},
                 ),
-                EdenPackageRow(
+                const EdenPackageRow(
                   name: 'redis',
                   currentVersion: '7.2.4',
                   type: EdenPackageType.formula,
@@ -155,10 +155,10 @@ class _DevflowToolsScreenState extends State<DevflowToolsScreen> {
           ),
 
           // Key Value Table
-          Section(
+          const Section(
             title: 'KEY VALUE TABLE',
             child: EdenKeyValueTable(
-              items: const [
+              items: [
                 EdenKeyValue(
                   key: 'user.name',
                   value: 'Justin',

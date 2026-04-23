@@ -98,11 +98,11 @@ class EdenBadge extends StatelessWidget {
   _BadgeSizing _resolveSizing() {
     switch (size) {
       case EdenBadgeSize.sm:
-        return _BadgeSizing(const EdgeInsets.symmetric(horizontal: 8, vertical: 2), 11, 12, 4);
+        return const _BadgeSizing(EdgeInsets.symmetric(horizontal: 8, vertical: 2), 11, 12, 4);
       case EdenBadgeSize.md:
-        return _BadgeSizing(const EdgeInsets.symmetric(horizontal: 10, vertical: 3), 12, 14, 4);
+        return const _BadgeSizing(EdgeInsets.symmetric(horizontal: 10, vertical: 3), 12, 14, 4);
       case EdenBadgeSize.lg:
-        return _BadgeSizing(const EdgeInsets.symmetric(horizontal: 12, vertical: 4), 13, 16, 6);
+        return const _BadgeSizing(EdgeInsets.symmetric(horizontal: 12, vertical: 4), 13, 16, 6);
     }
   }
 }

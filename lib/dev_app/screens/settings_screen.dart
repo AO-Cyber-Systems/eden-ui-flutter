@@ -22,16 +22,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
-          EdenPageHeader(
+          const EdenPageHeader(
             title: 'Settings',
             description: 'Manage your account preferences.',
           ),
 
-          EdenSettingsSection(
+          const EdenSettingsSection(
             title: 'Profile',
             description: 'Your personal information.',
             child: Column(
-              children: const [
+              children: [
                 EdenInput(label: 'Display Name', hint: 'Enter your name'),
                 SizedBox(height: 12),
                 EdenInput(label: 'Email', hint: 'you@example.com', prefixIcon: Icons.email_outlined),

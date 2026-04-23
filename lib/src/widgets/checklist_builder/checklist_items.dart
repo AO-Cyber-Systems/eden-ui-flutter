@@ -5,7 +5,7 @@ import '../../tokens/spacing.dart';
 import '../eden_checklist_builder.dart';
 
 class TypeIcon extends StatelessWidget {
-  const TypeIcon({required this.type, required this.isDark});
+  const TypeIcon({super.key, required this.type, required this.isDark});
 
   final EdenChecklistItemType type;
   final bool isDark;
@@ -38,7 +38,7 @@ class TypeIcon extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class NoteToggle extends StatelessWidget {
-  const NoteToggle({
+  const NoteToggle({super.key, 
     required this.hasNote,
     required this.isDark,
     required this.onTap,
@@ -71,7 +71,7 @@ class NoteToggle extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class ChecklistProgressBar extends StatelessWidget {
-  const ChecklistProgressBar({
+  const ChecklistProgressBar({super.key, 
     required this.checked,
     required this.total,
     required this.percent,
@@ -117,7 +117,7 @@ class ChecklistProgressBar extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: EdenSpacing.space1),
+        const SizedBox(height: EdenSpacing.space1),
         ClipRRect(
           borderRadius: EdenRadii.borderRadiusFull,
           child: SizedBox(
@@ -139,7 +139,7 @@ class ChecklistProgressBar extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class CompletionSummary extends StatelessWidget {
-  const CompletionSummary({
+  const CompletionSummary({super.key, 
     required this.checked,
     required this.total,
     required this.percent,
@@ -183,7 +183,7 @@ class CompletionSummary extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.all(EdenSpacing.space3),
+      padding: const EdgeInsets.all(EdenSpacing.space3),
       decoration: BoxDecoration(
         color: bgColor,
         border: Border.all(color: borderColor),
@@ -192,7 +192,7 @@ class CompletionSummary extends StatelessWidget {
       child: Row(
         children: [
           Icon(statusIcon, size: 20, color: statusColor),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +205,7 @@ class CompletionSummary extends StatelessWidget {
                     color: statusColor,
                   ),
                 ),
-                SizedBox(height: EdenSpacing.space1 / 2),
+                const SizedBox(height: EdenSpacing.space1 / 2),
                 Text(
                   '${(percent * 100).round()}% complete',
                   style: theme.textTheme.bodySmall?.copyWith(

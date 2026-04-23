@@ -118,7 +118,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
         borderRadius: EdenRadii.borderRadiusLg,
       ),
       child: Padding(
-        padding: EdgeInsets.all(EdenSpacing.space4),
+        padding: const EdgeInsets.all(EdenSpacing.space4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -130,7 +130,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: EdenSpacing.space3),
+              const SizedBox(height: EdenSpacing.space3),
             ],
             ...List.generate(widget.decisions.length, (i) {
               final isLast = i == widget.decisions.length - 1;
@@ -175,7 +175,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                 Container(
                   width: 10,
                   height: 10,
-                  margin: EdgeInsets.only(top: EdenSpacing.space1),
+                  margin: const EdgeInsets.only(top: EdenSpacing.space1),
                   decoration: BoxDecoration(
                     color: confidenceColor,
                     shape: BoxShape.circle,
@@ -192,7 +192,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
             ),
           ),
 
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
 
           // Content
           Expanded(
@@ -209,7 +209,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                   },
                   borderRadius: EdenRadii.borderRadiusSm,
                   child: Padding(
-                    padding: EdgeInsets.all(EdenSpacing.space1),
+                    padding: const EdgeInsets.all(EdenSpacing.space1),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -224,7 +224,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                                 color: mutedColor,
                               ),
                             ),
-                            SizedBox(width: EdenSpacing.space2),
+                            const SizedBox(width: EdenSpacing.space2),
                             _ConfidenceBadge(
                               label: _confidenceLabel(decision.confidence),
                               color: confidenceColor,
@@ -233,7 +233,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                           ],
                         ),
 
-                        SizedBox(height: EdenSpacing.space1),
+                        const SizedBox(height: EdenSpacing.space1),
 
                         // Decision point
                         Text(
@@ -243,11 +243,11 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                           ),
                         ),
 
-                        SizedBox(height: EdenSpacing.space1),
+                        const SizedBox(height: EdenSpacing.space1),
 
                         // Chosen action
                         Container(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: EdenSpacing.space2,
                             vertical: EdenSpacing.space1,
                           ),
@@ -258,9 +258,9 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.arrow_forward,
+                              const Icon(Icons.arrow_forward,
                                   size: 14, color: EdenColors.success),
-                              SizedBox(width: EdenSpacing.space1),
+                              const SizedBox(width: EdenSpacing.space1),
                               Flexible(
                                 child: Text(
                                   decision.chosenAction,
@@ -278,7 +278,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                         if (isExpanded) ...[
                           // Options considered
                           if (decision.optionsConsidered.isNotEmpty) ...[
-                            SizedBox(height: EdenSpacing.space2),
+                            const SizedBox(height: EdenSpacing.space2),
                             Text(
                               'Options considered:',
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -286,10 +286,10 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                                 color: mutedColor,
                               ),
                             ),
-                            SizedBox(height: EdenSpacing.space1),
+                            const SizedBox(height: EdenSpacing.space1),
                             ...decision.optionsConsidered.map(
                               (option) => Padding(
-                                padding: EdgeInsets.only(
+                                padding: const EdgeInsets.only(
                                     left: EdenSpacing.space2,
                                     bottom: EdenSpacing.space1 / 2),
                                 child: Row(
@@ -315,7 +315,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
 
                           // Reasoning
                           if (decision.reasoning != null) ...[
-                            SizedBox(height: EdenSpacing.space2),
+                            const SizedBox(height: EdenSpacing.space2),
                             Text(
                               'Reasoning:',
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -323,7 +323,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                                 color: mutedColor,
                               ),
                             ),
-                            SizedBox(height: EdenSpacing.space1 / 2),
+                            const SizedBox(height: EdenSpacing.space1 / 2),
                             Text(
                               decision.reasoning!,
                               style: theme.textTheme.bodySmall
@@ -337,7 +337,7 @@ class _EdenAgentDecisionLogState extends State<EdenAgentDecisionLog> {
                             decision.reasoning != null)
                           Padding(
                             padding:
-                                EdgeInsets.only(top: EdenSpacing.space1),
+                                const EdgeInsets.only(top: EdenSpacing.space1),
                             child: Icon(
                               isExpanded
                                   ? Icons.expand_less
@@ -377,7 +377,7 @@ class _ConfidenceBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -401,7 +401,7 @@ class _ConfidenceBadge extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: EdenSpacing.space1),
+          const SizedBox(width: EdenSpacing.space1),
           Text(
             label,
             style: TextStyle(

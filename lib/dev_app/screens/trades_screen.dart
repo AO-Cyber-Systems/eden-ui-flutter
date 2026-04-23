@@ -476,7 +476,7 @@ class _TradesScreenState extends State<TradesScreen> {
               onSignatureChanged: (strokes) {},
             ),
           ),
-          Section(
+          const Section(
             title: 'SIGNATURE PAD — Read-only (Captured)',
             child: EdenSignaturePad(
               height: 140,
@@ -485,16 +485,16 @@ class _TradesScreenState extends State<TradesScreen> {
               initialStrokes: [
                 EdenSignatureStroke(
                   points: [
-                    const EdenSignaturePoint(20, 100),
-                    const EdenSignaturePoint(40, 60),
-                    const EdenSignaturePoint(60, 80),
-                    const EdenSignaturePoint(80, 40),
-                    const EdenSignaturePoint(110, 70),
-                    const EdenSignaturePoint(140, 50),
-                    const EdenSignaturePoint(170, 90),
-                    const EdenSignaturePoint(200, 60),
-                    const EdenSignaturePoint(230, 80),
-                    const EdenSignaturePoint(260, 45),
+                    EdenSignaturePoint(20, 100),
+                    EdenSignaturePoint(40, 60),
+                    EdenSignaturePoint(60, 80),
+                    EdenSignaturePoint(80, 40),
+                    EdenSignaturePoint(110, 70),
+                    EdenSignaturePoint(140, 50),
+                    EdenSignaturePoint(170, 90),
+                    EdenSignaturePoint(200, 60),
+                    EdenSignaturePoint(230, 80),
+                    EdenSignaturePoint(260, 45),
                   ],
                 ),
               ],
@@ -515,15 +515,15 @@ class _TradesScreenState extends State<TradesScreen> {
                   EdenWizardStep(
                     title: 'Customer Info',
                     icon: Icons.person,
-                    content: (ctx, _) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
+                    content: (ctx, _) => const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           EdenInput(label: 'Customer Name', hint: 'e.g. Robert Johnson'),
-                          const SizedBox(height: EdenSpacing.space3),
+                          SizedBox(height: EdenSpacing.space3),
                           EdenInput(label: 'Phone', hint: '(555) 123-4567'),
-                          const SizedBox(height: EdenSpacing.space3),
+                          SizedBox(height: EdenSpacing.space3),
                           EdenInput(label: 'Address', hint: '742 Evergreen Terrace'),
                         ],
                       ),
@@ -532,15 +532,15 @@ class _TradesScreenState extends State<TradesScreen> {
                   EdenWizardStep(
                     title: 'Service Details',
                     icon: Icons.build,
-                    content: (ctx, _) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
+                    content: (ctx, _) => const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           EdenInput(label: 'Service Type', hint: 'HVAC, Plumbing, Electrical...'),
-                          const SizedBox(height: EdenSpacing.space3),
+                          SizedBox(height: EdenSpacing.space3),
                           EdenInput(label: 'Issue Description', hint: 'Describe the problem...', maxLines: 3),
-                          const SizedBox(height: EdenSpacing.space3),
+                          SizedBox(height: EdenSpacing.space3),
                           EdenInput(label: 'Priority', hint: 'Normal'),
                         ],
                       ),
@@ -549,15 +549,15 @@ class _TradesScreenState extends State<TradesScreen> {
                   EdenWizardStep(
                     title: 'Schedule',
                     icon: Icons.calendar_today,
-                    content: (ctx, _) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
+                    content: (ctx, _) => const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           EdenInput(label: 'Preferred Date', hint: '03/25/2026'),
-                          const SizedBox(height: EdenSpacing.space3),
+                          SizedBox(height: EdenSpacing.space3),
                           EdenInput(label: 'Time Window', hint: 'Morning (8 AM–12 PM)'),
-                          const SizedBox(height: EdenSpacing.space3),
+                          SizedBox(height: EdenSpacing.space3),
                           EdenInput(label: 'Assigned Technician', hint: 'Auto-assign'),
                         ],
                       ),
@@ -819,12 +819,12 @@ class _TradesScreenState extends State<TradesScreen> {
               child: EdenBarcodeScanner(
                 cameraPreview: Container(
                   color: Colors.black87,
-                  child: Center(
+                  child: const Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.camera_alt, size: 48, color: Colors.white30),
-                        const SizedBox(height: EdenSpacing.space2),
+                        SizedBox(height: EdenSpacing.space2),
                         Text(
                           'Camera Preview',
                           style: TextStyle(color: Colors.white38, fontSize: 14),
@@ -856,7 +856,7 @@ class _TradesScreenState extends State<TradesScreen> {
                 onCardMoved: (cardId, from, to, index) {},
                 onCardReordered: (cardId, col, oldIdx, newIdx) {},
                 children: [
-                  EdenKanbanColumn(
+                  const EdenKanbanColumn(
                     id: 'pending',
                     title: 'Pending',
                     color: EdenKanbanColumnColor.neutral,
@@ -866,20 +866,20 @@ class _TradesScreenState extends State<TradesScreen> {
                         id: 'k1',
                         title: 'Furnace Inspection — Chen',
                         description: 'Annual maintenance check',
-                        tags: [const EdenKanbanTag(label: 'HVAC')],
+                        tags: [EdenKanbanTag(label: 'HVAC')],
                         priority: EdenKanbanPriority.low,
                         dueDate: 'Mar 25',
                       ),
                       EdenKanbanCard(
                         id: 'k2',
                         title: 'Faucet Replacement — Brown',
-                        tags: [const EdenKanbanTag(label: 'Plumbing')],
+                        tags: [EdenKanbanTag(label: 'Plumbing')],
                         priority: EdenKanbanPriority.medium,
                         dueDate: 'Mar 26',
                       ),
                     ],
                   ),
-                  EdenKanbanColumn(
+                  const EdenKanbanColumn(
                     id: 'scheduled',
                     title: 'Scheduled',
                     color: EdenKanbanColumnColor.primary,
@@ -889,7 +889,7 @@ class _TradesScreenState extends State<TradesScreen> {
                         id: 'k3',
                         title: 'Panel Upgrade — Martin',
                         description: '200A service upgrade',
-                        tags: [const EdenKanbanTag(label: 'Electrical')],
+                        tags: [EdenKanbanTag(label: 'Electrical')],
                         priority: EdenKanbanPriority.high,
                         assigneeInitials: ['SK'],
                         dueDate: 'Mar 24',
@@ -897,14 +897,14 @@ class _TradesScreenState extends State<TradesScreen> {
                       EdenKanbanCard(
                         id: 'k4',
                         title: 'Water Heater — Garcia',
-                        tags: [const EdenKanbanTag(label: 'Plumbing')],
+                        tags: [EdenKanbanTag(label: 'Plumbing')],
                         priority: EdenKanbanPriority.medium,
                         assigneeInitials: ['DR'],
                         dueDate: 'Mar 24',
                       ),
                     ],
                   ),
-                  EdenKanbanColumn(
+                  const EdenKanbanColumn(
                     id: 'in_progress',
                     title: 'In Progress',
                     color: EdenKanbanColumnColor.warning,
@@ -914,14 +914,14 @@ class _TradesScreenState extends State<TradesScreen> {
                         id: 'k5',
                         title: 'HVAC Compressor — Johnson',
                         description: 'Replacing condenser unit',
-                        tags: [const EdenKanbanTag(label: 'HVAC'), const EdenKanbanTag(label: 'Urgent')],
+                        tags: [EdenKanbanTag(label: 'HVAC'), EdenKanbanTag(label: 'Urgent')],
                         priority: EdenKanbanPriority.high,
                         assigneeInitials: ['MT'],
                         dueDate: 'Today',
                       ),
                     ],
                   ),
-                  EdenKanbanColumn(
+                  const EdenKanbanColumn(
                     id: 'completed',
                     title: 'Completed',
                     color: EdenKanbanColumnColor.success,
@@ -930,7 +930,7 @@ class _TradesScreenState extends State<TradesScreen> {
                       EdenKanbanCard(
                         id: 'k6',
                         title: 'Pipe Burst Repair — Adams',
-                        tags: [const EdenKanbanTag(label: 'Emergency')],
+                        tags: [EdenKanbanTag(label: 'Emergency')],
                         priority: EdenKanbanPriority.high,
                         assigneeInitials: ['DR'],
                         dueDate: 'Mar 21',

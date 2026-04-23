@@ -101,7 +101,7 @@ class EdenObjectiveProgress extends StatelessWidget {
               onTap: onToggleExpand,
               borderRadius: EdenRadii.borderRadiusLg,
               child: Padding(
-                padding: EdgeInsets.all(EdenSpacing.space4),
+                padding: const EdgeInsets.all(EdenSpacing.space4),
                 child: Row(
                   children: [
                     Expanded(
@@ -114,10 +114,10 @@ class EdenObjectiveProgress extends StatelessWidget {
                       ),
                     ),
                     if (statusLabel != null) ...[
-                      SizedBox(width: EdenSpacing.space2),
+                      const SizedBox(width: EdenSpacing.space2),
                       _StatusBadge(label: statusLabel!, isDark: isDark),
                     ],
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     AnimatedRotation(
                       turns: expanded ? 0.5 : 0.0,
                       duration: const Duration(milliseconds: 200),
@@ -135,12 +135,12 @@ class EdenObjectiveProgress extends StatelessWidget {
 
           // Progress bar and summary text
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
+            padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _SegmentedProgressBar(jobs: jobs, isDark: isDark),
-                SizedBox(height: EdenSpacing.space2),
+                const SizedBox(height: EdenSpacing.space2),
                 Row(
                   children: [
                     Text(
@@ -164,7 +164,7 @@ class EdenObjectiveProgress extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
 
           // Expanded job list
           if (expanded) ...[
@@ -173,12 +173,12 @@ class EdenObjectiveProgress extends StatelessWidget {
               color: borderColor,
             ),
             Padding(
-              padding: EdgeInsets.all(EdenSpacing.space4),
+              padding: const EdgeInsets.all(EdenSpacing.space4),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   for (int i = 0; i < jobs.length; i++) ...[
-                    if (i > 0) SizedBox(height: EdenSpacing.space2),
+                    if (i > 0) const SizedBox(height: EdenSpacing.space2),
                     _JobRow(job: jobs[i], isDark: isDark),
                   ],
                 ],
@@ -210,7 +210,7 @@ class _StatusBadge extends StatelessWidget {
         : EdenColors.neutral[600]!;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -344,7 +344,7 @@ class _JobRow extends StatelessWidget {
           size: 18,
           color: color,
         ),
-        SizedBox(width: EdenSpacing.space2),
+        const SizedBox(width: EdenSpacing.space2),
         Expanded(
           child: Text(
             job.name,
@@ -352,7 +352,7 @@ class _JobRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        SizedBox(width: EdenSpacing.space2),
+        const SizedBox(width: EdenSpacing.space2),
         Text(
           _labelForState(job.state),
           style: TextStyle(

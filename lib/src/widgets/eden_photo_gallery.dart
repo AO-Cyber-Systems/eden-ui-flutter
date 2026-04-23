@@ -269,7 +269,7 @@ class _EdenPhotoGalleryState extends State<EdenPhotoGallery> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: itemCount,
-        separatorBuilder: (_, __) => SizedBox(width: EdenSpacing.space2),
+        separatorBuilder: (_, __) => const SizedBox(width: EdenSpacing.space2),
         itemBuilder: (context, index) {
           if (index == widget.photos.length && widget.showAddButton) {
             return SizedBox(
@@ -425,7 +425,7 @@ class _PhotoTileState extends State<_PhotoTile> {
                   right: 0,
                   bottom: 0,
                   child: Container(
-                    padding: EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: EdenSpacing.space1,
                       vertical: EdenSpacing.space1 / 2,
                     ),
@@ -589,11 +589,11 @@ class _SelectionToolbar extends StatelessWidget {
         isDark ? EdenColors.neutral[800]! : EdenColors.neutral[100]!;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space3,
         vertical: EdenSpacing.space2,
       ),
-      margin: EdgeInsets.only(bottom: EdenSpacing.space2),
+      margin: const EdgeInsets.only(bottom: EdenSpacing.space2),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: EdenRadii.borderRadiusMd,
@@ -610,13 +610,13 @@ class _SelectionToolbar extends StatelessWidget {
           if (onDelete != null)
             TextButton.icon(
               onPressed: onDelete,
-              icon: Icon(Icons.delete_outline, size: 18, color: EdenColors.error),
-              label: Text(
+              icon: const Icon(Icons.delete_outline, size: 18, color: EdenColors.error),
+              label: const Text(
                 'Delete',
                 style: TextStyle(color: EdenColors.error),
               ),
             ),
-          SizedBox(width: EdenSpacing.space1),
+          const SizedBox(width: EdenSpacing.space1),
           TextButton(
             onPressed: onClear,
             child: const Text('Cancel'),
@@ -651,18 +651,18 @@ class _EmptyState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: EdenSpacing.space12),
+        padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space12),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.camera_alt_outlined, size: 48, color: iconColor),
-            SizedBox(height: EdenSpacing.space3),
+            const SizedBox(height: EdenSpacing.space3),
             Text(
               message,
               style: theme.textTheme.bodyLarge?.copyWith(color: iconColor),
             ),
             if (onAdd != null) ...[
-              SizedBox(height: EdenSpacing.space4),
+              const SizedBox(height: EdenSpacing.space4),
               OutlinedButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_a_photo_outlined, size: 18),
@@ -754,7 +754,7 @@ class _EdenLightboxState extends State<_EdenLightbox> {
             right: 0,
             child: SafeArea(
               child: Container(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: EdenSpacing.space3,
                   vertical: EdenSpacing.space2,
                 ),
@@ -798,7 +798,7 @@ class _EdenLightboxState extends State<_EdenLightbox> {
               bottom: 0,
               child: SafeArea(
                 child: Container(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: EdenSpacing.space4,
                     vertical: EdenSpacing.space3,
                   ),

@@ -3,7 +3,7 @@ import '../../eden_ui.dart';
 
 /// Shared nav items used by both desktop and mobile layout demos.
 final _navItems = [
-  EdenNavItem(
+  const EdenNavItem(
     id: '__main__',
     label: 'Main',
     icon: Icons.apps,
@@ -14,7 +14,7 @@ final _navItems = [
       EdenNavItem(id: 'calendar', label: 'Calendar', icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today),
     ],
   ),
-  EdenNavItem(
+  const EdenNavItem(
     id: '__manage__',
     label: 'Manage',
     icon: Icons.settings,
@@ -57,7 +57,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
             ],
             selected: {_showMobile},
             onSelectionChanged: (v) => setState(() => _showMobile = v.first),
-            style: ButtonStyle(
+            style: const ButtonStyle(
               visualDensity: VisualDensity.compact,
               textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12)),
             ),
@@ -79,7 +79,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
         children: [
           Icon(Icons.hexagon, size: 24, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 8),
-          Text('Acme App', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text('Acme App', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         ],
       ),
       collapsedLogo: Icon(Icons.hexagon, size: 24, color: Theme.of(context).colorScheme.primary),
@@ -129,7 +129,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
                 children: [
                   Icon(Icons.hexagon, size: 22, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(width: 8),
-                  Text('Acme App', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                  const Text('Acme App', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                 ],
               ),
               topBar: EdenTopBarConfig(
@@ -178,7 +178,7 @@ class _PageContent extends StatelessWidget {
         ),
         const SizedBox(height: EdenSpacing.space4),
         // Sample stat cards
-        Wrap(
+        const Wrap(
           spacing: EdenSpacing.space3,
           runSpacing: EdenSpacing.space3,
           children: [

@@ -169,7 +169,7 @@ class EdenToolCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle, size: 14, color: EdenColors.success),
+            const Icon(Icons.check_circle, size: 14, color: EdenColors.success),
             const SizedBox(width: 4),
             Text(
               'Installed',
@@ -262,8 +262,8 @@ class EdenToolCard extends StatelessWidget {
           const SizedBox(width: EdenSpacing.space2),
           TextButton.icon(
             onPressed: onRemove,
-            icon: Icon(Icons.delete_outline, size: 16, color: EdenColors.error),
-            label: Text(
+            icon: const Icon(Icons.delete_outline, size: 16, color: EdenColors.error),
+            label: const Text(
               'Remove',
               style: TextStyle(color: EdenColors.error),
             ),

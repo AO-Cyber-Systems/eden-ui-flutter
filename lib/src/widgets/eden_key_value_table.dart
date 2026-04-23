@@ -118,7 +118,7 @@ class EdenKeyValueTable extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: EdenSpacing.space3),
+          const SizedBox(width: EdenSpacing.space3),
           // Value column
           Expanded(
             child: Text(
@@ -132,7 +132,7 @@ class EdenKeyValueTable extends StatelessWidget {
           ),
           // Copy button
           if (copyCallback != null) ...[
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
             IconButton(
               icon: Icon(
                 Icons.copy,

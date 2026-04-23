@@ -37,7 +37,7 @@ class _InputsScreenState extends State<InputsScreen> {
             ],
           ),
           const SizedBox(height: EdenSpacing.space4),
-          Section(
+          const Section(
             title: 'Basic Input',
             child: EdenInput(
               label: 'Email',
@@ -58,7 +58,7 @@ class _InputsScreenState extends State<InputsScreen> {
               )).toList(),
             ),
           ),
-          Section(
+          const Section(
             title: 'With Helper Text',
             child: EdenInput(
               label: 'Username',
@@ -66,7 +66,7 @@ class _InputsScreenState extends State<InputsScreen> {
               helperText: 'Must be at least 3 characters.',
             ),
           ),
-          Section(
+          const Section(
             title: 'Error State',
             child: EdenInput(
               label: 'Password',
@@ -76,7 +76,7 @@ class _InputsScreenState extends State<InputsScreen> {
               suffixIcon: Icons.visibility_off,
             ),
           ),
-          Section(
+          const Section(
             title: 'Disabled Input',
             child: EdenInput(
               label: 'Read-only',
@@ -84,7 +84,7 @@ class _InputsScreenState extends State<InputsScreen> {
               enabled: false,
             ),
           ),
-          Section(
+          const Section(
             title: 'Textarea',
             child: EdenInput(
               label: 'Message',
@@ -110,7 +110,7 @@ class _InputsScreenState extends State<InputsScreen> {
                   label: 'Dark mode',
                 ),
                 const SizedBox(height: 8),
-                EdenToggle(
+                const EdenToggle(
                   value: false,
                   onChanged: null,
                   label: 'Disabled toggle',

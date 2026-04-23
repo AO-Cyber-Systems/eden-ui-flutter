@@ -1,6 +1,4 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../tokens/colors.dart';
 
 class ViewfinderPainter extends CustomPainter {
   ViewfinderPainter({

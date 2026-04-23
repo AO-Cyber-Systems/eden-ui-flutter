@@ -19,10 +19,10 @@ class DevflowInfraScreen extends StatelessWidget {
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
           // Live Indicator
-          Section(
+          const Section(
             title: 'LIVE INDICATOR',
             child: Row(
-              children: const [
+              children: [
                 EdenLiveIndicator(
                   state: EdenConnectionState.connected,
                   label: 'API',
@@ -59,7 +59,7 @@ class DevflowInfraScreen extends StatelessWidget {
                   status: EdenServiceStatus.stopped,
                   onStart: () {},
                 ),
-                EdenServiceRow(
+                const EdenServiceRow(
                   name: 'Nginx',
                   description: 'Reverse proxy',
                   status: EdenServiceStatus.error,
@@ -97,7 +97,7 @@ class DevflowInfraScreen extends StatelessWidget {
           ),
 
           // Domains
-          Section(
+          const Section(
             title: 'DOMAINS',
             child: Column(
               children: [
@@ -140,12 +140,12 @@ class DevflowInfraScreen extends StatelessWidget {
             title: 'HEALTH CHECKS',
             child: Column(
               children: [
-                EdenHealthCheck(
+                const EdenHealthCheck(
                   name: 'Node.js',
                   category: 'Runtime',
                   status: EdenHealthCheckStatus.pass,
                 ),
-                EdenHealthCheck(
+                const EdenHealthCheck(
                   name: 'Docker',
                   category: 'Container',
                   status: EdenHealthCheckStatus.warn,

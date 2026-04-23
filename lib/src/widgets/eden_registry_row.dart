@@ -140,7 +140,7 @@ class _EdenRegistryRowState extends State<EdenRegistryRow> {
                       ),
                       child: Text(
                         widget.tag,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: EdenColors.info,

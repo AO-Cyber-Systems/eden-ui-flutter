@@ -107,13 +107,13 @@ class EdenBanner extends StatelessWidget {
   _BannerColors _resolveColors() {
     switch (variant) {
       case EdenBannerVariant.info:
-        return _BannerColors(EdenColors.info, Colors.white);
+        return const _BannerColors(EdenColors.info, Colors.white);
       case EdenBannerVariant.success:
-        return _BannerColors(EdenColors.success, Colors.white);
+        return const _BannerColors(EdenColors.success, Colors.white);
       case EdenBannerVariant.warning:
-        return _BannerColors(EdenColors.warning, Colors.white);
+        return const _BannerColors(EdenColors.warning, Colors.white);
       case EdenBannerVariant.danger:
-        return _BannerColors(EdenColors.error, Colors.white);
+        return const _BannerColors(EdenColors.error, Colors.white);
     }
   }
 }

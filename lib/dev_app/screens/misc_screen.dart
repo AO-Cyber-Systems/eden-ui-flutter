@@ -12,14 +12,14 @@ class MiscScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
-          Section(
+          const Section(
             title: 'Progress Bars',
             child: Column(
               children: [
                 EdenProgress(value: 0.25, label: 'Upload', showPercentage: true),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 EdenProgress(value: 0.6, size: EdenProgressSize.sm, color: EdenColors.success),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 EdenProgress(value: 0.85, size: EdenProgressSize.lg, color: EdenColors.warning, showPercentage: true),
               ],
             ),
@@ -32,19 +32,19 @@ class MiscScreen extends StatelessWidget {
               children: EdenSpinnerSize.values.map((s) => EdenSpinner(size: s)).toList(),
             ),
           ),
-          Section(
+          const Section(
             title: 'Skeletons',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const EdenSkeleton.circle(size: 40),
-                    const SizedBox(width: 12),
+                    EdenSkeleton.circle(size: 40),
+                    SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           EdenSkeleton.text(width: 160),
                           SizedBox(height: 8),
                           EdenSkeleton.text(width: 100),
@@ -53,15 +53,15 @@ class MiscScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const EdenSkeleton.block(height: 100),
+                SizedBox(height: 16),
+                EdenSkeleton.block(height: 100),
               ],
             ),
           ),
-          Section(
+          const Section(
             title: 'Dividers',
             child: Column(
-              children: const [
+              children: [
                 EdenDivider(),
                 SizedBox(height: 8),
                 EdenDivider(label: 'OR'),

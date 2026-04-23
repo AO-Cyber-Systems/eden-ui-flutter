@@ -130,7 +130,7 @@ class EdenRequestLog extends StatelessWidget {
     );
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         vertical: EdenSpacing.space2,
         horizontal: EdenSpacing.space3,
       ),
@@ -146,7 +146,7 @@ class EdenRequestLog extends StatelessWidget {
             label: _methodLabel(),
             color: _methodColor(),
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
 
           // Path
           Expanded(
@@ -160,7 +160,7 @@ class EdenRequestLog extends StatelessWidget {
               maxLines: 1,
             ),
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
 
           // Status code badge
           _StatusBadge(
@@ -168,7 +168,7 @@ class EdenRequestLog extends StatelessWidget {
             color: _statusColor(),
             textStyle: theme.textTheme.labelSmall,
           ),
-          SizedBox(width: EdenSpacing.space3),
+          const SizedBox(width: EdenSpacing.space3),
 
           // Model
           if (model != null) ...[
@@ -183,7 +183,7 @@ class EdenRequestLog extends StatelessWidget {
                 maxLines: 1,
               ),
             ),
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
           ],
 
           // Tokens
@@ -195,7 +195,7 @@ class EdenRequestLog extends StatelessWidget {
                 fontSize: 11,
               ),
             ),
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
           ],
 
           // Response time
@@ -207,12 +207,12 @@ class EdenRequestLog extends StatelessWidget {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
           ],
 
           // Streamed icon
           if (streamed) ...[
-            Tooltip(
+            const Tooltip(
               message: 'Streamed',
               child: Icon(
                 Icons.stream,
@@ -220,7 +220,7 @@ class EdenRequestLog extends StatelessWidget {
                 color: EdenColors.info,
               ),
             ),
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
           ],
 
           // Timestamp
@@ -238,8 +238,8 @@ class EdenRequestLog extends StatelessWidget {
 
   String _formatTokens() {
     final parts = <String>[];
-    if (inputTokens != null) parts.add('\u2191${inputTokens}');
-    if (outputTokens != null) parts.add('\u2193${outputTokens}');
+    if (inputTokens != null) parts.add('\u2191$inputTokens');
+    if (outputTokens != null) parts.add('\u2193$outputTokens');
     return parts.join(' ');
   }
 }
@@ -257,7 +257,7 @@ class _MethodBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 46,
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space1,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -295,7 +295,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),

@@ -55,13 +55,13 @@ class EdenToast {
   static _ToastColors _resolveColors(EdenToastVariant variant) {
     switch (variant) {
       case EdenToastVariant.success:
-        return _ToastColors(const Color(0xFF065F46), EdenColors.success);
+        return const _ToastColors(Color(0xFF065F46), EdenColors.success);
       case EdenToastVariant.error:
-        return _ToastColors(const Color(0xFF7F1D1D), EdenColors.error);
+        return const _ToastColors(Color(0xFF7F1D1D), EdenColors.error);
       case EdenToastVariant.warning:
-        return _ToastColors(const Color(0xFF78350F), EdenColors.warning);
+        return const _ToastColors(Color(0xFF78350F), EdenColors.warning);
       case EdenToastVariant.info:
-        return _ToastColors(const Color(0xFF1E3A8A), EdenColors.info);
+        return const _ToastColors(Color(0xFF1E3A8A), EdenColors.info);
     }
   }
 

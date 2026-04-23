@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:eden_ui_flutter/eden_ui.dart';
-import 'package:eden_ui_flutter/src/pages/eden_support_panel_demo_page.dart';
-import 'package:eden_ui_flutter/src/widgets/support_panel/eden_support_fab.dart';
 
 void main() {
   Widget buildApp() {

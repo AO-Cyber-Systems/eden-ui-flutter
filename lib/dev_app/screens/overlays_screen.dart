@@ -43,7 +43,7 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
               ],
             ),
             controls: [
-              Text('Tap buttons to trigger overlays', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const Text('Tap buttons to trigger overlays', style: TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
           const SizedBox(height: EdenSpacing.space4),
@@ -68,19 +68,19 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
                     onPressed: () => setState(() => _bannerVisible = true),
                   ),
                 const SizedBox(height: 8),
-                EdenBanner(
+                const EdenBanner(
                   message: 'System update completed successfully.',
                   variant: EdenBannerVariant.success,
                   dismissible: false,
                 ),
                 const SizedBox(height: 8),
-                EdenBanner(
+                const EdenBanner(
                   message: 'Service degradation detected.',
                   variant: EdenBannerVariant.danger,
                   dismissible: false,
                 ),
                 const SizedBox(height: 8),
-                EdenBanner(
+                const EdenBanner(
                   message: 'New features are now available.',
                   variant: EdenBannerVariant.info,
                   dismissible: false,
@@ -131,14 +131,14 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
                       context,
                       title: 'Edit Profile',
                       size: EdenModalSize.lg,
-                      child: Column(
+                      child: const Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const EdenInput(label: 'Full Name', hint: 'Enter your name'),
-                          const SizedBox(height: 12),
-                          const EdenInput(label: 'Email', hint: 'you@example.com'),
-                          const SizedBox(height: 12),
-                          const EdenInput(label: 'Bio', hint: 'Tell us about yourself', maxLines: 3),
+                          EdenInput(label: 'Full Name', hint: 'Enter your name'),
+                          SizedBox(height: 12),
+                          EdenInput(label: 'Email', hint: 'you@example.com'),
+                          SizedBox(height: 12),
+                          EdenInput(label: 'Bio', hint: 'Tell us about yourself', maxLines: 3),
                         ],
                       ),
                       actions: [
@@ -181,9 +181,9 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
                           children: [
                             const EdenInput(label: 'Search', hint: 'Filter by name...'),
                             const SizedBox(height: 16),
-                            EdenSelect<String>(
+                            const EdenSelect<String>(
                               label: 'Status',
-                              options: const [
+                              options: [
                                 EdenSelectOption(value: 'active', label: 'Active'),
                                 EdenSelectOption(value: 'pending', label: 'Pending'),
                                 EdenSelectOption(value: 'archived', label: 'Archived'),

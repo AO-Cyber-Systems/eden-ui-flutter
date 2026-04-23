@@ -120,11 +120,11 @@ class EdenButton extends StatelessWidget {
           isDark ? EdenColors.neutral[100]! : EdenColors.neutral[800]!,
         );
       case EdenButtonVariant.danger:
-        return _ButtonColors(EdenColors.error, Colors.white);
+        return const _ButtonColors(EdenColors.error, Colors.white);
       case EdenButtonVariant.success:
-        return _ButtonColors(EdenColors.success, Colors.white);
+        return const _ButtonColors(EdenColors.success, Colors.white);
       case EdenButtonVariant.warning:
-        return _ButtonColors(EdenColors.warning, Colors.white);
+        return const _ButtonColors(EdenColors.warning, Colors.white);
       case EdenButtonVariant.ghost:
         return _ButtonColors(
           isDark ? EdenColors.neutral[800]! : EdenColors.neutral[100]!,
@@ -141,33 +141,33 @@ class EdenButton extends StatelessWidget {
   _ButtonSizing _resolveSizing() {
     switch (size) {
       case EdenButtonSize.xs:
-        return _ButtonSizing(
-          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        return const _ButtonSizing(
+          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           14, 4,
         );
       case EdenButtonSize.sm:
-        return _ButtonSizing(
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        return const _ButtonSizing(
+          EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           16, 6,
         );
       case EdenButtonSize.md:
-        return _ButtonSizing(
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        return const _ButtonSizing(
+          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           18, 8,
         );
       case EdenButtonSize.lg:
-        return _ButtonSizing(
-          const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        return const _ButtonSizing(
+          EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           20, 8,
         );
       case EdenButtonSize.xl:
-        return _ButtonSizing(
-          const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-          const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        return const _ButtonSizing(
+          EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+          TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           22, 10,
         );
     }

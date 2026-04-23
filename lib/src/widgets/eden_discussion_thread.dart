@@ -244,15 +244,15 @@ class _EdenDiscussionThreadState extends State<EdenDiscussionThread> {
               child: InkWell(
                 onTap: widget.onReply,
                 borderRadius: EdenRadii.borderRadiusSm,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(
                     horizontal: EdenSpacing.space3,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.reply, size: 14, color: EdenColors.info),
-                      const SizedBox(width: EdenSpacing.space1),
+                      SizedBox(width: EdenSpacing.space1),
                       Text(
                         'Reply',
                         style: TextStyle(
@@ -310,7 +310,7 @@ class _ReplyCard extends StatelessWidget {
           if (isAccepted)
             Container(
               width: 3,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: EdenColors.success,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(EdenRadii.md),
@@ -327,10 +327,10 @@ class _ReplyCard extends StatelessWidget {
                 children: [
                   // Accepted answer indicator
                   if (isAccepted) ...[
-                    Row(
+                    const Row(
                       children: [
                         Icon(Icons.check_circle, size: 16, color: EdenColors.success),
-                        const SizedBox(width: EdenSpacing.space1),
+                        SizedBox(width: EdenSpacing.space1),
                         Text(
                           'Accepted Answer',
                           style: TextStyle(

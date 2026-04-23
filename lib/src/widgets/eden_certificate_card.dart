@@ -158,7 +158,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
@@ -169,7 +169,7 @@ class _Header extends StatelessWidget {
             size: 18,
             color: statusColor,
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
           Expanded(
             child: Text(
               'SSL Certificate',
@@ -179,7 +179,7 @@ class _Header extends StatelessWidget {
             ),
           ),
           Container(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space2,
               vertical: EdenSpacing.space1,
             ),
@@ -220,7 +220,7 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(EdenSpacing.space4),
+      padding: const EdgeInsets.all(EdenSpacing.space4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -231,7 +231,7 @@ class _Body extends StatelessWidget {
             theme: theme,
           ),
           if (issuer != null) ...[
-            SizedBox(height: EdenSpacing.space2),
+            const SizedBox(height: EdenSpacing.space2),
             _DetailRow(
               label: 'Issuer',
               value: issuer!,
@@ -240,7 +240,7 @@ class _Body extends StatelessWidget {
             ),
           ],
           if (expiry != null) ...[
-            SizedBox(height: EdenSpacing.space2),
+            const SizedBox(height: EdenSpacing.space2),
             _DetailRow(
               label: 'Expires',
               value: expiry!,
@@ -312,7 +312,7 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
@@ -330,7 +330,7 @@ class _Footer extends StatelessWidget {
                       color: statusColor,
                     ),
                   )
-                : Icon(Icons.refresh_rounded, size: 16),
+                : const Icon(Icons.refresh_rounded, size: 16),
             label: Text(loading ? 'Regenerating...' : 'Regenerate'),
           ),
         ],

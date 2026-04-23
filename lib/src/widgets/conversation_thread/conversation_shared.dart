@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
-import '../../tokens/spacing.dart';
 import '../eden_conversation_thread.dart';
 
 class CompactDot extends StatelessWidget {
-  const CompactDot({required this.eventType, required this.isDark});
+  const CompactDot({super.key, required this.eventType, required this.isDark});
 
   final EdenConversationEventType eventType;
   final bool isDark;
@@ -66,7 +65,7 @@ class CompactDot extends StatelessWidget {
 }
 
 class LabelPill extends StatelessWidget {
-  const LabelPill({required this.label, required this.isDark});
+  const LabelPill({super.key, required this.label, required this.isDark});
 
   final dynamic label;
   final bool isDark;

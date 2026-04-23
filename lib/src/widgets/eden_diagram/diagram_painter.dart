@@ -383,7 +383,7 @@ class EdenDiagramPainter extends CustomPainter {
         ..close();
       canvas.drawPath(dPath, Paint()..color = color..style = PaintingStyle.fill);
     } else if (type == EdenArrowHead.circle) {
-      canvas.drawCircle(Offset(-size / 2, 0), size / 3, Paint()..color = color..style = PaintingStyle.fill);
+      canvas.drawCircle(const Offset(-size / 2, 0), size / 3, Paint()..color = color..style = PaintingStyle.fill);
     }
 
     canvas.restore();

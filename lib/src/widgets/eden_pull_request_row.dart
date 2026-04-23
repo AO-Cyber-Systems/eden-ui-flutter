@@ -233,7 +233,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
         child: InkWell(
           onTap: widget.onTap,
           child: Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space4,
               vertical: EdenSpacing.space3,
             ),
@@ -246,14 +246,14 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.only(top: 2),
                       child: Icon(
                         _stateIcon(),
                         size: 18,
                         color: _stateColor(),
                       ),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Expanded(
                       child: Text(
                         widget.title,
@@ -264,7 +264,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Text(
                       '#${widget.number}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -275,7 +275,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                   ],
                 ),
 
-                SizedBox(height: EdenSpacing.space2),
+                const SizedBox(height: EdenSpacing.space2),
 
                 // Labels row
                 if (widget.labels.isNotEmpty) ...[
@@ -286,7 +286,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                         .map((label) => _LabelPill(label: label))
                         .toList(),
                   ),
-                  SizedBox(height: EdenSpacing.space2),
+                  const SizedBox(height: EdenSpacing.space2),
                 ],
 
                 // Metadata row: branch info, CI, review, conflicts, comments
@@ -298,7 +298,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                       size: 13,
                       color: subtextColor,
                     ),
-                    SizedBox(width: EdenSpacing.space1),
+                    const SizedBox(width: EdenSpacing.space1),
                     Flexible(
                       child: Text(
                         '${widget.headBranch} \u2192 ${widget.baseBranch}',
@@ -311,7 +311,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                       ),
                     ),
 
-                    SizedBox(width: EdenSpacing.space3),
+                    const SizedBox(width: EdenSpacing.space3),
 
                     // CI status dot
                     Container(
@@ -323,7 +323,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                       ),
                     ),
 
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
 
                     // Review status icon
                     Icon(
@@ -334,8 +334,8 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
 
                     // Conflict warning
                     if (widget.hasConflicts) ...[
-                      SizedBox(width: EdenSpacing.space2),
-                      Icon(
+                      const SizedBox(width: EdenSpacing.space2),
+                      const Icon(
                         Icons.warning_amber_rounded,
                         size: 14,
                         color: EdenColors.warning,
@@ -344,13 +344,13 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
 
                     // Comment count
                     if (widget.commentCount > 0) ...[
-                      SizedBox(width: EdenSpacing.space2),
+                      const SizedBox(width: EdenSpacing.space2),
                       Icon(
                         Icons.chat_bubble_outline,
                         size: 13,
                         color: subtextColor,
                       ),
-                      SizedBox(width: EdenSpacing.space1 / 2),
+                      const SizedBox(width: EdenSpacing.space1 / 2),
                       Text(
                         '${widget.commentCount}',
                         style: TextStyle(
@@ -360,7 +360,7 @@ class _EdenPullRequestRowState extends State<EdenPullRequestRow> {
                       ),
                     ],
 
-                    Spacer(),
+                    const Spacer(),
 
                     // Author
                     _AuthorChip(
@@ -387,7 +387,7 @@ class _LabelPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -450,7 +450,7 @@ class _AuthorChip extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: EdenSpacing.space1),
+        const SizedBox(width: EdenSpacing.space1),
         Text(
           name,
           style: TextStyle(

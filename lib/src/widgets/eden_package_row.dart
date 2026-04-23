@@ -245,8 +245,8 @@ class EdenPackageRow extends StatelessWidget {
               color: EdenColors.neutral[500],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 4),
             child: Icon(
               Icons.arrow_forward,
               size: 12,
@@ -306,8 +306,8 @@ class EdenPackageRow extends StatelessWidget {
       buttons.add(
         TextButton.icon(
           onPressed: onUninstall,
-          icon: Icon(Icons.delete_outline, size: 16, color: EdenColors.error),
-          label: Text(
+          icon: const Icon(Icons.delete_outline, size: 16, color: EdenColors.error),
+          label: const Text(
             'Uninstall',
             style: TextStyle(color: EdenColors.error),
           ),

@@ -97,11 +97,11 @@ class EdenInput extends StatelessWidget {
   _InputSizing _resolveSizing() {
     switch (size) {
       case EdenInputSize.sm:
-        return _InputSizing(const EdgeInsets.symmetric(horizontal: 12, vertical: 8), 13, 18);
+        return const _InputSizing(EdgeInsets.symmetric(horizontal: 12, vertical: 8), 13, 18);
       case EdenInputSize.md:
-        return _InputSizing(const EdgeInsets.symmetric(horizontal: 16, vertical: 12), 14, 20);
+        return const _InputSizing(EdgeInsets.symmetric(horizontal: 16, vertical: 12), 14, 20);
       case EdenInputSize.lg:
-        return _InputSizing(const EdgeInsets.symmetric(horizontal: 16, vertical: 14), 16, 22);
+        return const _InputSizing(EdgeInsets.symmetric(horizontal: 16, vertical: 14), 16, 22);
     }
   }
 }

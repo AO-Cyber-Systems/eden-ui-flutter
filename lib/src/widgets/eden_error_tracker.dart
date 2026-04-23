@@ -275,7 +275,7 @@ class _OccurrenceCountBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.repeat_rounded,
             size: 10,
             color: EdenColors.error,
@@ -507,7 +507,7 @@ class _ErrorActions extends StatelessWidget {
                   ),
                   borderRadius: EdenRadii.borderRadiusSm,
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
@@ -515,7 +515,7 @@ class _ErrorActions extends StatelessWidget {
                       size: 14,
                       color: EdenColors.success,
                     ),
-                    const SizedBox(width: EdenSpacing.space1),
+                    SizedBox(width: EdenSpacing.space1),
                     Text(
                       'Resolve',
                       style: TextStyle(

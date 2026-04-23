@@ -370,7 +370,7 @@ class _DurationDisplay extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isResolved)
-              Icon(
+              const Icon(
                 Icons.timer_rounded,
                 size: 12,
                 color: EdenColors.warning,
@@ -423,7 +423,7 @@ class _StatusProgression extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final steps = EdenIncidentStatus.values;
+    const steps = EdenIncidentStatus.values;
     final currentIndex = steps.indexOf(status);
 
     return Row(

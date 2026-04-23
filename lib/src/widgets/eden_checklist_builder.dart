@@ -271,7 +271,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
           ),
 
         if (widget.showProgress && total > 0)
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
 
         // Items list
         if (widget.allowReorder && !widget.readOnly)
@@ -319,13 +319,13 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
 
         // Add item field
         if (widget.allowAdd && !widget.readOnly) ...[
-          SizedBox(height: EdenSpacing.space2),
+          const SizedBox(height: EdenSpacing.space2),
           _buildAddField(isDark, theme),
         ],
 
         // Completion summary
         if (widget.showCompletionSummary && total > 0) ...[
-          SizedBox(height: EdenSpacing.space4),
+          const SizedBox(height: EdenSpacing.space4),
           CompletionSummary(
             checked: checked,
             total: total,
@@ -385,7 +385,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
                 ReorderableDragStartListener(
                   index: index,
                   child: Padding(
-                    padding: EdgeInsets.only(right: EdenSpacing.space1),
+                    padding: const EdgeInsets.only(right: EdenSpacing.space1),
                     child: Icon(
                       Icons.drag_indicator,
                       size: 18,
@@ -409,12 +409,12 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
                   visualDensity: VisualDensity.compact,
                 ),
               ),
-              SizedBox(width: EdenSpacing.space2),
+              const SizedBox(width: EdenSpacing.space2),
 
               // Type icon
               if (item.type != EdenChecklistItemType.checkbox) ...[
                 TypeIcon(type: item.type, isDark: isDark),
-                SizedBox(width: EdenSpacing.space1),
+                const SizedBox(width: EdenSpacing.space1),
               ],
 
               // Title
@@ -477,7 +477,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
                           color: noteColor.withValues(alpha: 0.6),
                         ),
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: EdenSpacing.space2,
                           vertical: EdenSpacing.space1,
                         ),
@@ -521,9 +521,9 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
         direction: DismissDirection.endToStart,
         background: Container(
           alignment: Alignment.centerRight,
-          padding: EdgeInsets.only(right: EdenSpacing.space4),
+          padding: const EdgeInsets.only(right: EdenSpacing.space4),
           color: EdenColors.error.withValues(alpha: 0.15),
-          child: Icon(Icons.delete_outline, color: EdenColors.error),
+          child: const Icon(Icons.delete_outline, color: EdenColors.error),
         ),
         onDismissed: (_) {
           widget.onItemDeleted?.call(item.id);
@@ -565,11 +565,11 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
               });
             },
             child: Container(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space3,
               vertical: EdenSpacing.space2,
             ),
-            margin: EdgeInsets.only(
+            margin: const EdgeInsets.only(
               top: EdenSpacing.space2,
               bottom: EdenSpacing.space1,
             ),
@@ -588,7 +588,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
                       ? EdenColors.neutral[400]
                       : EdenColors.neutral[600],
                 ),
-                SizedBox(width: EdenSpacing.space2),
+                const SizedBox(width: EdenSpacing.space2),
                 Expanded(
                   child: Text(
                     item.sectionHeader!,
@@ -640,7 +640,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
               _addFocus.requestFocus();
             });
           },
-          icon: Icon(Icons.add, size: 18),
+          icon: const Icon(Icons.add, size: 18),
           label: const Text('Add item'),
         ),
       );
@@ -659,7 +659,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
             decoration: InputDecoration(
               hintText: 'New item...',
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space3,
                 vertical: EdenSpacing.space2,
               ),
@@ -675,7 +675,7 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
             onSubmitted: (_) => _submitNewItem(),
           ),
         ),
-        SizedBox(width: EdenSpacing.space2),
+        const SizedBox(width: EdenSpacing.space2),
         IconButton(
           onPressed: _submitNewItem,
           icon: const Icon(Icons.check, size: 20),

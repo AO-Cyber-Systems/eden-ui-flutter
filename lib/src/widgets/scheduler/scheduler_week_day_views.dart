@@ -58,7 +58,7 @@ class WeekView extends StatelessWidget {
           ),
           child: Row(
             children: [
-              SizedBox(width: _hourLabelWidth),
+              const SizedBox(width: _hourLabelWidth),
               ...days.map((d) {
                 final isToday = d == today;
                 return Expanded(
@@ -71,7 +71,7 @@ class WeekView extends StatelessWidget {
                           : null,
                       child: Container(
                         padding:
-                            EdgeInsets.symmetric(vertical: EdenSpacing.space2),
+                            const EdgeInsets.symmetric(vertical: EdenSpacing.space2),
                         child: Column(
                         children: [
                           Text(
@@ -413,7 +413,7 @@ class TimeColumn extends StatelessWidget {
     if (columns.isEmpty) return [];
 
     final totalColumns = columns.length;
-    final padding = EdenSpacing.space1;
+    const padding = EdenSpacing.space1;
     final usableWidth = availableWidth - padding * 2;
     final colWidth = usableWidth / totalColumns;
     final List<Widget> widgets = [];
@@ -521,7 +521,7 @@ class EventBlock extends StatelessWidget {
           cursor: onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 1),
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space2,
               vertical: EdenSpacing.space1,
             ),

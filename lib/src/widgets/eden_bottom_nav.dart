@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../tokens/colors.dart';
 
 /// A single item in the bottom navigation.
 class EdenBottomNavItem {

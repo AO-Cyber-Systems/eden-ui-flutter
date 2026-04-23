@@ -63,16 +63,6 @@ class _EdenTagListState extends State<EdenTagList> {
     });
   }
 
-  String _abbreviateDigest(String digest) {
-    if (digest.length <= 15) return digest;
-    // Show prefix:first12chars...
-    final colonIndex = digest.indexOf(':');
-    if (colonIndex >= 0 && digest.length > colonIndex + 13) {
-      return '${digest.substring(0, colonIndex + 13)}...';
-    }
-    return '${digest.substring(0, 15)}...';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

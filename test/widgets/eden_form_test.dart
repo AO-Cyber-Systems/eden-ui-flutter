@@ -42,10 +42,10 @@ void main() {
 
   group('EdenForm', () {
     testWidgets('renders child widget', (tester) async {
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(const MaterialApp(
         home: Scaffold(
           body: EdenForm(
-            child: const Text('Form Content'),
+            child: Text('Form Content'),
           ),
         ),
       ));

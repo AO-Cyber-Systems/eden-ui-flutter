@@ -79,8 +79,8 @@ void main() {
     testWidgets('renders in dark theme without error', (tester) async {
       await tester.pumpWidget(MaterialApp(
         theme: ThemeData.dark(),
-        home: Scaffold(
-          body: const EdenCard(title: 'Dark Card'),
+        home: const Scaffold(
+          body: EdenCard(title: 'Dark Card'),
         ),
       ));
       expect(find.text('Dark Card'), findsOneWidget);

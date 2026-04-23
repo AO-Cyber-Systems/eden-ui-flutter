@@ -281,7 +281,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
         children: [
           // Header
           Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
+            padding: const EdgeInsets.all(EdenSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -294,7 +294,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                       label: _stateLabel(),
                       color: _stateColor(),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Text(
                       '#${widget.number}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -302,7 +302,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                         fontFamily: 'monospace',
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     // +/- changes summary
                     ChangesSummary(
                       additions: widget.additions,
@@ -311,7 +311,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                   ],
                 ),
 
-                SizedBox(height: EdenSpacing.space2),
+                const SizedBox(height: EdenSpacing.space2),
 
                 // Title
                 Text(
@@ -321,7 +321,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                   ),
                 ),
 
-                SizedBox(height: EdenSpacing.space2),
+                const SizedBox(height: EdenSpacing.space2),
 
                 // Branch info
                 Row(
@@ -331,13 +331,13 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                       size: 14,
                       color: subtextColor,
                     ),
-                    SizedBox(width: EdenSpacing.space1),
+                    const SizedBox(width: EdenSpacing.space1),
                     BranchChip(
                       name: widget.headBranch,
                       isDark: isDark,
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: EdenSpacing.space1,
                       ),
                       child: Icon(
@@ -350,7 +350,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                       name: widget.baseBranch,
                       isDark: isDark,
                     ),
-                    SizedBox(width: EdenSpacing.space3),
+                    const SizedBox(width: EdenSpacing.space3),
                     Text(
                       widget.authorName,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -387,7 +387,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
 
           // Body + sidebar row
           Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
+            padding: const EdgeInsets.all(EdenSpacing.space4),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -396,7 +396,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                   flex: 3,
                   child: Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(EdenSpacing.space3),
+                    padding: const EdgeInsets.all(EdenSpacing.space3),
                     decoration: BoxDecoration(
                       color: isDark
                           ? EdenColors.neutral[850]!
@@ -416,7 +416,7 @@ class _EdenPullRequestDetailState extends State<EdenPullRequestDetail> {
                   ),
                 ),
 
-                SizedBox(width: EdenSpacing.space4),
+                const SizedBox(width: EdenSpacing.space4),
 
                 // Metadata sidebar
                 Expanded(

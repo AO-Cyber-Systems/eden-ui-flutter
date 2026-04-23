@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../tokens/colors.dart';
-import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
 
 /// A single item in a timeline.
@@ -31,8 +29,6 @@ class EdenTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Column(
       children: [
         for (int i = 0; i < items.length; i++)

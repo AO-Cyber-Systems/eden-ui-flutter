@@ -6,7 +6,7 @@ import '../eden_conversation_thread.dart';
 import 'conversation_shared.dart';
 
 class CommentContent extends StatelessWidget {
-  const CommentContent({
+  const CommentContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -78,7 +78,7 @@ class CommentContent extends StatelessWidget {
 }
 
 class LabelChangeContent extends StatelessWidget {
-  const LabelChangeContent({
+  const LabelChangeContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -126,7 +126,7 @@ class LabelChangeContent extends StatelessWidget {
 }
 
 class AssignmentContent extends StatelessWidget {
-  const AssignmentContent({
+  const AssignmentContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -196,7 +196,7 @@ class AssignmentContent extends StatelessWidget {
 }
 
 class StatusChangeContent extends StatelessWidget {
-  const StatusChangeContent({
+  const StatusChangeContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -248,7 +248,7 @@ class StatusChangeContent extends StatelessWidget {
 }
 
 class CommitRefContent extends StatelessWidget {
-  const CommitRefContent({
+  const CommitRefContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -314,7 +314,7 @@ class CommitRefContent extends StatelessWidget {
 }
 
 class CommitLine extends StatelessWidget {
-  const CommitLine({
+  const CommitLine({super.key, 
     required this.commit,
     required this.isDark,
     required this.theme,
@@ -368,7 +368,7 @@ class CommitLine extends StatelessWidget {
 }
 
 class CrossRefContent extends StatelessWidget {
-  const CrossRefContent({
+  const CrossRefContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -432,7 +432,7 @@ class CrossRefContent extends StatelessWidget {
 }
 
 class ReviewSummaryContent extends StatelessWidget {
-  const ReviewSummaryContent({
+  const ReviewSummaryContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,
@@ -592,7 +592,7 @@ class ReviewSummaryContent extends StatelessWidget {
 }
 
 class MergeContent extends StatelessWidget {
-  const MergeContent({
+  const MergeContent({super.key, 
     required this.event,
     required this.isDark,
     required this.theme,

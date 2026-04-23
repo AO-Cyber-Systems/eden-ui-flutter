@@ -99,7 +99,7 @@ class _EdenReviewerListState extends State<EdenReviewerList> {
         children: [
           // Header
           Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space4,
               vertical: EdenSpacing.space3,
             ),
@@ -129,24 +129,24 @@ class _EdenReviewerListState extends State<EdenReviewerList> {
               color: Colors.transparent,
               child: InkWell(
                 onTap: widget.onRequestReview,
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(EdenRadii.lg),
                   bottomRight: Radius.circular(EdenRadii.lg),
                 ),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: EdenSpacing.space4,
                     vertical: EdenSpacing.space3,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.person_add_outlined,
                         size: 16,
                         color: EdenColors.info,
                       ),
-                      SizedBox(width: EdenSpacing.space2),
+                      const SizedBox(width: EdenSpacing.space2),
                       Text(
                         'Request review',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -237,7 +237,7 @@ class _ReviewerRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space4,
               vertical: EdenSpacing.space3,
             ),
@@ -262,7 +262,7 @@ class _ReviewerRow extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(width: EdenSpacing.space3),
+                const SizedBox(width: EdenSpacing.space3),
 
                 // Name
                 Expanded(
@@ -277,7 +277,7 @@ class _ReviewerRow extends StatelessWidget {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: EdenSpacing.space1 / 2),
+                      const SizedBox(height: EdenSpacing.space1 / 2),
                       Text(
                         _statusLabel(),
                         style: TextStyle(

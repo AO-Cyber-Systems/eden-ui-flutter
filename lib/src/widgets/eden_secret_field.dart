@@ -80,7 +80,7 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          SizedBox(height: EdenSpacing.space1),
+          const SizedBox(height: EdenSpacing.space1),
         ],
         if (widget.readOnly)
           _buildReadOnlyField(theme, isDark, surfaceBg, borderColor)
@@ -112,7 +112,7 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
         border: Border.all(color: borderColor),
         borderRadius: EdenRadii.borderRadiusMd,
       ),
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space3,
         vertical: EdenSpacing.space2,
       ),
@@ -157,7 +157,7 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
         ),
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(
+          contentPadding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space3,
             vertical: EdenSpacing.space3,
           ),

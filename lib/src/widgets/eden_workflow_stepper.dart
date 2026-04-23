@@ -118,7 +118,7 @@ class _StepColumn extends StatelessWidget {
           isDark: isDark,
           onTap: onTap,
         ),
-        SizedBox(height: EdenSpacing.space2),
+        const SizedBox(height: EdenSpacing.space2),
         Text(
           step.label,
           style: TextStyle(
@@ -251,7 +251,7 @@ class _ConnectingLine extends StatelessWidget {
   Widget build(BuildContext context) {
     // Position the line at the vertical center of the step circles (14px from top).
     return Padding(
-      padding: EdgeInsets.only(bottom: EdenSpacing.space2 + 14),
+      padding: const EdgeInsets.only(bottom: EdenSpacing.space2 + 14),
       child: SizedBox(
         height: 2,
         child: _buildLine(),

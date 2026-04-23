@@ -119,7 +119,7 @@ class _BrandColorPicker extends StatelessWidget {
                         : null,
                   ),
                   child: isSelected
-                      ? Icon(Icons.check, size: 18, color: Colors.white)
+                      ? const Icon(Icons.check, size: 18, color: Colors.white)
                       : null,
                 ),
               );

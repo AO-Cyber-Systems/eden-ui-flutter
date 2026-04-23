@@ -142,7 +142,7 @@ class EdenAccountCard extends StatelessWidget {
       opacity: loading ? 0.6 : 1.0,
       duration: const Duration(milliseconds: 200),
       child: Container(
-        padding: EdgeInsets.all(EdenSpacing.space4),
+        padding: const EdgeInsets.all(EdenSpacing.space4),
         decoration: BoxDecoration(
           color: surfaceColor,
           border: Border.all(color: borderColor),
@@ -154,7 +154,7 @@ class EdenAccountCard extends StatelessWidget {
           children: [
             _buildHeader(theme, mutedTextColor),
             Padding(
-              padding: EdgeInsets.symmetric(vertical: EdenSpacing.space3),
+              padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space3),
               child: Divider(height: 1, color: borderColor),
             ),
             _buildMetrics(theme, mutedTextColor),
@@ -175,7 +175,7 @@ class EdenAccountCard extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        SizedBox(width: EdenSpacing.space2),
+        const SizedBox(width: EdenSpacing.space2),
         Tooltip(
           message: _statusLabel(),
           child: Text(
@@ -185,9 +185,9 @@ class EdenAccountCard extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: EdenSpacing.space2),
+        const SizedBox(width: EdenSpacing.space2),
         Container(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space2,
             vertical: EdenSpacing.space1 / 2,
           ),
@@ -331,7 +331,7 @@ class _ActionButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: EdenRadii.borderRadiusSm,
           child: Padding(
-            padding: EdgeInsets.all(EdenSpacing.space1),
+            padding: const EdgeInsets.all(EdenSpacing.space1),
             child: Icon(icon, size: 18, color: onPressed != null ? color : color.withValues(alpha: 0.4)),
           ),
         ),
@@ -366,12 +366,12 @@ class _RateLimitIndicator extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.data_usage, size: 14, color: mutedColor),
-        SizedBox(width: EdenSpacing.space1),
+        const SizedBox(width: EdenSpacing.space1),
         Text(
           'Rate Limit',
           style: textStyle?.copyWith(color: mutedColor),
         ),
-        SizedBox(width: EdenSpacing.space2),
+        const SizedBox(width: EdenSpacing.space2),
         SizedBox(
           width: 60,
           height: 4,
@@ -384,7 +384,7 @@ class _RateLimitIndicator extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: EdenSpacing.space1),
+        const SizedBox(width: EdenSpacing.space1),
         Text(
           '$remaining/$total',
           style: textStyle?.copyWith(
@@ -420,7 +420,7 @@ class _MetricChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: mutedColor),
-        SizedBox(width: EdenSpacing.space1),
+        const SizedBox(width: EdenSpacing.space1),
         Text(
           '$label: ',
           style: textStyle?.copyWith(color: mutedColor),

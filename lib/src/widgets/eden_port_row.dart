@@ -56,7 +56,7 @@ class EdenPortRow extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
@@ -72,7 +72,7 @@ class EdenPortRow extends StatelessWidget {
       child: Row(
         children: [
           _PortNumber(port: port, isDark: isDark),
-          SizedBox(width: EdenSpacing.space4),
+          const SizedBox(width: EdenSpacing.space4),
           Expanded(
             child: Text(
               process,
@@ -83,7 +83,7 @@ class EdenPortRow extends StatelessWidget {
             ),
           ),
           if (pid != null) ...[
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
             Text(
               pid!,
               style: TextStyle(
@@ -94,7 +94,7 @@ class EdenPortRow extends StatelessWidget {
             ),
           ],
           if (user != null) ...[
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
             Text(
               user!,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -103,7 +103,7 @@ class EdenPortRow extends StatelessWidget {
             ),
           ],
           if (onKill != null) ...[
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
             _KillButton(
               onKill: onKill!,
               loading: loading,
@@ -128,7 +128,7 @@ class _PortNumber extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(minWidth: 60),
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1,
       ),
@@ -166,7 +166,7 @@ class _KillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return SizedBox(
+      return const SizedBox(
         width: 16,
         height: 16,
         child: CircularProgressIndicator(
@@ -184,7 +184,7 @@ class _KillButton extends StatelessWidget {
         child: InkWell(
           onTap: onKill,
           borderRadius: EdenRadii.borderRadiusSm,
-          child: Padding(
+          child: const Padding(
             padding: EdgeInsets.all(EdenSpacing.space1),
             child: Icon(
               Icons.close_rounded,

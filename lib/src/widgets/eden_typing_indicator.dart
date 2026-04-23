@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
-import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
 
 /// Mirrors the eden_typing_indicator Rails component.

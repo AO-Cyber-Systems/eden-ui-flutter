@@ -307,7 +307,7 @@ class _EdenAgentRunCardState extends State<EdenAgentRunCard>
           onTap: widget.onTap,
           borderRadius: EdenRadii.borderRadiusLg,
           child: Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
+            padding: const EdgeInsets.all(EdenSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -330,7 +330,7 @@ class _EdenAgentRunCardState extends State<EdenAgentRunCard>
                         );
                       },
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Text(
                       _statusLabel(),
                       style: theme.textTheme.titleSmall?.copyWith(
@@ -347,7 +347,7 @@ class _EdenAgentRunCardState extends State<EdenAgentRunCard>
                   ],
                 ),
 
-                SizedBox(height: EdenSpacing.space3),
+                const SizedBox(height: EdenSpacing.space3),
 
                 // Objective
                 Text(
@@ -359,17 +359,17 @@ class _EdenAgentRunCardState extends State<EdenAgentRunCard>
                   overflow: TextOverflow.ellipsis,
                 ),
 
-                SizedBox(height: EdenSpacing.space3),
+                const SizedBox(height: EdenSpacing.space3),
 
                 // Duration
                 if (widget.run.duration != null)
                   Padding(
-                    padding: EdgeInsets.only(bottom: EdenSpacing.space3),
+                    padding: const EdgeInsets.only(bottom: EdenSpacing.space3),
                     child: Row(
                       children: [
                         Icon(Icons.timer_outlined,
                             size: 14, color: mutedColor),
-                        SizedBox(width: EdenSpacing.space1),
+                        const SizedBox(width: EdenSpacing.space1),
                         Text(
                           _formatDuration(widget.run.duration!),
                           style: theme.textTheme.bodySmall
@@ -421,7 +421,7 @@ class _EdenAgentRunCardState extends State<EdenAgentRunCard>
                 if (widget.onCancel != null && _isInProgress ||
                     widget.onRetry != null &&
                         widget.run.status == EdenAgentRunStatus.failed) ...[
-                  SizedBox(height: EdenSpacing.space3),
+                  const SizedBox(height: EdenSpacing.space3),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -473,7 +473,7 @@ class _TriggerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isDark ? EdenColors.neutral[400]! : EdenColors.neutral[500]!;
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -485,7 +485,7 @@ class _TriggerBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
-          SizedBox(width: EdenSpacing.space1),
+          const SizedBox(width: EdenSpacing.space1),
           Text(
             label,
             style: TextStyle(
@@ -521,7 +521,7 @@ class _StatChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 12, color: color),
-        SizedBox(width: EdenSpacing.space1 / 2),
+        const SizedBox(width: EdenSpacing.space1 / 2),
         Text(
           '$value $label',
           style: TextStyle(
@@ -559,7 +559,7 @@ class _ActionButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: EdenRadii.borderRadiusSm,
         child: Padding(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space2,
             vertical: EdenSpacing.space1,
           ),
@@ -567,7 +567,7 @@ class _ActionButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 14, color: color),
-              SizedBox(width: EdenSpacing.space1),
+              const SizedBox(width: EdenSpacing.space1),
               Text(
                 label,
                 style: TextStyle(

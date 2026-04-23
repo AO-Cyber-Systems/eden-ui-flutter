@@ -168,7 +168,7 @@ class _EdenEmailViewerState extends State<EdenEmailViewer> {
             ),
           if (widget.onDelete != null)
             IconButton(
-              icon: Icon(Icons.delete_outline, color: EdenColors.error),
+              icon: const Icon(Icons.delete_outline, color: EdenColors.error),
               onPressed: widget.onDelete,
               tooltip: 'Delete',
             ),

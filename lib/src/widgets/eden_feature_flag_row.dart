@@ -131,7 +131,7 @@ class _EdenFeatureFlagRowState extends State<EdenFeatureFlagRow> {
                 child: Switch.adaptive(
                   value: flag.isEnabled,
                   onChanged: widget.onToggle,
-                  activeColor: EdenColors.success,
+                  activeThumbColor: EdenColors.success,
                 ),
               ),
               const SizedBox(width: EdenSpacing.space3),

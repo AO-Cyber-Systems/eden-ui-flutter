@@ -170,7 +170,7 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
           onTap: widget.onTap,
           borderRadius: EdenRadii.borderRadiusLg,
           child: Padding(
-            padding: EdgeInsets.all(EdenSpacing.space4),
+            padding: const EdgeInsets.all(EdenSpacing.space4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -187,7 +187,7 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
                         ),
                       ),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     _HealthBadge(
                       label: _healthLabel(),
                       icon: _healthIcon(),
@@ -198,7 +198,7 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
 
                 // Description
                 if (widget.description != null) ...[
-                  SizedBox(height: EdenSpacing.space2),
+                  const SizedBox(height: EdenSpacing.space2),
                   Text(
                     widget.description!,
                     style: theme.textTheme.bodySmall
@@ -208,7 +208,7 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
                   ),
                 ],
 
-                SizedBox(height: EdenSpacing.space3),
+                const SizedBox(height: EdenSpacing.space3),
 
                 // Progress bar
                 Row(
@@ -227,7 +227,7 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
                         ),
                       ),
                     ),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Text(
                       '${widget.completedCount} of ${widget.childCount} issues',
                       style: theme.textTheme.bodySmall
@@ -238,12 +238,12 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
 
                 // Date range
                 if (widget.startDate != null || widget.endDate != null) ...[
-                  SizedBox(height: EdenSpacing.space3),
+                  const SizedBox(height: EdenSpacing.space3),
                   Row(
                     children: [
                       Icon(Icons.calendar_today_outlined,
                           size: 14, color: mutedColor),
-                      SizedBox(width: EdenSpacing.space1),
+                      const SizedBox(width: EdenSpacing.space1),
                       Text(
                         [
                           if (widget.startDate != null)
@@ -260,13 +260,13 @@ class _EdenEpicCardState extends State<EdenEpicCard> {
 
                 // Labels
                 if (widget.labels.isNotEmpty) ...[
-                  SizedBox(height: EdenSpacing.space3),
+                  const SizedBox(height: EdenSpacing.space3),
                   Wrap(
                     spacing: EdenSpacing.space1,
                     runSpacing: EdenSpacing.space1,
                     children: widget.labels.map((label) {
                       return Container(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: EdenSpacing.space2,
                           vertical: EdenSpacing.space1 / 2,
                         ),
@@ -314,7 +314,7 @@ class _HealthBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -326,7 +326,7 @@ class _HealthBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
-          SizedBox(width: EdenSpacing.space1),
+          const SizedBox(width: EdenSpacing.space1),
           Text(
             label,
             style: TextStyle(

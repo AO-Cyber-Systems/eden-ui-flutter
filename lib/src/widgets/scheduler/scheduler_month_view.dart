@@ -63,7 +63,7 @@ class MonthView extends StatelessWidget {
             children: _dayLabels.map((d) {
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: EdenSpacing.space2),
+                  padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space2),
                   child: Text(
                     d,
                     textAlign: TextAlign.center,
@@ -193,7 +193,7 @@ class MonthDayCell extends StatelessWidget {
               ? Border(right: BorderSide(color: borderColor))
               : null,
         ),
-        padding: EdgeInsets.all(EdenSpacing.space1),
+        padding: const EdgeInsets.all(EdenSpacing.space1),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -220,7 +220,7 @@ class MonthDayCell extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: EdenSpacing.space1),
+            const SizedBox(height: EdenSpacing.space1),
             // Event dots
             if (events.isNotEmpty)
               Wrap(
@@ -247,7 +247,7 @@ class MonthDayCell extends StatelessWidget {
               ),
             if (events.length > 5)
               Padding(
-                padding: EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   '+${events.length - 5}',
                   style: TextStyle(

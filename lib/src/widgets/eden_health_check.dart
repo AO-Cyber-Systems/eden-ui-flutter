@@ -66,7 +66,7 @@ class EdenHealthCheck extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
@@ -82,7 +82,7 @@ class EdenHealthCheck extends StatelessWidget {
       child: Row(
         children: [
           _StatusIcon(status: status),
-          SizedBox(width: EdenSpacing.space3),
+          const SizedBox(width: EdenSpacing.space3),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +95,7 @@ class EdenHealthCheck extends StatelessWidget {
                   ),
                 ),
                 if (category != null) ...[
-                  SizedBox(height: EdenSpacing.space1),
+                  const SizedBox(height: EdenSpacing.space1),
                   Text(
                     category!,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -107,11 +107,11 @@ class EdenHealthCheck extends StatelessWidget {
             ),
           ),
           if (fixHint != null) ...[
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
             _FixHint(hint: fixHint!, isDark: isDark),
           ],
           if (onInstall != null) ...[
-            SizedBox(width: EdenSpacing.space3),
+            const SizedBox(width: EdenSpacing.space3),
             _InstallButton(
               onInstall: onInstall!,
               installing: installing,
@@ -152,17 +152,17 @@ class _StatusIconConfig {
   static _StatusIconConfig forStatus(EdenHealthCheckStatus status) {
     switch (status) {
       case EdenHealthCheckStatus.pass:
-        return _StatusIconConfig(
+        return const _StatusIconConfig(
           icon: Icons.check_circle_rounded,
           color: EdenColors.success,
         );
       case EdenHealthCheckStatus.warn:
-        return _StatusIconConfig(
+        return const _StatusIconConfig(
           icon: Icons.warning_rounded,
           color: EdenColors.warning,
         );
       case EdenHealthCheckStatus.fail:
-        return _StatusIconConfig(
+        return const _StatusIconConfig(
           icon: Icons.cancel_rounded,
           color: EdenColors.error,
         );
@@ -182,7 +182,7 @@ class _FixHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1,
       ),
@@ -218,7 +218,7 @@ class _InstallButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (installing) {
-      return SizedBox(
+      return const SizedBox(
         width: 16,
         height: 16,
         child: CircularProgressIndicator(
@@ -230,10 +230,10 @@ class _InstallButton extends StatelessWidget {
 
     return TextButton.icon(
       onPressed: onInstall,
-      icon: Icon(Icons.download_rounded, size: 16),
+      icon: const Icon(Icons.download_rounded, size: 16),
       label: const Text('Install'),
       style: TextButton.styleFrom(
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: EdenSpacing.space2,
           vertical: EdenSpacing.space1,
         ),

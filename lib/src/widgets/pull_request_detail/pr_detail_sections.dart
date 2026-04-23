@@ -5,7 +5,7 @@ import '../../tokens/spacing.dart';
 import '../eden_pull_request_detail.dart';
 
 class PrStateBadge extends StatelessWidget {
-  const PrStateBadge({
+  const PrStateBadge({super.key, 
     required this.icon,
     required this.label,
     required this.color,
@@ -18,7 +18,7 @@ class PrStateBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1,
       ),
@@ -30,7 +30,7 @@ class PrStateBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color),
-          SizedBox(width: EdenSpacing.space1),
+          const SizedBox(width: EdenSpacing.space1),
           Text(
             label,
             style: TextStyle(
@@ -46,7 +46,7 @@ class PrStateBadge extends StatelessWidget {
 }
 
 class ChangesSummary extends StatelessWidget {
-  const ChangesSummary({
+  const ChangesSummary({super.key, 
     required this.additions,
     required this.deletions,
   });
@@ -61,17 +61,17 @@ class ChangesSummary extends StatelessWidget {
       children: [
         Text(
           '+$additions',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: EdenColors.success,
             fontFamily: 'monospace',
           ),
         ),
-        SizedBox(width: EdenSpacing.space1),
+        const SizedBox(width: EdenSpacing.space1),
         Text(
           '-$deletions',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: EdenColors.error,
@@ -84,7 +84,7 @@ class ChangesSummary extends StatelessWidget {
 }
 
 class BranchChip extends StatelessWidget {
-  const BranchChip({
+  const BranchChip({super.key, 
     required this.name,
     required this.isDark,
   });
@@ -95,7 +95,7 @@ class BranchChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1 / 2,
       ),
@@ -119,7 +119,7 @@ class BranchChip extends StatelessWidget {
 }
 
 class PrTabButton extends StatelessWidget {
-  const PrTabButton({
+  const PrTabButton({super.key, 
     required this.tab,
     required this.isActive,
     required this.commitsCount,
@@ -161,7 +161,7 @@ class PrTabButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space3,
             vertical: EdenSpacing.space2,
           ),
@@ -188,7 +188,7 @@ class PrTabButton extends StatelessWidget {
 }
 
 class MetadataSidebar extends StatelessWidget {
-  const MetadataSidebar({
+  const MetadataSidebar({super.key, 
     required this.reviewers,
     required this.assignees,
     required this.labels,
@@ -224,7 +224,7 @@ class MetadataSidebar extends StatelessWidget {
         // Reviewers
         if (reviewers.isNotEmpty) ...[
           Text('REVIEWERS', style: sectionLabelStyle),
-          SizedBox(height: EdenSpacing.space2),
+          const SizedBox(height: EdenSpacing.space2),
           ...reviewers.map((r) => ReviewerRow(
                 reviewer: r,
                 onTap: onReviewerTap != null
@@ -232,21 +232,21 @@ class MetadataSidebar extends StatelessWidget {
                     : null,
                 isDark: isDark,
               )),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
           Divider(color: borderColor, height: 1),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
         ],
 
         // Assignees
         if (assignees.isNotEmpty) ...[
           Text('ASSIGNEES', style: sectionLabelStyle),
-          SizedBox(height: EdenSpacing.space2),
+          const SizedBox(height: EdenSpacing.space2),
           ...assignees.map((a) => Padding(
-                padding: EdgeInsets.only(bottom: EdenSpacing.space1),
+                padding: const EdgeInsets.only(bottom: EdenSpacing.space1),
                 child: Row(
                   children: [
                     PrAvatarCircle(initial: a.initial, isDark: isDark),
-                    SizedBox(width: EdenSpacing.space2),
+                    const SizedBox(width: EdenSpacing.space2),
                     Expanded(
                       child: Text(
                         a.name,
@@ -257,21 +257,21 @@ class MetadataSidebar extends StatelessWidget {
                   ],
                 ),
               )),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
           Divider(color: borderColor, height: 1),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
         ],
 
         // Labels
         if (labels.isNotEmpty) ...[
           Text('LABELS', style: sectionLabelStyle),
-          SizedBox(height: EdenSpacing.space2),
+          const SizedBox(height: EdenSpacing.space2),
           Wrap(
             spacing: EdenSpacing.space1,
             runSpacing: EdenSpacing.space1,
             children: labels.map((l) {
               return Container(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: EdenSpacing.space2,
                   vertical: EdenSpacing.space1 / 2,
                 ),
@@ -290,15 +290,15 @@ class MetadataSidebar extends StatelessWidget {
               );
             }).toList(),
           ),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
           Divider(color: borderColor, height: 1),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
         ],
 
         // Milestone
         if (milestone != null) ...[
           Text('MILESTONE', style: sectionLabelStyle),
-          SizedBox(height: EdenSpacing.space2),
+          const SizedBox(height: EdenSpacing.space2),
           Row(
             children: [
               Icon(
@@ -308,7 +308,7 @@ class MetadataSidebar extends StatelessWidget {
                     ? EdenColors.neutral[400]!
                     : EdenColors.neutral[500]!,
               ),
-              SizedBox(width: EdenSpacing.space1),
+              const SizedBox(width: EdenSpacing.space1),
               Expanded(
                 child: Text(
                   milestone!,
@@ -318,17 +318,17 @@ class MetadataSidebar extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
           Divider(color: borderColor, height: 1),
-          SizedBox(height: EdenSpacing.space3),
+          const SizedBox(height: EdenSpacing.space3),
         ],
 
         // Linked issues
         if (linkedIssues.isNotEmpty) ...[
           Text('LINKED ISSUES', style: sectionLabelStyle),
-          SizedBox(height: EdenSpacing.space2),
+          const SizedBox(height: EdenSpacing.space2),
           ...linkedIssues.map((issue) => Padding(
-                padding: EdgeInsets.only(bottom: EdenSpacing.space1),
+                padding: const EdgeInsets.only(bottom: EdenSpacing.space1),
                 child: Row(
                   children: [
                     Icon(
@@ -340,7 +340,7 @@ class MetadataSidebar extends StatelessWidget {
                           ? EdenColors.purple[500]!
                           : EdenColors.success,
                     ),
-                    SizedBox(width: EdenSpacing.space1),
+                    const SizedBox(width: EdenSpacing.space1),
                     Expanded(
                       child: Text(
                         '#${issue.number} ${issue.title}',
@@ -358,7 +358,7 @@ class MetadataSidebar extends StatelessWidget {
 }
 
 class ReviewerRow extends StatelessWidget {
-  const ReviewerRow({
+  const ReviewerRow({super.key, 
     required this.reviewer,
     required this.isDark,
     this.onTap,
@@ -373,7 +373,7 @@ class ReviewerRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: EdenSpacing.space1),
+      padding: const EdgeInsets.only(bottom: EdenSpacing.space1),
       child: Semantics(
         button: onTap != null,
         label: 'Reviewer: ${reviewer.name}',
@@ -383,7 +383,7 @@ class ReviewerRow extends StatelessWidget {
           child: Row(
             children: [
               PrAvatarCircle(initial: reviewer.initial, isDark: isDark),
-              SizedBox(width: EdenSpacing.space2),
+              const SizedBox(width: EdenSpacing.space2),
               Expanded(
                 child: Text(
                   reviewer.name,
@@ -409,7 +409,7 @@ class ReviewerRow extends StatelessWidget {
 }
 
 class PrAvatarCircle extends StatelessWidget {
-  const PrAvatarCircle({
+  const PrAvatarCircle({super.key, 
     required this.initial,
     required this.isDark,
   });

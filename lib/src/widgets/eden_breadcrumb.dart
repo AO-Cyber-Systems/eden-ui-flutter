@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../tokens/spacing.dart';
 
 /// A single breadcrumb item.
 class EdenBreadcrumbItem {

@@ -32,7 +32,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
               onChanged: (i) => setState(() => _tabIndex = i),
             ),
             controls: [
-              Text('Tap tabs to change selection', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              const Text('Tap tabs to change selection', style: TextStyle(fontSize: 12, color: Colors.grey)),
             ],
           ),
           const SizedBox(height: EdenSpacing.space4),
@@ -65,12 +65,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
           ),
 
           // Stepper
-          Section(
+          const Section(
             title: 'Stepper',
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
+              padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space4),
               child: EdenStepper(
-                steps: const [
+                steps: [
                   EdenStepItem(label: 'Account', status: EdenStepStatus.complete),
                   EdenStepItem(label: 'Company', status: EdenStepStatus.complete),
                   EdenStepItem(label: 'Billing', status: EdenStepStatus.current),

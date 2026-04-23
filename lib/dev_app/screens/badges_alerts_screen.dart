@@ -72,7 +72,7 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               )).toList(),
             ),
           ),
-          Section(
+          const Section(
             title: 'Badge with Icon',
             child: Wrap(
               spacing: 8,

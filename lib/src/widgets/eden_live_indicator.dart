@@ -117,7 +117,7 @@ class _EdenLiveIndicatorState extends State<EdenLiveIndicator>
       mainAxisSize: MainAxisSize.min,
       children: [
         dot,
-        SizedBox(width: EdenSpacing.space1),
+        const SizedBox(width: EdenSpacing.space1),
         Text(
           widget.label!,
           style: theme.textTheme.bodySmall?.copyWith(

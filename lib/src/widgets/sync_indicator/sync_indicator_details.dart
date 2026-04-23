@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
-import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_sync_indicator.dart';
 
 class SyncQueueItem extends StatelessWidget {
-  const SyncQueueItem({
+  const SyncQueueItem({super.key, 
     required this.operation,
     required this.isDark,
     required this.theme,

@@ -71,7 +71,7 @@ class SchedulerToolbar extends StatelessWidget {
         isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!;
 
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space2,
       ),
@@ -93,9 +93,9 @@ class SchedulerToolbar extends StatelessWidget {
             tooltip: 'Next',
             visualDensity: VisualDensity.compact,
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
           TodayButton(onPressed: onToday, isDark: isDark),
-          SizedBox(width: EdenSpacing.space4),
+          const SizedBox(width: EdenSpacing.space4),
           // Title
           Expanded(
             child: Text(
@@ -134,7 +134,7 @@ class TodayButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
+          padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
           side: BorderSide(color: borderColor),
           shape: RoundedRectangleBorder(
             borderRadius: EdenRadii.borderRadiusMd,
@@ -193,7 +193,7 @@ class ViewToggle extends StatelessWidget {
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
+                  padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: isActive ? selectedBg : Colors.transparent,
@@ -248,7 +248,7 @@ class AssigneeFilterRow extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space2,
       ),
@@ -267,11 +267,11 @@ class AssigneeFilterRow extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
             ...assignees.map((name) {
               final isSelected = selected.contains(name);
               return Padding(
-                padding: EdgeInsets.only(right: EdenSpacing.space1),
+                padding: const EdgeInsets.only(right: EdenSpacing.space1),
                 child: FilterChip(
                   label: Text(name),
                   selected: isSelected,
@@ -284,8 +284,8 @@ class AssigneeFilterRow extends StatelessWidget {
                     }
                     onChanged(next);
                   },
-                  labelStyle: TextStyle(fontSize: 12),
-                  padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+                  labelStyle: const TextStyle(fontSize: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

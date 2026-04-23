@@ -172,11 +172,11 @@ class _EdenReleaseCardState extends State<EdenReleaseCard> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.local_offer_outlined, size: 12, color: EdenColors.info),
+              const Icon(Icons.local_offer_outlined, size: 12, color: EdenColors.info),
               const SizedBox(width: EdenSpacing.space1),
               Text(
                 widget.tagName,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: EdenColors.info,
@@ -198,7 +198,7 @@ class _EdenReleaseCardState extends State<EdenReleaseCard> {
               color: EdenColors.warning.withValues(alpha: 0.12),
               borderRadius: EdenRadii.borderRadiusSm,
             ),
-            child: Text(
+            child: const Text(
               'Pre-release',
               style: TextStyle(
                 fontSize: 11,
@@ -365,7 +365,7 @@ class _AssetRow extends StatelessWidget {
               child: InkWell(
                 onTap: onDownload,
                 borderRadius: EdenRadii.borderRadiusSm,
-                child: Center(
+                child: const Center(
                   child: Icon(
                     Icons.download_outlined,
                     size: 16,

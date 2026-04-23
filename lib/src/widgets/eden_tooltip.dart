@@ -23,7 +23,7 @@ class EdenTooltip extends StatelessWidget {
         color: isDark ? EdenColors.neutral[700] : EdenColors.neutral[900],
         borderRadius: EdenRadii.borderRadiusMd,
       ),
-      textStyle: TextStyle(
+      textStyle: const TextStyle(
         color: Colors.white,
         fontSize: 12,
         fontWeight: FontWeight.w500,

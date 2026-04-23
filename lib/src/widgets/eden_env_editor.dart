@@ -155,7 +155,7 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
         : EdenColors.neutral[200]!;
 
     return Padding(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space3,
       ),
@@ -167,9 +167,9 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(width: EdenSpacing.space2),
+          const SizedBox(width: EdenSpacing.space2),
           Container(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space2,
               vertical: EdenSpacing.space1,
             ),
@@ -226,7 +226,7 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
         : EdenColors.info.withAlpha(25);
 
     return Padding(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
         vertical: EdenSpacing.space2,
       ),
@@ -246,7 +246,7 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
                   color: EdenColors.neutral[400],
                 ),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: EdenSpacing.space2,
                   vertical: EdenSpacing.space2,
                 ),
@@ -257,7 +257,7 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
           ),
           // Equals divider
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+            padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
             child: Text(
               '=',
               style: monoStyle?.copyWith(
@@ -282,7 +282,7 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
                   color: EdenColors.neutral[400],
                 ),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: EdenSpacing.space2,
                   vertical: EdenSpacing.space2,
                 ),
@@ -303,9 +303,9 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
           ),
           // Source badge
           if (entry.source != null) ...[
-            SizedBox(width: EdenSpacing.space1),
+            const SizedBox(width: EdenSpacing.space1),
             Container(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space2,
                 vertical: EdenSpacing.space1,
               ),
@@ -324,9 +324,9 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
           ],
           // Remove button
           if (!widget.readOnly) ...[
-            SizedBox(width: EdenSpacing.space1),
+            const SizedBox(width: EdenSpacing.space1),
             IconButton(
-              icon: Icon(
+              icon: const Icon(
                 Icons.close,
                 size: 18,
                 color: EdenColors.error,

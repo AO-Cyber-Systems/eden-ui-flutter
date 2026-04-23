@@ -78,10 +78,10 @@ class _DevflowProjectScreenState extends State<DevflowProjectScreen> {
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
           // Workflow Stepper
-          Section(
+          const Section(
             title: 'WORKFLOW STEPPER',
             child: EdenWorkflowStepper(
-              steps: const [
+              steps: [
                 EdenWorkflowStep(
                   label: 'New',
                   state: EdenWorkflowStepState.completed,
@@ -207,7 +207,7 @@ class _DevflowProjectScreenState extends State<DevflowProjectScreen> {
           ),
 
           // Terminal Output
-          Section(
+          const Section(
             title: 'TERMINAL OUTPUT',
             child: EdenTerminalOutput(
               command: 'devflow doctor',

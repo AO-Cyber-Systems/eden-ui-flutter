@@ -89,7 +89,7 @@ class EdenDomainRow extends StatelessWidget {
       child: InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(
+        padding: const EdgeInsets.symmetric(
           horizontal: EdenSpacing.space4,
           vertical: EdenSpacing.space3,
         ),
@@ -115,7 +115,7 @@ class EdenDomainRow extends StatelessWidget {
               ),
             ),
             if (isWildcard) ...[
-              SizedBox(width: EdenSpacing.space2),
+              const SizedBox(width: EdenSpacing.space2),
               _Badge(
                 label: 'wildcard',
                 color: EdenColors.info,
@@ -123,20 +123,20 @@ class EdenDomainRow extends StatelessWidget {
               ),
             ],
             if (source != null) ...[
-              SizedBox(width: EdenSpacing.space2),
+              const SizedBox(width: EdenSpacing.space2),
               _Badge(
                 label: source!,
                 color: EdenColors.neutral[500]!,
                 isDark: isDark,
               ),
             ],
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
             _SslBadge(
               status: sslStatus,
               expiry: sslExpiry,
               isDark: isDark,
             ),
-            SizedBox(width: EdenSpacing.space2),
+            const SizedBox(width: EdenSpacing.space2),
             _DnsBadge(
               status: dnsStatus,
               isDark: isDark,
@@ -163,7 +163,7 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space2,
         vertical: EdenSpacing.space1,
       ),

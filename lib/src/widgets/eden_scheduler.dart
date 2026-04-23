@@ -2,9 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../tokens/colors.dart';
-import '../tokens/radii.dart';
-import '../tokens/spacing.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
 import 'scheduler/scheduler_week_day_views.dart';

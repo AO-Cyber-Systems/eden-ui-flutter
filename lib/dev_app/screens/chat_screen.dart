@@ -12,24 +12,24 @@ class ChatScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
-          Section(
+          const Section(
             title: 'Chat Bubbles',
             child: EdenCard(
-              padding: const EdgeInsets.all(EdenSpacing.space4),
+              padding: EdgeInsets.all(EdenSpacing.space4),
               child: Column(
                 children: [
                   EdenChatBubble(
                     message: 'Hey! Can you help me build a UI component library?',
                     sender: EdenChatSender.user,
                     timestamp: '2:34 PM',
-                    avatar: const EdenAvatar(initials: 'JD', size: EdenAvatarSize.sm),
+                    avatar: EdenAvatar(initials: 'JD', size: EdenAvatarSize.sm),
                   ),
                   EdenChatBubble(
                     message: 'Of course! I can help you port the Eden UI design system to Flutter. '
                         'We\'ll start with the design tokens and core components.',
                     sender: EdenChatSender.assistant,
                     timestamp: '2:34 PM',
-                    avatar: const EdenAvatar(initials: 'AI', size: EdenAvatarSize.sm),
+                    avatar: EdenAvatar(initials: 'AI', size: EdenAvatarSize.sm),
                   ),
                   EdenChatBubble(
                     message: 'That sounds great. Let\'s start with buttons and cards.',
@@ -50,12 +50,12 @@ class ChatScreen extends StatelessWidget {
             ),
           ),
 
-          Section(
+          const Section(
             title: 'Chat with Avatars & Status',
             child: EdenCard(
-              padding: const EdgeInsets.all(EdenSpacing.space4),
+              padding: EdgeInsets.all(EdenSpacing.space4),
               child: Column(
-                children: const [
+                children: [
                   EdenChatBubble(
                     message: 'Quick question about the project.',
                     sender: EdenChatSender.user,

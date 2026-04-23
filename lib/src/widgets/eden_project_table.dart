@@ -295,14 +295,14 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
           // Header row
           Container(
             color: headerBg,
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space2,
               vertical: EdenSpacing.space2,
             ),
             child: Row(
               children: [
                 // Checkbox header
-                SizedBox(
+                const SizedBox(
                   width: 32,
                   child: SizedBox.shrink(),
                 ),
@@ -367,14 +367,14 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
               child: InkWell(
                 onTap: widget.onAddRow,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: EdenSpacing.space4,
                     vertical: EdenSpacing.space2,
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.add, size: 16, color: mutedColor),
-                      SizedBox(width: EdenSpacing.space1),
+                      const SizedBox(width: EdenSpacing.space1),
                       Text(
                         'Add row',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -406,7 +406,7 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
       child: InkWell(
         onTap: () => widget.onSort?.call(field.id),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+          padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -421,7 +421,7 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
                 ),
               ),
               if (isSorted) ...[
-                SizedBox(width: EdenSpacing.space1 / 2),
+                const SizedBox(width: EdenSpacing.space1 / 2),
                 Icon(
                   sortDir == EdenSortDirection.ascending
                       ? Icons.arrow_upward
@@ -453,7 +453,7 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
       child: InkWell(
         onTap: () => _toggleGroup(groupKey),
         child: Padding(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space4,
             vertical: EdenSpacing.space2,
           ),
@@ -464,14 +464,14 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
                 size: 16,
                 color: mutedColor,
               ),
-              SizedBox(width: EdenSpacing.space1),
+              const SizedBox(width: EdenSpacing.space1),
               Text(
                 groupKey,
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(width: EdenSpacing.space1),
+              const SizedBox(width: EdenSpacing.space1),
               Text(
                 '($count)',
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -507,7 +507,7 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
         child: InkWell(
           onTap: () => widget.onRowTap?.call(row.id),
           child: Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space2,
               vertical: EdenSpacing.space1,
             ),
@@ -569,14 +569,14 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
     // Inline editing
     if (isEditing) {
       return Padding(
-        padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+        padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
         child: TextField(
           controller: _editController,
           autofocus: true,
           style: theme.textTheme.bodySmall,
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(
+            contentPadding: const EdgeInsets.symmetric(
               horizontal: EdenSpacing.space1,
               vertical: EdenSpacing.space1,
             ),
@@ -596,13 +596,13 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
       final option = _findOption(field, value);
       if (option != null) {
         return Padding(
-          padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+          padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
           child: GestureDetector(
             onTap: widget.onCellChanged != null
                 ? () => _startEditing(row.id, field.id, value)
                 : null,
             child: Container(
-              padding: EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space2,
                 vertical: EdenSpacing.space1 / 2,
               ),
@@ -635,7 +635,7 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
           .map((w) => w[0].toUpperCase())
           .join();
       return Padding(
-        padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+        padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
         child: GestureDetector(
           onTap: widget.onCellChanged != null
               ? () => _startEditing(row.id, field.id, value)
@@ -648,14 +648,14 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
                 backgroundColor: EdenColors.info.withValues(alpha: 0.15),
                 child: Text(
                   initials,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: EdenColors.info,
                   ),
                 ),
               ),
-              SizedBox(width: EdenSpacing.space1),
+              const SizedBox(width: EdenSpacing.space1),
               Flexible(
                 child: Text(
                   value,
@@ -671,7 +671,7 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
 
     // Default text cell (tap to edit)
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+      padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
       child: GestureDetector(
         onDoubleTap: widget.onCellChanged != null
             ? () => _startEditing(row.id, field.id, value)

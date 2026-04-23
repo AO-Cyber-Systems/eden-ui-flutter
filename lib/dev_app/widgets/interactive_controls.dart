@@ -28,7 +28,7 @@ class EnumSelector<T extends Enum> extends StatelessWidget {
           label: Text(label),
           selected: isActive,
           onSelected: (_) => onChanged(v),
-          labelStyle: TextStyle(fontSize: 12),
+          labelStyle: const TextStyle(fontSize: 12),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         );
@@ -55,7 +55,7 @@ class ToggleControl extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: TextStyle(fontSize: 13)),
+        Text(label, style: const TextStyle(fontSize: 13)),
         const SizedBox(width: 6),
         SizedBox(
           height: 28,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
-import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
 import 'conversation_thread/conversation_event_cards.dart';
 import 'conversation_thread/conversation_shared.dart';
