@@ -209,6 +209,12 @@ export 'src/widgets/eden_tag_list.dart';
 export 'src/widgets/eden_design_diff_viewer.dart';
 export 'src/widgets/eden_discussion_thread.dart';
 
+// AOHealth — Wireframe foundation widgets
+export 'src/widgets/eden_progress_ring.dart';
+export 'src/widgets/eden_chip.dart';
+export 'src/widgets/eden_segmented_control.dart';
+export 'src/widgets/eden_settings_tile.dart';
+
 // Trades — Enterprise UI Components
 export 'src/widgets/eden_scheduler.dart';
 export 'src/widgets/eden_document_viewer.dart';
