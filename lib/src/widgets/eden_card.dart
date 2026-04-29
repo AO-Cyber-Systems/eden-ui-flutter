@@ -132,10 +132,10 @@ class EdenCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (title != null)
-          Text(title!, style: theme.textTheme.titleMedium),
+          SelectableText(title!, style: theme.textTheme.titleMedium),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
-          Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(
+          SelectableText(subtitle!, style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           )),
         ],
