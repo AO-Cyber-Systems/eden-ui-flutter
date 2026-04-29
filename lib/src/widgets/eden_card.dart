@@ -127,17 +127,29 @@ class EdenCard extends StatelessWidget {
     final theme = Theme.of(context);
     if (child != null) return child!;
 
+    // Use SelectableText for read-only cards (no onTap) so title/subtitle text
+    // is selectable on Flutter web. When onTap is set the card is an interactive
+    // button — SelectableText would absorb the tap gesture, so we fall back to
+    // regular Text and let the GestureDetector handle the interaction.
+    final bool selectable = onTap == null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (title != null)
-          SelectableText(title!, style: theme.textTheme.titleMedium),
+          selectable
+              ? SelectableText(title!, style: theme.textTheme.titleMedium)
+              : Text(title!, style: theme.textTheme.titleMedium),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
-          SelectableText(subtitle!, style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          )),
+          selectable
+              ? SelectableText(subtitle!, style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ))
+              : Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                )),
         ],
       ],
     );
