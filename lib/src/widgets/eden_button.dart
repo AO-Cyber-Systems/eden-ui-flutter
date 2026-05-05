@@ -66,7 +66,7 @@ class EdenButton extends StatelessWidget {
           Icon(icon, size: sizing.iconSize),
           SizedBox(width: sizing.gap),
         ],
-        Text(label),
+        Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
         if (trailingIcon != null) ...[
           SizedBox(width: sizing.gap),
           Icon(trailingIcon, size: sizing.iconSize),
