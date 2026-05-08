@@ -33,14 +33,13 @@ None.
 
 ## Next Up
 
-Run `/devflow:quick` to fix `EdenPageHeader` iPhone-narrow overflow (RESP-01..03).
+Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downstream `eden-biz-flutter` consumers re-pick up the fix via `path:` dep on next `flutter pub get`.
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-
-(none yet)
+| 1 | EdenPageHeader iPhone-narrow LayoutBuilder + 480pt breakpoint fix | 2026-05-07 | 3558da1 | [1-edenpageheader-iphone-narrow-layoutbuild](./quick/1-edenpageheader-iphone-narrow-layoutbuild/) |
 
 ---
-*Last activity: 2026-05-07 — Project bootstrapped; collapsed Objective 1 ceremony into quick task track.*
+*Last activity: 2026-05-07 — Completed quick task 1: EdenPageHeader iPhone-narrow LayoutBuilder fix. RED→GREEN: 8/8 new tests pass, 233/233 widget regression preserved, `flutter analyze` clean.*
