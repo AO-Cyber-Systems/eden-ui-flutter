@@ -2,32 +2,26 @@
 
 ## Active Objectives
 
-### Objective 1: EdenPageHeader iPhone-narrow Wrap fix
+_(none — small fixes are tracked as `/devflow:quick` tasks under `.planning/quick/`. Full objectives accrue when a single capability spans multiple TRDs or needs research/verification ceremony.)_
 
-**Goal:** `EdenPageHeader` widget no longer overflows its outer `Row` layout on iPhone-narrow viewports (≥390pt logical width). Currently the outer `Row` places `title-Column` + `actions-Row` side-by-side via the title's `Expanded`; on narrow viewports with 2-3 action buttons, the actions Row consumes more horizontal space than the leftover, causing `RenderFlex overflowed by N pixels`. Fix: wrap the build output in a `LayoutBuilder` that stacks actions below the title block on viewports `< 480pt` logical width while preserving the original side-by-side layout on wide.
+## v2 Future Objectives
 
-**Requirements:** RESP-01, RESP-02, RESP-03.
+Tracked but not in current scope:
 
-**Why:** Surfaced by the downstream `eden-biz-flutter` Objective 12 iOS sentinel (commit `f9a9941` in eden-biz-flutter). 4 deferred iOS sentinel tests in eden-biz-flutter sit behind a `_kSchedulingScreenSkipped` flag awaiting this fix. Reference: `eden-biz-flutter/.planning/objectives/12-ui-e2e-coverage/12-04-SUMMARY.md` § Deferred Items, `12-PROJECT.md` § Wave 0a.
+- **VRT-01** — Visual regression baselines for all `eden_*_test.dart` widgets at iPhone-narrow + iPad-portrait + desktop widths. Defer until Eden visual identity stabilizes enough that pixel-diffs aren't constant noise.
+- **XPL-01** — Cross-platform render gates in CI for all 6 supported platforms (iOS, Android, macOS, Windows, Linux, web).
 
-**Branch:** `fix/eden-page-header-iphone-narrow-overflow` (already cut from `origin/main` `e081038`).
+## Quick Tasks Tracker
 
-**TRDs:** TBD (planner decides — likely 1 type=tdd TRD with RED→GREEN cycle: failing iPhone-narrow widget test → LayoutBuilder fix → wide-viewport regression test).
+See `STATE.md` § "Quick Tasks Completed" + commit log on `main` for shipped fixes. RESP-XX requirements (responsive layout — `EdenPageHeader` iPhone-narrow Wrap fix etc.) are addressed via quick tasks until they accumulate into a broader responsive-design objective.
 
-**Success Criteria:**
-1. `EdenPageHeader` rendered at 390pt logical width with 3 actions: NO `RenderFlex overflowed` exception, NO yellow-and-black overflow indicators (RESP-01).
-2. New widget test file `test/widgets/eden_page_header_test.dart` exists with at least: (a) iPhone-narrow render passes, (b) wide-viewport (≥1024pt) side-by-side layout preserved, (c) actions wrap below title-block at narrow widths (RESP-02, RESP-03).
-3. Wide-viewport behavior unchanged: existing downstream consumers (eden-biz-flutter, etc.) see identical layout on iPad/desktop.
-4. `flutter analyze` clean for the modified widget.
-5. Downstream verification (manual, not gating this objective): re-run `eden-biz-flutter`'s iOS sentinel after this lands + `flutter pub get` + flip `_kSchedulingScreenSkipped` to `false`. The 4 deferred iOS sentinel tests should pass without the spike's viewport-widening kludge.
+## Triage Heuristic
 
-**Out of scope:**
-- Other widgets that may overflow at iPhone-narrow (cross-cutting responsive audit) — separate v2 objective when surfaced
-- Visual regression baselines (deferred to v2 VRT-01)
-- Real-device iOS testing (downstream concern)
-- Cross-platform render gates (deferred to v2 XPL-01)
+| Work shape | Tool |
+|---|---|
+| Single-line fix, 1 file, <30 LOC | `/devflow:micro` |
+| 1-5 files, <200 LOC, no architectural decisions | `/devflow:quick` |
+| Multi-file capability with research / verification needs | `/devflow:plan-objective <N>` (full objective) |
+| Net-new widget component with design + a11y + tests | `/devflow:plan-objective <N>` |
 
-**Reference docs:**
-- `eden-biz-flutter/.planning/objectives/12-ui-e2e-coverage/12-04-SUMMARY.md` — iOS sentinel that surfaced this bug
-- `eden-biz-flutter/.planning/objectives/12-ui-e2e-coverage/12-PROJECT.md` § Wave 0a — original cross-repo prerequisite framing
-- Reference fix shape (spike-suggested, applied to eden-biz-flutter's `_GlobalTopBar` already): wrap in `LayoutBuilder`, conditional rendering of side-by-side widgets above breakpoint
+When in doubt, start with `/devflow:quick`; promote to a full objective only if scope clearly spans it.

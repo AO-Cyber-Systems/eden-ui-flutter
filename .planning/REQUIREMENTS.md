@@ -35,17 +35,14 @@ Deferred to future release. Tracked but not in current roadmap.
 
 ## Traceability
 
-| Requirement | Objective | Status |
-|-------------|-------|--------|
-| RESP-01 | Objective 1 | Pending |
-| RESP-02 | Objective 1 | Pending |
-| RESP-03 | Objective 1 | Pending |
+| Requirement | Tracked via | Status |
+|-------------|-------------|--------|
+| RESP-01 | quick task (TBD) | Pending |
+| RESP-02 | quick task (TBD) | Pending |
+| RESP-03 | quick task (TBD) | Pending |
 
-**Coverage:**
-- v1 requirements: 3 total
-- Mapped to objectives: 3
-- Unmapped: 0 ✓
+**Coverage:** All 3 v1 requirements scope tightly into a single quick task (`/devflow:quick`) — 1 widget file + 1 widget test file, <100 LOC. They do NOT warrant a full objective with research/verification ceremony per the Triage Heuristic in ROADMAP.md.
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-07 after initial bootstrap*
+*Last updated: 2026-05-07 — collapsed Objective 1 ceremony into a quick task track*
