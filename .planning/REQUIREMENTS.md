@@ -7,9 +7,9 @@
 
 ### Responsive Layout (RESP)
 
-- [ ] **RESP-01** — `EdenPageHeader` Row layout no longer overflows on iPhone-narrow viewports (≥390pt logical width). The current outer `Row` places title-Column + actions-Row side-by-side; on narrow screens with 2-3 actions, the actions Row crowds out the title's Expanded width. Fix: introduce `LayoutBuilder` + threshold (480pt) that stacks actions below the title block on narrow viewports while preserving the original side-by-side layout on wide. Verification: new widget test pumps the widget at 390pt logical width with 3 actions and asserts no `RenderFlex overflowed` exceptions.
-- [ ] **RESP-02** — Widget test infrastructure for the responsive iPhone-narrow case is in place: shared helper or pattern for setting `tester.view.physicalSize` to iPhone-narrow + asserting no layout overflow. Mirrors the spike's `tester.view.physicalSize = const Size(1170, 2532)` workaround pattern but flips it — assert PASSES at 390pt without widening.
-- [ ] **RESP-03** — Test added explicitly catches the wide path too — `EdenPageHeader` rendered at desktop width (≥1024pt) preserves the side-by-side layout. Both paths covered by separate tests.
+- [x] **RESP-01** — `EdenPageHeader` Row layout no longer overflows on iPhone-narrow viewports (≥390pt logical width). The current outer `Row` places title-Column + actions-Row side-by-side; on narrow screens with 2-3 actions, the actions Row crowds out the title's Expanded width. Fix: introduce `LayoutBuilder` + threshold (480pt) that stacks actions below the title block on narrow viewports while preserving the original side-by-side layout on wide. Verification: new widget test pumps the widget at 390pt logical width with 3 actions and asserts no `RenderFlex overflowed` exceptions.
+- [x] **RESP-02** — Widget test infrastructure for the responsive iPhone-narrow case is in place: shared helper or pattern for setting `tester.view.physicalSize` to iPhone-narrow + asserting no layout overflow. Mirrors the spike's `tester.view.physicalSize = const Size(1170, 2532)` workaround pattern but flips it — assert PASSES at 390pt without widening.
+- [x] **RESP-03** — Test added explicitly catches the wide path too — `EdenPageHeader` rendered at desktop width (≥1024pt) preserves the side-by-side layout. Both paths covered by separate tests.
 
 ## v2 Requirements
 
@@ -37,9 +37,9 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Tracked via | Status |
 |-------------|-------------|--------|
-| RESP-01 | quick task (TBD) | Pending |
-| RESP-02 | quick task (TBD) | Pending |
-| RESP-03 | quick task (TBD) | Pending |
+| RESP-01 | quick task (TBD) | Complete |
+| RESP-02 | quick task (TBD) | Complete |
+| RESP-03 | quick task (TBD) | Complete |
 
 **Coverage:** All 3 v1 requirements scope tightly into a single quick task (`/devflow:quick`) — 1 widget file + 1 widget test file, <100 LOC. They do NOT warrant a full objective with research/verification ceremony per the Triage Heuristic in ROADMAP.md.
 
