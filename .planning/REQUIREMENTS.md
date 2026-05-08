@@ -37,9 +37,9 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Tracked via | Status |
 |-------------|-------------|--------|
-| RESP-01 | quick task (TBD) | Complete |
-| RESP-02 | quick task (TBD) | Complete |
-| RESP-03 | quick task (TBD) | Complete |
+| RESP-01 | quick-1 (commits `55b88cb` RED, `3558da1` GREEN) | Complete |
+| RESP-02 | quick-1 (commits `55b88cb` RED, `3558da1` GREEN) | Complete |
+| RESP-03 | quick-1 (commits `55b88cb` RED, `3558da1` GREEN) | Complete |
 
 **Coverage:** All 3 v1 requirements scope tightly into a single quick task (`/devflow:quick`) — 1 widget file + 1 widget test file, <100 LOC. They do NOT warrant a full objective with research/verification ceremony per the Triage Heuristic in ROADMAP.md.
 
