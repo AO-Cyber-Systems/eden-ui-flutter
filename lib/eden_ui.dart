@@ -78,6 +78,9 @@ export 'src/widgets/eden_command_palette.dart';
 // Utility & selection widgets
 export 'src/widgets/eden_confirm_dialog.dart';
 export 'src/widgets/eden_oauth_buttons.dart';
+export 'src/widgets/eden_async_form_scaffold.dart';
+export 'src/widgets/eden_inline_error_banner.dart';
+export 'src/widgets/eden_paywall_dialog.dart';
 export 'src/widgets/eden_theme_selector.dart';
 export 'src/widgets/eden_document_status_badge.dart';
 export 'src/widgets/eden_label_picker.dart';
