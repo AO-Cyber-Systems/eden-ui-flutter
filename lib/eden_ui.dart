@@ -82,6 +82,11 @@ export 'src/widgets/eden_theme_selector.dart';
 export 'src/widgets/eden_document_status_badge.dart';
 export 'src/widgets/eden_label_picker.dart';
 export 'src/widgets/eden_workspace_switcher.dart';
+export 'src/widgets/eden_quick_date_range.dart';
+export 'src/widgets/eden_export_button.dart';
+export 'src/widgets/eden_json_viewer.dart';
+export 'src/widgets/eden_masked_text.dart';
+export 'src/widgets/eden_status_badge.dart';
 
 // Messaging
 export 'src/widgets/eden_message_bubble.dart';
