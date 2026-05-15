@@ -1,8 +1,8 @@
 {
   "objective": "001-wave-a-cross-vertical-fundamentals",
-  "wave": 2,
+  "wave": 4,
   "current_trd": null,
-  "current_task": "Wave 2 complete (TRDs 001-04, 001-05, 001-06, 001-07, 001-08)",
+  "current_task": "Wave A 100% complete (15/15 TRDs — Waves 1-4 all GREEN)",
   "completed_tasks": [
     "001-01 Task 1 — fixture builders",
     "001-01 Task 2 — RED → GREEN EdenListPageScaffold (12 tests pass)",
@@ -17,14 +17,19 @@
     "001-05 Task 2 — RED → GREEN EdenPhoneInput (8 tests pass) + dev catalog",
     "001-06 Task 1 — RED → GREEN EdenMembershipTierBadge (10 tests pass) + dev catalog",
     "001-07 Task 1 — RED → GREEN EdenAuthenticatedImage (10 tests pass) + dev catalog",
-    "001-08 Task 1 — RED → GREEN EdenNetworkStatusBar (8 tests pass) + dev catalog"
+    "001-08 Task 1 — RED → GREEN EdenNetworkStatusBar (8 tests pass) + dev catalog",
+    "001-15 Task 1 — RED → GREEN RecordingMapProvider test double in lib/ (6 tests pass)",
+    "001-15 Task 2 — RED → GREEN EdenMapPreview (8 tests pass)",
+    "001-15 Task 3 — RED → GREEN EdenAddressInput (11 tests pass) + dev catalog"
   ],
-  "completed_trds": ["001-01", "001-02", "001-03", "001-04", "001-05", "001-06", "001-07", "001-08"],
+  "completed_trds": ["001-01", "001-02", "001-03", "001-04", "001-05", "001-06", "001-07", "001-08", "001-15"],
   "started_at": "2026-05-15",
   "wave1_completed_at": "2026-05-15",
   "wave1_tests_added": 42,
   "wave2_completed_at": "2026-05-15",
   "wave2_tests_added": 58,
+  "wave4_completed_at": "2026-05-15",
+  "wave4_tests_added": 25,
   "deviations": [
     {
       "trd": "001-03",
@@ -40,6 +45,11 @@
       "trd": "001-08",
       "rule": "Rule 3 — auto-fix blocking issue",
       "summary": "Tests using `pumpAndSettle()` after `status=reconnecting` deadlocked because the CircularProgressIndicator spins indefinitely. Replaced `pumpAndSettle()` with fixed-time `pump(Duration(milliseconds: 250))` to advance animation without waiting for steady-state. This matches the issue Wave 1 had flagged in deferred-items.md and resolves it at GREEN."
+    },
+    {
+      "trd": "001-15",
+      "rule": "Test-design adjustment (TRD recovery clause invoked)",
+      "summary": "EdenAddressInput uses a hand-rolled Material(Column) suggestion dropdown instead of Flutter's `Autocomplete<EdenPlaceSuggestion>` widget — invoking the TRD's <recovery> clause. Material `Autocomplete<>` builds an Overlay route that is not reachable from the standard test wrap() helper (MaterialApp(home: Scaffold(body: child))). Hand-rolled version is simpler to test and keeps the widget tree flat. No API impact; consumers see the same EdenAddressInput signature."
     }
   ]
 }
