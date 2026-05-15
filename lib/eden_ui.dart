@@ -263,6 +263,7 @@ export 'src/widgets/map_providers/eden_map_types.dart';
 export 'src/widgets/map_providers/eden_map_provider.dart';
 
 // Wave A — Cross-vertical primitives
+export 'src/widgets/eden_authenticated_image.dart';
 export 'src/widgets/eden_currency_display.dart';
 export 'src/widgets/eden_membership_tier_badge.dart';
 export 'src/widgets/eden_otp_input.dart';
