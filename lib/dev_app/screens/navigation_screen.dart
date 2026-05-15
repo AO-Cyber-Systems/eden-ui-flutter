@@ -162,6 +162,109 @@ class _NavigationScreenState extends State<NavigationScreen> {
               onClear: () {},
             ),
           ),
+
+          // Wave A — Quick Action Bar
+          Section(
+            title: 'Quick Action Bar — 5 actions (desktop)',
+            child: SizedBox(
+              height: 56,
+              child: EdenQuickActionBar(
+                actions: <EdenQuickAction>[
+                  EdenQuickAction(
+                      icon: Icons.push_pin, tooltip: 'Pin', onPressed: () {}),
+                  EdenQuickAction(
+                      icon: Icons.chat_bubble_outline,
+                      tooltip: 'Chat',
+                      onPressed: () {},
+                      badgeCount: 2),
+                  EdenQuickAction(
+                      icon: Icons.phone, tooltip: 'Call', onPressed: () {}),
+                  EdenQuickAction(
+                      icon: Icons.email_outlined,
+                      tooltip: 'Email',
+                      onPressed: () {}),
+                  EdenQuickAction(
+                      icon: Icons.archive_outlined,
+                      tooltip: 'Archive',
+                      onPressed: () {}),
+                ],
+              ),
+            ),
+          ),
+
+          Section(
+            title:
+                'Quick Action Bar — 8 actions at narrow width (overflow menu)',
+            child: Center(
+              child: SizedBox(
+                width: 320,
+                height: 56,
+                child: EdenQuickActionBar(
+                  actions: <EdenQuickAction>[
+                    EdenQuickAction(
+                        icon: Icons.print, tooltip: 'Print', onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.push_pin,
+                        tooltip: 'Pin',
+                        onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.chat_bubble_outline,
+                        tooltip: 'Chat',
+                        onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.phone,
+                        tooltip: 'Call',
+                        onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.camera_alt_outlined,
+                        tooltip: 'Photo',
+                        onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.share,
+                        tooltip: 'Share',
+                        onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.archive_outlined,
+                        tooltip: 'Archive',
+                        onPressed: () {}),
+                    EdenQuickAction(
+                        icon: Icons.delete_outline,
+                        tooltip: 'Delete',
+                        onPressed: () {}),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          Section(
+            title: 'Quick Action Bar — badges (3 / 12 / 99+)',
+            child: SizedBox(
+              height: 56,
+              child: EdenQuickActionBar(
+                actions: <EdenQuickAction>[
+                  EdenQuickAction(
+                    icon: Icons.notifications_outlined,
+                    tooltip: 'Alerts',
+                    badgeCount: 3,
+                    onPressed: () {},
+                  ),
+                  EdenQuickAction(
+                    icon: Icons.chat_bubble_outline,
+                    tooltip: 'Messages',
+                    badgeCount: 12,
+                    onPressed: () {},
+                  ),
+                  EdenQuickAction(
+                    icon: Icons.task_alt,
+                    tooltip: 'Tasks',
+                    badgeCount: 150,
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
