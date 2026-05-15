@@ -365,6 +365,84 @@ class _CompoundScreenState extends State<CompoundScreen> {
             ),
           ),
 
+          // Intake Form (Wave A composer)
+          Section(
+            title: 'INTAKE FORM — SALON ONBOARDING',
+            child: EdenCard(
+              child: SizedBox(
+                height: 480,
+                child: EdenIntakeForm(
+                  questions: const [
+                    EdenIntakeQuestion(
+                      id: 'name',
+                      label: 'Full name',
+                      type: EdenIntakeQuestionType.text,
+                      required: true,
+                    ),
+                    EdenIntakeQuestion(
+                      id: 'phone',
+                      label: 'Phone number',
+                      type: EdenIntakeQuestionType.text,
+                      required: true,
+                    ),
+                    EdenIntakeQuestion(
+                      id: 'services',
+                      label: 'Services interested in',
+                      type: EdenIntakeQuestionType.multipleChoice,
+                      options: ['Haircut', 'Color', 'Treatment', 'Style'],
+                    ),
+                    EdenIntakeQuestion(
+                      id: 'marketing',
+                      label: 'Receive marketing emails?',
+                      type: EdenIntakeQuestionType.yesNo,
+                    ),
+                  ],
+                  onComplete: (_) {},
+                ),
+              ),
+            ),
+          ),
+
+          // Intake Form — branching medical example
+          Section(
+            title: 'INTAKE FORM — MEDICAL (BRANCHING)',
+            child: EdenCard(
+              child: SizedBox(
+                height: 480,
+                child: EdenIntakeForm(
+                  questions: [
+                    const EdenIntakeQuestion(
+                      id: 'fullName',
+                      label: 'Full name',
+                      type: EdenIntakeQuestionType.text,
+                      required: true,
+                    ),
+                    const EdenIntakeQuestion(
+                      id: 'takingMeds',
+                      label: 'Currently taking medications?',
+                      type: EdenIntakeQuestionType.yesNo,
+                      required: true,
+                    ),
+                    EdenIntakeQuestion(
+                      id: 'meds_list',
+                      label: 'List your current medications',
+                      type: EdenIntakeQuestionType.longText,
+                      required: true,
+                      visibleWhen: (answers) => answers['takingMeds'] == true,
+                    ),
+                    const EdenIntakeQuestion(
+                      id: 'complaint',
+                      label: 'Primary complaint',
+                      type: EdenIntakeQuestionType.longText,
+                      required: true,
+                    ),
+                  ],
+                  onComplete: (_) {},
+                ),
+              ),
+            ),
+          ),
+
           const SizedBox(height: EdenSpacing.space8),
         ],
       ),
