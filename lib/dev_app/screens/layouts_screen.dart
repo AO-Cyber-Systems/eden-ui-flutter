@@ -456,9 +456,218 @@ class _ScaffoldsPreview extends StatelessWidget {
             ),
           ),
         ),
+
+        // Wave A — EdenRoleDashboardShell composer
+        const SizedBox(height: EdenSpacing.space8),
+        Text('EdenRoleDashboardShell',
+            style: theme.textTheme.titleLarge),
+        const SizedBox(height: EdenSpacing.space2),
+        Text(
+          'Role-specific home shell. Cycle the dropdown to switch '
+          'role palette + sections.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DashboardShellDemo(),
       ],
     );
   }
+}
+
+/// Stateful cycling demo for the EdenRoleDashboardShell catalog entry.
+class _DashboardShellDemo extends StatefulWidget {
+  const _DashboardShellDemo();
+
+  @override
+  State<_DashboardShellDemo> createState() => _DashboardShellDemoState();
+}
+
+class _DashboardShellDemoState extends State<_DashboardShellDemo> {
+  static const _options = <String>[
+    'Trades Dispatcher',
+    'Salon Owner',
+    'Medical Doctor',
+    'Gov Caseworker',
+  ];
+  String _selected = _options.first;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const Text('Role preset: '),
+            const SizedBox(width: 12),
+            DropdownButton<String>(
+              value: _selected,
+              items: _options
+                  .map((o) => DropdownMenuItem<String>(
+                        value: o,
+                        child: Text(o),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) setState(() => _selected = v);
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: EdenSpacing.space3),
+        SizedBox(
+          height: 560,
+          child: EdenCard(child: _buildShell()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShell() {
+    final (String greeting, String role, EdenRolePalette palette,
+        List<EdenDashboardSection> sections) = _resolve();
+    return EdenRoleDashboardShell(
+      greeting: greeting,
+      roleLabel: role,
+      rolePalette: palette,
+      avatar: const CircleAvatar(child: Text('U')),
+      sections: sections,
+    );
+  }
+
+  (String, String, EdenRolePalette, List<EdenDashboardSection>) _resolve() {
+    switch (_selected) {
+      case 'Salon Owner':
+        return (
+          'Good morning, Maya',
+          'Owner',
+          EdenRolePalette.salon,
+          _salonSections(),
+        );
+      case 'Medical Doctor':
+        return (
+          'Good morning, Dr. Lee',
+          'Doctor',
+          EdenRolePalette.medical,
+          _medicalSections(),
+        );
+      case 'Gov Caseworker':
+        return (
+          'Good morning, Jordan',
+          'Caseworker',
+          EdenRolePalette.gov,
+          _govSections(),
+        );
+      case 'Trades Dispatcher':
+      default:
+        return (
+          'Good morning, Sarah',
+          'Dispatcher',
+          EdenRolePalette.trades,
+          _tradesSections(),
+        );
+    }
+  }
+
+  List<EdenDashboardSection> _tradesSections() => <EdenDashboardSection>[
+        const EdenDashboardSection(
+          id: 'blocked_work',
+          title: 'Blocked Work',
+          priority: EdenDashboardSectionPriority.high,
+          icon: Icons.report_problem,
+          body: SizedBox(height: 60,
+              child: Text('3 blocked work orders')),
+        ),
+        const EdenDashboardSection(
+          id: 'incoming',
+          title: 'Incoming Work',
+          icon: Icons.inbox,
+          badge: '12',
+          body: SizedBox(height: 60, child: Text('12 new')),
+        ),
+        const EdenDashboardSection(
+          id: 'action',
+          title: 'Needs Your Action',
+          icon: Icons.assignment_late,
+          body: SizedBox(height: 60,
+              child: Text('5 approvals pending')),
+        ),
+        const EdenDashboardSection(
+          id: 'ai',
+          title: 'AI Insights',
+          icon: Icons.auto_awesome,
+          body: SizedBox(height: 60,
+              child: Text('2 anomalies detected')),
+        ),
+      ];
+
+  List<EdenDashboardSection> _salonSections() => <EdenDashboardSection>[
+        const EdenDashboardSection(
+          id: 'today',
+          title: "Today's Schedule",
+          body: SizedBox(height: 60, child: Text('8 appointments')),
+        ),
+        const EdenDashboardSection(
+          id: 'stylists',
+          title: 'Stylist Availability',
+          body: SizedBox(height: 60, child: Text('3 working')),
+        ),
+        const EdenDashboardSection(
+          id: 'revenue',
+          title: 'Revenue Pulse',
+          body: SizedBox(height: 60, child: Text(r'$4,250 today')),
+        ),
+        const EdenDashboardSection(
+          id: 'bookings',
+          title: 'New Bookings',
+          body: SizedBox(height: 60, child: Text('2 in last hour')),
+        ),
+      ];
+
+  List<EdenDashboardSection> _medicalSections() => <EdenDashboardSection>[
+        const EdenDashboardSection(
+          id: 'queue',
+          title: 'Patient Queue',
+          body: SizedBox(height: 60,
+              child: Text('5 patients waiting')),
+        ),
+        const EdenDashboardSection(
+          id: 'appts',
+          title: "Today's Appointments",
+          body: SizedBox(height: 60, child: Text('14 scheduled')),
+        ),
+        const EdenDashboardSection(
+          id: 'labs',
+          title: 'Lab Results In',
+          body: SizedBox(height: 60, child: Text('3 new')),
+        ),
+        const EdenDashboardSection(
+          id: 'msgs',
+          title: 'Messages',
+          body: SizedBox(height: 60, child: Text('7 unread')),
+        ),
+      ];
+
+  List<EdenDashboardSection> _govSections() => <EdenDashboardSection>[
+        const EdenDashboardSection(
+          id: 'open',
+          title: 'Open Cases',
+          body: SizedBox(height: 60, child: Text('42 active')),
+        ),
+        const EdenDashboardSection(
+          id: 'review',
+          title: 'Pending Review',
+          body: SizedBox(height: 60,
+              child: Text('11 awaiting decision')),
+        ),
+        const EdenDashboardSection(
+          id: 'foia',
+          title: 'FOIA Requests',
+          body: SizedBox(height: 60, child: Text('3 due this week')),
+        ),
+      ];
 }
 
 /// Minimal side-rail demo used by the Scaffolds preview.
