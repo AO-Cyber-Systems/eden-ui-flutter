@@ -119,6 +119,27 @@ class _InputsScreenState extends State<InputsScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'Wave A — Cross-vertical primitives'),
+          const Section(
+            title: 'Phone Input',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EdenPhoneInput(),
+                SizedBox(height: 12),
+                EdenPhoneInput(verifyButton: true),
+              ],
+            ),
+          ),
+          const Section(
+            title: 'OTP Input (6 digits)',
+            child: EdenOtpInput(autofocus: false),
+          ),
+          const Section(
+            title: 'OTP Input (4 digits)',
+            child: EdenOtpInput(length: 4, autofocus: false),
+          ),
         ],
       ),
     );
