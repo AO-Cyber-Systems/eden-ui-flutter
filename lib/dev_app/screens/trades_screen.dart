@@ -1,7 +1,12 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import '../../eden_ui.dart';
+// Hide the new map-provider EdenMapMarker so this demo can keep using the
+// legacy shape from `eden_map_view.dart` directly (the demo predates the
+// pluggable map provider work and is left intact to avoid touching the
+// Trades catalog screen broadly).
+import '../../eden_ui.dart' hide EdenMapMarker;
+import '../../src/widgets/eden_map_view.dart' show EdenMapMarker;
 import '../widgets/section.dart';
 
 /// Showcase screen for the Trades-inspired enterprise UI components.

@@ -234,7 +234,11 @@ export 'src/widgets/eden_checklist_builder.dart';
 export 'src/widgets/eden_permission_matrix.dart';
 export 'src/widgets/eden_sync_indicator.dart';
 export 'src/widgets/eden_activity_feed.dart';
-export 'src/widgets/eden_map_view.dart';
+// `EdenMapMarker` is hidden so the new map-provider `EdenMapMarker`
+// (Wave A — Map provider interface) becomes the canonical type exported
+// by the barrel. Consumers still needing the legacy shape can import
+// `package:eden_ui_flutter/src/widgets/eden_map_view.dart` directly.
+export 'src/widgets/eden_map_view.dart' hide EdenMapMarker;
 export 'src/widgets/eden_barcode_scanner.dart';
 
 // Pages
@@ -254,8 +258,12 @@ export 'src/widgets/eden_list_page_scaffold.dart';
 export 'src/widgets/eden_detail_header.dart';
 export 'src/widgets/eden_detail_page_scaffold.dart';
 
+// Wave A — Map provider interface (A4 dependency; reference impl ships separately)
+export 'src/widgets/map_providers/eden_map_types.dart';
+
 // Wave A — Cross-vertical primitives
 export 'src/widgets/eden_currency_display.dart';
+export 'src/widgets/eden_membership_tier_badge.dart';
 export 'src/widgets/eden_otp_input.dart';
 export 'src/widgets/eden_phone_input.dart';
 
