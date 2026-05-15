@@ -284,6 +284,7 @@ export 'src/widgets/eden_app_tour_overlay.dart';
 
 // Wave A — Cross-vertical primitives (offline + nav)
 export 'src/widgets/eden_offline_queue_viewer.dart';
+export 'src/widgets/eden_quick_action_bar.dart';
 
 // Wave A — Address & map components
 export 'src/widgets/eden_address_input.dart';
