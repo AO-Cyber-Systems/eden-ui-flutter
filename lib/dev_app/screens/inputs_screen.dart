@@ -140,8 +140,112 @@ class _InputsScreenState extends State<InputsScreen> {
             title: 'OTP Input (4 digits)',
             child: EdenOtpInput(length: 4, autofocus: false),
           ),
+
+          const EdenDivider(label: 'Wave A — Address & map components'),
+          const Section(
+            title: 'EdenAddressInput + EdenMapPreview (powered by RecordingMapProvider)',
+            child: _AddressInputDemo(),
+          ),
+          const Section(
+            title: 'EdenMapPreview with NoOpMapProvider (graceful degradation)',
+            child: EdenMapPreview(
+              provider: NoOpMapProvider(),
+              bounds: EdenMapBounds(
+                southwest: EdenLatLng(lat: 37.70, lng: -122.50),
+                northeast: EdenLatLng(lat: 37.85, lng: -122.35),
+              ),
+              height: 160,
+            ),
+          ),
+          const Section(
+            title: 'EdenAddressInput with NoOpMapProvider (manual entry only)',
+            child: EdenAddressInput(provider: NoOpMapProvider()),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Side-by-side address input + map preview demo backed by an in-memory
+/// RecordingMapProvider with deterministic San Francisco data so the demo
+/// works fully offline.
+class _AddressInputDemo extends StatefulWidget {
+  const _AddressInputDemo();
+
+  @override
+  State<_AddressInputDemo> createState() => _AddressInputDemoState();
+}
+
+class _AddressInputDemoState extends State<_AddressInputDemo> {
+  static const _sfLatLng = EdenLatLng(lat: 37.7793, lng: -122.4192);
+
+  static const _bounds = EdenMapBounds(
+    southwest: EdenLatLng(lat: 37.70, lng: -122.50),
+    northeast: EdenLatLng(lat: 37.85, lng: -122.35),
+  );
+
+  late final RecordingMapProvider _provider;
+  EdenAddress? _current;
+
+  @override
+  void initState() {
+    super.initState();
+    _provider = RecordingMapProvider(
+      cannedAddress: const EdenAddress(
+        streetLine1: '1 Apple Park Way',
+        city: 'Cupertino',
+        regionCode: 'CA',
+        postalCode: '95014',
+        countryCode: 'US',
+        latLng: _sfLatLng,
+      ),
+      cannedSuggestions: const <EdenPlaceSuggestion>[
+        EdenPlaceSuggestion(
+          placeId: 'place_apple_hq',
+          primaryText: 'Apple Park',
+          secondaryText: '1 Apple Park Way, Cupertino, CA',
+        ),
+        EdenPlaceSuggestion(
+          placeId: 'place_twitter_hq',
+          primaryText: 'Twitter HQ',
+          secondaryText: '1355 Market St, San Francisco, CA',
+        ),
+        EdenPlaceSuggestion(
+          placeId: 'place_salesforce_tower',
+          primaryText: 'Salesforce Tower',
+          secondaryText: '415 Mission St, San Francisco, CA',
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final markers = _current?.latLng == null
+        ? const <EdenMapMarker>[]
+        : <EdenMapMarker>[
+            EdenMapMarker(
+              id: 'current',
+              position: _current!.latLng!,
+              label: _current!.streetLine1,
+            ),
+          ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        EdenAddressInput(
+          provider: _provider,
+          onChanged: (a) => setState(() => _current = a),
+        ),
+        const SizedBox(height: 12),
+        EdenMapPreview(
+          provider: _provider,
+          bounds: _bounds,
+          markers: markers,
+          height: 180,
+        ),
+      ],
     );
   }
 }
