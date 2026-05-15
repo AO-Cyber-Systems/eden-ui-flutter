@@ -12,6 +12,12 @@ class OverlaysScreen extends StatefulWidget {
 
 class _OverlaysScreenState extends State<OverlaysScreen> {
   bool _bannerVisible = true;
+  bool _tipVisible = true;
+  String _selectedStarter = 'salon';
+  final GlobalKey _tourKey1 = GlobalKey();
+  final GlobalKey _tourKey2 = GlobalKey();
+  final GlobalKey<EdenAppTourOverlayState> _tourOverlayKey =
+      GlobalKey<EdenAppTourOverlayState>();
 
   @override
   Widget build(BuildContext context) {
@@ -242,6 +248,118 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
                   );
                 },
               )).toList(),
+            ),
+          ),
+
+          // Wave A — Onboarding triplet
+          Section(
+            title: 'Onboarding — Starter Templates',
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                EdenStarterTemplateCard(
+                  title: 'Salon Quickstart',
+                  description: 'Pre-configured services + commission rules',
+                  effortLabel: '~10 min',
+                  thumbnail: const Icon(Icons.cut, size: 28),
+                  selected: _selectedStarter == 'salon',
+                  onSelect: () => setState(() => _selectedStarter = 'salon'),
+                ),
+                EdenStarterTemplateCard(
+                  title: 'HVAC Pro',
+                  description: 'Work orders + dispatch + invoicing',
+                  effortLabel: '~15 min',
+                  thumbnail: const Icon(Icons.handyman, size: 28),
+                  selected: _selectedStarter == 'trades',
+                  onSelect: () => setState(() => _selectedStarter = 'trades'),
+                ),
+                EdenStarterTemplateCard(
+                  title: 'Medical Practice',
+                  description: 'Patient intake + appointments + clinical notes',
+                  effortLabel: '~20 min',
+                  thumbnail: const Icon(Icons.medical_services, size: 28),
+                  selected: _selectedStarter == 'medical',
+                  onSelect: () =>
+                      setState(() => _selectedStarter = 'medical'),
+                ),
+              ],
+            ),
+          ),
+
+          Section(
+            title: 'Onboarding — Contextual Tip',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EdenContextualTip(
+                  target: GlobalKey(),
+                  message:
+                      'Drag phases from the palette to build your process flow',
+                  visible: _tipVisible,
+                  onDismiss: () => setState(() => _tipVisible = false),
+                ),
+                if (!_tipVisible)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: TextButton(
+                      onPressed: () => setState(() => _tipVisible = true),
+                      child: const Text('Restore tip'),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          Section(
+            title: 'Onboarding — App Tour Overlay',
+            child: EdenAppTourOverlay(
+              key: _tourOverlayKey,
+              steps: <EdenTourStep>[
+                EdenTourStep(
+                  key: _tourKey1,
+                  title: 'Inbox',
+                  description: 'Your messages live here.',
+                ),
+                EdenTourStep(
+                  key: _tourKey2,
+                  title: 'Filters',
+                  description: 'Use filters to narrow down your view.',
+                ),
+              ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      EdenTourTarget(
+                        step: EdenTourStep(
+                          key: _tourKey1,
+                          title: 'Inbox',
+                          description: 'Your messages live here.',
+                        ),
+                        child: const Icon(Icons.inbox, size: 28),
+                      ),
+                      const SizedBox(width: 24),
+                      EdenTourTarget(
+                        step: EdenTourStep(
+                          key: _tourKey2,
+                          title: 'Filters',
+                          description:
+                              'Use filters to narrow down your view.',
+                        ),
+                        child: const Icon(Icons.filter_alt, size: 28),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  EdenButton(
+                    label: 'Start tour',
+                    onPressed: () =>
+                        _tourOverlayKey.currentState?.startTour(),
+                  ),
+                ],
+              ),
             ),
           ),
 
