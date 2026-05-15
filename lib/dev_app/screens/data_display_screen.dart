@@ -228,6 +228,76 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
           ),
+
+          // Offline Queue Viewer (Wave A)
+          Section(
+            title: 'Offline Queue Viewer — empty',
+            child: SizedBox(
+              height: 220,
+              child: EdenCard(
+                child: EdenOfflineQueueViewer(
+                  items: const <EdenOfflineQueueItem>[],
+                ),
+              ),
+            ),
+          ),
+
+          Section(
+            title: 'Offline Queue Viewer — mixed (5 items, all statuses)',
+            child: SizedBox(
+              height: 560,
+              child: EdenCard(
+                child: EdenOfflineQueueViewer(
+                  items: <EdenOfflineQueueItem>[
+                    EdenOfflineQueueItem(
+                      id: 'd1',
+                      actionType: 'Update Customer',
+                      summary: 'Customer ABC123: phone → 555-0100',
+                      queuedAt: DateTime.now()
+                          .subtract(const Duration(seconds: 20)),
+                    ),
+                    EdenOfflineQueueItem(
+                      id: 'd2',
+                      actionType: 'Create Work Order',
+                      summary: 'New WO for customer ABC123 — leaky faucet',
+                      queuedAt: DateTime.now()
+                          .subtract(const Duration(minutes: 5)),
+                    ),
+                    EdenOfflineQueueItem(
+                      id: 'd3',
+                      actionType: 'Update Invoice',
+                      summary: 'Invoice INV-9012 status → paid',
+                      queuedAt:
+                          DateTime.now().subtract(const Duration(hours: 2)),
+                      status: EdenOfflineQueueItemStatus.syncing,
+                    ),
+                    EdenOfflineQueueItem(
+                      id: 'd4',
+                      actionType: 'Update Customer',
+                      summary: 'Customer XYZ987: address conflict',
+                      queuedAt:
+                          DateTime.now().subtract(const Duration(days: 1)),
+                      status: EdenOfflineQueueItemStatus.conflict,
+                      conflictDescription:
+                          'Server has a newer address. Pick one.',
+                    ),
+                    EdenOfflineQueueItem(
+                      id: 'd5',
+                      actionType: 'Create Photo',
+                      summary: 'Attach roof.jpg to WO-4455',
+                      queuedAt:
+                          DateTime.now().subtract(const Duration(days: 3)),
+                      status: EdenOfflineQueueItemStatus.error,
+                      errorMessage: '413: payload too large',
+                    ),
+                  ],
+                  onRetry: (_) {},
+                  onDiscard: (_) {},
+                  onResolveConflict: (_) {},
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
