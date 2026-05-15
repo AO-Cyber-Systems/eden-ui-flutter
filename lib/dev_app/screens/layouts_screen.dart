@@ -347,7 +347,142 @@ class _ScaffoldsPreview extends StatelessWidget {
             ),
           ),
         ),
+
+        const SizedBox(height: EdenSpacing.space8),
+        Text('EdenDetailHeader + EdenDetailPageScaffold',
+            style: theme.textTheme.titleLarge),
+        const SizedBox(height: EdenSpacing.space2),
+        Text(
+          'Detail-page scaffold: header (breadcrumb + title + badge + actions) → '
+          'optional tab bar → body + optional side rail. Side rail collapses to '
+          'a "Details" bottom-sheet trigger below 480pt.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+
+        _DemoFrame(
+          label: 'EdenDetailHeader — header only with breadcrumb + actions',
+          child: Padding(
+            padding: const EdgeInsets.all(EdenSpacing.space4),
+            child: EdenDetailHeader(
+              title: 'Customer ABC123',
+              subtitle: 'Acme HVAC Co.',
+              breadcrumb: const ['Customers', 'Active'],
+              leading: const Icon(Icons.business),
+              statusBadge: const Chip(label: Text('Active')),
+              actions: [
+                EdenDetailHeaderAction(
+                    icon: Icons.star, tooltip: 'Star', onPressed: () {}),
+                EdenDetailHeaderAction(
+                    icon: Icons.archive,
+                    tooltip: 'Archive',
+                    onPressed: () {}),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+
+        const _DemoFrame(
+          label: 'EdenDetailPageScaffold — header only',
+          child: SizedBox(
+            height: 200,
+            child: EdenDetailPageScaffold(
+              header: EdenDetailHeader(title: 'Customer ABC123'),
+              body: Center(child: Text('Body content')),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+
+        const _DemoFrame(
+          label: 'EdenDetailPageScaffold — with tabs',
+          child: SizedBox(
+            height: 320,
+            child: DefaultTabController(
+              length: 3,
+              child: EdenDetailPageScaffold(
+                header: EdenDetailHeader(title: 'Customer ABC123'),
+                tabs: [
+                  EdenDetailTab(label: 'Overview'),
+                  EdenDetailTab(label: 'Activity'),
+                  EdenDetailTab(label: 'Files'),
+                ],
+                body: TabBarView(
+                  children: [
+                    Center(child: Text('Overview body')),
+                    Center(child: Text('Activity body')),
+                    Center(child: Text('Files body')),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+
+        _DemoFrame(
+          label: 'EdenDetailPageScaffold — with side rail (desktop)',
+          child: SizedBox(
+            height: 320,
+            child: EdenDetailPageScaffold(
+              header: const EdenDetailHeader(title: 'Customer ABC123'),
+              sideRail: _DemoSideRail(theme: theme),
+              body: const Center(child: Text('Body content')),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+
+        _DemoFrame(
+          label: 'EdenDetailPageScaffold — narrow (390pt, side rail → Details button)',
+          child: Center(
+            child: SizedBox(
+              width: 390,
+              height: 320,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                  borderRadius: EdenRadii.borderRadiusMd,
+                ),
+                child: EdenDetailPageScaffold(
+                  header: const EdenDetailHeader(title: 'Customer ABC123'),
+                  sideRail: _DemoSideRail(theme: theme),
+                  body: const Center(child: Text('Body content')),
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
+    );
+  }
+}
+
+/// Minimal side-rail demo used by the Scaffolds preview.
+class _DemoSideRail extends StatelessWidget {
+  const _DemoSideRail({required this.theme});
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(EdenSpacing.space4),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Quick stats', style: theme.textTheme.labelLarge),
+          const SizedBox(height: EdenSpacing.space2),
+          Text('Open work orders: 3',
+              style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          Text('Outstanding balance: \$1,240',
+              style: theme.textTheme.bodySmall),
+        ],
+      ),
     );
   }
 }

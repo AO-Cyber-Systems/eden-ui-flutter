@@ -252,10 +252,12 @@ export 'src/pages/eden_reset_password_page.dart';
 // Wave A — Cross-vertical scaffolds
 export 'src/widgets/eden_list_page_scaffold.dart';
 export 'src/widgets/eden_detail_header.dart';
+export 'src/widgets/eden_detail_page_scaffold.dart';
 
 // Wave A — Cross-vertical primitives
 export 'src/widgets/eden_currency_display.dart';
 export 'src/widgets/eden_otp_input.dart';
+export 'src/widgets/eden_phone_input.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
