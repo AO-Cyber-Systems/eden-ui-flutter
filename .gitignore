@@ -44,3 +44,7 @@ pubspec.lock
 # Test screenshots
 *.png
 .playwright-mcp/
+
+# DevFlow local runtime state
+.planning/.skill-active
+.planning/.awareness-cache.json

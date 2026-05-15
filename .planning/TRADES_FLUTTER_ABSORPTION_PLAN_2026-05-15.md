@@ -358,7 +358,7 @@ Decisions needed before Phase 0 starts:
 | **Q2 RBAC home** | Lives in **biz admin function** for now (option b). Future migration to **AO Identity Service** when that lands. Document the migration path in the RBAC absorption PR. |
 | **Q3 Nav shell** | **eden-platform-flutter grows `VerticalNavSkin` interface; trades = first implementation.** Option (a). |
 | **Q4 Auth folder** | **Discard trades auth; use `eden-platform-flutter/src/auth/`.** Fold the 99-permission devLogin shortcut into platform dev tooling as `seedDevUser('owner', verticalScope)`. Option (a). |
-| **Q5 AODex/AOSentry client** | ⏸ **PAUSED — research action required.** AOCore work may already be in progress somewhere (eden-libs, aocyber-compliance, aosentry-fedramp-prep worktree per memory). Inventory in-progress AOCore lib work before deciding placement. Decision deferred until research lands. |
+| **Q5 AODex/AOSentry client** | ✅ **RESOLVED 2026-05-15 — option (d).** `eden-libs/eden-ai-dart` already ships full `AosentryClient`. Trades' `aodex_client.dart` is an AODex (Rails) client — different system. Donate as `eden-libs/eden-ai-dart/lib/src/aodex/` sibling to existing `aosentry/`. eden-ai-flutter exports `aodexClientProvider` mirroring `aosentryClientProvider`. No new `eden-aocore-flutter` package. See `ABSORPTION_RESEARCH_2026-05-15.md` §1. |
 | **Q6 agent_builder/ placement** | **Cross-vertical at `eden-biz/flutter/lib/features/agent_builder/`.** Option (a). Aligns with Q1 biz-needs-AI-integration intent. |
 | **Q7 documents vs dataroom** | **Keep separate.** Dataroom's original purpose was sharing-of-info; redefining/evolving toward **analytical concept / structured sharing**. Trades `documents/` lands as a separate folder (project docs + signature flow); dataroom keeps its DD/structured-sharing focus and evolves into analytical surface. Closer to option (b). |
 | **Q8 appointments vs scheduling** | **Shared model, vertical-flavored UI under `lib/features/scheduling/`.** Single scheduling/ folder owns the data model; UI variants per vertical (`scheduling/salon/*`, `scheduling/trades/*`, `scheduling/medical/*`). `EdenScheduler` enhancement (Wave B-trades-B1) lives in eden-ui-flutter. Option (a). |
@@ -377,11 +377,46 @@ Decisions needed before Phase 0 starts:
 - **Phase 5 retired** — tests with-folder (per Q12) means no separate test-sweep phase.
 - **Branch + repo lifecycle (per Q11):** trades-flutter `feature/multi-model-adaptive` stays as frozen ref through Phase 3; tag + archive at Phase 3 close. trades-flutter repo archives separately.
 
-### Open research actions
+### Open research actions — ALL RESOLVED 2026-05-15
 
-1. **AOCore lib inventory (Q5 unblock).** Inventory in-progress AOCore work across eden-libs/, aocyber-compliance/, aosentry-fedramp-prep/. Output: where AOSentry / AOID / AOEdge / AOAudit clients live or will live, and how trades-flutter's aodex_client absorbs cleanly. Should this be a third shared lib (`eden-libs/eden-aocore-flutter/`) or sit under one of the existing aocore-product repos?
-2. **eden-platform-flutter Connect shape (Q1 follow-up).** Read current `eden-libs/eden-platform-flutter/lib/src/` to identify the existing Connect channel + auth + entitlements + navigation surface. Compare with trades-flutter's parallel implementations. Output: per-file disposition (donate / rewrite / consolidate).
-3. **AO Identity Service status (Q2 future-migration).** Surface to user — is AO Identity in flight, planned-but-not-started, or just an idea? If in flight, Phase 2 RBAC PR should include a migration-path doc citing the real future state.
+Research agent completed all three. Findings at `eden-libs/eden-ui-flutter/.planning/ABSORPTION_RESEARCH_2026-05-15.md`. **Headline: all three Qs collapse — work is more in-flight than this plan originally assumed.**
+
+1. **AOCore lib inventory (Q5 unblock) — RESOLVED.**
+   - `eden-libs/eden-ai-dart` ships a full `AosentryClient` (5 files, ~1,025 LOC, 16 RPC methods).
+   - `eden-libs/eden-ai-flutter` ships Riverpod 3.x providers.
+   - Trades' `aodex_client.dart` talks to AODex (Rails personas/memories/knowledge/conversations/SSE), NOT to AOSentry-the-gateway — different system.
+   - **Locked: option (d) — donate trades' AODex client as `eden-libs/eden-ai-dart/lib/src/aodex/` sibling to existing `aosentry/`.** No new `eden-aocore-flutter` package. eden-ai-flutter exports `aodexClientProvider` mirroring the existing `aosentryClientProvider` pattern.
+
+2. **eden-platform-flutter Connect shape (Q1 follow-up) — RESOLVED.**
+   - Real Connect channel: `connectrpc/connect.dart` + codegen `eden_platform_api_dart` clients for AuthService / CompanyService / RegistryService / **RbacService** / WebhookService.
+   - Auth: full session + `flutter_secure_storage` + SSO + Microsoft/Google.
+   - Entitlements (`EdenFeatureGate(feature: ...)`) gates on subscription — **complementary** to trades' user-action RBAC, not collision.
+   - **Per-file disposition** (research §2.6): **13 files deletable, 5 donated upward, 3 rewritten in biz.** Phase 2 PR count drops from 4 → 3.
+
+3. **AO Identity Service status (Q2 future-migration) — RESOLVED: IN FLIGHT, partially shipped.**
+   - `eden-platform-go origin/main` ships `cmd/aoid/` binary + 20+ files under `internal/aoid/{clients,composition,discovery,federation,...}`.
+   - Working OIDC issuer: PKCE + token issuance + refresh rotation + /userinfo + ML-DSA-65 JWT signing.
+   - AODex registered as pilot client. PRs #13/#14/#17/#19 merged. `ws-ao-id-pilot-aodex` branch active.
+   - **PR #19 (merged 2026-05-15 — today) adds `Scopes` claim to platform/auth — exact migration target for biz-owned RBAC.**
+   - **Horizon: months, not years.** Q2 RBAC absorption PR should ship with migration-path doc referencing PRs #13/#14/#17/#19; don't block Phase 2 on AOID adoption.
+
+### Phase 0/2 plan revisions
+
+- **Phase 0 saved 3-5 days.** Q5/Q1 decisions collapse from "design from scratch" to "adopt + map."
+- **Phase 2 drops from 4 PRs to 3 PRs / ~8-10 dev-days:** Connect rewrite + auth discard + RBAC + VerticalNavSkin.
+- **Phase 0 gains 1 PR:** `eden-libs/eden-ai-dart` AODex donation (~1-2 days; donor = trades' existing `aodex_client.dart` + `aodex_models.dart`).
+- **Phase 1 unchanged** (16 widget donations); net addition: `EdenPermissionGate` (sibling to existing `EdenFeatureGate`).
+- **Phase 3 small change:** AI feature folders (W17/W18/W20) import `package:eden_ai_flutter/eden_ai_flutter.dart` instead of `package:trades/shared/api/aodex_client.dart`. Method signatures map 1:1 because donor is trades' own client.
+- **Phase 4 unchanged.** **Phase 5 retired.**
+
+### Q6 reconsideration (small, surfaced by research)
+
+The Q6 lock said `agent_builder/` placement = "cross-vertical at biz." That decision was made BEFORE knowing `eden-libs/eden-ai-dart/lib/src/skills/` + `eden-ai-go/skills/` + `eden-ai-go/orchestration/` already ship skill orchestration contracts. Reconsideration:
+
+- **If** trades-flutter's `agent_builder/` (15 files, 3,621 LOC: rule_editor_canvas, mcp_tool_panel, persona_session_panel) is **genuinely vertical-agnostic** (configures personas, MCP tools, rule editors targeting eden-ai-dart skills with no biz-domain entity binding), it belongs **upward in eden-ai-flutter** alongside `aosentryClientProvider`.
+- **If** it has biz-domain bindings (binds to biz `Customer` / `Project` entity types directly), Q6's "in biz" lock is correct.
+
+**Default decision (autonomous mode, 2026-05-15):** target eden-ai-flutter unless biz-domain bindings surface during port. Revisit at Phase 3 when `agent_builder/` actually lands. Lower-risk default because eden-ai-flutter is the right home if the bindings are skill-only, and a lift back down to biz is cheaper than a lift upward later.
 
 ---
 
