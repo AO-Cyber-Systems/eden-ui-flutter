@@ -260,6 +260,7 @@ export 'src/widgets/eden_detail_page_scaffold.dart';
 
 // Wave A — Map provider interface (A4 dependency; reference impl ships separately)
 export 'src/widgets/map_providers/eden_map_types.dart';
+export 'src/widgets/map_providers/eden_map_provider.dart';
 
 // Wave A — Cross-vertical primitives
 export 'src/widgets/eden_currency_display.dart';
