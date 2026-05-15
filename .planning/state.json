@@ -1,16 +1,27 @@
 {
   "objective": "001-wave-a-cross-vertical-fundamentals",
   "wave": 1,
-  "current_trd": "001-03",
-  "current_task": "Task 1 — EdenMapProvider value types + fixtures",
+  "current_trd": null,
+  "current_task": "Wave 1 complete (TRDs 001-01, 001-02, 001-03)",
   "completed_tasks": [
     "001-01 Task 1 — fixture builders",
     "001-01 Task 2 — RED → GREEN EdenListPageScaffold (12 tests pass)",
     "001-01 Task 3 — dev catalog entry",
     "001-02 Task 1 — fixture builders (split into header / scaffold)",
     "001-02 Task 2 — RED → GREEN EdenDetailHeader (9 tests pass)",
-    "001-02 Task 3 — RED → GREEN EdenDetailPageScaffold (8 tests pass) + dev catalog"
+    "001-02 Task 3 — RED → GREEN EdenDetailPageScaffold (8 tests pass) + dev catalog",
+    "001-03 Task 1 — value types + fixtures + EdenMapMarker collision fix",
+    "001-03 Task 2 — RED → GREEN EdenMapProvider interface + NoOpMapProvider (13 tests pass)"
   ],
-  "completed_trds": ["001-01", "001-02"],
-  "started_at": "2026-05-15"
+  "completed_trds": ["001-01", "001-02", "001-03"],
+  "started_at": "2026-05-15",
+  "wave1_completed_at": "2026-05-15",
+  "wave1_tests_added": 42,
+  "deviations": [
+    {
+      "trd": "001-03",
+      "rule": "Rule 1 — auto-fix bug",
+      "summary": "EdenMapMarker name collision with pre-existing lib/src/widgets/eden_map_view.dart#EdenMapMarker. Resolved by hiding legacy from barrel (lib/eden_ui.dart re-exports eden_map_view.dart with `hide EdenMapMarker`) and updating the lone dev-catalog consumer (trades_screen.dart) to import the legacy class directly. Legacy class file is unchanged; consumers using `import 'package:eden_ui_flutter/src/widgets/eden_map_view.dart'` directly are unaffected."
+    }
+  ]
 }

@@ -11,7 +11,7 @@
 TRDs:
 - [x] 001-01-TRD.md — A1 EdenListPageScaffold (Wave 1; port trades-flutter)
 - [x] 001-02-TRD.md — A2 EdenDetailPageScaffold + EdenDetailHeader (Wave 1; port trades-flutter)
-- [ ] 001-03-TRD.md — EdenMapProvider interface + value types + NoOpMapProvider (Wave 1; A4 dependency)
+- [x] 001-03-TRD.md — EdenMapProvider interface + value types + NoOpMapProvider (Wave 1; A4 dependency)
 - [ ] 001-04-TRD.md — A3 EdenCurrencyDisplay (Wave 2; port + multi-currency enhancement)
 - [ ] 001-05-TRD.md — A7 EdenPhoneInput + EdenOtpInput (Wave 2)
 - [ ] 001-06-TRD.md — A8 EdenMembershipTierBadge (Wave 2)
