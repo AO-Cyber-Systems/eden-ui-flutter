@@ -1,8 +1,8 @@
 {
   "objective": "001-wave-a-cross-vertical-fundamentals",
-  "wave": 1,
+  "wave": 2,
   "current_trd": null,
-  "current_task": "Wave 1 complete (TRDs 001-01, 001-02, 001-03)",
+  "current_task": "Wave 2 complete (TRDs 001-04, 001-05, 001-06, 001-07, 001-08)",
   "completed_tasks": [
     "001-01 Task 1 — fixture builders",
     "001-01 Task 2 — RED → GREEN EdenListPageScaffold (12 tests pass)",
@@ -11,17 +11,35 @@
     "001-02 Task 2 — RED → GREEN EdenDetailHeader (9 tests pass)",
     "001-02 Task 3 — RED → GREEN EdenDetailPageScaffold (8 tests pass) + dev catalog",
     "001-03 Task 1 — value types + fixtures + EdenMapMarker collision fix",
-    "001-03 Task 2 — RED → GREEN EdenMapProvider interface + NoOpMapProvider (13 tests pass)"
+    "001-03 Task 2 — RED → GREEN EdenMapProvider interface + NoOpMapProvider (13 tests pass)",
+    "001-04 Task 1 — RED → GREEN EdenCurrencyDisplay (14 tests pass) + dev catalog",
+    "001-05 Task 1 — RED → GREEN EdenOtpInput (8 tests pass)",
+    "001-05 Task 2 — RED → GREEN EdenPhoneInput (8 tests pass) + dev catalog",
+    "001-06 Task 1 — RED → GREEN EdenMembershipTierBadge (10 tests pass) + dev catalog",
+    "001-07 Task 1 — RED → GREEN EdenAuthenticatedImage (10 tests pass) + dev catalog",
+    "001-08 Task 1 — RED → GREEN EdenNetworkStatusBar (8 tests pass) + dev catalog"
   ],
-  "completed_trds": ["001-01", "001-02", "001-03"],
+  "completed_trds": ["001-01", "001-02", "001-03", "001-04", "001-05", "001-06", "001-07", "001-08"],
   "started_at": "2026-05-15",
   "wave1_completed_at": "2026-05-15",
   "wave1_tests_added": 42,
+  "wave2_completed_at": "2026-05-15",
+  "wave2_tests_added": 58,
   "deviations": [
     {
       "trd": "001-03",
       "rule": "Rule 1 — auto-fix bug",
       "summary": "EdenMapMarker name collision with pre-existing lib/src/widgets/eden_map_view.dart#EdenMapMarker. Resolved by hiding legacy from barrel (lib/eden_ui.dart re-exports eden_map_view.dart with `hide EdenMapMarker`) and updating the lone dev-catalog consumer (trades_screen.dart) to import the legacy class directly. Legacy class file is unchanged; consumers using `import 'package:eden_ui_flutter/src/widgets/eden_map_view.dart'` directly are unaffected."
+    },
+    {
+      "trd": "001-07",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "EdenAuthenticatedImage tests pivoted from end-to-end HTTP-override-based fixtures to structural assertions on the underlying NetworkImage provider (cast image.image as NetworkImage, assert headers + url). Rationale: flutter_test intercepts Image.network internally and bypasses HttpOverrides; structural assertions verify the widget contract (header forwarding) without requiring a fake HTTP stack. Fixture file simplified to bytes+headers constants."
+    },
+    {
+      "trd": "001-08",
+      "rule": "Rule 3 — auto-fix blocking issue",
+      "summary": "Tests using `pumpAndSettle()` after `status=reconnecting` deadlocked because the CircularProgressIndicator spins indefinitely. Replaced `pumpAndSettle()` with fixed-time `pump(Duration(milliseconds: 250))` to advance animation without waiting for steady-state. This matches the issue Wave 1 had flagged in deferred-items.md and resolves it at GREEN."
     }
   ]
 }

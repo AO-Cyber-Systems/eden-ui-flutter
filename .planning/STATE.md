@@ -5,7 +5,7 @@
 See: [`./PROJECT.md`](./PROJECT.md) (updated 2026-05-07)
 
 **Core value:** Predictable, accessible widget primitives that downstream apps can compose without inheriting platform/transport concerns.
-**Current focus:** Objective 001 Wave 1 SHIPPED (2026-05-15) — TRDs 001-01, 001-02, 001-03 GREEN. 42 new widget/unit tests added. Wave 2 (TRDs 001-04..08) and Wave 3/4 continue.
+**Current focus:** Objective 001 Wave 1 + Wave 2 SHIPPED (2026-05-15) — TRDs 001-01..08 GREEN. 100 new widget/unit tests added (42 Wave 1 + 58 Wave 2). Wave 3 (TRDs 001-09..14) + Wave 4 (TRD 001-15) remain.
 
 ## Current Position
 
@@ -15,6 +15,7 @@ See: [`./PROJECT.md`](./PROJECT.md) (updated 2026-05-07)
 
 ## Recent Activity
 
+- **2026-05-15:** **Objective 001 Wave 2 complete.** TRD 001-04 (`EdenCurrencyDisplay`, 14 tests; multi-currency USD/EUR/GBP/CAD/AUD with hand-rolled symbol map — no `intl` dependency), TRD 001-05 (`EdenOtpInput` 8 tests + `EdenPhoneInput` 8 tests; 8-country v1 picker; transport-agnostic verify-button slot), TRD 001-06 (`EdenMembershipTierBadge`, 10 tests; 5 preset tiers + custom-tier escape hatch for salon/retail/legal/gov), TRD 001-07 (`EdenAuthenticatedImage`, 10 tests; headers map or async headersBuilder; library does NOT mint tokens), TRD 001-08 (`EdenNetworkStatusBar`, 8 tests; 4 states with state-driven API — library does NOT subscribe to connectivity). 58 new tests, all GREEN, transport-agnostic. Two minor deviations logged (001-07 test pivot to structural NetworkImage assertions; 001-08 `pumpAndSettle` → fixed-frame pump).
 - **2026-05-15:** **Objective 001 Wave 1 complete.** TRD 001-01 (`EdenListPageScaffold`, 12 tests), TRD 001-02 (`EdenDetailHeader` + `EdenDetailPageScaffold`, 17 tests), TRD 001-03 (`EdenMapProvider` interface + `NoOpMapProvider`, 13 tests). 42 new tests, all GREEN, transport-agnostic. One deviation logged (Rule 1): legacy `EdenMapMarker` from `eden_map_view.dart` collided with the new map-provider `EdenMapMarker` — resolved by hiding the legacy class from the barrel re-export, preserving the legacy file's direct API. See `state.json` deviations array for details.
 - **2026-05-07:** Project bootstrapped (commit `2057742`). PROJECT.md (`kind: ui-lib`, `default_work: feature`), config.json, REQUIREMENTS.md (RESP-01..03 + v2 placeholders for VRT-01 + XPL-01), ROADMAP.md (no active objectives — Triage Heuristic + quick-task tracker), STATE.md.
 - **2026-05-07:** Objective 1 ceremony walked back. Original scope (`EdenPageHeader` iPhone-narrow Wrap fix) is a single-widget LayoutBuilder swap + 1 widget test file — too small for full plan-objective overhead. Collapsed to a `/devflow:quick` task track per Triage Heuristic.
