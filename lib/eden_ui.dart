@@ -282,6 +282,9 @@ export 'src/widgets/eden_starter_template_card.dart';
 export 'src/widgets/eden_contextual_tip.dart';
 export 'src/widgets/eden_app_tour_overlay.dart';
 
+// Wave A — Cross-vertical primitives (offline + nav)
+export 'src/widgets/eden_offline_queue_viewer.dart';
+
 // Wave A — Address & map components
 export 'src/widgets/eden_address_input.dart';
 export 'src/widgets/eden_map_preview.dart';
