@@ -2,7 +2,7 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '_fixtures/eden_detail_page_scaffold_fixtures.dart';
+import '_fixtures/eden_detail_header_fixtures.dart';
 
 void main() {
   Widget wrap(Widget child) {
