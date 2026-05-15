@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
 import '../widgets/section.dart';
 
-class MiscScreen extends StatelessWidget {
+class MiscScreen extends StatefulWidget {
   const MiscScreen({super.key});
+
+  @override
+  State<MiscScreen> createState() => _MiscScreenState();
+}
+
+class _MiscScreenState extends State<MiscScreen> {
+  EdenNetworkStatus _networkStatus = EdenNetworkStatus.offline;
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +19,35 @@ class MiscScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
         children: [
+          // Network Status Bar (Wave A — Cross-vertical primitive)
+          Section(
+            title: 'Network Status Bar (Wave A)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EdenNetworkStatusBar(
+                  status: _networkStatus,
+                  attemptCount:
+                      _networkStatus == EdenNetworkStatus.reconnecting ? 2 : null,
+                  retryButton: _networkStatus == EdenNetworkStatus.offline,
+                  onRetry: () =>
+                      setState(() => _networkStatus = EdenNetworkStatus.reconnecting),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: EdenNetworkStatus.values.map((s) {
+                    return ChoiceChip(
+                      label: Text(s.name),
+                      selected: _networkStatus == s,
+                      onSelected: (_) => setState(() => _networkStatus = s),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
           const Section(
             title: 'Progress Bars',
             child: Column(
