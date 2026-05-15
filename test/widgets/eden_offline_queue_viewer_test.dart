@@ -119,7 +119,9 @@ void main() {
       await tester.pumpAndSettle();
       // Confirm dialog visible.
       expect(find.text('Discard change?'), findsOneWidget);
-      await tester.tap(find.text('Discard'));
+      // The dialog adds a "Discard" button on top of the per-row buttons.
+      // Tap the LAST occurrence — the dialog's confirm button.
+      await tester.tap(find.text('Discard').last);
       await tester.pumpAndSettle();
       expect(discarded, isNotNull);
       expect(discarded!.id, 'q1');
