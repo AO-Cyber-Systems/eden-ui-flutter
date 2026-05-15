@@ -271,5 +271,11 @@ export 'src/widgets/eden_network_status_bar.dart';
 export 'src/widgets/eden_otp_input.dart';
 export 'src/widgets/eden_phone_input.dart';
 
+// Wave A — Cross-vertical composers
+export 'src/widgets/eden_consent_flow.dart';
+
+// Wave A — Address & map components
+export 'src/widgets/eden_map_preview.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
