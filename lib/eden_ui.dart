@@ -273,6 +273,7 @@ export 'src/widgets/eden_phone_input.dart';
 
 // Wave A — Cross-vertical composers
 export 'src/widgets/eden_consent_flow.dart';
+export 'src/widgets/eden_intake_form.dart';
 
 // Wave A — Address & map components
 export 'src/widgets/eden_address_input.dart';
