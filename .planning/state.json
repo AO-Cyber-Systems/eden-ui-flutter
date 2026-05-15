@@ -1,9 +1,13 @@
 {
   "objective": "001-wave-a-cross-vertical-fundamentals",
   "wave": 1,
-  "current_trd": "001-01",
-  "current_task": "Task 1 — Fixture builders",
-  "completed_tasks": [],
-  "completed_trds": [],
+  "current_trd": "001-02",
+  "current_task": "Task 1 — Fixture builders (EdenDetailHeader + EdenDetailPageScaffold)",
+  "completed_tasks": [
+    "001-01 Task 1 — fixture builders",
+    "001-01 Task 2 — RED → GREEN EdenListPageScaffold (12 tests pass)",
+    "001-01 Task 3 — dev catalog entry"
+  ],
+  "completed_trds": ["001-01"],
   "started_at": "2026-05-15"
 }

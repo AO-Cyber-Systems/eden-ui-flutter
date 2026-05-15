@@ -40,8 +40,11 @@ class LayoutsScreen extends StatefulWidget {
   State<LayoutsScreen> createState() => _LayoutsScreenState();
 }
 
+/// Top-level preview mode for the Layouts dev screen.
+enum _LayoutPreview { desktop, mobile, scaffolds }
+
 class _LayoutsScreenState extends State<LayoutsScreen> {
-  bool _showMobile = false;
+  _LayoutPreview _preview = _LayoutPreview.desktop;
   String _selectedId = 'dashboard';
 
   @override
@@ -50,13 +53,14 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
       appBar: AppBar(
         title: const Text('Layouts'),
         actions: [
-          SegmentedButton<bool>(
+          SegmentedButton<_LayoutPreview>(
             segments: const [
-              ButtonSegment(value: false, label: Text('Desktop'), icon: Icon(Icons.desktop_windows, size: 16)),
-              ButtonSegment(value: true, label: Text('Mobile'), icon: Icon(Icons.phone_iphone, size: 16)),
+              ButtonSegment(value: _LayoutPreview.desktop, label: Text('Desktop'), icon: Icon(Icons.desktop_windows, size: 16)),
+              ButtonSegment(value: _LayoutPreview.mobile, label: Text('Mobile'), icon: Icon(Icons.phone_iphone, size: 16)),
+              ButtonSegment(value: _LayoutPreview.scaffolds, label: Text('Scaffolds'), icon: Icon(Icons.view_agenda_outlined, size: 16)),
             ],
-            selected: {_showMobile},
-            onSelectionChanged: (v) => setState(() => _showMobile = v.first),
+            selected: {_preview},
+            onSelectionChanged: (v) => setState(() => _preview = v.first),
             style: const ButtonStyle(
               visualDensity: VisualDensity.compact,
               textStyle: WidgetStatePropertyAll(TextStyle(fontSize: 12)),
@@ -65,7 +69,11 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
           const SizedBox(width: 12),
         ],
       ),
-      body: _showMobile ? _mobilePreview() : _desktopPreview(),
+      body: switch (_preview) {
+        _LayoutPreview.desktop => _desktopPreview(),
+        _LayoutPreview.mobile => _mobilePreview(),
+        _LayoutPreview.scaffolds => const _ScaffoldsPreview(),
+      },
     );
   }
 
@@ -231,6 +239,139 @@ class _PageContent extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Scaffolds preview — Wave A cross-vertical scaffolds
+// -----------------------------------------------------------------------------
+
+/// Demos the Wave A list/detail scaffolds in a single scrollable panel so
+/// `just dev-ui` reveals them under the Layouts category.
+class _ScaffoldsPreview extends StatelessWidget {
+  const _ScaffoldsPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(EdenSpacing.space4),
+      children: [
+        Text('EdenListPageScaffold', style: theme.textTheme.titleLarge),
+        const SizedBox(height: EdenSpacing.space2),
+        Text(
+          'Composable list-page scaffold: header + alerts + filters + search + body. '
+          'Header stacks vertically when constraints drop below 480pt.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+
+        const _DemoFrame(
+          label: 'Minimal',
+          child: SizedBox(
+            height: 240,
+            child: EdenListPageScaffold(
+              title: 'Projects',
+              body: Text('Body content'),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+
+        _DemoFrame(
+          label: 'Full composition',
+          child: SizedBox(
+            height: 520,
+            child: EdenListPageScaffold(
+              title: 'Customers',
+              createLabel: 'New Customer',
+              onCreate: () {},
+              filterPills: const Wrap(
+                spacing: 8,
+                children: [
+                  Chip(label: Text('Active')),
+                  Chip(label: Text('Archived')),
+                  Chip(label: Text('VIP')),
+                ],
+              ),
+              searchHint: 'Search customers...',
+              onSearchChanged: (_) {},
+              alerts: Container(
+                padding: const EdgeInsets.all(EdenSpacing.space3),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: EdenRadii.borderRadiusMd,
+                ),
+                child: Text(
+                  '1 blocking alert',
+                  style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                ),
+              ),
+              body: ListView(
+                children: List.generate(
+                  5,
+                  (i) => ListTile(
+                    leading: const Icon(Icons.business),
+                    title: Text('Customer ${i + 1}'),
+                    subtitle: Text('Last activity ${i + 1}d ago'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+
+        _DemoFrame(
+          label: 'Narrow constraint (390pt) — header stacks vertically',
+          child: Center(
+            child: SizedBox(
+              width: 390,
+              height: 320,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                  borderRadius: EdenRadii.borderRadiusMd,
+                ),
+                child: EdenListPageScaffold(
+                  title: 'Very Long Page Title That Would Overflow',
+                  createLabel: 'Create Something With A Long Label',
+                  onCreate: () {},
+                  body: const Center(child: Text('Body content')),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Captioned frame used by the Scaffolds preview panel.
+class _DemoFrame extends StatelessWidget {
+  const _DemoFrame({required this.label, required this.child});
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenCard(child: child),
       ],
     );
   }
