@@ -224,6 +224,7 @@ export 'src/widgets/eden_segmented_control.dart';
 export 'src/widgets/eden_settings_tile.dart';
 
 // Trades — Enterprise UI Components
+export 'src/widgets/eden_qr_code.dart';
 export 'src/widgets/eden_scheduler.dart';
 export 'src/widgets/eden_document_viewer.dart';
 export 'src/widgets/eden_signature_pad.dart';
@@ -278,6 +279,8 @@ export 'src/widgets/eden_role_dashboard_shell.dart';
 
 // Wave A — Onboarding triplet
 export 'src/widgets/eden_starter_template_card.dart';
+export 'src/widgets/eden_contextual_tip.dart';
+export 'src/widgets/eden_app_tour_overlay.dart';
 
 // Wave A — Address & map components
 export 'src/widgets/eden_address_input.dart';
