@@ -299,6 +299,72 @@ class _CompoundScreenState extends State<CompoundScreen> {
             ),
           ),
 
+          // Consent Flow (Wave A composer)
+          Section(
+            title: 'CONSENT FLOW',
+            child: EdenCard(
+              child: SizedBox(
+                height: 560,
+                child: EdenConsentFlow(
+                  clauses: const [
+                    EdenConsentClause(
+                      id: 'tos',
+                      title: 'Terms of Service',
+                      body: 'I agree to the terms of service.',
+                    ),
+                    EdenConsentClause(
+                      id: 'privacy',
+                      title: 'Privacy Policy',
+                      body:
+                          'I acknowledge that my data is handled per the privacy policy.',
+                    ),
+                    EdenConsentClause(
+                      id: 'communications',
+                      title: 'Communications',
+                      body: 'I consent to transactional communications.',
+                    ),
+                  ],
+                  metadata: const {'tenant': 'demo-tenant'},
+                  onComplete: (_) {},
+                ),
+              ),
+            ),
+          ),
+
+          // Consent Flow — medical with affirmations + witness
+          Section(
+            title: 'CONSENT FLOW — MEDICAL + WITNESS',
+            child: EdenCard(
+              child: SizedBox(
+                height: 640,
+                child: EdenConsentFlow(
+                  clauses: const [
+                    EdenConsentClause(
+                      id: 'procedure_explained',
+                      title: 'Procedure explained',
+                      body:
+                          'The proposed procedure has been explained to me.',
+                      requireAffirmation: true,
+                    ),
+                    EdenConsentClause(
+                      id: 'risks_disclosed',
+                      title: 'Risks disclosed',
+                      body: 'I understand the medical risks involved.',
+                      requireAffirmation: true,
+                    ),
+                    EdenConsentClause(
+                      id: 'hipaa',
+                      title: 'HIPAA authorization',
+                      body: 'I authorize PHI use per HIPAA disclosures.',
+                    ),
+                  ],
+                  requireWitness: true,
+                  onComplete: (_) {},
+                ),
+              ),
+            ),
+          ),
+
           const SizedBox(height: EdenSpacing.space8),
         ],
       ),
