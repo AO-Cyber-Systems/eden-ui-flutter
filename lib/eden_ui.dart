@@ -255,6 +255,7 @@ export 'src/widgets/eden_detail_header.dart';
 
 // Wave A — Cross-vertical primitives
 export 'src/widgets/eden_currency_display.dart';
+export 'src/widgets/eden_otp_input.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
