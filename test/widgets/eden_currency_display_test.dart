@@ -93,13 +93,23 @@ void main() {
       expect(textWidget.style?.color, Theme.of(ctx).colorScheme.error);
     });
 
-    testWidgets('colorize=true on zero applies no color override',
+    testWidgets('colorize=true on zero does not apply positive/negative override',
         (tester) async {
+      // Capture the default (non-colorized) zero color.
+      await tester.pumpWidget(wrap(
+        const EdenCurrencyDisplay(cents: 0),
+      ));
+      final defaultColor =
+          tester.widget<Text>(find.text(r'$0.00')).style?.color;
+
+      // With colorize=true and zero, the rendered color matches default
+      // (i.e., no positive/negative override is applied).
       await tester.pumpWidget(wrap(
         const EdenCurrencyDisplay(cents: 0, colorize: true),
       ));
-      final textWidget = tester.widget<Text>(find.text(r'$0.00'));
-      expect(textWidget.style?.color, isNull);
+      final colorizedZeroColor =
+          tester.widget<Text>(find.text(r'$0.00')).style?.color;
+      expect(colorizedZeroColor, defaultColor);
     });
 
     testWidgets(
