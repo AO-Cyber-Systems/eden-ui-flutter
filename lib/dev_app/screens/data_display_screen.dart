@@ -193,6 +193,41 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
           ),
+
+          // EdenAuthenticatedImage demo (Wave A primitive)
+          const Section(
+            title: 'Authenticated Image (Wave A)',
+            child: EdenCard(
+              child: Padding(
+                padding: EdgeInsets.all(EdenSpacing.space3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Headers map (e.g., Bearer + X-Tenant for signed URLs) '
+                      'is forwarded to NetworkImage. Library does NOT generate '
+                      'the token — downstream apps inject via callback.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: EdenAuthenticatedImage(
+                        // Catalog uses a public image so the demo renders without
+                        // a backend; in production a signed-URL endpoint would be used.
+                        url: 'https://picsum.photos/seed/eden/240/240',
+                        headers: {
+                          'Authorization': 'Bearer demo-token',
+                          'X-Tenant': 'tenant-demo',
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
