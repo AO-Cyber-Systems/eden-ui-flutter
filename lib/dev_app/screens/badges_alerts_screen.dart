@@ -108,6 +108,43 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               onDismiss: () {},
             ),
           ),
+
+          const EdenDivider(label: 'Wave A — Membership Tier Badge'),
+          Section(
+            title: 'Preset Tiers',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: EdenMembershipTier.values
+                  .map((t) => EdenMembershipTierBadge(tier: t))
+                  .toList(),
+            ),
+          ),
+          const Section(
+            title: 'Custom Tiers (salon / retail / legal / gov)',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenMembershipTierBadge.custom(
+                  label: 'Elite',
+                  backgroundColor: Color(0xFFEC4899),
+                  foregroundColor: Color(0xFFFFFFFF),
+                ),
+                EdenMembershipTierBadge.custom(
+                  label: 'TS-SCI',
+                  backgroundColor: Color(0xFF7F1D1D),
+                  foregroundColor: Color(0xFFFFFFFF),
+                  icon: Icons.security,
+                ),
+                EdenMembershipTierBadge.custom(
+                  label: 'Lapsed',
+                  backgroundColor: Color(0xFFE5E7EB),
+                  foregroundColor: Color(0xFF374151),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
