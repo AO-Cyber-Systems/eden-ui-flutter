@@ -266,6 +266,7 @@ export 'src/widgets/map_providers/eden_map_provider.dart';
 export 'src/widgets/eden_authenticated_image.dart';
 export 'src/widgets/eden_currency_display.dart';
 export 'src/widgets/eden_membership_tier_badge.dart';
+export 'src/widgets/eden_network_status_bar.dart';
 export 'src/widgets/eden_otp_input.dart';
 export 'src/widgets/eden_phone_input.dart';
 

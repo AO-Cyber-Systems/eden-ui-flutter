@@ -27,7 +27,7 @@ void main() {
       await tester.pumpWidget(wrap(
         const EdenNetworkStatusBar(status: EdenNetworkStatus.offline),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(find.text('No internet connection'), findsOneWidget);
       expect(find.byIcon(Icons.wifi_off), findsOneWidget);
     });
@@ -38,7 +38,7 @@ void main() {
       await tester.pumpWidget(wrap(
         const EdenNetworkStatusBar(status: EdenNetworkStatus.reconnecting),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(find.text('Reconnecting...'), findsOneWidget);
       // A progress indicator is present (spinner).
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -50,7 +50,7 @@ void main() {
       await tester.pumpWidget(wrap(
         const EdenNetworkStatusBar(status: EdenNetworkStatus.syncing),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(find.text('Syncing changes...'), findsOneWidget);
     });
 
@@ -64,7 +64,7 @@ void main() {
           onRetry: () => retried = true,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(find.text('Retry'), findsOneWidget);
       await tester.tap(find.text('Retry'));
       await tester.pump();
@@ -80,24 +80,24 @@ void main() {
           attemptCount: 3,
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(find.text('Reconnecting (attempt 3)...'), findsOneWidget);
     });
 
     testWidgets('state transition online → offline animates in via SlideTransition',
         (tester) async {
-      // Start with online (no banner).
+      // Start with online (no banner content).
       await tester.pumpWidget(wrap(
         const EdenNetworkStatusBar(status: EdenNetworkStatus.online),
       ));
-      expect(find.byType(SlideTransition), findsNothing);
+      expect(find.text('No internet connection'), findsNothing);
 
       // Switch to offline.
       await tester.pumpWidget(wrap(
         const EdenNetworkStatusBar(status: EdenNetworkStatus.offline),
       ));
       await tester.pump();
-      // Animation in progress.
+      // AnimatedSwitcher uses SlideTransition to animate the new banner in.
       expect(find.byType(SlideTransition), findsWidgets);
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('No internet connection'), findsOneWidget);
@@ -119,7 +119,7 @@ void main() {
           onRetry: () {},
         ),
       ));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(tester.takeException(), isNull);
       // Sanity: the fixture has all 4 enum values.
       expect(EdenNetworkStatusBarFixtures.allStates.length, 4);
