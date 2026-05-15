@@ -275,6 +275,7 @@ export 'src/widgets/eden_phone_input.dart';
 export 'src/widgets/eden_consent_flow.dart';
 
 // Wave A — Address & map components
+export 'src/widgets/eden_address_input.dart';
 export 'src/widgets/eden_map_preview.dart';
 
 // Utils

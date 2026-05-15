@@ -179,9 +179,9 @@ void main() {
         'NoOpMapProvider — autocomplete is suppressed (no suggestion list)',
         (tester) async {
       await tester.pumpWidget(wrap(
-        EdenAddressInput(
-          provider: const NoOpMapProvider(),
-          autocompleteDebounce: const Duration(milliseconds: 50),
+        const EdenAddressInput(
+          provider: NoOpMapProvider(),
+          autocompleteDebounce: Duration(milliseconds: 50),
         ),
       ));
 
