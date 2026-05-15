@@ -18,16 +18,32 @@
     "001-06 Task 1 — RED → GREEN EdenMembershipTierBadge (10 tests pass) + dev catalog",
     "001-07 Task 1 — RED → GREEN EdenAuthenticatedImage (10 tests pass) + dev catalog",
     "001-08 Task 1 — RED → GREEN EdenNetworkStatusBar (8 tests pass) + dev catalog",
+    "001-09 Task 1 — value types (EdenConsentClause, EdenConsentRecord) + fixtures",
+    "001-09 Task 2 — RED → GREEN EdenConsentFlow (11 tests pass) + dev catalog",
+    "001-10 Task 1 — value types (EdenIntakeQuestion, EdenIntakeQuestionType) + fixtures",
+    "001-10 Task 2 — RED → GREEN EdenIntakeForm (14 tests pass) + dev catalog",
+    "001-11 Task 1 — value types (EdenDashboardSection, EdenRolePalette) + fixtures",
+    "001-11 Task 2 — RED → GREEN EdenRoleDashboardShell (11 tests pass) + dev catalog",
+    "001-12 Task 1 — RED → GREEN EdenStarterTemplateCard (5 tests pass) + shared triplet fixtures",
+    "001-12 Task 2 — RED → GREEN EdenContextualTip (4) + EdenAppTourOverlay (5) + dev catalog",
+    "001-13 Task 1 — value types (EdenOfflineQueueItem) + fixtures",
+    "001-13 Task 2 — RED → GREEN EdenOfflineQueueViewer (9 tests pass) + dev catalog",
+    "001-14 Task 1 — value types (EdenQuickAction) + fixtures + RED → GREEN EdenQuickActionBar (11 tests pass) + dev catalog",
     "001-15 Task 1 — RED → GREEN RecordingMapProvider test double in lib/ (6 tests pass)",
     "001-15 Task 2 — RED → GREEN EdenMapPreview (8 tests pass)",
     "001-15 Task 3 — RED → GREEN EdenAddressInput (11 tests pass) + dev catalog"
   ],
-  "completed_trds": ["001-01", "001-02", "001-03", "001-04", "001-05", "001-06", "001-07", "001-08", "001-15"],
+  "completed_trds": [
+    "001-01", "001-02", "001-03", "001-04", "001-05", "001-06", "001-07", "001-08",
+    "001-09", "001-10", "001-11", "001-12", "001-13", "001-14", "001-15"
+  ],
   "started_at": "2026-05-15",
   "wave1_completed_at": "2026-05-15",
   "wave1_tests_added": 42,
   "wave2_completed_at": "2026-05-15",
   "wave2_tests_added": 58,
+  "wave3_completed_at": "2026-05-15",
+  "wave3_tests_added": 70,
   "wave4_completed_at": "2026-05-15",
   "wave4_tests_added": 25,
   "deviations": [
@@ -47,9 +63,37 @@
       "summary": "Tests using `pumpAndSettle()` after `status=reconnecting` deadlocked because the CircularProgressIndicator spins indefinitely. Replaced `pumpAndSettle()` with fixed-time `pump(Duration(milliseconds: 250))` to advance animation without waiting for steady-state. This matches the issue Wave 1 had flagged in deferred-items.md and resolves it at GREEN."
     },
     {
+      "trd": "001-09",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "TRD spec called for primarySignature: List<int> bytes in EdenConsentRecord. Implementation captures List<EdenSignatureStroke> instead — strokes are the canonical primitive EdenSignaturePad emits via onSignatureChanged, and storing strokes lets consumers rasterise at any resolution losslessly. Caller can convert strokes → bytes via their own raster pipeline."
+    },
+    {
+      "trd": "001-10",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "TRD test list specified 13 tests; shipped 14 (added a separate test that verifies number question answer is typed as num, alongside the original 7-question-types coverage)."
+    },
+    {
+      "trd": "001-12",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "EdenAppTourOverlay GREEN: captured the inner BuildContext via ShowCaseWidget's builder param so startTour() can call ShowCaseWidget.of(innerCtx).startShowCase(keys). Calling .of() on the outer State context fails because ShowCaseWidget is a descendant, not an ancestor. Initial RED test had `isActive=false by default` and `startTour() flips isActive` both passing against the stub coincidentally; rewrote both to add sentinel-text assertions that only the real GREEN can satisfy."
+    },
+    {
+      "trd": "001-13",
+      "rule": "Rule 1 — auto-fix bug",
+      "summary": "Relative-time helper used `<30s` threshold for 'just now' which excluded an exactly-30-seconds-ago timestamp. Bumped to `<=30s` so the fixed-clock test on q1 (30s before referenceNow) deterministically renders 'just now'. Also: test for the Discard confirm dialog uses `find.text('Discard').last` because each row's Discard button + the dialog's Discard button both register the same Text — not a widget bug, a test scoping pattern."
+    },
+    {
+      "trd": "001-14",
+      "rule": "Rule 1 — auto-fix bug",
+      "summary": "EdenQuickActionBar initial inline-cap calculation always reserved one slot for the overflow menu (`computed - 1`), which forced overflow even at wide widths when all actions already fit. Fixed: `autoCap = slotCap >= actions.length ? actions.length : slotCap - 1` — only reserve the menu slot when overflow would actually be needed. Also: `constraints.maxWidth.isFinite` guard since LayoutBuilder can deliver double.infinity inside scrollable parents."
+    },
+    {
       "trd": "001-15",
       "rule": "Test-design adjustment (TRD recovery clause invoked)",
       "summary": "EdenAddressInput uses a hand-rolled Material(Column) suggestion dropdown instead of Flutter's `Autocomplete<EdenPlaceSuggestion>` widget — invoking the TRD's <recovery> clause. Material `Autocomplete<>` builds an Overlay route that is not reachable from the standard test wrap() helper (MaterialApp(home: Scaffold(body: child))). Hand-rolled version is simpler to test and keeps the widget tree flat. No API impact; consumers see the same EdenAddressInput signature."
     }
+  ],
+  "notes": [
+    "Wave 3 ran in parallel with Wave 4 (TRD 001-15). Both executors authored commits to lib/eden_ui.dart on the same file; coordination was handled via distinct section headers ('Wave A — Cross-vertical composers', 'Wave A — Onboarding triplet', 'Wave A — Cross-vertical primitives (offline + nav)' from Wave 3, vs 'Wave A — Address & map components' from Wave 4). One brief polluted commit (`4d1359f`) included transient .planning/.skill-active + .planning/.awareness-cache.json files; cleaned up in `7387302` which gitignored both. End-of-wave full-suite run: 70 Wave 3 tests + 25 Wave 4 tests pass."
   ]
 }

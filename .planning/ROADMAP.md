@@ -17,12 +17,12 @@ TRDs:
 - [x] 001-06-TRD.md — A8 EdenMembershipTierBadge (Wave 2)
 - [x] 001-07-TRD.md — A12 EdenAuthenticatedImage (Wave 2; donor trades-react)
 - [x] 001-08-TRD.md — A13 EdenNetworkStatusBar (Wave 2; donor trades-react)
-- [ ] 001-09-TRD.md — A5 EdenConsentFlow (Wave 3; composes eden_signature_pad + eden_form_wizard)
-- [ ] 001-10-TRD.md — A6 EdenIntakeForm (Wave 3; composes eden_form_wizard)
-- [ ] 001-11-TRD.md — A9 EdenRoleDashboardShell (Wave 3; depends on Wave 1 scaffolds)
-- [ ] 001-12-TRD.md — A10 EdenAppTourOverlay + EdenContextualTip + EdenStarterTemplateCard (Wave 3; onboarding triplet, uses showcaseview)
-- [ ] 001-13-TRD.md — A11 EdenOfflineQueueViewer (Wave 3; donor trades-flutter field_crew)
-- [ ] 001-14-TRD.md — A14 EdenQuickActionBar (Wave 3; donor trades-react)
+- [x] 001-09-TRD.md — A5 EdenConsentFlow (Wave 3; composes eden_signature_pad + eden_form_wizard)
+- [x] 001-10-TRD.md — A6 EdenIntakeForm (Wave 3; composes eden_form_wizard)
+- [x] 001-11-TRD.md — A9 EdenRoleDashboardShell (Wave 3; depends on Wave 1 scaffolds)
+- [x] 001-12-TRD.md — A10 EdenAppTourOverlay + EdenContextualTip + EdenStarterTemplateCard (Wave 3; onboarding triplet, uses showcaseview)
+- [x] 001-13-TRD.md — A11 EdenOfflineQueueViewer (Wave 3; donor trades-flutter field_crew)
+- [x] 001-14-TRD.md — A14 EdenQuickActionBar (Wave 3; donor trades-react)
 - [x] 001-15-TRD.md — A4 EdenAddressInput + EdenMapPreview + RecordingMapProvider (Wave 4; implements TRD-03 interface)
 
 ## v2 Future Objectives
