@@ -152,6 +152,47 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
           ),
+
+          // Currency Display (Wave A — Cross-vertical primitives)
+          const Section(
+            title: 'Currency Display',
+            child: EdenCard(
+              child: Padding(
+                padding: EdgeInsets.all(EdenSpacing.space3),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Default (USD)'),
+                    EdenCurrencyDisplay(cents: 12500),
+                    SizedBox(height: 8),
+                    Text('Negative'),
+                    EdenCurrencyDisplay(cents: -5000),
+                    SizedBox(height: 8),
+                    Text('Show sign'),
+                    EdenCurrencyDisplay(cents: 5000, showSign: true),
+                    SizedBox(height: 8),
+                    Text('No cents'),
+                    EdenCurrencyDisplay(cents: 5000, showCents: false),
+                    SizedBox(height: 8),
+                    Text('Thousands'),
+                    EdenCurrencyDisplay(cents: 1234500),
+                    SizedBox(height: 8),
+                    Text('EUR'),
+                    EdenCurrencyDisplay(cents: 12500, currencyCode: 'EUR'),
+                    SizedBox(height: 8),
+                    Text('GBP'),
+                    EdenCurrencyDisplay(cents: 12500, currencyCode: 'GBP'),
+                    SizedBox(height: 8),
+                    Text('Colorize positive'),
+                    EdenCurrencyDisplay(cents: 5000, colorize: true),
+                    SizedBox(height: 8),
+                    Text('Colorize negative'),
+                    EdenCurrencyDisplay(cents: -5000, colorize: true),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
