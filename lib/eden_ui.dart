@@ -309,6 +309,7 @@ export 'src/widgets/eden_cost_summary_card.dart';
 export 'src/widgets/eden_activity_feed_item.dart';
 export 'src/widgets/eden_blocking_alerts.dart';
 export 'src/widgets/eden_media_row.dart';
+export 'src/widgets/eden_placeholder_page.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
