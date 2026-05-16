@@ -129,7 +129,40 @@ class _FuelScreenState extends State<FuelScreen> {
               ),
             ),
           ),
-          // TRD 005-04 will append: Section(title: 'EdenHazmatDocViewer — Manifest + MSDS + cert', child: ...).
+          Section(
+            title: 'EdenHazmatDocViewer — Manifest + MSDS + cert',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final status in EdenHazmatCertStatus.values)
+                      _HazmatCertStatusDemo(status: status),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const EdenHazmatDocViewer(
+                  data: EdenHazmatDocData(
+                    manifestAttachment: EdenAttachment(
+                      name: 'manifest-2026-05-16.pdf',
+                      size: 124500,
+                      type: 'application/pdf',
+                      url: 'https://example.com/manifest.pdf',
+                    ),
+                    msdsAttachment: EdenAttachment(
+                      name: 'msds-propane.pdf',
+                      size: 89200,
+                      type: 'application/pdf',
+                      url: 'https://example.com/msds.pdf',
+                    ),
+                    driverCertLabel: 'DOT HM-126F • Driver J. Smith',
+                  ),
+                ),
+              ],
+            ),
+          ),
           // TRD 005-05 will append: Section(title: 'EdenFuelPriceTicker — Real-time price', child: ...).
           // TRD 005-06 will append: Section(title: 'EdenTruckInventoryCard — Per-truck inventory', child: ...).
         ],
@@ -239,6 +272,32 @@ class _RouteStopListDemoState extends State<_RouteStopListDemo> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Cert-status mini-demo for the HazmatDocViewer catalog section.
+class _HazmatCertStatusDemo extends StatelessWidget {
+  const _HazmatCertStatusDemo({required this.status});
+
+  final EdenHazmatCertStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 380,
+      child: EdenHazmatDocViewer(
+        data: EdenHazmatDocData(
+          manifestAttachment: const EdenAttachment(
+            name: 'manifest.pdf',
+            size: 100,
+            type: 'application/pdf',
+            url: 'https://example.com/manifest.pdf',
+          ),
+          driverCertLabel: 'Sample driver',
+          certStatus: status,
+        ),
+      ),
     );
   }
 }
