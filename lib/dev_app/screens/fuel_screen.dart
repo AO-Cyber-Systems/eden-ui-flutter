@@ -163,7 +163,76 @@ class _FuelScreenState extends State<FuelScreen> {
               ],
             ),
           ),
-          // TRD 005-05 will append: Section(title: 'EdenFuelPriceTicker — Real-time price', child: ...).
+          Section(
+            title: 'EdenFuelPriceTicker — Real-time price',
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: 400,
+                  child: EdenFuelPriceTicker(
+                    data: EdenFuelPriceData(
+                      currentCents: 250,
+                      priorCents: 245,
+                      fuelTypeLabel: 'Heating oil',
+                      asOf: DateTime.now()
+                          .subtract(const Duration(minutes: 5)),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 400,
+                  child: EdenFuelPriceTicker(
+                    data: EdenFuelPriceData(
+                      currentCents: 240,
+                      priorCents: 250,
+                      fuelTypeLabel: 'Diesel',
+                      asOf: DateTime.now()
+                          .subtract(const Duration(hours: 2)),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 400,
+                  child: EdenFuelPriceTicker(
+                    data: EdenFuelPriceData(
+                      currentCents: 250,
+                      priorCents: 250,
+                      fuelTypeLabel: 'Propane',
+                      asOf: DateTime.now(),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 200,
+                  child: EdenFuelPriceTicker(
+                    data: EdenFuelPriceData(
+                      currentCents: 350,
+                      priorCents: 250,
+                      fuelTypeLabel: 'Aviation fuel',
+                      asOf: DateTime.now()
+                          .subtract(const Duration(days: 1)),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 400,
+                  child: EdenFuelPriceTicker(
+                    data: EdenFuelPriceData(
+                      currentCents: 260,
+                      priorCents: 250,
+                      fuelTypeLabel: 'Gasoline (wholesale resale)',
+                      asOf: DateTime.now()
+                          .subtract(const Duration(minutes: 30)),
+                    ),
+                    deltaPolarity:
+                        EdenFuelPriceDeltaPolarity.higherIsBetter,
+                  ),
+                ),
+              ],
+            ),
+          ),
           // TRD 005-06 will append: Section(title: 'EdenTruckInventoryCard — Per-truck inventory', child: ...).
         ],
       ),
