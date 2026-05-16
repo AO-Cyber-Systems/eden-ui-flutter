@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import 'scheduler/scheduler_controller.dart';
+import 'scheduler/scheduler_day_view.dart';
 import 'scheduler/scheduler_models.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
@@ -21,19 +22,32 @@ class EdenSchedulerConfig {
     this.startHour = 6,
     this.endHour = 20,
     this.slotHeight = 60.0,
+    this.fullDay = false,
   });
 
   /// First visible hour (inclusive, 0-23). Defaults to 6 (6 AM).
+  /// Ignored when [fullDay] is true.
   final int startHour;
 
   /// Last visible hour (exclusive, 1-24). Defaults to 20 (8 PM).
+  /// Ignored when [fullDay] is true.
   final int endHour;
 
   /// Pixel height of one hour row. Defaults to 60.
   final double slotHeight;
 
+  /// When true, overrides [startHour]=0 and [endHour]=24 (full 24-hour grid).
+  /// Mirrors donor `ALL_HOUR_SLOTS` toggle (`EnhancedCalendar.tsx`).
+  final bool fullDay;
+
+  /// Effective first hour (respects [fullDay] override).
+  int get effectiveStartHour => fullDay ? 0 : startHour;
+
+  /// Effective last hour (respects [fullDay] override).
+  int get effectiveEndHour => fullDay ? 24 : endHour;
+
   /// Total number of visible hours.
-  int get hourCount => endHour - startHour;
+  int get hourCount => effectiveEndHour - effectiveStartHour;
 
   /// Total pixel height of the time grid body.
   double get totalHeight => hourCount * slotHeight;
@@ -292,13 +306,10 @@ class _EdenSchedulerState extends State<EdenScheduler> {
         );
       case EdenSchedulerView.day:
       case EdenSchedulerView.mobile:
-        return DayView(
+        return EdenSchedulerDayView(
           focusedDate: _focusedDate,
-          today: _today,
           events: _filteredEvents,
           config: widget.config,
-          isDark: isDark,
-          theme: theme,
           scrollController: _scrollController,
           onEventTap: widget.onEventTap,
           onTimeSlotTap: widget.onTimeSlotTap,

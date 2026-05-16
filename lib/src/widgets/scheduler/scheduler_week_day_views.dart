@@ -264,7 +264,7 @@ class HourLabelColumn extends StatelessWidget {
       height: config.totalHeight,
       child: Stack(
         children: List.generate(config.hourCount, (i) {
-          final hour = config.startHour + i;
+          final hour = config.effectiveStartHour + i;
           final label = _formatHour(hour);
           return Positioned(
             top: i * config.slotHeight - 7,
@@ -308,6 +308,7 @@ class TimeColumn extends StatelessWidget {
     required this.compact,
     this.onEventTap,
     this.onTimeSlotTap,
+    this.clock,
   });
 
   final DateTime date;
@@ -319,6 +320,7 @@ class TimeColumn extends StatelessWidget {
   final bool compact;
   final ValueChanged<EdenSchedulerEvent>? onEventTap;
   final ValueChanged<DateTime>? onTimeSlotTap;
+  final DateTime Function()? clock;
 
   @override
   Widget build(BuildContext context) {
@@ -333,10 +335,12 @@ class TimeColumn extends StatelessWidget {
         if (onTimeSlotTap == null) return;
         final dy = details.localPosition.dy;
         final fractionalHour = dy / config.slotHeight;
-        final hour = config.startHour + fractionalHour.floor();
-        final minute = ((fractionalHour - fractionalHour.floor()) * 60)
+        final hour = config.effectiveStartHour + fractionalHour.floor();
+        // Snap minutes to 15-min increments to match donor slot semantics.
+        final rawMinute = ((fractionalHour - fractionalHour.floor()) * 60)
             .round()
             .clamp(0, 59);
+        final minute = (rawMinute ~/ 15) * 15;
         onTimeSlotTap!(
           DateTime(date.year, date.month, date.day, hour, minute),
         );
@@ -450,13 +454,14 @@ class TimeColumn extends StatelessWidget {
   }
 
   double _timeToOffset(DateTime time) {
-    final hours = time.hour + time.minute / 60.0 - config.startHour;
+    final hours = time.hour + time.minute / 60.0 - config.effectiveStartHour;
     return hours.clamp(0.0, config.hourCount.toDouble()) * config.slotHeight;
   }
 
   Widget _buildNowIndicator() {
-    final now = DateTime.now();
-    if (now.hour < config.startHour || now.hour >= config.endHour) {
+    final now = clock?.call() ?? DateTime.now();
+    if (now.hour < config.effectiveStartHour ||
+        now.hour >= config.effectiveEndHour) {
       return const SizedBox.shrink();
     }
     final top = _timeToOffset(now);
