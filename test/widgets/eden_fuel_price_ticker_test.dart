@@ -178,4 +178,104 @@ void main() {
       );
     });
   });
+
+  // -----------------------------------------------------------------
+  // Task 2 — Polarity flip + responsive layout + iPhone-narrow
+  // -----------------------------------------------------------------
+  group('EdenFuelPriceTicker higherIsBetter polarity', () {
+    testWidgets('up5cents + higherIsBetter → green chip', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenFuelPriceTicker(
+          data: EdenFuelPriceTickerFixtures.up5cents,
+          deltaPolarity: EdenFuelPriceDeltaPolarity.higherIsBetter,
+          now: EdenFuelPriceTickerFixtures.asOfRef,
+        ),
+      ));
+      expect(deltaChipColorOf(tester), EdenColors.success);
+    });
+
+    testWidgets('down10cents + higherIsBetter → red chip', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenFuelPriceTicker(
+          data: EdenFuelPriceTickerFixtures.down10cents,
+          deltaPolarity: EdenFuelPriceDeltaPolarity.higherIsBetter,
+          now: EdenFuelPriceTickerFixtures.asOfRef,
+        ),
+      ));
+      expect(deltaChipColorOf(tester), EdenColors.error);
+    });
+
+    testWidgets(
+        'flat + higherIsBetter → grey chip (flat ignores polarity)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenFuelPriceTicker(
+          data: EdenFuelPriceTickerFixtures.flat,
+          deltaPolarity: EdenFuelPriceDeltaPolarity.higherIsBetter,
+          now: EdenFuelPriceTickerFixtures.asOfRef,
+        ),
+      ));
+      expect(deltaChipColorOf(tester), const Color(0xFF94A3B8));
+    });
+  });
+
+  group('EdenFuelPriceTicker responsive layout', () {
+    testWidgets('width 200 → vertical layout (no Row ancestor for price)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenFuelPriceTicker(
+          data: EdenFuelPriceTickerFixtures.up5cents,
+          now: EdenFuelPriceTickerFixtures.asOfRef,
+        ),
+        width: 200,
+      ));
+      // Scope to descendants of the ticker. The deltaChip itself is a Row,
+      // but the priceWidget (EdenCurrencyDisplay) should have NO Row
+      // ancestor within the ticker tree when narrow.
+      final priceWidget = find.byType(EdenCurrencyDisplay);
+      final ancestorRow = find.ancestor(
+        of: priceWidget,
+        matching: find.descendant(
+          of: find.byType(EdenFuelPriceTicker),
+          matching: find.byType(Row),
+        ),
+      );
+      expect(ancestorRow, findsNothing,
+          reason: 'narrow layout: priceWidget should not be in a Row');
+    });
+
+    testWidgets('width 400 → horizontal layout (Row ancestor for price)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenFuelPriceTicker(
+          data: EdenFuelPriceTickerFixtures.up5cents,
+          now: EdenFuelPriceTickerFixtures.asOfRef,
+        ),
+        width: 400,
+      ));
+      final priceWidget = find.byType(EdenCurrencyDisplay);
+      final ancestorRow = find.ancestor(
+        of: priceWidget,
+        matching: find.descendant(
+          of: find.byType(EdenFuelPriceTicker),
+          matching: find.byType(Row),
+        ),
+      );
+      expect(ancestorRow, findsAtLeastNWidgets(1),
+          reason: 'wide layout: priceWidget should have a Row ancestor');
+    });
+  });
+
+  group('EdenFuelPriceTicker iPhone-narrow safety', () {
+    testWidgets('390pt + longFuelTypeLabel — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenFuelPriceTicker(
+          data: EdenFuelPriceTickerFixtures.longFuelTypeLabel,
+          now: EdenFuelPriceTickerFixtures.asOfRef,
+        ),
+        width: 390,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
