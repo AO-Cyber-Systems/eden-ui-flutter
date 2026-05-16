@@ -20,9 +20,15 @@ void main() {
       ));
       expect(find.text('JS'), findsOneWidget);
       expect(find.text('5m ago'), findsOneWidget);
-      // RichText: actor + action + entity composed inside a single TextSpan
-      final richText = tester.widget<RichText>(find.byType(RichText).first);
-      final span = richText.text as TextSpan;
+      // RichText: actor + action + entity composed inside a single TextSpan.
+      // Find the RichText whose root TextSpan has nested children (the simple
+      // Text widgets render RichTexts too — those have no children).
+      final richTextWithChildren = tester.widgetList<RichText>(find.byType(RichText))
+          .firstWhere((rt) {
+        final span = rt.text;
+        return span is TextSpan && (span.children?.isNotEmpty ?? false);
+      });
+      final span = richTextWithChildren.text as TextSpan;
       final flat = _flatten(span);
       expect(flat, contains('John Smith'));
       expect(flat, contains(' created '));

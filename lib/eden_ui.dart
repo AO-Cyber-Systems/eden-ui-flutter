@@ -306,6 +306,7 @@ export 'src/widgets/eden_stock_level_indicator.dart';
 
 // Phase 1 — Dashboard composites (objective 003)
 export 'src/widgets/eden_cost_summary_card.dart';
+export 'src/widgets/eden_activity_feed_item.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
