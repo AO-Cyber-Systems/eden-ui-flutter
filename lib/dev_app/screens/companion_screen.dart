@@ -84,8 +84,95 @@ class _CompanionScreenState extends State<CompanionScreen> {
                 onAccuracyChanged: (a) => setState(() => _gpsAccuracy = a),
               ),
             ),
+            const SizedBox(height: EdenSpacing.space4),
+            _Section(
+              title: 'EdenCompanionShell (Wave 3 composition)',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Mount the full shell live — flip the UX toggle inside '
+                    'the shell to observe compact↔expanded layout swap.',
+                  ),
+                  const SizedBox(height: EdenSpacing.space2),
+                  EdenButton(
+                    label: 'Open EdenCompanionShell demo',
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            _CompanionShellDemoPage(controller: _controller),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CompanionShellDemoPage extends StatefulWidget {
+  const _CompanionShellDemoPage({required this.controller});
+  final EdenAppModeController controller;
+
+  @override
+  State<_CompanionShellDemoPage> createState() =>
+      _CompanionShellDemoPageState();
+}
+
+class _CompanionShellDemoPageState extends State<_CompanionShellDemoPage> {
+  String _selectedNavId = 'home';
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenAppModeScope(
+      controller: widget.controller,
+      child: EdenCompanionShell(
+        greeting: 'Good morning, Sarah',
+        roleLabel: 'Field Tech',
+        rolePalette: EdenRolePalette.trades,
+        sections: const [
+          EdenDashboardSection(
+            id: 'today',
+            title: "Today's appointments",
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('3 stops queued'),
+            ),
+          ),
+          EdenDashboardSection(
+            id: 'insights',
+            title: 'AI insights',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('Look-ahead routing saved 22 min today'),
+            ),
+          ),
+          EdenDashboardSection(
+            id: 'quick',
+            title: 'Quick actions',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('Check in / Out · Sign / Photo'),
+            ),
+          ),
+        ],
+        navItems: const [
+          EdenCompanionNavItem(id: 'home', label: 'Home', icon: Icons.home),
+          EdenCompanionNavItem(id: 'jobs', label: 'Jobs', icon: Icons.work),
+          EdenCompanionNavItem(
+              id: 'schedule', label: 'Schedule', icon: Icons.calendar_today),
+          EdenCompanionNavItem(
+              id: 'inventory', label: 'Inventory', icon: Icons.inventory_2),
+          EdenCompanionNavItem(
+              id: 'profile', label: 'Profile', icon: Icons.person),
+        ],
+        selectedNavId: _selectedNavId,
+        onNavChanged: (id) => setState(() => _selectedNavId = id),
       ),
     );
   }
