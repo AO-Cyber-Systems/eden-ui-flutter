@@ -122,6 +122,34 @@ class _MiscScreenState extends State<MiscScreen> {
             ),
           ),
 
+          const EdenDivider(label: 'EdenAiCollapsibleSection — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Default (expanded) / defaultExpanded=false / custom icon',
+            child: Column(
+              children: [
+                EdenAiCollapsibleSection(
+                  title: 'Default expanded section',
+                  child: Text('Hello insights — body of the section.'),
+                ),
+                EdenAiCollapsibleSection(
+                  title: 'Starts collapsed',
+                  defaultExpanded: false,
+                  child: Text('You only see this after tapping the header.'),
+                ),
+                EdenAiCollapsibleSection(
+                  title: 'Custom icon (insights)',
+                  icon: Icons.insights,
+                  child: Text('Executive-tier KPIs.'),
+                ),
+                EdenAiCollapsibleSection(
+                  title:
+                      'A very long section title that should ellipsize gracefully on narrow viewports — 60 chars',
+                  child: Text('Body with long-title parent.'),
+                ),
+              ],
+            ),
+          ),
+
           const EdenDivider(label: 'EdenPlaceholderPage — Phase 1 (objective 003)'),
           Section(
             title: 'EdenPlaceholderPage preview (tap to open)',
