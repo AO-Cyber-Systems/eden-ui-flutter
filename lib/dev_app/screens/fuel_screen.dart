@@ -104,13 +104,121 @@ class _FuelScreenState extends State<FuelScreen> {
               ],
             ),
           ),
-          // TRD 005-02 will append: Section(title: 'EdenRouteStopList — Ordered stop sequence', child: ...).
+          Section(
+            title: 'EdenRouteStopList — Ordered stop sequence',
+            child: _RouteStopListDemo(),
+          ),
           // TRD 005-03 will append: Section(title: 'EdenMeterReadingEntry — Reading capture', child: ...).
           // TRD 005-04 will append: Section(title: 'EdenHazmatDocViewer — Manifest + MSDS + cert', child: ...).
           // TRD 005-05 will append: Section(title: 'EdenFuelPriceTicker — Real-time price', child: ...).
           // TRD 005-06 will append: Section(title: 'EdenTruckInventoryCard — Per-truck inventory', child: ...).
         ],
       ),
+    );
+  }
+}
+
+/// Interactive demo of [EdenRouteStopList] — holds mutable stops state in
+/// the demo widget so drag-reorder mutations re-render correctly.
+class _RouteStopListDemo extends StatefulWidget {
+  @override
+  State<_RouteStopListDemo> createState() => _RouteStopListDemoState();
+}
+
+class _RouteStopListDemoState extends State<_RouteStopListDemo> {
+  List<EdenRouteStopData> _stops = _initialStops();
+  bool _reorderable = true;
+
+  static List<EdenRouteStopData> _initialStops() => [
+        EdenRouteStopData(
+          id: 's1',
+          label: 'Acme Industrial — 250 gal propane',
+          status: EdenRouteStopStatus.completed,
+          estimatedArrival: DateTime(2026, 5, 16, 8, 30),
+          address: const EdenAddress(
+            streetLine1: '100 Main St',
+            city: 'Boston',
+            regionCode: 'MA',
+            postalCode: '02101',
+            countryCode: 'US',
+          ),
+          payloadGal: 250,
+        ),
+        EdenRouteStopData(
+          id: 's2',
+          label: 'Beta Co Heating — 180 gal heating oil',
+          status: EdenRouteStopStatus.enRoute,
+          estimatedArrival: DateTime(2026, 5, 16, 9, 45),
+          address: const EdenAddress(
+            streetLine1: '42 Oak Ave',
+            city: 'Cambridge',
+            regionCode: 'MA',
+            postalCode: '02139',
+            countryCode: 'US',
+          ),
+          payloadGal: 180,
+        ),
+        EdenRouteStopData(
+          id: 's3',
+          label: 'Gamma LLC Yard — 500 gal diesel',
+          status: EdenRouteStopStatus.pending,
+          estimatedArrival: DateTime(2026, 5, 16, 11, 15),
+          address: const EdenAddress(
+            streetLine1: '789 Industrial Way',
+            streetLine2: 'Suite B',
+            city: 'Quincy',
+            regionCode: 'MA',
+            postalCode: '02169',
+            countryCode: 'US',
+          ),
+          payloadGal: 500,
+        ),
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Reorderable:'),
+            const SizedBox(width: 8),
+            Switch(
+              value: _reorderable,
+              onChanged: (v) => setState(() => _reorderable = v),
+            ),
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: () => setState(() => _stops = []),
+              child: const Text('Show empty state'),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () => setState(() => _stops = _initialStops()),
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 360,
+          child: EdenRouteStopList(
+            stops: _stops,
+            reorderable: _reorderable,
+            onReorder: (o, n) => setState(() {
+              final item = _stops.removeAt(o);
+              _stops.insert(n, item);
+            }),
+            onStopTap: (id) => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Tapped stop $id')),
+            ),
+            onStatusTap: (id) => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Tapped status $id')),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
