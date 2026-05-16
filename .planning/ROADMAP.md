@@ -86,6 +86,37 @@ TRDs (all GREEN as of 2026-05-16; objective 100% complete):
 - [x] 004-15-TRD.md — EdenSchedulerCreateDialog + EditDialog + DetailDialog slot-based + responsive (Wave 4)
 - [x] 004-16-TRD.md — Viewport culling + layout cache + recurrence cache (Wave 4; human-verify side-by-side parity checkpoint pending)
 
+### Objective 005: B-Fuel Components — Fuel-delivery vertical primitives
+
+**Goal:** Ship 6 generic UI primitives that fuel-delivery downstream apps (`eden-biz-flutter` fuel admin + companion driver app) compose to render the fuel-delivery domain. Generic — widgets don't bind to fuel entities; consumers map `fuel_tanks`, `delivery_routes`, `meter_readings`, `truck_inventories`, `fuel_prices`, `hazmat_documents` to library value classes. Reuses existing primitives (`EdenAuthenticatedImage`, `EdenAttachmentPreview`, `EdenCurrencyDisplay`, `EdenStockLevelIndicator`) where possible. Cross-vertical reuse beyond fuel: water utilities (TankGauge), medical home-visits (RouteStopList), utility meter reads (MeterReadingEntry), insurance cert viewers (HazmatDocViewer), commodity tickers (FuelPriceTicker), service-truck capacity cards (TruckInventoryCard). See `objectives/005-b-fuel-components/OBJECTIVE.md`.
+
+**TRDs:** 6 plans across 3 waves (~2-3 wk Claude execution)
+
+TRDs:
+- [ ] 005-01-TRD.md — EdenTankGauge (Wave 1; 3 modes: linear/segmented/dial via CustomPainter; Compact pinning via EdenAdaptiveTierScope; low-threshold visual cue; net-new design — no donor)
+- [ ] 005-02-TRD.md — EdenRouteStopList (Wave 1; ReorderableListView with drag-reorder + ETA + status badges + EdenAddress preview; Flutter newIndex quirk hidden from consumers)
+- [ ] 005-03-TRD.md — EdenMeterReadingEntry (Wave 2; gallons + photo + source + timestamp + audit form; composes EdenAuthenticatedImage; emits EdenMeterReadingDraft)
+- [ ] 005-04-TRD.md — EdenHazmatDocViewer (Wave 2; DOT manifest + MSDS modal sheet + driver-cert pill; composes EdenAttachmentPreview; read-only v1, signature flow deferred)
+- [ ] 005-05-TRD.md — EdenFuelPriceTicker (Wave 3; current + delta + as-of; composes EdenCurrencyDisplay; configurable delta polarity; hand-rolled relative-time formatter)
+- [ ] 005-06-TRD.md — EdenTruckInventoryCard (Wave 3; truck + fuel-type + capacity + fill bar; composes EdenStockLevelIndicator; donor trades-flutter truck_inventory_section.dart)
+
+### Objective 008: Dev Catalog Enrichment — Make Existing 52 Components Demo as Completely as They Test
+
+**Goal:** Enrich the live Flutter dev catalog (`lib/dev_app/screens/`) so the 52 components shipped across objectives 001/002/003/004 demo as completely as they test. Today's catalog makes the library look thinner than it is — 1041 tests pass but most components have 1-5 minimal demos with generic data. After this objective ships: every screen shows default + realistic-populated + edge + responsive + interactive states drawing on a shared cross-vertical sample-data library (trades / salon / fuel / medical / gov). Includes the side-by-side trades-react PNG embeds for EdenScheduler closing the objective-004 human-verify parity checkpoint. **Catalog-content objective — no component public APIs change.** See `objectives/008-dev-catalog-enrichment/OBJECTIVE.md`.
+
+**TRDs:** 9 plans across 5 waves (~2-3 wk Claude execution)
+
+TRDs:
+- [ ] 008-01-TRD.md — Cross-vertical sample-data library `lib/dev_app/_sample_data/` (trades/salon/fuel/medical/gov scenarios + cross-cutting customers/staff/inventory) (Wave 1)
+- [ ] 008-02-TRD.md — `layouts_screen.dart` enrichment — EdenListPageScaffold + EdenDetailPageScaffold cross-vertical realistic list/detail demos (Wave 2)
+- [ ] 008-03-TRD.md — `data_display_screen.dart` enrichment — EdenStatCard 5 vertical KPI grids + EdenDataTable realistic tables + EdenCostSummaryCard / EdenActivityFeedItem / EdenMediaRow / EdenStockLevelIndicator (Wave 2)
+- [ ] 008-04-TRD.md — `inputs_screen.dart` + `misc_screen.dart` — EdenPhoneInput 8-country grid + EdenOtpInput length/state variants + EdenAddressInput 5 verticals + EdenNetworkStatusBar lifecycle + EdenOfflineQueueViewer + EdenAuthenticatedImage (Wave 2)
+- [ ] 008-05-TRD.md — `companion_screen.dart` — 5 vertical-flavor full shells (trades dispatch / salon front-desk / fuel driver / medical home-visit / gov caseworker) + realistic GPS coords + vertical-content gate demos + tier-aware EdenAdaptiveLayout demo (Wave 3)
+- [ ] 008-06-TRD.md — NEW `composers_screen.dart` — EdenConsentFlow / EdenIntakeForm / EdenRoleDashboardShell / EdenAppTourOverlay + EdenContextualTip + EdenStarterTemplateCard cross-vertical (Wave 3)
+- [ ] 008-07-TRD.md — `badges_alerts_screen.dart` — EdenUrgencyBadge / EdenPipelineBadge / EdenApprovalStatusBadge / EdenBlockingAlerts / EdenMembershipTierBadge realistic cross-vertical contexts (Wave 4)
+- [ ] 008-08-TRD.md — `chat_screen.dart` AI surface — EdenInsightCard 6 layouts × cross-vertical + EdenAiPanel persona-keyed insights + EdenAiCollapsibleSection / EdenPersonaSelector / EdenAgentChat per-vertical streaming presets / EdenAiInsightSlot (Wave 4)
+- [ ] 008-09-TRD.md — `scheduler_screen.dart` HEADLINE — side-by-side trades-react PNG embeds (5 view modes) + 50+ event live perf demo + cross-vertical scheduler scenarios (trades/salon/medical/fuel/gov) + pubspec.yaml asset registration (Wave 5)
+
 ## v2 Future Objectives
 
 Tracked but not in current scope:
