@@ -20,6 +20,7 @@ import 'devflow_infra_screen.dart';
 import 'devflow_project_screen.dart';
 import 'devflow_tools_screen.dart';
 import 'trades_screen.dart';
+import 'companion_screen.dart';
 
 /// Root screen showing all component categories.
 class HomeScreen extends StatelessWidget {
@@ -322,5 +323,11 @@ final _categories = [
     title: 'Trades — Enterprise Components',
     subtitle: 'Scheduler, approvals, checklists, maps, sync, signatures',
     builder: (_) => const TradesScreen(),
+  ),
+  _Category(
+    icon: Icons.phone_iphone,
+    title: 'Companion Shell',
+    subtitle: 'EdenAppMode, EdenAdaptiveLayout, mode toggle, gate, GPS, shell',
+    builder: (_) => const CompanionScreen(),
   ),
 ];
