@@ -67,6 +67,72 @@ class _CompanionScreenState extends State<CompanionScreen> {
               title: 'EdenUxModeToggle demo',
               child: _UxModeToggleDemo(controller: _controller),
             ),
+            const SizedBox(height: EdenSpacing.space4),
+            _Section(
+              title: 'EdenFieldViewGate demo',
+              child: _FieldViewGateDemo(controller: _controller),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldViewGateDemo extends StatelessWidget {
+  const _FieldViewGateDemo({required this.controller});
+  final EdenAppModeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Flip the mode toggle above to swap which card is visible.',
+        ),
+        const SizedBox(height: EdenSpacing.space3),
+        EdenFieldViewGate.companionOnly(
+          fallback: const _GateCard(
+            icon: Icons.visibility_off,
+            label: 'Companion card hidden — not in field mode',
+          ),
+          child: const _GateCard(
+            icon: Icons.smartphone,
+            label: 'Companion-only widget',
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenFieldViewGate.adminOnly(
+          fallback: const _GateCard(
+            icon: Icons.visibility_off,
+            label: 'Admin card hidden — not in admin mode',
+          ),
+          child: const _GateCard(
+            icon: Icons.desktop_windows,
+            label: 'Admin-only widget',
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GateCard extends StatelessWidget {
+  const _GateCard({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenCard(
+      child: Padding(
+        padding: const EdgeInsets.all(EdenSpacing.space3),
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: 8),
+            Expanded(child: Text(label)),
           ],
         ),
       ),
