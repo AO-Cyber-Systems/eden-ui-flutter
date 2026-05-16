@@ -24,7 +24,9 @@ class FieldScreen extends StatelessWidget {
           // Wave 2 — GPS-aware pages
           _CheckInPageDemo(),
           _LocationMapPageDemo(),
-          // (TRD 007-02/04 will append capture-flow page demos here)
+          // Wave 3 — Capture-flow pages
+          _SignatureCapturePageDemo(),
+          // (TRD 007-04 will append _PhotoCapturePageDemo here)
           // (TRD 007-01/03 will append form-flow page demos here)
         ],
       ),
@@ -158,6 +160,55 @@ class _LocationMapPageDemo extends StatelessWidget {
           onRefresh: () {},
           appBarTitle: 'Active Technicians',
         ),
+      ),
+    );
+  }
+}
+
+class _SignatureCapturePageDemo extends StatefulWidget {
+  const _SignatureCapturePageDemo();
+  @override
+  State<_SignatureCapturePageDemo> createState() =>
+      _SignatureCapturePageDemoState();
+}
+
+class _SignatureCapturePageDemoState extends State<_SignatureCapturePageDemo> {
+  String _last = '—';
+
+  Future<void> _openPage() async {
+    final result =
+        await Navigator.of(context).push<EdenSignatureCaptureResult?>(
+      MaterialPageRoute(
+        builder: (_) => const EdenSignatureCapturePage(
+          title: 'Customer Signature',
+          signerName: 'Mr. Johnson',
+          metadata: {'work_order_id': 'WO-4821'},
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _last = result == null
+          ? 'cancelled'
+          : '${result.strokes.length} stroke(s) @ ${result.signedAt}';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Section(
+      title: 'EdenSignatureCapturePage',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FilledButton.icon(
+            onPressed: _openPage,
+            icon: const Icon(Icons.draw),
+            label: const Text('Open signature page'),
+          ),
+          const SizedBox(height: 8),
+          Text('Last result: $_last'),
+        ],
       ),
     );
   }
