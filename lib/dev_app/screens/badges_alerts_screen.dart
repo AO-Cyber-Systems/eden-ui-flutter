@@ -145,6 +145,32 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenUrgencyBadge — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Known urgency levels',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenUrgencyBadge(urgency: 'low'),
+                EdenUrgencyBadge(urgency: 'medium'),
+                EdenUrgencyBadge(urgency: 'high'),
+                EdenUrgencyBadge(urgency: 'critical'),
+              ],
+            ),
+          ),
+          const Section(
+            title: 'Unknown urgency fallback',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenUrgencyBadge(urgency: 'urgent_af'),
+                EdenUrgencyBadge(urgency: 'p0'),
+              ],
+            ),
+          ),
         ],
       ),
     );
