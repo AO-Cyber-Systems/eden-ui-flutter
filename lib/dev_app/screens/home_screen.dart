@@ -21,6 +21,7 @@ import 'devflow_project_screen.dart';
 import 'devflow_tools_screen.dart';
 import 'trades_screen.dart';
 import 'companion_screen.dart';
+import 'composers_screen.dart';
 import 'scheduler_screen.dart';
 import 'field_screen.dart';
 import 'fuel_screen.dart';
@@ -332,6 +333,13 @@ final _categories = [
     title: 'Companion Shell',
     subtitle: 'EdenAppMode, EdenAdaptiveLayout, mode toggle, gate, GPS, shell',
     builder: (_) => const CompanionScreen(),
+  ),
+  _Category(
+    icon: Icons.account_tree_outlined,
+    title: 'Composers — Obj 008 W3',
+    subtitle:
+        'EdenConsentFlow / EdenIntakeForm / EdenRoleDashboardShell / EdenStarterTemplateCard / EdenAppTourOverlay',
+    builder: (_) => const ComposersScreen(),
   ),
   _Category(
     icon: Icons.calendar_view_week_outlined,
