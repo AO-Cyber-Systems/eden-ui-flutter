@@ -74,50 +74,75 @@ class SchedulerToolbar extends StatelessWidget {
     final borderColor =
         isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: EdenSpacing.space4,
-        vertical: EdenSpacing.space2,
-      ),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: borderColor)),
-      ),
-      child: Row(
-        children: [
-          // Navigation
-          IconButton(
-            icon: const Icon(Icons.chevron_left, size: 20),
-            onPressed: onPrev,
-            tooltip: 'Previous',
-            visualDensity: VisualDensity.compact,
+    return LayoutBuilder(
+      builder: (context, c) {
+        // With 7 view variants the labeled toggle is ~500-600pt wide. Collapse
+        // to icon-only when the toolbar's available width drops below 1100pt
+        // so 800pt / 600pt / 390pt phone viewports stay overflow-free. (TRD
+        // 004-02 may revisit this threshold with finer responsive breakpoints.)
+        final iconOnly = c.maxWidth.isFinite && c.maxWidth < 1100;
+        // At iPhone-narrow widths, also collapse the title (let the toggle +
+        // nav fill the row) so 7-icon toggle + Prev/Next/Today still fit.
+        final isNarrow = c.maxWidth.isFinite && c.maxWidth < 480;
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isNarrow ? EdenSpacing.space2 : EdenSpacing.space4,
+            vertical: EdenSpacing.space2,
           ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right, size: 20),
-            onPressed: onNext,
-            tooltip: 'Next',
-            visualDensity: VisualDensity.compact,
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: borderColor)),
           ),
-          const SizedBox(width: EdenSpacing.space2),
-          TodayButton(onPressed: onToday, isDark: isDark),
-          const SizedBox(width: EdenSpacing.space4),
-          // Title
-          Expanded(
-            child: Text(
-              _title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+          child: Row(
+            children: [
+              // Navigation
+              IconButton(
+                icon: const Icon(Icons.chevron_left, size: 20),
+                onPressed: onPrev,
+                tooltip: 'Previous',
+                visualDensity: VisualDensity.compact,
               ),
-            ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, size: 20),
+                onPressed: onNext,
+                tooltip: 'Next',
+                visualDensity: VisualDensity.compact,
+              ),
+              if (!isNarrow) ...[
+                const SizedBox(width: EdenSpacing.space2),
+                TodayButton(onPressed: onToday, isDark: isDark),
+              ] else
+                IconButton(
+                  icon: const Icon(Icons.today_outlined, size: 18),
+                  onPressed: onToday,
+                  tooltip: 'Today',
+                  visualDensity: VisualDensity.compact,
+                ),
+              const SizedBox(width: EdenSpacing.space2),
+              // Title — hidden at iPhone-narrow widths to make room.
+              if (!isNarrow)
+                Expanded(
+                  child: Text(
+                    _title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+              else
+                const Spacer(),
+              // View toggle
+              ViewToggle(
+                view: view,
+                isDark: isDark,
+                theme: theme,
+                onChanged: onViewChanged,
+                iconOnly: iconOnly,
+              ),
+            ],
           ),
-          // View toggle
-          ViewToggle(
-            view: view,
-            isDark: isDark,
-            theme: theme,
-            onChanged: onViewChanged,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -158,6 +183,8 @@ class ViewToggle extends StatelessWidget {
     required this.isDark,
     required this.theme,
     required this.onChanged,
+    this.visibleViews,
+    this.iconOnly,
   });
 
   final EdenSchedulerView view;
@@ -165,66 +192,117 @@ class ViewToggle extends StatelessWidget {
   final ThemeData theme;
   final ValueChanged<EdenSchedulerView> onChanged;
 
+  /// When non-null, only these view variants render. Default = all variants.
+  final List<EdenSchedulerView>? visibleViews;
+
+  /// When true, render icon-only (label hidden) regardless of available width.
+  /// When null (default), auto-collapse to icon-only at narrow widths via
+  /// LayoutBuilder.
+  final bool? iconOnly;
+
+  static const Map<EdenSchedulerView, String> _labels = {
+    EdenSchedulerView.month: 'Month',
+    EdenSchedulerView.week: 'Week',
+    EdenSchedulerView.workWeek: 'Work Week',
+    EdenSchedulerView.day: 'Day',
+    EdenSchedulerView.list: 'List',
+    EdenSchedulerView.mobile: 'Mobile',
+    EdenSchedulerView.swimlane: 'Swimlane',
+  };
+
+  static const Map<EdenSchedulerView, IconData> _icons = {
+    EdenSchedulerView.month: Icons.calendar_month,
+    EdenSchedulerView.week: Icons.view_week,
+    EdenSchedulerView.workWeek: Icons.business_center,
+    EdenSchedulerView.day: Icons.view_day,
+    EdenSchedulerView.list: Icons.view_list,
+    EdenSchedulerView.mobile: Icons.smartphone,
+    EdenSchedulerView.swimlane: Icons.view_column,
+  };
+
   @override
   Widget build(BuildContext context) {
+    final views = visibleViews ?? EdenSchedulerView.values;
     final borderColor =
         isDark ? EdenColors.neutral[600]! : EdenColors.neutral[300]!;
     final selectedBg =
         isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!;
 
-    return Container(
-      height: 32,
-      decoration: BoxDecoration(
-        border: Border.all(color: borderColor),
-        borderRadius: EdenRadii.borderRadiusMd,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: EdenSchedulerView.values.map((v) {
-          final isActive = v == view;
-          final label = switch (v) {
-            EdenSchedulerView.month => 'Month',
-            EdenSchedulerView.week => 'Week',
-            EdenSchedulerView.workWeek => 'Work Week',
-            EdenSchedulerView.day => 'Day',
-            EdenSchedulerView.list => 'List',
-            EdenSchedulerView.mobile => 'Mobile',
-            EdenSchedulerView.swimlane => 'Swimlane',
-          };
-          return Semantics(
-            button: true,
-            label: '$label view',
-            selected: isActive,
-            child: GestureDetector(
-              onTap: () => onChanged(v),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space3),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isActive ? selectedBg : Colors.transparent,
-                    border: v != EdenSchedulerView.values.first
-                        ? Border(left: BorderSide(color: borderColor))
-                        : null,
-                  ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      color: isActive
-                          ? theme.colorScheme.onSurface
-                          : theme.colorScheme.onSurfaceVariant,
+    return LayoutBuilder(
+      builder: (context, c) {
+        // Width-based collapse threshold. When the toolbar surrounding this
+        // toggle gets narrow, an explicit `iconOnly` wins; otherwise auto-
+        // collapse below 600pt available toggle width — roughly the point
+        // where 7 word-labels stop fitting on a 390pt screen.
+        final hostWidth = c.hasBoundedWidth ? c.maxWidth : null;
+        final autoCollapse = hostWidth != null && hostWidth < 280;
+        final useIconOnly = iconOnly ?? autoCollapse;
+
+        return Container(
+          height: 32,
+          decoration: BoxDecoration(
+            border: Border.all(color: borderColor),
+            borderRadius: EdenRadii.borderRadiusMd,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: views.map((v) {
+              final isActive = v == view;
+              final label = _labels[v]!;
+              final icon = _icons[v]!;
+              return Semantics(
+                button: true,
+                label: '$label view',
+                selected: isActive,
+                child: GestureDetector(
+                  onTap: () => onChanged(v),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: useIconOnly
+                            ? EdenSpacing.space2
+                            : EdenSpacing.space3,
+                      ),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: isActive ? selectedBg : Colors.transparent,
+                        border: v != views.first
+                            ? Border(left: BorderSide(color: borderColor))
+                            : null,
+                      ),
+                      child: useIconOnly
+                          ? Tooltip(
+                              message: '$label view',
+                              child: Icon(
+                                icon,
+                                size: 16,
+                                color: isActive
+                                    ? theme.colorScheme.onSurface
+                                    : theme.colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          : Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isActive
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: isActive
+                                    ? theme.colorScheme.onSurface
+                                    : theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 }

@@ -72,7 +72,16 @@ class EdenScheduler extends StatefulWidget {
     this.onTimeSlotTap,
     this.onViewChanged,
     this.onAssigneeFilterChanged,
+    this.controller,
   });
+
+  /// Optional external state controller. When provided, the widget reads/writes
+  /// `view` and `focusedDate` from the controller and does NOT dispose it (the
+  /// caller owns disposal). When absent, an internal controller is created and
+  /// disposed automatically.
+  ///
+  /// Mirrors the Flutter `TextField(controller: …)` lifetime-aware pattern.
+  final EdenSchedulerController? controller;
 
   /// Events to display.
   final List<EdenSchedulerEvent> events;
@@ -114,23 +123,43 @@ class EdenScheduler extends StatefulWidget {
 }
 
 class _EdenSchedulerState extends State<EdenScheduler> {
-  late EdenSchedulerView _view;
-  late DateTime _focusedDate;
+  late EdenSchedulerController _controller;
+  bool _ownsController = false;
   late ScrollController _scrollController;
+
+  EdenSchedulerView get _view => _controller.view;
+  DateTime get _focusedDate => _controller.focusedDate;
 
   @override
   void initState() {
     super.initState();
-    _view = widget.view;
-    _focusedDate = _stripTime(widget.initialDate ?? DateTime.now());
+    if (widget.controller != null) {
+      _controller = widget.controller!;
+      _ownsController = false;
+    } else {
+      _controller = EdenSchedulerController(
+        initialView: widget.view,
+        initialDate: widget.initialDate,
+      );
+      _ownsController = true;
+    }
+    _controller.addListener(_onControllerChanged);
     _scrollController = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentTime();
     });
   }
 
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    if (_ownsController) {
+      _controller.dispose();
+    }
     _scrollController.dispose();
     super.dispose();
   }
@@ -166,33 +195,11 @@ class _EdenSchedulerState extends State<EdenScheduler> {
   }
 
   void _navigateDate(int delta) {
-    setState(() {
-      switch (_view) {
-        case EdenSchedulerView.month:
-          _focusedDate = DateTime(
-            _focusedDate.year,
-            _focusedDate.month + delta,
-            1,
-          );
-          break;
-        case EdenSchedulerView.week:
-        case EdenSchedulerView.workWeek:
-        case EdenSchedulerView.list:
-        case EdenSchedulerView.swimlane:
-          _focusedDate = _focusedDate.add(Duration(days: 7 * delta));
-          break;
-        case EdenSchedulerView.day:
-        case EdenSchedulerView.mobile:
-          _focusedDate = _focusedDate.add(Duration(days: delta));
-          break;
-      }
-    });
+    _controller.navigate(delta);
   }
 
   void _goToday() {
-    setState(() {
-      _focusedDate = _today;
-    });
+    _controller.goToday();
     if (_view != EdenSchedulerView.month) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToCurrentTime();
@@ -202,7 +209,7 @@ class _EdenSchedulerState extends State<EdenScheduler> {
 
   void _setView(EdenSchedulerView v) {
     if (v == _view) return;
-    setState(() => _view = v);
+    _controller.setView(v);
     widget.onViewChanged?.call(v);
     if (v != EdenSchedulerView.month) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -265,7 +272,7 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           isDark: isDark,
           theme: theme,
           onDateSelected: (d) {
-            setState(() => _focusedDate = d);
+            _controller.setFocusedDate(d);
             widget.onDateSelected?.call(d);
           },
           onEventTap: widget.onEventTap,
