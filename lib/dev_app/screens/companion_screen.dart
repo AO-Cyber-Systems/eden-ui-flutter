@@ -16,6 +16,8 @@ class CompanionScreen extends StatefulWidget {
 class _CompanionScreenState extends State<CompanionScreen> {
   late final EdenAppModeController _controller;
   double _viewportWidth = 390;
+  double _adaptiveDemoWidth = 390;
+  bool _forceCompact = false;
 
   @override
   void initState() {
@@ -48,6 +50,16 @@ class _CompanionScreenState extends State<CompanionScreen> {
               child: _ResolveAppModeDemo(
                 viewportWidth: _viewportWidth,
                 onWidthChanged: (v) => setState(() => _viewportWidth = v),
+              ),
+            ),
+            const SizedBox(height: EdenSpacing.space4),
+            _Section(
+              title: 'EdenAdaptiveLayout demo',
+              child: _AdaptiveLayoutDemo(
+                width: _adaptiveDemoWidth,
+                forceCompact: _forceCompact,
+                onWidthChanged: (v) => setState(() => _adaptiveDemoWidth = v),
+                onForceCompactChanged: (v) => setState(() => _forceCompact = v),
               ),
             ),
           ],
@@ -106,6 +118,82 @@ class _AppModeControllerDemo extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _AdaptiveLayoutDemo extends StatelessWidget {
+  const _AdaptiveLayoutDemo({
+    required this.width,
+    required this.forceCompact,
+    required this.onWidthChanged,
+    required this.onForceCompactChanged,
+  });
+
+  final double width;
+  final bool forceCompact;
+  final ValueChanged<double> onWidthChanged;
+  final ValueChanged<bool> onForceCompactChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Demo width: ${width.round()}pt'),
+        Slider(
+          value: width,
+          min: 320,
+          max: 1600,
+          divisions: 128,
+          label: '${width.round()}pt',
+          onChanged: onWidthChanged,
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('forceCompact'),
+          value: forceCompact,
+          onChanged: onForceCompactChanged,
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        SizedBox(
+          width: width,
+          height: 80,
+          child: EdenAdaptiveLayout(
+            forceCompact: forceCompact,
+            compactBuilder: (_) => _TierBadge(
+              tier: 'Compact (<600pt)',
+              color: Colors.blue.shade100,
+            ),
+            mediumBuilder: (_) => _TierBadge(
+              tier: 'Medium (600–840pt)',
+              color: Colors.amber.shade100,
+            ),
+            expandedBuilder: (_) => _TierBadge(
+              tier: 'Expanded (≥840pt)',
+              color: Colors.green.shade100,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TierBadge extends StatelessWidget {
+  const _TierBadge({required this.tier, required this.color});
+  final String tier;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      alignment: Alignment.center,
+      child: Text(tier, style: const TextStyle(fontWeight: FontWeight.w600)),
     );
   }
 }
