@@ -171,6 +171,34 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenPipelineBadge — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Known pipeline stages',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenPipelineBadge(stage: 'draft'),
+                EdenPipelineBadge(stage: 'sent'),
+                EdenPipelineBadge(stage: 'won'),
+                EdenPipelineBadge(stage: 'lost'),
+                EdenPipelineBadge(stage: 'expired'),
+              ],
+            ),
+          ),
+          const Section(
+            title: 'Aliases + unknown fallback',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenPipelineBadge(stage: 'accepted'),
+                EdenPipelineBadge(stage: 'rejected'),
+                EdenPipelineBadge(stage: 'invented_stage'),
+              ],
+            ),
+          ),
         ],
       ),
     );
