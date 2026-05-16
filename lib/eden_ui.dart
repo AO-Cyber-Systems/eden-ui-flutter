@@ -348,5 +348,8 @@ export 'src/widgets/scheduler/scheduler_sidebar.dart';
 export 'src/widgets/scheduler/scheduler_dialogs.dart';
 export 'src/widgets/scheduler/scheduler_performance.dart';
 
+// Objective 005 — B-Fuel components Wave 1
+export 'src/widgets/eden_tank_gauge.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
