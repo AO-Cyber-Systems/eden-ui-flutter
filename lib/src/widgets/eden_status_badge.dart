@@ -14,7 +14,8 @@ import 'eden_badge.dart';
 /// - **danger** — `blocked`, `error`, `failed`, `unhealthy`, `rejected`,
 ///   `cancelled`
 /// - **warning** — `warning`, `degraded`, `soft_limit`, `fired`, `acknowledged`
-/// - **info** — `pending`, `processing`, `in_progress`, `queued`
+/// - **info** — `pending`, `processing`, `in_progress`, `queued`,
+///   `field_billing`, `service_billing`
 /// - **neutral** — `expired`, `inactive`, `suspended`, `disabled`, and any
 ///   string not in the above tables
 class EdenStatusBadge extends StatelessWidget {
@@ -78,6 +79,8 @@ class EdenStatusBadge extends StatelessWidget {
       case 'processing':
       case 'in_progress':
       case 'queued':
+      case 'field_billing':
+      case 'service_billing':
         return _BadgeConfig(
           label: _capitalize(status),
           variant: EdenBadgeVariant.info,

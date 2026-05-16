@@ -78,5 +78,21 @@ void main() {
       ));
       expect(findBadge(tester).size, EdenBadgeSize.lg);
     });
+
+    testWidgets('maps "field_billing" to info variant (invoice list badge)',
+        (tester) async {
+      await tester
+          .pumpWidget(wrap(const EdenStatusBadge(status: 'field_billing')));
+      expect(findBadge(tester).variant, EdenBadgeVariant.info);
+      expect(find.text('Field Billing'), findsOneWidget);
+    });
+
+    testWidgets('maps "service_billing" to info variant (semantic synonym)',
+        (tester) async {
+      await tester
+          .pumpWidget(wrap(const EdenStatusBadge(status: 'service_billing')));
+      expect(findBadge(tester).variant, EdenBadgeVariant.info);
+      expect(find.text('Service Billing'), findsOneWidget);
+    });
   });
 }
