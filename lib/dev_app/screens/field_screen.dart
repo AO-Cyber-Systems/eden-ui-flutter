@@ -20,7 +20,7 @@ class FieldScreen extends StatelessWidget {
         children: const [
           // Wave 1 — Mobile-shell primitives
           _QuickAccessGridDemo(),
-          // (TRD 007-08 will append _MobileAiFabDemo here)
+          _MobileAiFabDemo(),
           // (TRD 007-05/06 will append GPS-aware page demos here)
           // (TRD 007-02/04 will append capture-flow page demos here)
           // (TRD 007-01/03 will append form-flow page demos here)
@@ -34,6 +34,83 @@ class _QuickAccessGridDemo extends StatefulWidget {
   const _QuickAccessGridDemo();
   @override
   State<_QuickAccessGridDemo> createState() => _QuickAccessGridDemoState();
+}
+
+class _MobileAiFabDemo extends StatefulWidget {
+  const _MobileAiFabDemo();
+  @override
+  State<_MobileAiFabDemo> createState() => _MobileAiFabDemoState();
+}
+
+class _MobileAiFabDemoState extends State<_MobileAiFabDemo> {
+  EdenAiPersona _persona = EdenAiPersona.fieldTech;
+  String _lastSent = '—';
+
+  Stream<EdenChatStreamChunk> _echoSender(EdenChatRequest req) async* {
+    setState(() => _lastSent = req.content);
+    yield EdenChatStreamChunk(
+        type: EdenChatChunkType.content, content: 'Echo: ${req.content}');
+    yield const EdenChatStreamChunk(type: EdenChatChunkType.done);
+  }
+
+  Future<String> _inertCreate(
+          {required String personaId, required String title}) async =>
+      'conv-demo';
+
+  @override
+  Widget build(BuildContext context) {
+    return Section(
+      title: 'EdenMobileAiFab + EdenMobileAiChatSheet',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 200,
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: Text('Tap the FAB to open the chat sheet'),
+                  ),
+                ),
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: EdenMobileAiFab(
+                    pageContext: 'mobile_home',
+                    entityType: 'appointment',
+                    entityId: 'apt-123',
+                    entityLabel: 'Smith Job — 9:00 AM',
+                    activePersona: _persona,
+                    onPersonaChanged: (p) => setState(() => _persona = p),
+                    sendMessage: _echoSender,
+                    createConversation: _inertCreate,
+                    quickActions: const [
+                      EdenMobileAiQuickAction(
+                          label: 'Find Parts', icon: Icons.search),
+                      EdenMobileAiQuickAction(
+                          label: 'Equipment Info',
+                          icon: Icons.info_outline),
+                      EdenMobileAiQuickAction(
+                          label: 'Report Issue',
+                          icon: Icons.report_outlined),
+                    ],
+                    unreadCount: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text('Last sent: $_lastSent'),
+        ],
+      ),
+    );
+  }
 }
 
 class _QuickAccessGridDemoState extends State<_QuickAccessGridDemo> {

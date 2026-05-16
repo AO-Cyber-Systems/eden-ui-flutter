@@ -64,7 +64,7 @@ void main() {
   });
 
   group('EdenMobileAiChatSheet — entity chip', () {
-    testWidgets('entityLabel non-null renders "Working on: $entityLabel"',
+    testWidgets('entityLabel non-null renders "Working on: <label>"',
         (tester) async {
       await openSheet(tester, entityLabel: 'Smith Job — 9:00 AM');
       expect(find.text('Working on: Smith Job — 9:00 AM'), findsOneWidget);

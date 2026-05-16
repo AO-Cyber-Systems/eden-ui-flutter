@@ -354,6 +354,8 @@ export 'src/widgets/eden_route_stop_list.dart';
 
 // Objective 007 — B-Trades-A field/companion pages
 export 'src/widgets/eden_mobile_quick_access_grid.dart';
+export 'src/widgets/eden_mobile_ai_fab.dart';
+export 'src/widgets/eden_mobile_ai_chat_sheet.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
