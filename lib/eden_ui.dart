@@ -334,5 +334,8 @@ export 'src/widgets/scheduler/scheduler_week_view.dart';
 export 'src/widgets/scheduler/scheduler_month_view.dart';
 export 'src/widgets/scheduler/scheduler_list_view.dart';
 
+// Objective 004 — EdenScheduler Enhancement Wave 3
+export 'src/widgets/scheduler/scheduler_event_block.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
