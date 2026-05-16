@@ -21,6 +21,7 @@ import 'devflow_project_screen.dart';
 import 'devflow_tools_screen.dart';
 import 'trades_screen.dart';
 import 'companion_screen.dart';
+import 'scheduler_screen.dart';
 
 /// Root screen showing all component categories.
 class HomeScreen extends StatelessWidget {
@@ -329,5 +330,11 @@ final _categories = [
     title: 'Companion Shell',
     subtitle: 'EdenAppMode, EdenAdaptiveLayout, mode toggle, gate, GPS, shell',
     builder: (_) => const CompanionScreen(),
+  ),
+  _Category(
+    icon: Icons.calendar_view_week_outlined,
+    title: 'EdenScheduler — Objective 004',
+    subtitle: 'Multi-view scheduler enhancement — exact trades-react parity',
+    builder: (_) => const SchedulerScreen(),
   ),
 ];
