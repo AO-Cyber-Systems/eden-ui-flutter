@@ -23,7 +23,7 @@ class FieldScreen extends StatelessWidget {
           _MobileAiFabDemo(),
           // Wave 2 — GPS-aware pages
           _CheckInPageDemo(),
-          // (TRD 007-06 will append _LocationMapPageDemo here)
+          _LocationMapPageDemo(),
           // (TRD 007-02/04 will append capture-flow page demos here)
           // (TRD 007-01/03 will append form-flow page demos here)
         ],
@@ -110,6 +110,54 @@ class _MobileAiFabDemoState extends State<_MobileAiFabDemo> {
           const SizedBox(height: 8),
           Text('Last sent: $_lastSent'),
         ],
+      ),
+    );
+  }
+}
+
+class _LocationMapPageDemo extends StatelessWidget {
+  const _LocationMapPageDemo();
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    return Section(
+      title: 'EdenLocationMapPage',
+      child: SizedBox(
+        height: 600,
+        child: EdenLocationMapPage(
+          provider: const NoOpMapProvider(),
+          pins: [
+            EdenLocationPin(
+              id: 'demo-1',
+              name: 'Mike T.',
+              position: const EdenLatLng(lat: 37.7749, lng: -122.4194),
+              accuracyMeters: 12,
+              batteryLevel: 78,
+              lastSeenAt: now.subtract(const Duration(minutes: 3)),
+            ),
+            EdenLocationPin(
+              id: 'demo-2',
+              name: 'Sarah K.',
+              position: const EdenLatLng(lat: 37.7849, lng: -122.4094),
+              accuracyMeters: 8,
+              batteryLevel: 92,
+              lastSeenAt: now.subtract(const Duration(seconds: 45)),
+            ),
+            EdenLocationPin(
+              id: 'demo-3',
+              name: 'Christopher M.',
+              position: const EdenLatLng(lat: 37.7949, lng: -122.3994),
+              accuracyMeters: 25,
+              batteryLevel: 22,
+              lastSeenAt: now.subtract(const Duration(hours: 2)),
+            ),
+          ],
+          onPinTapped: (id) => ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Demo pin tap: $id')),
+          ),
+          onRefresh: () {},
+          appBarTitle: 'Active Technicians',
+        ),
       ),
     );
   }
