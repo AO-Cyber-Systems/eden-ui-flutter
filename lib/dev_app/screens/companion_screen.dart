@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../eden_ui.dart';
+import '../_sample_data/sample_data.dart';
 
 /// Catalog screen for the Companion Shell Foundation primitives
 /// (objective 002). Hosts live demos for `EdenAppMode` (slider-driven
@@ -20,6 +21,8 @@ class _CompanionScreenState extends State<CompanionScreen> {
   bool _forceCompact = false;
   EdenGpsStatus _gpsStatus = EdenGpsStatus.high;
   double _gpsAccuracy = 5;
+  String _shellVertical = 'trades';
+  String _gpsVertical = 'trades';
 
   @override
   void initState() {
@@ -76,23 +79,63 @@ class _CompanionScreenState extends State<CompanionScreen> {
             ),
             const SizedBox(height: EdenSpacing.space4),
             _Section(
-              title: 'EdenGpsStatusIndicator demo',
+              title: 'EdenGpsStatusIndicator demo — vertical-realistic coords',
               child: _GpsStatusDemo(
                 status: _gpsStatus,
                 accuracy: _gpsAccuracy,
+                vertical: _gpsVertical,
                 onStatusChanged: (s) => setState(() => _gpsStatus = s),
                 onAccuracyChanged: (a) => setState(() => _gpsAccuracy = a),
+                onVerticalChanged: (v) => setState(() => _gpsVertical = v),
               ),
             ),
             const SizedBox(height: EdenSpacing.space4),
             _Section(
-              title: 'EdenCompanionShell (Wave 3 composition)',
+              title: 'EdenCompanionShell (Wave 3 composition) — pick vertical',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: <Widget>[
                   const Text(
                     'Mount the full shell live — flip the UX toggle inside '
-                    'the shell to observe compact↔expanded layout swap.',
+                    'the shell to observe compact↔expanded layout swap. Use '
+                    'the picker below to choose a vertical-flavored shell.',
+                  ),
+                  const SizedBox(height: EdenSpacing.space2),
+                  Row(
+                    children: <Widget>[
+                      const Text('Vertical: '),
+                      const SizedBox(width: 8),
+                      DropdownButton<String>(
+                        value: _shellVertical,
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem<String>(
+                            value: 'trades',
+                            child: Text('Trades — Dispatch'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'salon',
+                            child: Text('Salon — Front-desk'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'fuel',
+                            child: Text('Fuel — Driver'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'medical',
+                            child: Text('Medical — Home visit'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'gov',
+                            child: Text('Gov — Caseworker'),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) {
+                            setState(() => _shellVertical = v);
+                          }
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: EdenSpacing.space2),
                   EdenButton(
@@ -100,8 +143,10 @@ class _CompanionScreenState extends State<CompanionScreen> {
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute<void>(
-                        builder: (_) =>
-                            _CompanionShellDemoPage(controller: _controller),
+                        builder: (_) => _CompanionShellDemoPage(
+                          controller: _controller,
+                          vertical: _shellVertical,
+                        ),
                       ),
                     ),
                   ),
@@ -116,8 +161,12 @@ class _CompanionScreenState extends State<CompanionScreen> {
 }
 
 class _CompanionShellDemoPage extends StatefulWidget {
-  const _CompanionShellDemoPage({required this.controller});
+  const _CompanionShellDemoPage({
+    required this.controller,
+    required this.vertical,
+  });
   final EdenAppModeController controller;
+  final String vertical;
 
   @override
   State<_CompanionShellDemoPage> createState() =>
@@ -129,48 +178,15 @@ class _CompanionShellDemoPageState extends State<_CompanionShellDemoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cfg = _shellConfigFor(widget.vertical);
     return EdenAppModeScope(
       controller: widget.controller,
       child: EdenCompanionShell(
-        greeting: 'Good morning, Sarah',
-        roleLabel: 'Field Tech',
-        rolePalette: EdenRolePalette.trades,
-        sections: const [
-          EdenDashboardSection(
-            id: 'today',
-            title: "Today's appointments",
-            body: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text('3 stops queued'),
-            ),
-          ),
-          EdenDashboardSection(
-            id: 'insights',
-            title: 'AI insights',
-            body: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text('Look-ahead routing saved 22 min today'),
-            ),
-          ),
-          EdenDashboardSection(
-            id: 'quick',
-            title: 'Quick actions',
-            body: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text('Check in / Out · Sign / Photo'),
-            ),
-          ),
-        ],
-        navItems: const [
-          EdenCompanionNavItem(id: 'home', label: 'Home', icon: Icons.home),
-          EdenCompanionNavItem(id: 'jobs', label: 'Jobs', icon: Icons.work),
-          EdenCompanionNavItem(
-              id: 'schedule', label: 'Schedule', icon: Icons.calendar_today),
-          EdenCompanionNavItem(
-              id: 'inventory', label: 'Inventory', icon: Icons.inventory_2),
-          EdenCompanionNavItem(
-              id: 'profile', label: 'Profile', icon: Icons.person),
-        ],
+        greeting: cfg.greeting,
+        roleLabel: cfg.role,
+        rolePalette: cfg.palette,
+        sections: cfg.sections,
+        navItems: cfg.navItems,
         selectedNavId: _selectedNavId,
         onNavChanged: (id) => setState(() => _selectedNavId = id),
       ),
@@ -178,35 +194,320 @@ class _CompanionShellDemoPageState extends State<_CompanionShellDemoPage> {
   }
 }
 
+/// Per-vertical EdenCompanionShell configuration: greeting / role label /
+/// palette / dashboard sections / bottom-nav items. Each variant pulls
+/// realistic vertical-specific snippets from _sample_data/.
+({
+  String greeting,
+  String role,
+  EdenRolePalette palette,
+  List<EdenDashboardSection> sections,
+  List<EdenCompanionNavItem> navItems,
+}) _shellConfigFor(String vertical) {
+  switch (vertical) {
+    case 'salon':
+      return (
+        greeting: 'Hey Marisol',
+        role: 'Stylist',
+        palette: EdenRolePalette.salon,
+        sections: <EdenDashboardSection>[
+          EdenDashboardSection(
+            id: 'today',
+            title: "Today's chairs",
+            body: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                '${SalonScenarios.weekAppointments.length} appointments '
+                'this week · cuts / color / chemical',
+              ),
+            ),
+          ),
+          const EdenDashboardSection(
+            id: 'rebook',
+            title: 'Rebook nudge',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                '6 platinum clients overdue (avg cadence 6 weeks)',
+              ),
+            ),
+          ),
+        ],
+        navItems: const <EdenCompanionNavItem>[
+          EdenCompanionNavItem(
+              id: 'home', label: 'Home', icon: Icons.home_outlined),
+          EdenCompanionNavItem(
+              id: 'appts', label: 'Appts', icon: Icons.event_available),
+          EdenCompanionNavItem(
+              id: 'clients', label: 'Clients', icon: Icons.people_outline),
+          EdenCompanionNavItem(
+              id: 'stock', label: 'Stock', icon: Icons.inventory_2_outlined),
+          EdenCompanionNavItem(
+              id: 'me', label: 'Me', icon: Icons.person_outline),
+        ],
+      );
+    case 'fuel':
+      return (
+        greeting: 'Manny',
+        role: 'Driver',
+        palette: EdenRolePalette.fuel,
+        sections: const <EdenDashboardSection>[
+          EdenDashboardSection(
+            id: 'route',
+            title: 'Route today',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                'Route A · 4 stops · Diesel #2 · Truck T7',
+              ),
+            ),
+          ),
+          EdenDashboardSection(
+            id: 'tanks',
+            title: 'Tank readings due',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('3 outpost tanks · log at each stop'),
+            ),
+          ),
+        ],
+        navItems: const <EdenCompanionNavItem>[
+          EdenCompanionNavItem(
+              id: 'home', label: 'Home', icon: Icons.home_outlined),
+          EdenCompanionNavItem(
+              id: 'route', label: 'Route', icon: Icons.alt_route),
+          EdenCompanionNavItem(
+              id: 'truck',
+              label: 'Truck',
+              icon: Icons.local_shipping_outlined),
+          EdenCompanionNavItem(
+              id: 'logs', label: 'Logs', icon: Icons.list_alt),
+          EdenCompanionNavItem(
+              id: 'me', label: 'Me', icon: Icons.person_outline),
+        ],
+      );
+    case 'medical':
+      return (
+        greeting: 'Dr. Patel',
+        role: 'Home Visit',
+        palette: EdenRolePalette.medical,
+        sections: <EdenDashboardSection>[
+          EdenDashboardSection(
+            id: 'visits',
+            title: 'Visits today',
+            body: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                '${MedicalScenarios.weekVisits.length} visits this week '
+                '· next: MRN 44291 (diabetes panel)',
+              ),
+            ),
+          ),
+          const EdenDashboardSection(
+            id: 'consents',
+            title: 'Pending consents',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                'MRN 51208 — HIPAA + ROI · capture before visit',
+              ),
+            ),
+          ),
+        ],
+        navItems: const <EdenCompanionNavItem>[
+          EdenCompanionNavItem(
+              id: 'home', label: 'Home', icon: Icons.home_outlined),
+          EdenCompanionNavItem(
+              id: 'visits',
+              label: 'Visits',
+              icon: Icons.medical_services_outlined),
+          EdenCompanionNavItem(
+              id: 'patients',
+              label: 'Patients',
+              icon: Icons.people_outline),
+          EdenCompanionNavItem(
+              id: 'labs', label: 'Labs', icon: Icons.science_outlined),
+          EdenCompanionNavItem(
+              id: 'me', label: 'Me', icon: Icons.person_outline),
+        ],
+      );
+    case 'gov':
+      return (
+        greeting: 'Caseworker Sørensen',
+        role: 'Case Reviewer',
+        palette: EdenRolePalette.gov,
+        sections: const <EdenDashboardSection>[
+          EdenDashboardSection(
+            id: 'queue',
+            title: 'Open cases',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('247 open · 4 SLA breaches today'),
+            ),
+          ),
+          EdenDashboardSection(
+            id: 'today',
+            title: "Today's docket",
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                'Case review CCM-2026-0427 · 09:00–10:30',
+              ),
+            ),
+          ),
+        ],
+        navItems: const <EdenCompanionNavItem>[
+          EdenCompanionNavItem(
+              id: 'home', label: 'Home', icon: Icons.home_outlined),
+          EdenCompanionNavItem(
+              id: 'cases', label: 'Cases', icon: Icons.folder_open_outlined),
+          EdenCompanionNavItem(
+              id: 'board', label: 'Board', icon: Icons.gavel),
+          EdenCompanionNavItem(
+              id: 'docs', label: 'Docs', icon: Icons.description_outlined),
+          EdenCompanionNavItem(
+              id: 'me', label: 'Me', icon: Icons.person_outline),
+        ],
+      );
+    case 'trades':
+    default:
+      return (
+        greeting: 'Good morning, Alice',
+        role: 'Field Tech',
+        palette: EdenRolePalette.trades,
+        sections: <EdenDashboardSection>[
+          EdenDashboardSection(
+            id: 'today',
+            title: "Today's stops",
+            body: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                '${TradesScenarios.weekEvents.length} jobs this week · '
+                'next: ${TradesScenarios.weekEvents.first.title}',
+              ),
+            ),
+          ),
+          const EdenDashboardSection(
+            id: 'blockers',
+            title: 'Blocked work',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                '3 blockers · permit / survey / parts',
+              ),
+            ),
+          ),
+          const EdenDashboardSection(
+            id: 'insights',
+            title: 'AI insights',
+            body: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                'Look-ahead routing — save ~38 driving minutes Thu',
+              ),
+            ),
+          ),
+        ],
+        navItems: const <EdenCompanionNavItem>[
+          EdenCompanionNavItem(
+              id: 'home', label: 'Home', icon: Icons.home_outlined),
+          EdenCompanionNavItem(
+              id: 'jobs', label: 'Jobs', icon: Icons.build_outlined),
+          EdenCompanionNavItem(
+              id: 'schedule',
+              label: 'Schedule',
+              icon: Icons.calendar_today_outlined),
+          EdenCompanionNavItem(
+              id: 'parts',
+              label: 'Parts',
+              icon: Icons.inventory_2_outlined),
+          EdenCompanionNavItem(
+              id: 'me', label: 'Me', icon: Icons.person_outline),
+        ],
+      );
+  }
+}
+
 class _GpsStatusDemo extends StatelessWidget {
   const _GpsStatusDemo({
     required this.status,
     required this.accuracy,
+    required this.vertical,
     required this.onStatusChanged,
     required this.onAccuracyChanged,
+    required this.onVerticalChanged,
   });
 
   final EdenGpsStatus status;
   final double accuracy;
+  final String vertical;
   final ValueChanged<EdenGpsStatus> onStatusChanged;
   final ValueChanged<double> onAccuracyChanged;
+  final ValueChanged<String> onVerticalChanged;
+
+  /// Vertical-realistic GPS coordinates for the demo cycle:
+  /// - trades:  Atlanta suburb (Marietta job site)
+  /// - salon:   NYC retail (Bleecker St)
+  /// - fuel:    Chicago industrial outskirt
+  /// - medical: Atlanta home-visit (Lullwater Rd)
+  /// - gov:     Cobb County campus
+  EdenLatLng _coordsFor(String v) {
+    switch (v) {
+      case 'salon':
+        return const EdenLatLng(lat: 40.7281, lng: -73.9942);
+      case 'fuel':
+        return const EdenLatLng(lat: 41.8497, lng: -87.7449);
+      case 'medical':
+        return const EdenLatLng(lat: 33.7704, lng: -84.3329);
+      case 'gov':
+        return const EdenLatLng(lat: 33.9526, lng: -84.5499);
+      case 'trades':
+      default:
+        return const EdenLatLng(lat: 33.9526, lng: -84.5499);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Row(
-          children: [
+          children: <Widget>[
+            const Text('Vertical: '),
+            const SizedBox(width: 8),
+            DropdownButton<String>(
+              value: vertical,
+              onChanged: (v) {
+                if (v != null) onVerticalChanged(v);
+              },
+              items: const <DropdownMenuItem<String>>[
+                DropdownMenuItem<String>(
+                    value: 'trades', child: Text('Trades (Marietta)')),
+                DropdownMenuItem<String>(
+                    value: 'salon', child: Text('Salon (NYC)')),
+                DropdownMenuItem<String>(
+                    value: 'fuel', child: Text('Fuel (Chicago)')),
+                DropdownMenuItem<String>(
+                    value: 'medical', child: Text('Medical (Atlanta)')),
+                DropdownMenuItem<String>(
+                    value: 'gov', child: Text('Gov (Cobb)')),
+              ],
+            ),
+          ],
+        ),
+        Row(
+          children: <Widget>[
             const Text('Status: '),
             DropdownButton<EdenGpsStatus>(
               value: status,
               onChanged: (v) {
                 if (v != null) onStatusChanged(v);
               },
-              items: [
+              items: <DropdownMenuItem<EdenGpsStatus>>[
                 for (final s in EdenGpsStatus.values)
-                  DropdownMenuItem(value: s, child: Text(s.name)),
+                  DropdownMenuItem<EdenGpsStatus>(
+                      value: s, child: Text(s.name)),
               ],
             ),
           ],
@@ -229,9 +530,8 @@ class _GpsStatusDemo extends StatelessWidget {
         EdenGpsStatusIndicator(
           status: status,
           accuracyMeters: status == EdenGpsStatus.unavailable ? null : accuracy,
-          position: status == EdenGpsStatus.unavailable
-              ? null
-              : const EdenLatLng(lat: 40.7128, lng: -74.0060),
+          position:
+              status == EdenGpsStatus.unavailable ? null : _coordsFor(vertical),
         ),
       ],
     );
