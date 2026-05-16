@@ -62,6 +62,30 @@ TRDs:
 - [x] 003-14-TRD.md — EdenAgentChat + EdenAgentChatFab + EdenChatMessageBubble (Wave 3; chat FAB + modal sheet; callback-driven streaming + lazy conversation creation; depends 003-10 + 003-13)
 - [x] 003-15-TRD.md — EdenAiInsightSlot (Wave 3; enabled-gate around EdenAiPanel; internal/external state pattern; depends 003-10 + 003-11)
 
+### Objective 004: EdenScheduler Enhancement — Exact Parity with trades-react Schedule
+
+**Goal:** Bring `EdenScheduler` (current thin Material 3 month/week/day shell) to exact UX-observable feature parity with the canonical donor trades-react Schedule (`AOCyber-Trades/trades/client/src/pages/Schedule.tsx` 3140 LOC + `EnhancedCalendar.tsx` 5609 LOC + `MobileScheduleView/*` family + `TruckAvailabilityView.tsx` 1761 LOC). User direction 2026-05-16: 'Need it to be exactly feature parity.' After this objective ships, every Eden Biz vertical (trades, salon, medical, fuel, retail, legal, gov) composes a scheduler with the same gestures + drag affordances + swimlanes + mobile pinch-zoom without re-implementing any of it. See `objectives/004-eden-scheduler-enhancement/OBJECTIVE.md`.
+
+**TRDs:** 16 plans across 4 waves (~4-6 wk Claude execution)
+
+TRDs:
+- [ ] 004-01-TRD.md — Models + EdenSchedulerController + back-compat preserved (Wave 1; foundational data + controller)
+- [ ] 004-02-TRD.md — SchedulerToolbar extension to 7 views + responsive collapse + dev catalog Scheduler screen (Wave 1)
+- [ ] 004-03-TRD.md — EdenSchedulerTimeMath pure-Dart helpers + recurrence expansion (Wave 1; yDeltaPxToMinutes, addMinutesToTime, formatTime, expandRecurrence)
+- [ ] 004-04-TRD.md — EdenSchedulerDayView with now-indicator + fullDay config (Wave 2; extracts from scheduler_week_day_views.dart)
+- [ ] 004-05-TRD.md — EdenSchedulerWeekView supporting workWeek + week modes + today highlight + expand-arrow (Wave 2; completes file split)
+- [ ] 004-06-TRD.md — EdenSchedulerMonthView overflow handling (+N more) + drill-down bottom sheet + rename (Wave 2)
+- [ ] 004-07-TRD.md — EdenSchedulerListView chronological date-grouped view (Wave 2)
+- [ ] 004-08-TRD.md — EdenSchedulerMobileView composite + tab strip + swipe-nav + pinch-zoom + ResourceChipStrip + Compact auto-route (Wave 3; depends Wave 1 + 004-10)
+- [ ] 004-09-TRD.md — EdenSchedulerSwimlaneView resource-as-column grid + drag-cross-resource + lane collapse (Wave 3; depends 004-10)
+- [ ] 004-10-TRD.md — EdenSchedulerEventBlock with drag-to-reschedule + top/bottom resize + preview chip (Wave 3; foundational for 08/09/11/12/13)
+- [ ] 004-11-TRD.md — EdenSchedulerAllDayRow with multi-day spanning + drag-cross-day + drag-from-hour-grid conversion (Wave 3)
+- [ ] 004-12-TRD.md — ConflictLayout algorithm + multi-select + ConflictBanner + SelectionBanner (Wave 3)
+- [ ] 004-13-TRD.md — EdenSchedulerPickMode controller + drag-to-create drafts + bottom commit bar (Wave 3)
+- [ ] 004-14-TRD.md — EdenSchedulerSidebar composite (mini-cal + chip-strip + density legend + toggles) + Zoom + Search + Shortcuts + Overflow (Wave 4)
+- [ ] 004-15-TRD.md — EdenSchedulerCreateDialog + EditDialog + DetailDialog slot-based + responsive (Wave 4)
+- [ ] 004-16-TRD.md — Viewport culling + layout cache + recurrence cache + side-by-side human-verify parity checkpoint (Wave 4)
+
 ## v2 Future Objectives
 
 Tracked but not in current scope:
