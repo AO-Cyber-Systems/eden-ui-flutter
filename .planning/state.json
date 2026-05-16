@@ -1,42 +1,60 @@
 {
   "objective": "003-phase-1-widget-donations",
-  "wave": 1,
+  "wave": 2,
   "current_trd": null,
-  "current_task": "Wave 1 complete (4/4 TRDs — 003-01..04 GREEN). Moving to Wave 2.",
+  "current_task": "Wave 2 complete (9/15 TRDs — 003-01..09 GREEN). Moving to Wave 3 AI surface.",
   "completed_tasks": [
-    "003-01 — RED→GREEN EdenUrgencyBadge (9/9 + 1 skip) + catalog + export",
-    "003-02 — RED→GREEN EdenPipelineBadge (11/11) + catalog + export",
-    "003-03 — RED→GREEN EdenApprovalStatusBadge (15/15) + catalog + export",
-    "003-04 — RED→GREEN EdenStockLevelIndicator (11/11) + catalog + export"
+    "003-01 — RED→GREEN EdenUrgencyBadge (9/9 + 1 skip)",
+    "003-02 — RED→GREEN EdenPipelineBadge (11/11)",
+    "003-03 — RED→GREEN EdenApprovalStatusBadge (15/15)",
+    "003-04 — RED→GREEN EdenStockLevelIndicator (11/11)",
+    "003-05 — RED→GREEN EdenCostSummaryCard (9/9; composes EdenCurrencyDisplay)",
+    "003-06 — RED→GREEN EdenActivityFeedItem + inlined EdenActivityFeedItemData/EdenActivityVariant (11/11)",
+    "003-07 — RED→GREEN EdenBlockingAlerts + inlined EdenBlockingAlertData/EdenBlockingAction/EdenBlockingSeverity (16/16)",
+    "003-08 — RED→GREEN EdenMediaRow + inlined EdenMediaRowItem (11/11)",
+    "003-09 — RED→GREEN EdenPlaceholderPage (8/8; library-enhanced subtitle+action over donor)"
   ],
   "completed_trds": [
     "003-01",
     "003-02",
     "003-03",
-    "003-04"
+    "003-04",
+    "003-05",
+    "003-06",
+    "003-07",
+    "003-08",
+    "003-09"
   ],
   "started_at": "2026-05-15",
   "wave1_completed_at": "2026-05-15",
   "wave1_tests_added": 46,
-  "wave1_total_tests": 633,
+  "wave2_completed_at": "2026-05-15",
+  "wave2_tests_added": 55,
+  "total_tests_after_wave2": 688,
   "deviations": [
     {
       "trd": "003-01",
       "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "EdenUrgencyBadge labelSmall.fontSize-inheritance test skipped: ThemeData.light().textTheme.labelSmall.fontSize is null in this Flutter SDK while the rendered Text.style.fontSize falls through to 11.0 via internal text-style merging — the assertion was structurally wrong, not the implementation. Replaced with a differential override-vs-default assertion which captures the meaningful invariant (override sets 18; default is not 18)."
+      "summary": "labelSmall.fontSize-inheritance test skipped; replaced with differential override-vs-default assertion."
     },
     {
       "trd": "003-03",
       "rule": "Rule 1 — auto-fix bug",
-      "summary": "Donor wraps Text directly inside Container (no Flex ancestor); the TRD-prescribed `Flexible(child: Text(...))` wrapper threw ParentDataWidget assertions at runtime ('FlexParentData applied to RenderObject expecting BoxParentData'). Reverted to direct Text + TextOverflow.ellipsis for iPhone-narrow safety; verified iPhone-narrow 90pt path passes for all 11 statuses."
+      "summary": "TRD-prescribed Flexible wrapper threw FlexParentData assertions (donor Text sits inside Container without Flex ancestor); used direct Text + TextOverflow.ellipsis instead."
     },
     {
       "trd": "003-04",
       "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "Test helper colorOfBar return type required Color! (force-unwrap of Animation<Color>.value which is nullable) — donor always passes AlwaysStoppedAnimation<Color>(non-null color)."
+      "summary": "colorOfBar test helper return type required Color! force-unwrap (Animation<Color>.value is nullable; donor always non-null)."
+    },
+    {
+      "trd": "003-06",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "RichText lookup needed disambiguation — avatar Text widgets render RichText too with no children; switched to firstWhere predicate that selects the RichText whose root TextSpan has children."
     }
   ],
   "notes": [
-    "Wave 1 4 TRDs executed serially (shared lib/eden_ui.dart + badges_alerts_screen.dart + data_display_screen.dart). Commit cadence: test→feat→docs per TRD with df-tools commit + push after each docs commit. All commits land on main."
+    "Wave 2 5 TRDs executed serially (shared lib/eden_ui.dart + 3 dev-catalog screens: badges_alerts/data_display/misc). Phase 1 Dashboard composites export section opened by 003-05; 003-06/07/08 appended. EdenPlaceholderPage owns its own Scaffold — dartdoc'd; consumers don't double-wrap.",
+    "Cross-vertical decoupling lock honored: 003-06 owns EdenActivityFeedItemData/EdenActivityVariant; 003-07 owns EdenBlockingAlertData/EdenBlockingAction/EdenBlockingSeverity; 003-08 owns EdenMediaRowItem. ZERO 'package:trades/' imports in lib/."
   ]
 }
