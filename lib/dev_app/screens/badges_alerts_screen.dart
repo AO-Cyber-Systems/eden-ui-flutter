@@ -233,6 +233,39 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenBlockingAlerts — Phase 1 (objective 003)'),
+          Section(
+            title: 'Mixed list (1 red + 1 amber → red tint)',
+            child: EdenBlockingAlerts(alerts: [
+              EdenBlockingAlertData(
+                task: 'Install HVAC',
+                context: 'Phase 2',
+                reason: 'Waiting on permit approval',
+                actions: [
+                  EdenBlockingAction(label: 'View Permit', onPressed: () {}),
+                  EdenBlockingAction(label: 'Notify Inspector', onPressed: () {}),
+                ],
+              ),
+              const EdenBlockingAlertData(
+                task: 'Pour foundation',
+                context: 'Phase 1',
+                reason: 'Awaiting inspection',
+                severity: EdenBlockingSeverity.amber,
+              ),
+            ]),
+          ),
+          const Section(
+            title: 'Single-alert (no chevron)',
+            child: EdenBlockingAlerts(alerts: [
+              EdenBlockingAlertData(
+                task: 'Inspect roof',
+                context: 'Permit review',
+                reason: 'Survey not received',
+                severity: EdenBlockingSeverity.amber,
+              ),
+            ]),
+          ),
         ],
       ),
     );

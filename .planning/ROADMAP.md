@@ -52,7 +52,7 @@ TRDs:
 - [x] 003-04-TRD.md — EdenStockLevelIndicator (Wave 1; linear bar with green/amber/red thresholds, donor trades-flutter)
 - [x] 003-05-TRD.md — EdenCostSummaryCard (Wave 2; labor/material/equipment/total breakdown card, composes EdenCurrencyDisplay)
 - [x] 003-06-TRD.md — EdenActivityFeedItem (Wave 2; avatar + actor/action/entity + time row; inlined data class)
-- [ ] 003-07-TRD.md — EdenBlockingAlerts (Wave 2; collapsible severity-colored alert list; inlined types)
+- [x] 003-07-TRD.md — EdenBlockingAlerts (Wave 2; collapsible severity-colored alert list; inlined types)
 - [ ] 003-08-TRD.md — EdenMediaRow (Wave 2; compact icon+count+label cells, + Add buttons; inlined item class)
 - [ ] 003-09-TRD.md — EdenPlaceholderPage (Wave 2; coming-soon route screen + optional action button)
 - [ ] 003-10-TRD.md — EdenInsightCard + foundation eden_ai_models.dart (Wave 3; 6 layouts incl. CustomPainter chart; shared AI types: EdenInsightContent, EdenAiPersona, EdenChatMessage, etc.)
