@@ -339,6 +339,8 @@ export 'src/widgets/scheduler/scheduler_event_block.dart';
 export 'src/widgets/scheduler/scheduler_mobile_view.dart';
 export 'src/widgets/scheduler/scheduler_swimlane_view.dart';
 export 'src/widgets/scheduler/scheduler_all_day_row.dart';
+export 'src/widgets/scheduler/scheduler_conflict_layout.dart';
+export 'src/widgets/scheduler/scheduler_conflict_banner.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
