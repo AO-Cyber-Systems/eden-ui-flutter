@@ -31,7 +31,7 @@ class FieldScreen extends StatelessWidget {
           _PhotoCapturePageDemo(),
           // Wave 4 — Form-flow pages
           _PackoutPageDemo(),
-          // (TRD 007-01 will append _InspectionFormPageDemo here)
+          _InspectionFormPageDemo(),
         ],
       ),
     );
@@ -163,6 +163,70 @@ class _LocationMapPageDemo extends StatelessWidget {
           ),
           onRefresh: () {},
           appBarTitle: 'Active Technicians',
+        ),
+      ),
+    );
+  }
+}
+
+class _InspectionFormPageDemo extends StatelessWidget {
+  const _InspectionFormPageDemo();
+  @override
+  Widget build(BuildContext context) {
+    return Section(
+      title: 'EdenInspectionFormPage',
+      child: SizedBox(
+        height: 700,
+        child: EdenInspectionFormPage(
+          form: EdenInspectionForm(
+            id: 'demo-f1',
+            name: 'HVAC Inspection',
+            status: EdenInspectionFormStatus.draft,
+            createdAt: DateTime.now(),
+            sections: const [
+              EdenInspectionSection(
+                id: 'sec-equipment',
+                title: 'Equipment',
+                fields: [
+                  EdenInspectionField(
+                      id: 'model',
+                      label: 'Model number',
+                      type: EdenInspectionFieldType.text,
+                      isRequired: true),
+                  EdenInspectionField(
+                      id: 'age',
+                      label: 'Age (years)',
+                      type: EdenInspectionFieldType.number),
+                  EdenInspectionField(
+                      id: 'serviced',
+                      label: 'Recently serviced?',
+                      type: EdenInspectionFieldType.boolean),
+                ],
+              ),
+              EdenInspectionSection(
+                id: 'sec-conditions',
+                title: 'Conditions',
+                fields: [
+                  EdenInspectionField(
+                    id: 'rating',
+                    label: 'Overall rating',
+                    type: EdenInspectionFieldType.singleSelect,
+                    options: ['Excellent', 'Good', 'Fair', 'Poor'],
+                  ),
+                  EdenInspectionField(
+                    id: 'tags',
+                    label: 'Visible issues',
+                    type: EdenInspectionFieldType.multiSelect,
+                    options: ['Rust', 'Leak', 'Noise', 'Damaged housing'],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          onSaveDraft: (f) async => f,
+          onSubmit: (f) async => f.copyWith(
+              status: EdenInspectionFormStatus.submitted,
+              submittedAt: DateTime.now()),
         ),
       ),
     );

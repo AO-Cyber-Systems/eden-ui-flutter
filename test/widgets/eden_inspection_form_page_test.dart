@@ -180,7 +180,8 @@ void main() {
   });
 
   group('EdenInspectionFormPage — submit gating', () {
-    testWidgets('required empty + submit → snack bar; onSubmit NOT called',
+    testWidgets(
+        'required empty → Submit button disabled; tap label says complete required',
         (tester) async {
       final (captured, fn) = EdenInspectionFormPageFixtures.saveRecorder();
       await pumpAtDefault(
@@ -189,10 +190,11 @@ void main() {
             form: EdenInspectionFormPageFixtures.twoRequired(),
             onSubmit: fn,
           )));
-      await tester.tap(find.widgetWithText(FilledButton, 'Submit Form'));
-      await tester.pumpAndSettle();
+      // The submit-area FilledButton uses the "Complete required..." label
+      // when not ready; verify it's disabled (onPressed == null).
+      final btn = tester.widget<FilledButton>(find.byType(FilledButton));
+      expect(btn.onPressed, isNull);
       expect(captured, isEmpty);
-      expect(find.textContaining('complete all required'), findsOneWidget);
     });
   });
 

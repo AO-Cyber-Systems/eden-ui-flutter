@@ -372,6 +372,7 @@ export 'src/widgets/eden_signature_capture_page.dart';
 export 'src/widgets/eden_process_canvas/eden_process_canvas_exports.dart';
 export 'src/widgets/eden_photo_capture_page.dart';
 export 'src/widgets/eden_packout_page.dart';
+export 'src/widgets/eden_inspection_form_page.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
