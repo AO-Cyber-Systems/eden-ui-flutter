@@ -345,4 +345,42 @@ void main() {
       expect(find.byKey(const ValueKey('eden-tank-dial')), findsNothing);
     });
   });
+
+  // -----------------------------------------------------------------
+  // Task 3 — iPhone-narrow safety
+  // -----------------------------------------------------------------
+  group('EdenTankGauge iPhone-narrow safety (390pt)', () {
+    testWidgets('linear mode at 80pt column — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTankGauge(
+          data: EdenTankGaugeFixtures.normal,
+          mode: EdenTankGaugeMode.linear,
+        ),
+        width: 80,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('segmented mode at 200pt — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTankGauge(
+          data: EdenTankGaugeFixtures.normal,
+          mode: EdenTankGaugeMode.segmented,
+        ),
+        width: 200,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('dial mode at 200pt — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTankGauge(
+          data: EdenTankGaugeFixtures.normal,
+          mode: EdenTankGaugeMode.dial,
+        ),
+        width: 200,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
