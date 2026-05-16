@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
 import '../widgets/section.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  bool _aiPanelExpanded = true;
+  EdenAiPersona _aiPanelPersona = EdenAiPersona.operations;
+  bool _aiPanelLoading = false;
+  bool _aiPanelEmpty = false;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +183,111 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          const EdenDivider(label: 'EdenAiPanel — Phase 1 (objective 003)'),
+          Section(
+            title: 'Live AI panel (toggle + persona swap + loading + empty)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    EdenButton(
+                      label: _aiPanelExpanded ? 'Collapse' : 'Expand',
+                      variant: EdenButtonVariant.secondary,
+                      onPressed: () => setState(
+                          () => _aiPanelExpanded = !_aiPanelExpanded),
+                    ),
+                    EdenButton(
+                      label: _aiPanelLoading ? 'Stop loading' : 'Loading',
+                      variant: EdenButtonVariant.secondary,
+                      onPressed: () => setState(
+                          () => _aiPanelLoading = !_aiPanelLoading),
+                    ),
+                    EdenButton(
+                      label: _aiPanelEmpty ? 'Show insights' : 'Empty',
+                      variant: EdenButtonVariant.secondary,
+                      onPressed: () =>
+                          setState(() => _aiPanelEmpty = !_aiPanelEmpty),
+                    ),
+                    DropdownButton<EdenAiPersona>(
+                      value: _aiPanelPersona,
+                      onChanged: (p) =>
+                          setState(() => _aiPanelPersona = p!),
+                      items: EdenAiPersona.values
+                          .map((p) => DropdownMenuItem(
+                                value: p,
+                                child: Text(p.displayLabel),
+                              ))
+                          .toList(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 360,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Expanded(
+                        child: Card(
+                          margin: EdgeInsets.zero,
+                          child: Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Text(
+                              'Host page content placeholder\n\n'
+                              'EdenAiPanel renders on the right and tracks the consumer-owned expanded flag.',
+                            ),
+                          ),
+                        ),
+                      ),
+                      EdenAiPanel(
+                        insights: _aiPanelEmpty
+                            ? const <EdenInsightContent>[]
+                            : const [
+                                EdenInsightContent(
+                                  id: 's',
+                                  type: EdenInsightType.summary,
+                                  title: 'Project Update',
+                                  subtitle: '3 tasks remaining',
+                                ),
+                                EdenInsightContent(
+                                  id: 'm',
+                                  type: EdenInsightType.metric,
+                                  title: 'Revenue',
+                                  data: <String, dynamic>{
+                                    'value': r'$12,500',
+                                    'trend': 'up',
+                                    'change': '+8%',
+                                  },
+                                ),
+                                EdenInsightContent(
+                                  id: 'a',
+                                  type: EdenInsightType.alert,
+                                  title: 'Permit expiring',
+                                  severity: EdenInsightSeverity.warning,
+                                ),
+                                EdenInsightContent(
+                                  id: 'sg',
+                                  type: EdenInsightType.suggestion,
+                                  title: 'Try AI summary',
+                                ),
+                              ],
+                        persona: _aiPanelPersona,
+                        isExpanded: _aiPanelExpanded,
+                        onToggle: () => setState(
+                            () => _aiPanelExpanded = !_aiPanelExpanded),
+                        isLoading: _aiPanelLoading,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
