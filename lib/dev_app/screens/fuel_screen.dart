@@ -233,7 +233,85 @@ class _FuelScreenState extends State<FuelScreen> {
               ],
             ),
           ),
-          // TRD 005-06 will append: Section(title: 'EdenTruckInventoryCard — Per-truck inventory', child: ...).
+          Section(
+            title: 'EdenTruckInventoryCard — Per-truck inventory',
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: 350,
+                  child: EdenTruckInventoryCard(
+                    data: const EdenTruckInventoryData(
+                      truckLabel: 'Truck 47',
+                      fuelTypeLabel: 'Propane',
+                      capacityGal: 500,
+                      currentGal: 320,
+                    ),
+                    onTap: () =>
+                        ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Tapped Truck 47')),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 600,
+                  child: EdenTruckInventoryCard(
+                    data: EdenTruckInventoryData(
+                      truckLabel: 'Tanker A-12',
+                      fuelTypeLabel: 'Heating oil',
+                      capacityGal: 2500,
+                      currentGal: 1850,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 350,
+                  child: EdenTruckInventoryCard(
+                    data: EdenTruckInventoryData(
+                      truckLabel: 'Truck 99',
+                      fuelTypeLabel: 'Diesel',
+                      capacityGal: 500,
+                      currentGal: 0,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 350,
+                  child: EdenTruckInventoryCard(
+                    data: EdenTruckInventoryData(
+                      truckLabel: 'Truck 14',
+                      fuelTypeLabel: 'Gasoline',
+                      capacityGal: 500,
+                      currentGal: 500,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 350,
+                  child: EdenTruckInventoryCard(
+                    data: EdenTruckInventoryData(
+                      truckLabel: 'Tanker B-99',
+                      fuelTypeLabel: 'Heating oil',
+                      capacityGal: 500,
+                      currentGal: 550,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 350,
+                  child: EdenTruckInventoryCard(
+                    data: EdenTruckInventoryData(
+                      truckLabel: 'Truck (unspecified)',
+                      fuelTypeLabel: 'Propane',
+                      capacityGal: 0,
+                      currentGal: 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
