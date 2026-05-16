@@ -162,4 +162,143 @@ void main() {
       expect(find.textContaining(', MA'), findsNothing);
     });
   });
+
+  // -----------------------------------------------------------------
+  // Task 2 — Drag-reorder + tap interactions + disabled-reorder +
+  // iPhone-narrow safety.
+  // -----------------------------------------------------------------
+  group('EdenRouteStopList drag handle visibility', () {
+    testWidgets('reorderable (default) → drag handles visible', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(stops: EdenRouteStopListFixtures.threeStops),
+      ));
+      expect(find.byIcon(Icons.drag_handle), findsNWidgets(3));
+    });
+
+    testWidgets('reorderable: false → no drag handles', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(
+          stops: EdenRouteStopListFixtures.threeStops,
+          reorderable: false,
+        ),
+      ));
+      expect(find.byIcon(Icons.drag_handle), findsNothing);
+    });
+
+    testWidgets('reorderable: false uses ListView, not ReorderableListView',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(
+          stops: EdenRouteStopListFixtures.threeStops,
+          reorderable: false,
+        ),
+      ));
+      expect(find.byType(ReorderableListView), findsNothing);
+      expect(find.byType(ListView), findsOneWidget);
+    });
+  });
+
+  group('EdenRouteStopList reorder math', () {
+    testWidgets(
+        'drag index 0 → position 2 fires onReorder(0, 2) intuitively '
+        '(Flutter raw newIndex=3 hidden)', (tester) async {
+      int? receivedOld;
+      int? receivedNew;
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(
+          stops: EdenRouteStopListFixtures.threeStops,
+          onReorder: (o, n) {
+            receivedOld = o;
+            receivedNew = n;
+          },
+        ),
+      ));
+      // Invoke ReorderableListView's onReorder directly with Flutter's raw
+      // off-by-one newIndex (moving down from 0 to slot 2 → raw newIndex=3).
+      final rlv = tester.widget<ReorderableListView>(
+        find.byType(ReorderableListView),
+      );
+      rlv.onReorder(0, 3);
+      expect(receivedOld, 0);
+      expect(receivedNew, 2,
+          reason: 'consumer should receive intuitive newIndex=2 (not raw 3)');
+    });
+
+    testWidgets('drag index 2 → position 0 fires onReorder(2, 0)',
+        (tester) async {
+      int? receivedOld;
+      int? receivedNew;
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(
+          stops: EdenRouteStopListFixtures.threeStops,
+          onReorder: (o, n) {
+            receivedOld = o;
+            receivedNew = n;
+          },
+        ),
+      ));
+      final rlv = tester.widget<ReorderableListView>(
+        find.byType(ReorderableListView),
+      );
+      // Moving UP (newIndex < oldIndex) — Flutter's raw is the intuitive index.
+      rlv.onReorder(2, 0);
+      expect(receivedOld, 2);
+      expect(receivedNew, 0);
+    });
+  });
+
+  group('EdenRouteStopList tap interactions', () {
+    testWidgets('tap on stop body fires onStopTap with correct id',
+        (tester) async {
+      String? tappedId;
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(
+          stops: EdenRouteStopListFixtures.threeStops,
+          onStopTap: (id) => tappedId = id,
+        ),
+      ));
+      // Tap on the label text of stop s2 (Beta Co).
+      await tester.tap(find.text('Beta Co'));
+      await tester.pump();
+      expect(tappedId, 's2');
+    });
+
+    testWidgets('tap on status badge fires onStatusTap; onStopTap does NOT fire',
+        (tester) async {
+      String? bodyTappedId;
+      String? statusTappedId;
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(
+          stops: EdenRouteStopListFixtures.threeStops,
+          onStopTap: (id) => bodyTappedId = id,
+          onStatusTap: (id) => statusTappedId = id,
+        ),
+      ));
+      await tester.tap(find.byKey(const Key('eden-route-stop-status-s1')));
+      await tester.pump();
+      expect(statusTappedId, 's1');
+      expect(bodyTappedId, isNull,
+          reason: 'status-badge gesture should NOT bubble to InkWell');
+    });
+
+    testWidgets('onStopTap == null → tap on body does not throw',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(stops: EdenRouteStopListFixtures.threeStops),
+      ));
+      await tester.tap(find.text('Beta Co'));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('EdenRouteStopList iPhone-narrow safety', () {
+    testWidgets('390pt + long labels — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenRouteStopList(stops: EdenRouteStopListFixtures.longLabels),
+        width: 390,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
