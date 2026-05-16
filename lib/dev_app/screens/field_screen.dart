@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
 import '../widgets/section.dart';
@@ -26,7 +28,7 @@ class FieldScreen extends StatelessWidget {
           _LocationMapPageDemo(),
           // Wave 3 — Capture-flow pages
           _SignatureCapturePageDemo(),
-          // (TRD 007-04 will append _PhotoCapturePageDemo here)
+          _PhotoCapturePageDemo(),
           // (TRD 007-01/03 will append form-flow page demos here)
         ],
       ),
@@ -160,6 +162,82 @@ class _LocationMapPageDemo extends StatelessWidget {
           onRefresh: () {},
           appBarTitle: 'Active Technicians',
         ),
+      ),
+    );
+  }
+}
+
+class _PhotoCapturePageDemo extends StatefulWidget {
+  const _PhotoCapturePageDemo();
+  @override
+  State<_PhotoCapturePageDemo> createState() => _PhotoCapturePageDemoState();
+}
+
+class _PhotoCapturePageDemoState extends State<_PhotoCapturePageDemo> {
+  String _last = '—';
+
+  // Synthetic 1×1 PNG bytes — same fixture as the widget test, so reviewers
+  // see the post-capture annotation/categorization flow without a real plugin.
+  static final _onePixelPng = Uint8List.fromList(const [
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+    0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+    0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44, 0x41,
+    0x54, 0x78, 0x9C, 0x62, 0x00, 0x01, 0x00, 0x00,
+    0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
+    0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+    0x42, 0x60, 0x82,
+  ]);
+
+  Future<void> _openPage() async {
+    final result = await Navigator.of(context).push<EdenPhotoCaptureResult?>(
+      MaterialPageRoute(
+        builder: (_) => EdenPhotoCapturePage(
+          appointmentId: 'apt-123',
+          fieldId: 'before',
+          onCapture: (req) async {
+            await Future<void>.delayed(const Duration(milliseconds: 200));
+            return EdenCapturedPhoto(
+              filePath: '/tmp/demo.png',
+              bytes: _onePixelPng,
+              mimeType: 'image/png',
+              capturedAt: DateTime.now(),
+            );
+          },
+          onPickFromGallery: () async => EdenCapturedPhoto(
+            filePath: '/tmp/demo.png',
+            bytes: _onePixelPng,
+            mimeType: 'image/png',
+            capturedAt: DateTime.now(),
+          ),
+          categories: const ['before', 'during', 'after'],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() {
+      _last = result == null
+          ? 'cancelled'
+          : '${result.category ?? "no-category"} · "${result.annotation ?? ""}"';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Section(
+      title: 'EdenPhotoCapturePage',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FilledButton.icon(
+            onPressed: _openPage,
+            icon: const Icon(Icons.camera_alt_outlined),
+            label: const Text('Open photo capture page'),
+          ),
+          const SizedBox(height: 8),
+          Text('Last result: $_last'),
+        ],
       ),
     );
   }

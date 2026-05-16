@@ -367,6 +367,7 @@ export 'src/widgets/eden_mobile_ai_chat_sheet.dart';
 export 'src/widgets/eden_check_in_page.dart';
 export 'src/widgets/eden_location_map_page.dart';
 export 'src/widgets/eden_signature_capture_page.dart';
+export 'src/widgets/eden_photo_capture_page.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
