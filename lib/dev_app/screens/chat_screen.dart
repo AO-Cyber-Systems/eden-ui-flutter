@@ -15,6 +15,26 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _aiPanelLoading = false;
   bool _aiPanelEmpty = false;
 
+  EdenAiPersona _chatPersona = EdenAiPersona.operations;
+
+  Stream<EdenChatStreamChunk> _mockSendMessage(EdenChatRequest req) async* {
+    // Hand-built mock: 4 content chunks + done, at ~150ms intervals.
+    const chunks = ['Sure — ', 'I can help ', 'with that. ', 'Here is the plan.'];
+    for (final c in chunks) {
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      yield EdenChatStreamChunk(
+          type: EdenChatChunkType.content, content: c);
+    }
+    yield const EdenChatStreamChunk(type: EdenChatChunkType.done);
+  }
+
+  Future<String> _mockCreateConversation({
+    required String personaId,
+    required String title,
+  }) async {
+    return 'demo-conv-1';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -288,6 +308,34 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+
+          const EdenDivider(label: 'EdenAgentChat — Phase 1 (objective 003)'),
+          Section(
+            title: 'Tap the FAB to open the chat sheet',
+            child: SizedBox(
+              height: 220,
+              child: Scaffold(
+                body: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'Host page content. Tap the gold sparkle FAB to open the '
+                    'EdenAgentChat modal. Streaming response is mocked locally '
+                    '(150ms intervals); production wires sendMessage + '
+                    'createConversation to AODex/AOSentry via callback.',
+                  ),
+                ),
+                floatingActionButton: EdenAgentChatFab(
+                  activePersona: _chatPersona,
+                  onPersonaChanged: (p) =>
+                      setState(() => _chatPersona = p),
+                  sendMessage: _mockSendMessage,
+                  createConversation: _mockCreateConversation,
+                  pageContext: 'Catalog demo',
+                  entityLabel: 'Customer #42',
+                ),
+              ),
             ),
           ),
         ],
