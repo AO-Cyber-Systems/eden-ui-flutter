@@ -294,6 +294,7 @@ export 'src/widgets/eden_map_preview.dart';
 export 'src/widgets/eden_app_mode.dart';
 export 'src/widgets/eden_adaptive_layout.dart';
 export 'src/widgets/eden_ux_mode_toggle.dart';
+export 'src/widgets/eden_field_view_gate.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
