@@ -1,36 +1,38 @@
 {
   "objective": "003-phase-1-widget-donations",
-  "wave": 2,
+  "wave": 3,
   "current_trd": null,
-  "current_task": "Wave 2 complete (9/15 TRDs — 003-01..09 GREEN). Moving to Wave 3 AI surface.",
+  "current_task": "Objective 003 complete — Phase 1 Widget Donations (15/15 TRDs GREEN). 767 tests passing, +1 skipped. Phase 3 trades-flutter feature-folder absorption unblocked.",
   "completed_tasks": [
     "003-01 — RED→GREEN EdenUrgencyBadge (9/9 + 1 skip)",
     "003-02 — RED→GREEN EdenPipelineBadge (11/11)",
     "003-03 — RED→GREEN EdenApprovalStatusBadge (15/15)",
     "003-04 — RED→GREEN EdenStockLevelIndicator (11/11)",
-    "003-05 — RED→GREEN EdenCostSummaryCard (9/9; composes EdenCurrencyDisplay)",
-    "003-06 — RED→GREEN EdenActivityFeedItem + inlined EdenActivityFeedItemData/EdenActivityVariant (11/11)",
-    "003-07 — RED→GREEN EdenBlockingAlerts + inlined EdenBlockingAlertData/EdenBlockingAction/EdenBlockingSeverity (16/16)",
-    "003-08 — RED→GREEN EdenMediaRow + inlined EdenMediaRowItem (11/11)",
-    "003-09 — RED→GREEN EdenPlaceholderPage (8/8; library-enhanced subtitle+action over donor)"
+    "003-05 — RED→GREEN EdenCostSummaryCard (9/9)",
+    "003-06 — RED→GREEN EdenActivityFeedItem + inlined data class (11/11)",
+    "003-07 — RED→GREEN EdenBlockingAlerts + inlined data classes (16/16)",
+    "003-08 — RED→GREEN EdenMediaRow + inlined data class (11/11)",
+    "003-09 — RED→GREEN EdenPlaceholderPage (8/8; donor + subtitle + action enhancements)",
+    "003-10 — RED→GREEN EdenInsightCard + foundation eden_ai_models.dart (18/18 across 6 layouts incl. CustomPainter chart)",
+    "003-11 — RED→GREEN EdenAiPanel composing EdenInsightCard (12/12 expanded/collapsed/loading/empty/personas)",
+    "003-12 — RED→GREEN EdenAiCollapsibleSection (9/9)",
+    "003-13 — RED→GREEN EdenPersonaSelector Riverpod-stripped (9/9)",
+    "003-14 — RED→GREEN EdenAgentChat + EdenAgentChatFab + EdenChatMessageBubble + chat streaming callbacks (3+16/19)",
+    "003-15 — RED→GREEN EdenAiInsightSlot gated EdenAiPanel slot (10/10)"
   ],
   "completed_trds": [
-    "003-01",
-    "003-02",
-    "003-03",
-    "003-04",
-    "003-05",
-    "003-06",
-    "003-07",
-    "003-08",
-    "003-09"
+    "003-01", "003-02", "003-03", "003-04", "003-05",
+    "003-06", "003-07", "003-08", "003-09", "003-10",
+    "003-11", "003-12", "003-13", "003-14", "003-15"
   ],
   "started_at": "2026-05-15",
   "wave1_completed_at": "2026-05-15",
   "wave1_tests_added": 46,
   "wave2_completed_at": "2026-05-15",
   "wave2_tests_added": 55,
-  "total_tests_after_wave2": 688,
+  "wave3_completed_at": "2026-05-15",
+  "wave3_tests_added": 79,
+  "total_tests_after_objective": 767,
   "deviations": [
     {
       "trd": "003-01",
@@ -50,11 +52,28 @@
     {
       "trd": "003-06",
       "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "RichText lookup needed disambiguation — avatar Text widgets render RichText too with no children; switched to firstWhere predicate that selects the RichText whose root TextSpan has children."
+      "summary": "RichText lookup needed firstWhere predicate to skip avatar Text widgets that render RichText too with no children."
+    },
+    {
+      "trd": "003-10",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "SnackBar test description string had a stray '\\$label' Dart interpolation that broke compilation; rewritten as literal 'label'."
+    },
+    {
+      "trd": "003-12",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "AnimatedCrossFade keeps both children in tree (opacity-fades only); switched toggle-visibility tests from find.text presence/absence to AnimatedCrossFade.crossFadeState property checks."
+    },
+    {
+      "trd": "003-14",
+      "rule": "Rule 3 — auto-fix blocking issue",
+      "summary": "EdenAgentChat header Row overflowed 40pt at iPhone-narrow (390pt) because the 'AI Assistant' Text was non-flexible alongside the persona selector + close button. Wrapped the title Text in Flexible+TextOverflow.ellipsis."
     }
   ],
   "notes": [
-    "Wave 2 5 TRDs executed serially (shared lib/eden_ui.dart + 3 dev-catalog screens: badges_alerts/data_display/misc). Phase 1 Dashboard composites export section opened by 003-05; 003-06/07/08 appended. EdenPlaceholderPage owns its own Scaffold — dartdoc'd; consumers don't double-wrap.",
-    "Cross-vertical decoupling lock honored: 003-06 owns EdenActivityFeedItemData/EdenActivityVariant; 003-07 owns EdenBlockingAlertData/EdenBlockingAction/EdenBlockingSeverity; 003-08 owns EdenMediaRowItem. ZERO 'package:trades/' imports in lib/."
+    "Wave 3 (AI surface) ordered foundation-first: 003-10 establishes lib/src/widgets/eden_ai/eden_ai_models.dart + EdenInsightCard before 003-11/12/13/14/15 compose on top. New section header `// Phase 1 — AI surface (objective 003)` opened in lib/eden_ui.dart with 8 exports (eden_ai_models, eden_insight_card, eden_ai_panel, eden_ai_collapsible_section, eden_persona_selector, eden_chat_streaming_callbacks, eden_chat_message_bubble, eden_agent_chat, eden_ai_insight_slot).",
+    "CRITICAL decoupling: ZERO `package:trades/...` / `flutter_riverpod` / `dio` / `http` / `connectrpc` / `aodex` imports in lib/. All AI types library-owned in eden_ai_models.dart. Streaming via callback (EdenChatStreamSender). Conversation creation via callback (EdenChatConversationCreator). Intent classification REMOVED — biz-logic stays in consumer; library exposes generic Widget? proposalCard slot.",
+    "Each wave closed with full-suite verification: Wave 1 = 633 tests, Wave 2 = 688, Wave 3 = 767 (all GREEN; 1 skip carried from 003-01).",
+    "Per-TRD commit cadence (test→feat→docs) + push after each docs commit. ~45 commits total for objective 003."
   ]
 }
