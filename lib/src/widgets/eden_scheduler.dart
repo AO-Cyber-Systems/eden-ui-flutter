@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'scheduler/scheduler_controller.dart';
 import 'scheduler/scheduler_day_view.dart';
 import 'scheduler/scheduler_list_view.dart';
+import 'scheduler/scheduler_mobile_view.dart';
 import 'scheduler/scheduler_models.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
@@ -89,6 +90,8 @@ class EdenScheduler extends StatefulWidget {
     this.onViewChanged,
     this.onAssigneeFilterChanged,
     this.controller,
+    this.forceMobileView = false,
+    this.resources,
   });
 
   /// Optional external state controller. When provided, the widget reads/writes
@@ -98,6 +101,16 @@ class EdenScheduler extends StatefulWidget {
   ///
   /// Mirrors the Flutter `TextField(controller: …)` lifetime-aware pattern.
   final EdenSchedulerController? controller;
+
+  /// When true, force the mobile/compact composite view regardless of width.
+  /// Locked decision E rule 3: at logical width `< 1200pt` inside
+  /// `EdenCompanionShell`, this is automatically true.
+  final bool forceMobileView;
+
+  /// Optional list of resources for the mobile chip strip (TRD 14 will reuse
+  /// this for the sidebar resource filter). Library does NOT mutate it; the
+  /// caller owns the list.
+  final List<EdenSchedulerResource>? resources;
 
   /// Events to display.
   final List<EdenSchedulerEvent> events;
@@ -279,6 +292,20 @@ class _EdenSchedulerState extends State<EdenScheduler> {
   }
 
   Widget _buildBody(ThemeData theme, bool isDark) {
+    // Locked decision E rule 3: at narrow widths or when explicitly forced,
+    // route to the mobile composite regardless of the controller view.
+    final width = MediaQuery.maybeOf(context)?.size.width ?? 1280;
+    final useMobile = widget.forceMobileView || width < 600;
+    if (useMobile && _view != EdenSchedulerView.month) {
+      return EdenSchedulerMobileView(
+        controller: _controller,
+        events: _filteredEvents,
+        config: widget.config,
+        resources: widget.resources,
+        onEventTap: widget.onEventTap,
+        onTimeSlotTap: widget.onTimeSlotTap,
+      );
+    }
     switch (_view) {
       case EdenSchedulerView.month:
         return EdenSchedulerMonthView(
