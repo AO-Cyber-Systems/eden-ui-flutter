@@ -15,6 +15,73 @@ enum EdenEdgeStyle { solid, dashed, dotted }
 /// Arrow head style.
 enum EdenArrowHead { none, arrow, filledArrow, diamond, circle }
 
+/// Connection-handle kind for [EdenDiagramPort].
+enum EdenDiagramPortKind { source, target, both }
+
+/// A custom connection port on an [EdenDiagramNode] (objective 006, parity E-5).
+///
+/// Use [EdenDiagramNode.ports] to opt into multi-handle nodes (e.g. a decision
+/// node with separate "yes" and "no" output handles). When [EdenDiagramNode.ports]
+/// is null, the canvas uses the legacy fixed 4-direction port model via
+/// [EdenDiagramNode.portOffset].
+///
+/// Set [id] to match donor `sourceHandle` / `targetHandle` strings (e.g. `'yes'`,
+/// `'no'`, `'top'`, `'left'`) for round-trip with saved layout data.
+class EdenDiagramPort {
+  const EdenDiagramPort({
+    required this.id,
+    required this.side,
+    this.offset = 0.5,
+    required this.kind,
+    this.color,
+    this.data = const {},
+  });
+
+  final String id;
+  final EdenPortSide side;
+  /// 0..1 normalized position along the side (0.5 = center).
+  final double offset;
+  final EdenDiagramPortKind kind;
+  final String? color;
+  final Map<String, dynamic> data;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'side': side.name,
+        'offset': offset,
+        'kind': kind.name,
+        if (color != null) 'color': color,
+        if (data.isNotEmpty) 'data': data,
+      };
+
+  factory EdenDiagramPort.fromJson(Map<String, dynamic> json) => EdenDiagramPort(
+        id: json['id'] as String,
+        side: EdenPortSide.values.firstWhere(
+          (s) => s.name == json['side'],
+          orElse: () => EdenPortSide.top,
+        ),
+        offset: (json['offset'] as num?)?.toDouble() ?? 0.5,
+        kind: EdenDiagramPortKind.values.firstWhere(
+          (k) => k.name == json['kind'],
+          orElse: () => EdenDiagramPortKind.source,
+        ),
+        color: json['color'] as String?,
+        data: (json['data'] as Map<String, dynamic>?) ?? const {},
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is EdenDiagramPort &&
+      other.id == id &&
+      other.side == side &&
+      other.offset == offset &&
+      other.kind == kind &&
+      other.color == color;
+
+  @override
+  int get hashCode => Object.hash(id, side, offset, kind, color);
+}
+
 /// A single node in the diagram.
 class EdenDiagramNode {
   EdenDiagramNode({
@@ -31,6 +98,7 @@ class EdenDiagramNode {
     this.textColor,
     this.icon,
     this.data = const {},
+    this.ports,
   });
 
   final String id;
@@ -46,6 +114,13 @@ class EdenDiagramNode {
   String? textColor;
   String? icon; // Material icon name hint (for future use)
   Map<String, dynamic> data; // arbitrary user data
+  /// Custom connection ports (objective 006, parity E-5).
+  ///
+  /// When non-null, the canvas uses these for hit-test, port-dot rendering,
+  /// and edge anchor resolution instead of the legacy 4-direction model.
+  /// Legacy [portOffset] still returns the fixed 4-direction values when
+  /// called directly (back-compat invariant).
+  List<EdenDiagramPort>? ports;
 
   /// Center point of this node.
   Offset get center => Offset(x + width / 2, y + height / 2);
@@ -78,6 +153,8 @@ class EdenDiagramNode {
     if (textColor != null) 'textColor': textColor,
     if (icon != null) 'icon': icon,
     if (data.isNotEmpty) 'data': data,
+    if (ports != null && ports!.isNotEmpty)
+      'ports': ports!.map((p) => p.toJson()).toList(),
   };
 
   factory EdenDiagramNode.fromJson(Map<String, dynamic> json) => EdenDiagramNode(
@@ -97,6 +174,9 @@ class EdenDiagramNode {
     textColor: json['textColor'] as String?,
     icon: json['icon'] as String?,
     data: (json['data'] as Map<String, dynamic>?) ?? {},
+    ports: (json['ports'] as List<dynamic>?)
+        ?.map((p) => EdenDiagramPort.fromJson(p as Map<String, dynamic>))
+        .toList(),
   );
 }
 
