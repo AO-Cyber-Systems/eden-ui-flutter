@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../_sample_data/sample_data.dart';
 import '../widgets/section.dart';
 
 class MiscScreen extends StatefulWidget {
@@ -212,6 +215,67 @@ class _MiscScreenState extends State<MiscScreen> {
             ),
           ),
 
+          // -----------------------------------------------------------------
+          // Objective 008 Wave 2 (TRD 008-04) — cross-vertical misc demos.
+          // -----------------------------------------------------------------
+          const EdenDivider(label: 'Network lifecycle simulator'),
+          const Section(
+            title: 'Auto-cycle: online → reconnecting → offline → reconnecting → online',
+            child: _NetworkLifecycleDemo(),
+          ),
+
+          const EdenDivider(label: 'EdenOfflineQueueViewer — cross-vertical'),
+          const Section(
+            title: 'Realistic queued mutations (5 items, mixed verticals)',
+            child: _OfflineQueueDemo(),
+          ),
+          const Section(
+            title: 'Edge — Conflict-heavy queue',
+            child: _OfflineQueueConflictDemo(),
+          ),
+          const Section(
+            title: 'Edge — Empty queue',
+            child: SizedBox(
+              height: 120,
+              child: EdenOfflineQueueViewer(items: <EdenOfflineQueueItem>[]),
+            ),
+          ),
+
+          const EdenDivider(label: 'EdenAuthenticatedImage — headers + async builder'),
+          const Section(
+            title: 'Static headers map (404 fallback)',
+            child: EdenAuthenticatedImage(
+              url: 'https://images.example.invalid/avatar.png',
+              headers: <String, String>{
+                'Authorization': 'Bearer demo-token',
+              },
+              width: 80,
+              height: 80,
+            ),
+          ),
+          Section(
+            title: 'Async headersBuilder (500ms delay)',
+            child: EdenAuthenticatedImage(
+              url: 'https://images.example.invalid/signed-photo.jpg',
+              headersBuilder: () async {
+                await Future<void>.delayed(const Duration(milliseconds: 500));
+                return const <String, String>{
+                  'Authorization': 'Bearer late-loaded',
+                };
+              },
+              width: 200,
+              height: 120,
+            ),
+          ),
+          const Section(
+            title: 'Error fallback (no headers, invalid URL)',
+            child: EdenAuthenticatedImage(
+              url: 'https://images.example.invalid/missing.jpg',
+              width: 200,
+              height: 120,
+            ),
+          ),
+
           const EdenDivider(label: 'EdenPlaceholderPage — Phase 1 (objective 003)'),
           Section(
             title: 'EdenPlaceholderPage preview (tap to open)',
@@ -250,6 +314,191 @@ class _MiscScreenState extends State<MiscScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Objective 008 Wave 2 (TRD 008-04) demo widgets — misc surfaces.
+// =============================================================================
+
+/// Auto-cycle network status simulator. Defaults to OFF (no timer running)
+/// so widget tests don't leak; user taps "Start" to begin.
+class _NetworkLifecycleDemo extends StatefulWidget {
+  const _NetworkLifecycleDemo();
+
+  @override
+  State<_NetworkLifecycleDemo> createState() => _NetworkLifecycleDemoState();
+}
+
+class _NetworkLifecycleDemoState extends State<_NetworkLifecycleDemo> {
+  static const List<EdenNetworkStatus> _cycle = <EdenNetworkStatus>[
+    EdenNetworkStatus.online,
+    EdenNetworkStatus.reconnecting,
+    EdenNetworkStatus.offline,
+    EdenNetworkStatus.reconnecting,
+    EdenNetworkStatus.syncing,
+  ];
+
+  EdenNetworkStatus _status = EdenNetworkStatus.online;
+  int _idx = 0;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _start() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _idx = (_idx + 1) % _cycle.length;
+        _status = _cycle[_idx];
+      });
+    });
+    setState(() {});
+  }
+
+  void _stop() {
+    _timer?.cancel();
+    _timer = null;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final running = _timer != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        EdenNetworkStatusBar(
+          status: _status,
+          attemptCount: _status == EdenNetworkStatus.reconnecting ? 2 : null,
+        ),
+        const SizedBox(height: EdenSpacing.space3),
+        Row(
+          children: <Widget>[
+            EdenButton(
+              label: running ? 'Stop' : 'Start auto-cycle',
+              variant: EdenButtonVariant.secondary,
+              onPressed: running ? _stop : _start,
+            ),
+            const SizedBox(width: EdenSpacing.space2),
+            Text(
+              'Current: ${_status.name}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Hand-built realistic queue with mixed-vertical mutations.
+class _OfflineQueueDemo extends StatelessWidget {
+  const _OfflineQueueDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final today = CrossCuttingFixtures.catalogToday;
+    final items = <EdenOfflineQueueItem>[
+      EdenOfflineQueueItem(
+        id: 'q-trades-001',
+        actionType: 'Upload Photos',
+        summary: 'Trades · Whitfield install · 3 photos',
+        queuedAt: today.subtract(const Duration(minutes: 4)),
+        status: EdenOfflineQueueItemStatus.syncing,
+        payloadPreview: '{"jobId":"tr-evt-001","count":3}',
+      ),
+      EdenOfflineQueueItem(
+        id: 'q-salon-002',
+        actionType: 'Checkout',
+        summary: r'Salon · A. Okonkwo-Reyes balayage · $385',
+        queuedAt: today.subtract(const Duration(minutes: 12)),
+      ),
+      EdenOfflineQueueItem(
+        id: 'q-medical-003',
+        actionType: 'Upload Labs',
+        summary: 'Medical · MRN 44291 · A1C result',
+        queuedAt: today.subtract(const Duration(minutes: 38)),
+        status: EdenOfflineQueueItemStatus.error,
+        errorMessage: 'Cellular connection dropped before upload completed.',
+      ),
+      EdenOfflineQueueItem(
+        id: 'q-gov-004',
+        actionType: 'Submit Form',
+        summary: 'Gov · Case CCM-2026-0427 · Tier-2 attestation',
+        queuedAt: today.subtract(const Duration(hours: 1, minutes: 20)),
+      ),
+      EdenOfflineQueueItem(
+        id: 'q-fuel-005',
+        actionType: 'Confirm Delivery',
+        summary: 'Fuel · Northpoint Diesel · 1,800 gal · Truck T7',
+        queuedAt: today.subtract(const Duration(hours: 2, minutes: 8)),
+        status: EdenOfflineQueueItemStatus.conflict,
+        conflictDescription:
+            'Server-side tank reading conflicts with submitted gallons total.',
+      ),
+    ];
+    return SizedBox(
+      height: 560,
+      child: EdenOfflineQueueViewer(
+        items: items,
+        now: today,
+        onRetry: (_) {},
+        onDiscard: (_) {},
+        onResolveConflict: (_) {},
+      ),
+    );
+  }
+}
+
+class _OfflineQueueConflictDemo extends StatelessWidget {
+  const _OfflineQueueConflictDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final today = CrossCuttingFixtures.catalogToday;
+    final items = <EdenOfflineQueueItem>[
+      EdenOfflineQueueItem(
+        id: 'qc-1',
+        actionType: 'Update Customer',
+        summary: 'Trades · Bartholomew · phone changed',
+        queuedAt: today.subtract(const Duration(minutes: 8)),
+        status: EdenOfflineQueueItemStatus.conflict,
+        conflictDescription: 'Server has newer record (updated 4 min after queue).',
+      ),
+      EdenOfflineQueueItem(
+        id: 'qc-2',
+        actionType: 'Update Stylist Schedule',
+        summary: 'Salon · Marisol · double-booked 2pm',
+        queuedAt: today.subtract(const Duration(minutes: 30)),
+        status: EdenOfflineQueueItemStatus.conflict,
+        conflictDescription: 'Slot already taken by walk-in.',
+      ),
+      EdenOfflineQueueItem(
+        id: 'qc-3',
+        actionType: 'Adjust Tank Reading',
+        summary: 'Fuel · Terminal 4 · Tank 3 (87 → 22%)',
+        queuedAt: today.subtract(const Duration(hours: 1)),
+        status: EdenOfflineQueueItemStatus.conflict,
+        conflictDescription:
+            'Another driver reported 78% — manual reconciliation needed.',
+      ),
+    ];
+    return SizedBox(
+      height: 460,
+      child: EdenOfflineQueueViewer(
+        items: items,
+        now: today,
+        onResolveConflict: (_) {},
+        onDiscard: (_) {},
+        onRetry: (_) {},
       ),
     );
   }
