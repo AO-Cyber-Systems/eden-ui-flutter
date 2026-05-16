@@ -1,5 +1,6 @@
 import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '_fixtures/eden_ux_mode_toggle_fixtures.dart';
