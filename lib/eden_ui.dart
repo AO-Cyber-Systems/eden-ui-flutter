@@ -311,5 +311,8 @@ export 'src/widgets/eden_blocking_alerts.dart';
 export 'src/widgets/eden_media_row.dart';
 export 'src/widgets/eden_placeholder_page.dart';
 
+// Phase 1 — AI surface (objective 003)
+export 'src/widgets/eden_ai/eden_ai_models.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
