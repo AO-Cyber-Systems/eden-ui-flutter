@@ -100,6 +100,29 @@ TRDs:
 - [ ] 005-05-TRD.md — EdenFuelPriceTicker (Wave 3; current + delta + as-of; composes EdenCurrencyDisplay; configurable delta polarity; hand-rolled relative-time formatter)
 - [ ] 005-06-TRD.md — EdenTruckInventoryCard (Wave 3; truck + fuel-type + capacity + fill bar; composes EdenStockLevelIndicator; donor trades-flutter truck_inventory_section.dart)
 
+### Objective 006: A4-a — Visual Process Canvas Port from trades-react
+
+**Goal:** Port the trades-react Visual Process Builder (`AOCyber-Trades/trades/client/src/components/customizations/processes/visual-builder/` — 21 files, 3819 LOC) into eden-ui-flutter as a generic, vertical-agnostic, transport-agnostic process-builder primitive. After this objective ships, every Eden Biz vertical (trades, salon, medical, fuel, retail, legal, gov) composes a process builder with the same node grammar (Start / End / Phase / TaskGroup / Task / Decision / Orphan), drag-from-toolbox UX, context-menu editing, swimlane + free-form layout engines, and bidirectional model-to-canvas sync — without re-implementing any of it. EXTENDS the existing `eden_diagram/` sub-suite (process builder is the second consumer; system diagrams was the first). See `objectives/006-a4a-visual-process-canvas/OBJECTIVE.md`. Locked decisions: deep-audit §7 (process builder generic + registry-driven entity types + both swimlane/free-form layouts).
+
+**TRDs:** 15 plans across 5 waves (~4 wk Claude execution)
+
+TRDs:
+- [ ] 006-01-TRD.md — Value types + EdenProcessEntityTypeRegistry + EdenProcessRuntimeComponentRegistry + EdenDiagramPort additive (Wave 1; foundation; parity rows R-1/R-2/E-5/L-5)
+- [ ] 006-02-TRD.md — eden_diagram engine extensions: drop-target hit-test API + customNodeRenderer + multi-handle port honor (Wave 1; parity rows D-1/D-2/E-5)
+- [ ] 006-03-TRD.md — EdenProcessGraphBuilder + EdenProcessController + EdenProcessLayoutEngine abstract + edge style helper (Wave 1; parity rows S-1..S-5/E-1/E-2)
+- [ ] 006-04-TRD.md — EdenProcessStartNode + EdenProcessEndNode + EdenProcessOrphanNode + EdenProcessNodeRenderer.dispatch (Wave 2; parity rows N-1/N-2/N-7)
+- [ ] 006-05-TRD.md — EdenProcessPhaseNode with 8-color palette + expand/collapse + milestone Flag + drop-target ring + inline rename (Wave 2; parity row N-3)
+- [ ] 006-06-TRD.md — EdenProcessTaskGroupNode with inline task list + 4 toggle dots + workflow-hooks Zap + drag-target for split (Wave 2; parity rows N-4/D-6)
+- [ ] 006-07-TRD.md — EdenProcessTaskNode + EdenProcessDecisionNode + graph builder 4-port emission for decisions (Wave 2; parity rows N-5/N-6)
+- [ ] 006-08-TRD.md — EdenSwimlaneLayout real algorithm (replaces TRD 03 stub; donor applySwimLaneLayout port; DEFAULT layout per Mark) (Wave 3; parity row L-1)
+- [ ] 006-09-TRD.md — EdenFreeFormLayout (BFS-rank, no Dagre dep) + EdenGridLayout + EdenLinearLayout (Wave 3; parity rows L-2/L-3)
+- [ ] 006-10-TRD.md — EdenProcessPhaseEditorDialog + TaskGroupEditorDialog + TaskEditorDialog (Wave 4; parity rows X-1/X-2/X-3)
+- [ ] 006-11-TRD.md — EdenNodeContextMenu (with generic action API + submenu) + EdenEdgeContextMenu (Wave 4; parity rows C-1/C-2/C-3/C-4)
+- [ ] 006-12-TRD.md — EdenProcessToolbox with Draggable<EdenProcessDragPayload> + click-fallback + templates section + recommended sort (Wave 4; parity rows T-1/T-2/T-3)
+- [ ] 006-13-TRD.md — EdenProcessValidator + EdenProcessValidationResult (pure-function port of donor validateProcess) (Wave 5; parity rows V-1/V-2)
+- [ ] 006-14-TRD.md — EdenVisualProcessCanvas composite root (composes everything from Waves 1-4) + EdenProcessValidationPanel + EdenDiagram.hitTestEdge additive (Wave 5; parity rows D-3/D-4/D-5/L-4/V-3 wiring)
+- [ ] 006-15-TRD.md — Dev catalog ProcessBuilderScreen + home_screen nav tile + integration smoke test + human-verify side-by-side parity checkpoint vs trades-react (Wave 5; closes objective)
+
 ### Objective 007: B-Trades-A — Field/Companion Pages (cross-vertical)
 
 **Goal:** Ship the 8 cross-vertical companion-mode page composites per `TRADES_REMAP_DEEP_AUDIT_2026-05-15.md` §5 B-trades-A. Full-page compositions (NOT shells) that drop into an `EdenCompanionShell` (objective 002) content slot: inspection-form-with-photos-and-signature, full-screen signature/photo capture flows, GPS clock-in/out with map confirm, full-bleed location map view, truck-load packout checklist, mobile launcher grid, AI FAB + bottom-sheet chat. After this objective ships, downstream `eden-platform-flutter` + any companion-mode vertical app (trades-hvac, medical home-visit, fuel-truck driver, gov caseworker site visits) compose a field-crew companion surface from library primitives. Library remains transport-agnostic (callbacks for camera/GPS/persistence/network/signature acquisition); no new pubspec deps. See `objectives/007-b-trades-a-field-companion/OBJECTIVE.md`.
