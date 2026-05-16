@@ -108,7 +108,27 @@ class _FuelScreenState extends State<FuelScreen> {
             title: 'EdenRouteStopList — Ordered stop sequence',
             child: _RouteStopListDemo(),
           ),
-          // TRD 005-03 will append: Section(title: 'EdenMeterReadingEntry — Reading capture', child: ...).
+          Section(
+            title: 'EdenMeterReadingEntry — Reading capture',
+            child: SizedBox(
+              width: 400,
+              child: EdenMeterReadingEntry(
+                onPhotoPick: () async {
+                  // Demo: small delay simulating a camera capture.
+                  await Future<void>.delayed(
+                      const Duration(milliseconds: 300));
+                  return 'https://via.placeholder.com/240x240.png?text=Tank+photo';
+                },
+                onSubmit: (draft) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                        'Recorded: ${draft.gallons} gal · ${draft.source.name} '
+                        '· operator ${draft.operatorId}'),
+                  ));
+                },
+              ),
+            ),
+          ),
           // TRD 005-04 will append: Section(title: 'EdenHazmatDocViewer — Manifest + MSDS + cert', child: ...).
           // TRD 005-05 will append: Section(title: 'EdenFuelPriceTicker — Real-time price', child: ...).
           // TRD 005-06 will append: Section(title: 'EdenTruckInventoryCard — Per-truck inventory', child: ...).
