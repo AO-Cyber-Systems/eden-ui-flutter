@@ -315,6 +315,7 @@ export 'src/widgets/eden_placeholder_page.dart';
 export 'src/widgets/eden_ai/eden_ai_models.dart';
 export 'src/widgets/eden_ai/eden_insight_card.dart';
 export 'src/widgets/eden_ai/eden_ai_panel.dart';
+export 'src/widgets/eden_ai/eden_ai_collapsible_section.dart';
 
 // Utils
 export 'src/utils/responsive.dart';

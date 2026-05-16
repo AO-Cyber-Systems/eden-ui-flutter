@@ -23,7 +23,13 @@ void main() {
       expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
     });
 
-    testWidgets("defaultExpanded=false: child NOT visible",
+    CrossFadeState crossFadeStateOf(WidgetTester tester) {
+      return tester
+          .widget<AnimatedCrossFade>(find.byType(AnimatedCrossFade))
+          .crossFadeState;
+    }
+
+    testWidgets("defaultExpanded=false: AnimatedCrossFade is showSecond",
         (tester) async {
       await tester.pumpWidget(wrap(
         const EdenAiCollapsibleSection(
@@ -33,9 +39,8 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      // Title still visible, body hidden.
       expect(find.text('X'), findsOneWidget);
-      expect(find.text('hidden').evaluate().isEmpty, isTrue);
+      expect(crossFadeStateOf(tester), CrossFadeState.showSecond);
     });
 
     testWidgets('tapping header collapses an expanded section',
@@ -46,10 +51,10 @@ void main() {
           child: Text('hidden'),
         ),
       ));
-      expect(find.text('hidden'), findsOneWidget);
+      expect(crossFadeStateOf(tester), CrossFadeState.showFirst);
       await tester.tap(find.text('Y'));
       await tester.pumpAndSettle();
-      expect(find.text('hidden').evaluate().isEmpty, isTrue);
+      expect(crossFadeStateOf(tester), CrossFadeState.showSecond);
     });
 
     testWidgets('tapping header expands a collapsed section',
@@ -62,10 +67,10 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
-      expect(find.text('hidden').evaluate().isEmpty, isTrue);
+      expect(crossFadeStateOf(tester), CrossFadeState.showSecond);
       await tester.tap(find.text('Z'));
       await tester.pumpAndSettle();
-      expect(find.text('hidden'), findsOneWidget);
+      expect(crossFadeStateOf(tester), CrossFadeState.showFirst);
     });
 
     testWidgets("icon override replaces auto_awesome",
