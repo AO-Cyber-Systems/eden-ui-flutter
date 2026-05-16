@@ -18,6 +18,8 @@ class _CompanionScreenState extends State<CompanionScreen> {
   double _viewportWidth = 390;
   double _adaptiveDemoWidth = 390;
   bool _forceCompact = false;
+  EdenGpsStatus _gpsStatus = EdenGpsStatus.high;
+  double _gpsAccuracy = 5;
 
   @override
   void initState() {
@@ -72,9 +74,79 @@ class _CompanionScreenState extends State<CompanionScreen> {
               title: 'EdenFieldViewGate demo',
               child: _FieldViewGateDemo(controller: _controller),
             ),
+            const SizedBox(height: EdenSpacing.space4),
+            _Section(
+              title: 'EdenGpsStatusIndicator demo',
+              child: _GpsStatusDemo(
+                status: _gpsStatus,
+                accuracy: _gpsAccuracy,
+                onStatusChanged: (s) => setState(() => _gpsStatus = s),
+                onAccuracyChanged: (a) => setState(() => _gpsAccuracy = a),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _GpsStatusDemo extends StatelessWidget {
+  const _GpsStatusDemo({
+    required this.status,
+    required this.accuracy,
+    required this.onStatusChanged,
+    required this.onAccuracyChanged,
+  });
+
+  final EdenGpsStatus status;
+  final double accuracy;
+  final ValueChanged<EdenGpsStatus> onStatusChanged;
+  final ValueChanged<double> onAccuracyChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text('Status: '),
+            DropdownButton<EdenGpsStatus>(
+              value: status,
+              onChanged: (v) {
+                if (v != null) onStatusChanged(v);
+              },
+              items: [
+                for (final s in EdenGpsStatus.values)
+                  DropdownMenuItem(value: s, child: Text(s.name)),
+              ],
+            ),
+          ],
+        ),
+        Text('Accuracy: ${accuracy.round()} m'),
+        Slider(
+          value: accuracy,
+          min: 0,
+          max: 100,
+          divisions: 100,
+          label: '${accuracy.round()} m',
+          onChanged: onAccuracyChanged,
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        const Text(
+          'Mode-aware: flip the UX toggle above. admin → coords hidden; '
+          'fieldCompanion/askUser → coords visible.',
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenGpsStatusIndicator(
+          status: status,
+          accuracyMeters: status == EdenGpsStatus.unavailable ? null : accuracy,
+          position: status == EdenGpsStatus.unavailable
+              ? null
+              : const EdenLatLng(lat: 40.7128, lng: -74.0060),
+        ),
+      ],
     );
   }
 }
