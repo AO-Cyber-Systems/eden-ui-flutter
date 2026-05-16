@@ -11,7 +11,7 @@ void main() {
     final bar = tester.widget<LinearProgressIndicator>(
       find.byType(LinearProgressIndicator),
     );
-    return bar.valueColor!.value;
+    return bar.valueColor!.value!;
   }
 
   group('EdenStockLevelIndicator', () {

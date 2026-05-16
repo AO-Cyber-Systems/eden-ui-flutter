@@ -302,6 +302,7 @@ export 'src/widgets/eden_companion_shell.dart';
 export 'src/widgets/eden_urgency_badge.dart';
 export 'src/widgets/eden_pipeline_badge.dart';
 export 'src/widgets/eden_approval_status_badge.dart';
+export 'src/widgets/eden_stock_level_indicator.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
