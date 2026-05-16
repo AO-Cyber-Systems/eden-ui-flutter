@@ -53,6 +53,9 @@ class SchedulerToolbar extends StatelessWidget {
       case EdenSchedulerView.month:
         return '${_months[focusedDate.month - 1]} ${focusedDate.year}';
       case EdenSchedulerView.week:
+      case EdenSchedulerView.workWeek:
+      case EdenSchedulerView.list:
+      case EdenSchedulerView.swimlane:
         final start = focusedDate
             .subtract(Duration(days: focusedDate.weekday - 1));
         final end = start.add(const Duration(days: 6));
@@ -61,6 +64,7 @@ class SchedulerToolbar extends StatelessWidget {
         }
         return '${_months[start.month - 1]} ${start.day} – ${_months[end.month - 1]} ${end.day}, ${end.year}';
       case EdenSchedulerView.day:
+      case EdenSchedulerView.mobile:
         return '${_shortDays[focusedDate.weekday - 1]}, ${_months[focusedDate.month - 1]} ${focusedDate.day}, ${focusedDate.year}';
     }
   }
@@ -182,7 +186,11 @@ class ViewToggle extends StatelessWidget {
           final label = switch (v) {
             EdenSchedulerView.month => 'Month',
             EdenSchedulerView.week => 'Week',
+            EdenSchedulerView.workWeek => 'Work Week',
             EdenSchedulerView.day => 'Day',
+            EdenSchedulerView.list => 'List',
+            EdenSchedulerView.mobile => 'Mobile',
+            EdenSchedulerView.swimlane => 'Swimlane',
           };
           return Semantics(
             button: true,

@@ -2,63 +2,17 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'scheduler/scheduler_controller.dart';
+import 'scheduler/scheduler_models.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
 import 'scheduler/scheduler_week_day_views.dart';
 
-// ---------------------------------------------------------------------------
-// Enums & data models
-// ---------------------------------------------------------------------------
-
-/// The view mode for [EdenScheduler].
-enum EdenSchedulerView {
-  /// Monthly calendar grid with event dot indicators.
-  month,
-
-  /// Seven-column time grid with event blocks.
-  week,
-
-  /// Single-column time grid with event blocks.
-  day,
-}
-
-/// An event displayed in the [EdenScheduler].
-class EdenSchedulerEvent {
-  /// Creates a scheduler event.
-  const EdenSchedulerEvent({
-    required this.id,
-    required this.title,
-    required this.start,
-    required this.end,
-    this.color,
-    this.description,
-    this.assignee,
-  });
-
-  /// Unique identifier.
-  final String id;
-
-  /// Short title displayed on the event block.
-  final String title;
-
-  /// Start date and time.
-  final DateTime start;
-
-  /// End date and time.
-  final DateTime end;
-
-  /// Accent color for the event block. Falls back to theme primary.
-  final Color? color;
-
-  /// Optional longer description shown in day view.
-  final String? description;
-
-  /// Optional assignee name used for filtering.
-  final String? assignee;
-
-  /// Duration in minutes.
-  int get durationMinutes => end.difference(start).inMinutes;
-}
+// Re-export the new data models / controller so consumers continue to import
+// `package:eden_ui_flutter/eden_ui.dart` and see `EdenSchedulerEvent`,
+// `EdenSchedulerView`, etc. unchanged.
+export 'scheduler/scheduler_models.dart';
+export 'scheduler/scheduler_controller.dart';
 
 /// Configuration for [EdenScheduler] business hours and slot sizing.
 class EdenSchedulerConfig {
@@ -222,9 +176,13 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           );
           break;
         case EdenSchedulerView.week:
+        case EdenSchedulerView.workWeek:
+        case EdenSchedulerView.list:
+        case EdenSchedulerView.swimlane:
           _focusedDate = _focusedDate.add(Duration(days: 7 * delta));
           break;
         case EdenSchedulerView.day:
+        case EdenSchedulerView.mobile:
           _focusedDate = _focusedDate.add(Duration(days: delta));
           break;
       }
@@ -326,6 +284,7 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           onTimeSlotTap: widget.onTimeSlotTap,
         );
       case EdenSchedulerView.day:
+      case EdenSchedulerView.mobile:
         return DayView(
           focusedDate: _focusedDate,
           today: _today,
@@ -334,6 +293,24 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           isDark: isDark,
           theme: theme,
           scrollController: _scrollController,
+          onEventTap: widget.onEventTap,
+          onTimeSlotTap: widget.onTimeSlotTap,
+        );
+      case EdenSchedulerView.workWeek:
+      case EdenSchedulerView.list:
+      case EdenSchedulerView.swimlane:
+        // Wave 2/3 will replace these with dedicated views. For now, fall
+        // through to the existing WeekView so the new variants render
+        // something rather than crashing back-compat consumers that opt in.
+        return WeekView(
+          focusedDate: _focusedDate,
+          today: _today,
+          events: _filteredEvents,
+          config: widget.config,
+          isDark: isDark,
+          theme: theme,
+          scrollController: _scrollController,
+          onDateSelected: widget.onDateSelected,
           onEventTap: widget.onEventTap,
           onTimeSlotTap: widget.onTimeSlotTap,
         );

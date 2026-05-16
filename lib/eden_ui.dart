@@ -322,5 +322,9 @@ export 'src/widgets/eden_ai/eden_chat_message_bubble.dart';
 export 'src/widgets/eden_ai/eden_agent_chat.dart';
 export 'src/widgets/eden_ai/eden_ai_insight_slot.dart';
 
+// Objective 004 — EdenScheduler Enhancement
+export 'src/widgets/scheduler/scheduler_models.dart';
+export 'src/widgets/scheduler/scheduler_controller.dart';
+
 // Utils
 export 'src/utils/responsive.dart';

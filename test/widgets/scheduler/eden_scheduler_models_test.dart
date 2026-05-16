@@ -9,7 +9,7 @@ import '_fixtures/eden_scheduler_models_fixtures.dart';
 void main() {
   group('EdenSchedulerEvent — back-compat invariant', () {
     test('zero-extra-fields constructor compiles + exposes legacy fields', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e1',
         title: 'T',
         start: _start,
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('legacy 6-named-param constructor still compiles', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e2',
         title: 'T2',
         start: _start,
@@ -55,7 +55,7 @@ void main() {
 
   group('EdenSchedulerEvent — new fields', () {
     test('status exposed', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -66,7 +66,7 @@ void main() {
     });
 
     test('type exposed', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -77,7 +77,7 @@ void main() {
     });
 
     test('resourceIds exposed', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -88,12 +88,12 @@ void main() {
     });
 
     test('location exposed (composite type)', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
         end: _end,
-        location: EdenSchedulerLocation(name: 'Site A', address: '123 Main St'),
+        location: const EdenSchedulerLocation(name: 'Site A', address: '123 Main St'),
       );
       expect(e.location, isNotNull);
       expect(e.location!.name, 'Site A');
@@ -103,7 +103,7 @@ void main() {
     });
 
     test('dispatchIssue exposed', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -114,7 +114,7 @@ void main() {
     });
 
     test('allDay defaults false; can be set true', () {
-      const noAllDay = EdenSchedulerEvent(
+      final noAllDay = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -122,7 +122,7 @@ void main() {
       );
       expect(noAllDay.allDay, isFalse);
 
-      const allDay = EdenSchedulerEvent(
+      final allDay = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -146,7 +146,7 @@ void main() {
     });
 
     test('readiness exposed', () {
-      const e = EdenSchedulerEvent(
+      final e = EdenSchedulerEvent(
         id: 'e',
         title: 'T',
         start: _start,
@@ -305,5 +305,5 @@ void main() {
   });
 }
 
-const DateTime _start = DateTime(2026, 5, 16, 9, 0);
-const DateTime _end = DateTime(2026, 5, 16, 10, 0);
+final DateTime _start = DateTime(2026, 5, 16, 9, 0);
+final DateTime _end = DateTime(2026, 5, 16, 10, 0);
