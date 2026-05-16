@@ -62,9 +62,42 @@ class _CompanionScreenState extends State<CompanionScreen> {
                 onForceCompactChanged: (v) => setState(() => _forceCompact = v),
               ),
             ),
+            const SizedBox(height: EdenSpacing.space4),
+            _Section(
+              title: 'EdenUxModeToggle demo',
+              child: _UxModeToggleDemo(controller: _controller),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _UxModeToggleDemo extends StatelessWidget {
+  const _UxModeToggleDemo({required this.controller});
+  final EdenAppModeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Active mode: ${controller.currentMode.name}'),
+            const SizedBox(height: EdenSpacing.space3),
+            const Text('Compact (icon-only):'),
+            const SizedBox(height: EdenSpacing.space2),
+            EdenUxModeToggle.compact(controller: controller),
+            const SizedBox(height: EdenSpacing.space3),
+            const Text('Labeled (icon + text):'),
+            const SizedBox(height: EdenSpacing.space2),
+            EdenUxModeToggle.labeled(controller: controller),
+          ],
+        );
+      },
     );
   }
 }
