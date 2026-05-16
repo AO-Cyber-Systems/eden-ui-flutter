@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../tokens/colors.dart';
+import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_scheduler.dart';
+import 'scheduler_models.dart';
 
 // ---------------------------------------------------------------------------
-// Month view
+// Month view — calendar grid with event chip overflow + bottom-sheet drilldown
 // ---------------------------------------------------------------------------
 
-class MonthView extends StatelessWidget {
-  const MonthView({
+/// Calendar month grid for [EdenScheduler]. Renders a 6-row × 7-column grid of
+/// day cells with event chip / dot indicators. Per-cell overflow shows a
+/// `+N more` affordance that opens a Material modal bottom sheet listing all
+/// events on that day.
+///
+/// Mirrors donor month view (parity row V-4) with light event-chip color
+/// rendering (TG-6 light variant). The now-indicator does NOT render in month
+/// view — month is date-precision, not time-precision.
+class EdenSchedulerMonthView extends StatelessWidget {
+  const EdenSchedulerMonthView({
     super.key,
     required this.focusedDate,
     required this.today,
@@ -18,6 +28,7 @@ class MonthView extends StatelessWidget {
     required this.theme,
     required this.onDateSelected,
     this.onEventTap,
+    this.maxEventsPerCell = 3,
   });
 
   final DateTime focusedDate;
@@ -28,6 +39,10 @@ class MonthView extends StatelessWidget {
   final ValueChanged<DateTime> onDateSelected;
   final ValueChanged<EdenSchedulerEvent>? onEventTap;
 
+  /// Maximum number of event chips visible per cell. When exceeded the
+  /// `+N more` overflow affordance is shown. Default 3.
+  final int maxEventsPerCell;
+
   static const _dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
@@ -35,8 +50,6 @@ class MonthView extends StatelessWidget {
     final firstOfMonth = DateTime(focusedDate.year, focusedDate.month, 1);
     final daysInMonth =
         DateTime(focusedDate.year, focusedDate.month + 1, 0).day;
-
-    // Monday = 1, Sunday = 7
     final startWeekday = firstOfMonth.weekday; // 1-based, Mon=1
     final leadingBlanks = startWeekday - 1;
     final totalCells = leadingBlanks + daysInMonth;
@@ -54,7 +67,7 @@ class MonthView extends StatelessWidget {
 
     return Column(
       children: [
-        // Day-of-week headers
+        // Day-of-week headers.
         Container(
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: borderColor)),
@@ -63,7 +76,9 @@ class MonthView extends StatelessWidget {
             children: _dayLabels.map((d) {
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space2),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: EdenSpacing.space2,
+                  ),
                   child: Text(
                     d,
                     textAlign: TextAlign.center,
@@ -78,7 +93,7 @@ class MonthView extends StatelessWidget {
             }).toList(),
           ),
         ),
-        // Grid
+        // Grid.
         Expanded(
           child: Column(
             children: List.generate(rowCount, (row) {
@@ -94,18 +109,19 @@ class MonthView extends StatelessWidget {
                     children: List.generate(7, (col) {
                       final cellIndex = row * 7 + col;
                       final dayNum = cellIndex - leadingBlanks + 1;
-                      final isValid =
-                          dayNum >= 1 && dayNum <= daysInMonth;
+                      final isValid = dayNum >= 1 && dayNum <= daysInMonth;
 
                       if (!isValid) {
+                        // Render Apr/Jun outside-of-month days as muted.
                         return Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: col < 6
-                                  ? Border(
-                                      right: BorderSide(color: borderColor))
-                                  : null,
-                            ),
+                          child: _OutsideMonthCell(
+                            cellIndex: cellIndex,
+                            leadingBlanks: leadingBlanks,
+                            daysInMonth: daysInMonth,
+                            focusedDate: focusedDate,
+                            borderColor: borderColor,
+                            showRightBorder: col < 6,
+                            theme: theme,
                           ),
                         );
                       }
@@ -118,12 +134,14 @@ class MonthView extends StatelessWidget {
                           eventsByDate[_dateKey(cellDate)] ?? const [];
 
                       return Expanded(
-                        child: MonthDayCell(
+                        child: _MonthDayCell(
                           date: cellDate,
                           dayNum: dayNum,
                           isToday: isToday,
                           isFocused: isFocused,
+                          isMuted: false,
                           events: dayEvents,
+                          maxEventsPerCell: maxEventsPerCell,
                           isDark: isDark,
                           theme: theme,
                           showRightBorder: col < 6,
@@ -143,17 +161,72 @@ class MonthView extends StatelessWidget {
     );
   }
 
-  int _dateKey(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
+  static int _dateKey(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
 }
 
-class MonthDayCell extends StatelessWidget {
-  const MonthDayCell({
-    super.key,
+/// Back-compat typedef so existing `MonthView` imports keep compiling.
+@Deprecated('Use EdenSchedulerMonthView')
+typedef MonthView = EdenSchedulerMonthView;
+
+class _OutsideMonthCell extends StatelessWidget {
+  const _OutsideMonthCell({
+    required this.cellIndex,
+    required this.leadingBlanks,
+    required this.daysInMonth,
+    required this.focusedDate,
+    required this.borderColor,
+    required this.showRightBorder,
+    required this.theme,
+  });
+
+  final int cellIndex;
+  final int leadingBlanks;
+  final int daysInMonth;
+  final DateTime focusedDate;
+  final Color borderColor;
+  final bool showRightBorder;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    // Compute the date that falls outside the focused month.
+    final dayNum = cellIndex - leadingBlanks + 1;
+    DateTime cellDate;
+    if (dayNum < 1) {
+      final prev = DateTime(focusedDate.year, focusedDate.month, 0);
+      cellDate = DateTime(prev.year, prev.month, prev.day + dayNum);
+    } else {
+      cellDate = DateTime(focusedDate.year, focusedDate.month + 1,
+          dayNum - daysInMonth);
+    }
+    return Container(
+      decoration: BoxDecoration(
+        border: showRightBorder
+            ? Border(right: BorderSide(color: borderColor))
+            : null,
+      ),
+      padding: const EdgeInsets.all(EdenSpacing.space1),
+      alignment: Alignment.topCenter,
+      child: Text(
+        '${cellDate.day}',
+        style: TextStyle(
+          fontSize: 12,
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+        ),
+      ),
+    );
+  }
+}
+
+class _MonthDayCell extends StatelessWidget {
+  const _MonthDayCell({
     required this.date,
     required this.dayNum,
     required this.isToday,
     required this.isFocused,
+    required this.isMuted,
     required this.events,
+    required this.maxEventsPerCell,
     required this.isDark,
     required this.theme,
     required this.showRightBorder,
@@ -166,7 +239,9 @@ class MonthDayCell extends StatelessWidget {
   final int dayNum;
   final bool isToday;
   final bool isFocused;
+  final bool isMuted;
   final List<EdenSchedulerEvent> events;
+  final int maxEventsPerCell;
   final bool isDark;
   final ThemeData theme;
   final bool showRightBorder;
@@ -180,86 +255,211 @@ class MonthDayCell extends StatelessWidget {
         ? theme.colorScheme.primary.withAlpha(30)
         : theme.colorScheme.primary.withAlpha(20);
 
-    return Semantics(
-      button: true,
-      label: 'Select ${date.month}/${date.day}/${date.year}',
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          decoration: BoxDecoration(
-          color: isFocused ? focusBg : null,
-          border: showRightBorder
-              ? Border(right: BorderSide(color: borderColor))
-              : null,
-        ),
-        padding: const EdgeInsets.all(EdenSpacing.space1),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Day number
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: isToday
-                  ? BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                    )
-                  : null,
-              child: Text(
-                '$dayNum',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight:
-                      isToday || isFocused ? FontWeight.w700 : FontWeight.w400,
-                  color: isToday
-                      ? Colors.white
-                      : theme.colorScheme.onSurface,
-                ),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final cellWidth = c.maxWidth;
+        final useDots = cellWidth < 80;
+        final useShortCount = cellWidth < 60;
+        // Limit the number of titled chips at narrow widths to keep cells
+        // legible; switch to colored dots when really narrow.
+        final cap = useDots ? 6 : maxEventsPerCell;
+        final visible = events.take(cap).toList();
+        final overflow = events.length - visible.length;
+
+        return Semantics(
+          button: true,
+          label: 'Select ${date.month}/${date.day}/${date.year}',
+          child: GestureDetector(
+            onTap: onTap,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              decoration: BoxDecoration(
+                color: isFocused ? focusBg : null,
+                border: showRightBorder
+                    ? Border(right: BorderSide(color: borderColor))
+                    : null,
               ),
-            ),
-            const SizedBox(height: EdenSpacing.space1),
-            // Event dots
-            if (events.isNotEmpty)
-              Wrap(
-                spacing: 3,
-                runSpacing: 3,
-                alignment: WrapAlignment.center,
-                children: events.take(5).map((e) {
-                  return Semantics(
-                    button: onEventTap != null,
-                    label: 'Event: ${e.title}',
-                    child: GestureDetector(
-                      onTap: onEventTap != null ? () => onEventTap!(e) : null,
-                      child: Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: e.color ?? theme.colorScheme.primary,
-                          shape: BoxShape.circle,
+              padding: const EdgeInsets.all(EdenSpacing.space1),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Day number.
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: isToday
+                          ? BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              shape: BoxShape.circle,
+                            )
+                          : null,
+                      child: Text(
+                        '$dayNum',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isToday || isFocused
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isToday
+                              ? Colors.white
+                              : isMuted
+                                  ? theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.45)
+                                  : theme.colorScheme.onSurface,
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-            if (events.length > 5)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  '+${events.length - 5}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: theme.colorScheme.onSurfaceVariant,
                   ),
+                  const SizedBox(height: 2),
+                  // Event indicators.
+                  if (visible.isNotEmpty)
+                    useDots
+                        ? Wrap(
+                            spacing: 3,
+                            runSpacing: 3,
+                            alignment: WrapAlignment.center,
+                            children: visible.map((e) {
+                              return Semantics(
+                                button: onEventTap != null,
+                                label: 'Event: ${e.title}',
+                                child: GestureDetector(
+                                  onTap: onEventTap != null
+                                      ? () => onEventTap!(e)
+                                      : null,
+                                  child: Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: e.color ??
+                                          theme.colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: visible.map((e) {
+                              final color =
+                                  e.color ?? theme.colorScheme.primary;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: GestureDetector(
+                                  onTap: onEventTap != null
+                                      ? () => onEventTap!(e)
+                                      : null,
+                                  child: Container(
+                                    height: 16,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
+                                    alignment: Alignment.centerLeft,
+                                    decoration: BoxDecoration(
+                                      color: color.withValues(alpha: 0.18),
+                                      borderRadius: EdenRadii.borderRadiusSm,
+                                      border: Border(
+                                        left: BorderSide(color: color, width: 2),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      e.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        color: color,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  if (overflow > 0)
+                    Semantics(
+                      button: true,
+                      label: '$overflow more events',
+                      child: GestureDetector(
+                        onTap: () => _openOverflowSheet(context),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            useShortCount ? '+$overflow' : '+$overflow more',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openOverflowSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(EdenSpacing.space4),
+                child: Text(
+                  'Events on ${date.month}/${date.day}/${date.year}',
+                  style: theme.textTheme.titleMedium,
                 ),
               ),
-          ],
-        ),
-      ),
-      ),
+              const Divider(height: 1),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: events.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (_, i) {
+                    final e = events[i];
+                    final color = e.color ?? theme.colorScheme.primary;
+                    return ListTile(
+                      leading: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      title: Text(e.title),
+                      subtitle: e.description != null
+                          ? Text(e.description!)
+                          : null,
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        onEventTap?.call(e);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

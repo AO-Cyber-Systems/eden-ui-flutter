@@ -280,7 +280,7 @@ class _EdenSchedulerState extends State<EdenScheduler> {
   Widget _buildBody(ThemeData theme, bool isDark) {
     switch (_view) {
       case EdenSchedulerView.month:
-        return MonthView(
+        return EdenSchedulerMonthView(
           focusedDate: _focusedDate,
           today: _today,
           events: _filteredEvents,
