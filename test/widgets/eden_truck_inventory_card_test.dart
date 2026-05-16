@@ -148,4 +148,86 @@ void main() {
       expect(find.text('Overfull'), findsNothing);
     });
   });
+
+  // -----------------------------------------------------------------
+  // Task 2 — onTap + responsive layout + iPhone-narrow
+  // -----------------------------------------------------------------
+  group('EdenTruckInventoryCard onTap', () {
+    testWidgets(
+        'onTap supplied → keyed outer InkWell present + tap fires',
+        (tester) async {
+      var tapped = false;
+      await tester.pumpWidget(wrap(
+        EdenTruckInventoryCard(
+          data: EdenTruckInventoryCardFixtures.normal,
+          onTap: () => tapped = true,
+        ),
+      ));
+      final inkWell =
+          find.byKey(const ValueKey('eden-truck-inventory-card-tap'));
+      expect(inkWell, findsOneWidget);
+      await tester.tap(inkWell);
+      await tester.pump();
+      expect(tapped, isTrue);
+    });
+
+    testWidgets(
+        'no onTap → no keyed outer InkWell (Chip InkWell is allowed)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTruckInventoryCard(
+            data: EdenTruckInventoryCardFixtures.normal),
+      ));
+      expect(
+        find.byKey(const ValueKey('eden-truck-inventory-card-tap')),
+        findsNothing,
+      );
+    });
+  });
+
+  group('EdenTruckInventoryCard responsive layout', () {
+    testWidgets('width 300 → vertical layout (icon above percent)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTruckInventoryCard(
+            data: EdenTruckInventoryCardFixtures.normal),
+        width: 300,
+        height: 400,
+      ));
+      final iconPos =
+          tester.getCenter(find.byIcon(Icons.local_shipping_outlined));
+      final percentPos = tester.getCenter(find.text('320/500 gal  •  64%'));
+      expect(iconPos.dy, lessThan(percentPos.dy),
+          reason: 'narrow → icon stacked above percent');
+    });
+
+    testWidgets('width 600 → horizontal layout (icon left of percent)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTruckInventoryCard(
+            data: EdenTruckInventoryCardFixtures.normal),
+        width: 600,
+        height: 200,
+      ));
+      final iconPos =
+          tester.getCenter(find.byIcon(Icons.local_shipping_outlined));
+      final percentPos = tester.getCenter(find.text('320/500 gal  •  64%'));
+      expect(iconPos.dx, lessThan(percentPos.dx),
+          reason: 'wide → icon left of percent');
+      expect((iconPos.dy - percentPos.dy).abs(), lessThan(60),
+          reason: 'wide → icon + percent roughly aligned vertically');
+    });
+  });
+
+  group('EdenTruckInventoryCard iPhone-narrow safety', () {
+    testWidgets('390pt + longLabels — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenTruckInventoryCard(
+            data: EdenTruckInventoryCardFixtures.longLabels),
+        width: 390,
+        height: 250,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
