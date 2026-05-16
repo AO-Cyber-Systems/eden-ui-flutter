@@ -298,5 +298,8 @@ export 'src/widgets/eden_field_view_gate.dart';
 export 'src/widgets/eden_gps_status_indicator.dart';
 export 'src/widgets/eden_companion_shell.dart';
 
+// Phase 1 — Status & state primitives (objective 003)
+export 'src/widgets/eden_urgency_badge.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
