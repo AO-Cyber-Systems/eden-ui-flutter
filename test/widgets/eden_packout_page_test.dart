@@ -187,7 +187,7 @@ void main() {
   });
 
   group('EdenPackoutPage — summary count with pending edit', () {
-    testWidgets('pending edit influences "$total units used"',
+    testWidgets('pending edit influences total units used',
         (tester) async {
       await pumpAtDefault(
           tester,

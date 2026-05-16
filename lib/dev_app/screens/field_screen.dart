@@ -29,7 +29,9 @@ class FieldScreen extends StatelessWidget {
           // Wave 3 — Capture-flow pages
           _SignatureCapturePageDemo(),
           _PhotoCapturePageDemo(),
-          // (TRD 007-01/03 will append form-flow page demos here)
+          // Wave 4 — Form-flow pages
+          _PackoutPageDemo(),
+          // (TRD 007-01 will append _InspectionFormPageDemo here)
         ],
       ),
     );
@@ -161,6 +163,48 @@ class _LocationMapPageDemo extends StatelessWidget {
           ),
           onRefresh: () {},
           appBarTitle: 'Active Technicians',
+        ),
+      ),
+    );
+  }
+}
+
+class _PackoutPageDemo extends StatelessWidget {
+  const _PackoutPageDemo();
+  @override
+  Widget build(BuildContext context) {
+    return Section(
+      title: 'EdenPackoutPage',
+      child: SizedBox(
+        height: 600,
+        child: EdenPackoutPage(
+          appBarTitle: 'Packout / Materials',
+          appointmentTitle: 'HVAC Repair — Johnson',
+          items: const [
+            EdenPackoutItem(
+              id: 'demo-pi-1',
+              itemName: '3/4" copper pipe',
+              sku: 'CU-075',
+              quantityLoaded: 50,
+              quantityUsed: 12,
+              quantityReturned: 0,
+              unit: 'ft',
+            ),
+            EdenPackoutItem(
+              id: 'demo-pi-2',
+              itemName: 'R410A refrigerant',
+              sku: 'R410A-1lb',
+              quantityLoaded: 4,
+              quantityUsed: 2,
+              quantityReturned: 2,
+              unit: 'lb',
+            ),
+          ],
+          onSaveItem: (item, edit) async => item.copyWith(
+            quantityUsed: edit.used,
+            quantityReturned: edit.returned,
+            notes: edit.notes,
+          ),
         ),
       ),
     );

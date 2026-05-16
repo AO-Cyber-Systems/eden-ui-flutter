@@ -367,7 +367,11 @@ export 'src/widgets/eden_mobile_ai_chat_sheet.dart';
 export 'src/widgets/eden_check_in_page.dart';
 export 'src/widgets/eden_location_map_page.dart';
 export 'src/widgets/eden_signature_capture_page.dart';
+
+// ─────────── Objective 006 — Process canvas Wave 1 ───────────
+export 'src/widgets/eden_process_canvas/eden_process_canvas_exports.dart';
 export 'src/widgets/eden_photo_capture_page.dart';
+export 'src/widgets/eden_packout_page.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
