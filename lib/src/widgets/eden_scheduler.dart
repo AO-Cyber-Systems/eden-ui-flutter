@@ -7,6 +7,7 @@ import 'scheduler/scheduler_day_view.dart';
 import 'scheduler/scheduler_models.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
+import 'scheduler/scheduler_week_view.dart';
 import 'scheduler/scheduler_week_day_views.dart';
 
 // Re-export the new data models / controller so consumers continue to import
@@ -292,13 +293,11 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           onEventTap: widget.onEventTap,
         );
       case EdenSchedulerView.week:
-        return WeekView(
+        return EdenSchedulerWeekView(
           focusedDate: _focusedDate,
-          today: _today,
           events: _filteredEvents,
+          mode: EdenSchedulerWeekMode.week,
           config: widget.config,
-          isDark: isDark,
-          theme: theme,
           scrollController: _scrollController,
           onDateSelected: widget.onDateSelected,
           onEventTap: widget.onEventTap,
@@ -315,18 +314,25 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           onTimeSlotTap: widget.onTimeSlotTap,
         );
       case EdenSchedulerView.workWeek:
+        return EdenSchedulerWeekView(
+          focusedDate: _focusedDate,
+          events: _filteredEvents,
+          mode: EdenSchedulerWeekMode.workWeek,
+          config: widget.config,
+          scrollController: _scrollController,
+          onDateSelected: widget.onDateSelected,
+          onEventTap: widget.onEventTap,
+          onTimeSlotTap: widget.onTimeSlotTap,
+        );
       case EdenSchedulerView.list:
       case EdenSchedulerView.swimlane:
-        // Wave 2/3 will replace these with dedicated views. For now, fall
-        // through to the existing WeekView so the new variants render
-        // something rather than crashing back-compat consumers that opt in.
-        return WeekView(
+        // TRD 07 (list) + TRD 09 (swimlane) replace this. For now, render
+        // the full week view so the variants don't crash.
+        return EdenSchedulerWeekView(
           focusedDate: _focusedDate,
-          today: _today,
           events: _filteredEvents,
+          mode: EdenSchedulerWeekMode.week,
           config: widget.config,
-          isDark: isDark,
-          theme: theme,
           scrollController: _scrollController,
           onDateSelected: widget.onDateSelected,
           onEventTap: widget.onEventTap,

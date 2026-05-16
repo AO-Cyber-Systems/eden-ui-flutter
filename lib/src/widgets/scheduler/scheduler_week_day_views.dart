@@ -8,7 +8,10 @@ import '../../tokens/spacing.dart';
 import '../eden_scheduler.dart';
 
 // ---------------------------------------------------------------------------
-// Week view
+// LEGACY: WeekView (deprecated — use `EdenSchedulerWeekView`).
+// Kept as a thin shim around the new widget so any consumer that imported
+// `WeekView` directly continues to compile. Will be removed in a future
+// objective.
 // ---------------------------------------------------------------------------
 
 class WeekView extends StatelessWidget {
