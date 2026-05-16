@@ -275,18 +275,44 @@ App Store listings (planned, v1):
   routes the user couldn't reach anyway (route allowlist + permission
   filter both apply).
 
-### Customer portal
+### Customer portal — REVISED 2026-05-15 (reconciliation with Q C lock)
+
+**Locked decision (user, 2026-05-15):** Customer portal uses **SAME AOID issuer**
+as the staff app, distinguished by JWT **scope claim**, NOT a separate
+`eden-portal-go` issuer. Aligns with `eden-platform-go` PR #19 (merged 2026-05-15)
+which added `Scopes` claim to platform/auth.
+
+- **JWT issuer:** AOID (single issuer; same `eden-platform-go cmd/aoid/` that
+  ships staff tokens).
+- **Scope split:** staff tokens have `scope: staff.*` (e.g., `staff.appointments.read`,
+  `staff.invoices.write`); customer tokens have `scope: portal.*` (e.g.,
+  `portal.invoice.read`, `portal.quote.approve`).
+- **Claim payload:** `tenant_id` always present. Staff tokens carry `user_id`;
+  customer tokens carry `customer_id`. The `aud` claim distinguishes
+  (`staff` vs `portal`).
+- **Backend enforcement:** routes gate on scope + aud. Customer tokens CANNOT
+  reach staff routes; staff tokens CANNOT reach portal-specific endpoints.
+- **Customer auth flow:** email + password OR magic-link OR OAuth/OIDC.
+  Per-tenant SSO config possible later (a tenant federates customer identity
+  from their own IdP). AOID handles all of these via standard OIDC flows.
+- **Library impact:** `EdenLoginPage` already exists; customer portal binary
+  uses its `branding:` prop to render tenant logo via `EdenAuthenticatedImage`
+  (Wave A) + tenant-colored theme. **No separate auth library needed.**
+
+**App-binary boundary preserved.** The customer portal still ships as a
+**separate Flutter build target of `eden-biz-flutter`** (its own bundle ID,
+its own app-store listing — see §3) — but with the same AOID auth backend.
+This is the cleanest of both worlds: one auth surface to maintain, separate
+front-ends to ship.
+
+### Customer portal (legacy text, now superseded — kept for historical context)
+
+The text below predates the 2026-05-15 reconciliation and proposed a separate
+`eden-portal-go` issuer. **Superseded by the locked decision above.**
 
 - JWT issuer: SEPARATE — `eden-portal-go` (TBD, see Q5 of patterns doc).
-- Claims include: `tenant_id`, `customer_id` (NOT `user_id`), portal-
-  specific scopes (`portal:read_billing`, `portal:approve_quote`, etc.).
-- Customer JWTs CANNOT access staff endpoints. Backend enforces.
-- Customer auth flow: email + password OR magic-link OR OAuth/OIDC.
-- Per-tenant SSO config possible later (a tenant federates customer
-  identity from their own IdP).
-- Library impact: `EdenLoginPage` already exists; customer portal binary
-  uses its `branding:` prop to render tenant logo via
-  `EdenAuthenticatedImage` (Wave A) + tenant-colored theme.
+- ~~Claims include: `tenant_id`, `customer_id` (NOT `user_id`), portal-
+  specific scopes~~ — superseded; now scope split on AOID.
 
 ### Token storage
 

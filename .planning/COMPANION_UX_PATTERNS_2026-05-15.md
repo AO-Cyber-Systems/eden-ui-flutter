@@ -30,6 +30,51 @@ status: read-only research; library is the composition palette
 
 ---
 
+## 0. Decisions locked through user discussion (2026-05-15)
+
+Six architectural decisions locked with Mark in the inline Q/A session that
+followed this doc's generation. These take precedence over any earlier
+recommendation in the body text where they conflict.
+
+| # | Decision | Locked rationale |
+|---|---|---|
+| **A — Mode discrimination** | **Hybrid**: screen-size auto-detect + JWT-claim override + always-on user toggle escape hatch. Default companion at `<600pt` logical width; JWT `app_mode` claim wins when present; toggle widget always visible. | Matches "simple on-the-go" UX target without locking out admins on a phone. Reuses trades-react's validated `UXModeToggle` semantics. |
+| **B — Vertical-flavor strategy** | **One companion mode + per-vertical route registry**, BUT vertical variability happens at the **page level**, NOT in the shell or nav structure. | Shell + nav predictability across verticals (good for cross-vertical employees, simpler dev). Page CONTENT can be radically different per vertical (`TradesFieldDispatchPage` ≠ `SalonStylistAppointmentsPage`). Trade-off: consistent shell, vertical-flavored pages. |
+| **C — Customer portal auth** | **Same AOID issuer + scope claim split** (`scope: staff.*` vs `scope: portal.*`). Customer portal is a **separate Flutter build target** of `eden-biz-flutter`, NOT a separate auth issuer. | Aligns with `eden-platform-go` PR #19 (merged 2026-05-15) which added `Scopes` claim to platform/auth. One auth surface to maintain; separate front-ends to ship. **Supersedes** the agent's "separate eden-portal-go issuer" recommendation. |
+| **D — Offline expectations** | **Three different postures**: admin online-tolerant (optimistic UI + retry); employee companion offline-critical (write queue + reconcile via `EdenOfflineQueueViewer`); customer portal mostly-online with cached read-only fallback on disconnect via `EdenNetworkStatusBar`. | Matches 2026 user expectations: ServiceTitan/Housecall/Jobber set offline-first as field-service baseline; office expects optimistic + retry; customers expect online with clear status. |
+| **E — Responsive strategy** | **Three Material 3 tiers locked**: Compact `<600pt`, Medium `600-840pt`, Expanded `≥840pt`. Use `LayoutBuilder.constraints.maxWidth` (logical pt, NOT raw pixels). **Companion mode pins to Compact at ALL widths** — a field user on a 12.9" iPad still wants thumb-reach bottom-nav. | Supersedes the five-breakpoint table in §3 of this doc — see Mark's pixel-resizing pain context. Three breakpoints, three rules: logical pt > raw pixel; mode trumps size for companion; M3 tier names not custom. |
+| **F — Customer portal v1 scope** | **Vertical-specific minimum for v1**: pay invoice + see status + message, plus per-vertical minimum (salon = book; trades = approve quote; fuel = see tank + delivery; medical = intake + co-pay; gov = submit + see case). **v3 roadmap = deep market-parity** (MangoMint-equivalent for salon, ServiceTitan-equivalent for trades, etc.). | Ship narrow, validate, expand. v1 ships in 4-6 wk per vertical; v3 takes 6-12 mo per vertical to reach competitive depth. |
+
+### B clarification — what "page-level vertical flavor" means in practice
+
+The companion shell + nav structure is **consistent across verticals**:
+
+| Layer | Cross-vertical? | Example |
+|---|---|---|
+| Shell (`EdenRoleDashboardShell`) | ✓ Same widget tree | Companion home shell with section slots |
+| Nav structure (5-tab bottom-nav, FAB, quick-access grid) | ✓ Same template | Same nav shape regardless of vertical |
+| Tile content (what each tab opens) | Per-vertical | "Today's appointments" → salon: appointments list; trades: jobs list; fuel: route stops |
+| Page content (the actual screens) | Per-vertical | `TradesFieldDispatchPage` ≠ `SalonStylistAppointmentsPage` ≠ `FuelDriverRoutePage` |
+
+Per-vertical route registry decides which slots populate; the slot CONTENT widget
+is per-vertical. This gives verticals radical page UX freedom while preserving
+shell + nav predictability.
+
+### E clarification — three rules to avoid past pixel-resizing pain
+
+1. **Use `LayoutBuilder.constraints.maxWidth` (logical pt), not `MediaQuery.size.width` (raw pixel).** Logical pt accounts for system text scale and density.
+2. **Three breakpoints, not five.** More breakpoints = more places to break.
+3. **Companion mode pins to Compact** regardless of width. The mode trumps the size.
+
+### Open questions deferred from this session
+
+The research agent surfaced 9 open questions in this doc (§ "Open questions
+for Mark") + 10 in `COMPANION_B2_SPEC_2026-05-15.md`. Status:
+- **A, B, C, D, E, F above** — closed in inline Q/A.
+- **Remaining 13 + open agent Qs** — triage in next session before Phase 1 / B2 implementation begins.
+
+---
+
 ## 1. Three views model
 
 Eden Biz ships **one Flutter codebase** (`eden-biz/flutter/`) that produces
