@@ -134,4 +134,76 @@ void main() {
       expect(find.byType(EdenAttachmentPreview), findsNothing);
     });
   });
+
+  // -----------------------------------------------------------------
+  // Task 2 — MSDS bottom sheet interaction + custom labels + iPhone-narrow
+  // -----------------------------------------------------------------
+  group('EdenHazmatDocViewer MSDS bottom sheet', () {
+    testWidgets("tap 'View MSDS' opens bottom sheet", (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenHazmatDocViewer(data: EdenHazmatDocViewerFixtures.full),
+      ));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'View MSDS'));
+      await tester.pumpAndSettle();
+      expect(find.text('Material Safety Data Sheet'), findsOneWidget);
+    });
+
+    testWidgets('bottom sheet contains EdenAttachmentPreview for MSDS',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenHazmatDocViewer(data: EdenHazmatDocViewerFixtures.full),
+      ));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'View MSDS'));
+      await tester.pumpAndSettle();
+      // 2 EdenAttachmentPreview present after sheet opens (manifest + msds).
+      expect(find.byType(EdenAttachmentPreview), findsNWidgets(2));
+    });
+
+    testWidgets('tap close icon dismisses bottom sheet', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenHazmatDocViewer(data: EdenHazmatDocViewerFixtures.full),
+      ));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'View MSDS'));
+      await tester.pumpAndSettle();
+      expect(find.text('Material Safety Data Sheet'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      expect(find.text('Material Safety Data Sheet'), findsNothing);
+    });
+  });
+
+  group('EdenHazmatDocViewer custom labels', () {
+    testWidgets('custom title renders', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenHazmatDocViewer(
+          data: EdenHazmatDocViewerFixtures.full,
+          title: 'Hazardous Materials Bill of Lading',
+        ),
+      ));
+      expect(find.text('Hazardous Materials Bill of Lading'), findsOneWidget);
+      expect(find.text('DOT Manifest'), findsNothing);
+    });
+
+    testWidgets('custom msdsButtonLabel renders', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenHazmatDocViewer(
+          data: EdenHazmatDocViewerFixtures.full,
+          msdsButtonLabel: 'Show Safety Data',
+        ),
+      ));
+      expect(find.widgetWithText(OutlinedButton, 'Show Safety Data'),
+          findsOneWidget);
+    });
+  });
+
+  group('EdenHazmatDocViewer iPhone-narrow safety', () {
+    testWidgets('390pt + longCert — no overflow (header wraps)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenHazmatDocViewer(data: EdenHazmatDocViewerFixtures.longCert),
+        width: 390,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
