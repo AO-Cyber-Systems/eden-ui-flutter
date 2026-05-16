@@ -301,6 +301,7 @@ export 'src/widgets/eden_companion_shell.dart';
 // Phase 1 — Status & state primitives (objective 003)
 export 'src/widgets/eden_urgency_badge.dart';
 export 'src/widgets/eden_pipeline_badge.dart';
+export 'src/widgets/eden_approval_status_badge.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
