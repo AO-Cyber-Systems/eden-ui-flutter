@@ -304,5 +304,8 @@ export 'src/widgets/eden_pipeline_badge.dart';
 export 'src/widgets/eden_approval_status_badge.dart';
 export 'src/widgets/eden_stock_level_indicator.dart';
 
+// Phase 1 — Dashboard composites (objective 003)
+export 'src/widgets/eden_cost_summary_card.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
