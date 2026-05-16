@@ -12,6 +12,7 @@ class MiscScreen extends StatefulWidget {
 class _MiscScreenState extends State<MiscScreen> {
   EdenNetworkStatus _networkStatus = EdenNetworkStatus.offline;
   EdenAiPersona _persona = EdenAiPersona.operations;
+  bool _slotEnabled = true;
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +135,51 @@ class _MiscScreenState extends State<MiscScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text('Active: ${_persona.displayLabel}'),
+              ],
+            ),
+          ),
+
+          const EdenDivider(label: 'EdenAiInsightSlot — Phase 1 (objective 003)'),
+          Section(
+            title: 'Gated AI panel slot (enabled / disabled toggle)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    EdenButton(
+                      label: _slotEnabled ? 'Disable slot' : 'Enable slot',
+                      variant: EdenButtonVariant.secondary,
+                      onPressed: () =>
+                          setState(() => _slotEnabled = !_slotEnabled),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('enabled: $_slotEnabled'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 280,
+                  width: 320,
+                  child: EdenAiInsightSlot(
+                    enabled: _slotEnabled,
+                    insights: const [
+                      EdenInsightContent(
+                        id: 's',
+                        type: EdenInsightType.summary,
+                        title: 'Project Update',
+                        subtitle: '3 tasks remaining',
+                      ),
+                      EdenInsightContent(
+                        id: 'a',
+                        type: EdenInsightType.alert,
+                        title: 'Permit expiring',
+                        severity: EdenInsightSeverity.warning,
+                      ),
+                    ],
+                    persona: EdenAiPersona.operations,
+                  ),
+                ),
               ],
             ),
           ),
