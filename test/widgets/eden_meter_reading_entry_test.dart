@@ -162,4 +162,199 @@ void main() {
   test('fixture validDraft has gallons 320.5', () {
     expect(EdenMeterReadingEntryFixtures.validDraft.gallons, 320.5);
   });
+
+  // -----------------------------------------------------------------
+  // Task 2 — Source picker + photo callback flow + timestamp override +
+  // submit emission + initialDraft pre-population.
+  // -----------------------------------------------------------------
+  group('EdenMeterReadingEntry source picker', () {
+    testWidgets('tap Telemetry → source becomes telemetry', (tester) async {
+      await tester.pumpWidget(wrap(const EdenMeterReadingEntry()));
+      await tester.tap(find.text('Telemetry'));
+      await tester.pump();
+      final radio = tester.widget<RadioListTile<EdenMeterReadingSource>>(
+        find.widgetWithText(
+            RadioListTile<EdenMeterReadingSource>, 'Telemetry'),
+      );
+      expect(radio.groupValue, EdenMeterReadingSource.telemetry);
+    });
+
+    testWidgets('tap Customer reported → source becomes customerReported',
+        (tester) async {
+      await tester.pumpWidget(wrap(const EdenMeterReadingEntry()));
+      await tester.tap(find.text('Customer reported'));
+      await tester.pump();
+      final radio = tester.widget<RadioListTile<EdenMeterReadingSource>>(
+        find.widgetWithText(
+            RadioListTile<EdenMeterReadingSource>, 'Customer reported'),
+      );
+      expect(radio.groupValue, EdenMeterReadingSource.customerReported);
+    });
+
+    testWidgets('re-tap Manual entry → back to manual', (tester) async {
+      await tester.pumpWidget(wrap(const EdenMeterReadingEntry()));
+      await tester.tap(find.text('Telemetry'));
+      await tester.pump();
+      await tester.tap(find.text('Manual entry'));
+      await tester.pump();
+      final radio = tester.widget<RadioListTile<EdenMeterReadingSource>>(
+        find.widgetWithText(
+            RadioListTile<EdenMeterReadingSource>, 'Manual entry'),
+      );
+      expect(radio.groupValue, EdenMeterReadingSource.manual);
+    });
+  });
+
+  group('EdenMeterReadingEntry photo capture flow', () {
+    testWidgets(
+        'onPhotoPick == null → Capture button disabled', (tester) async {
+      await tester.pumpWidget(wrap(const EdenMeterReadingEntry()));
+      final button = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Capture photo'),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets(
+        'onPhotoPick returns URL → preview replaces Capture button',
+        (tester) async {
+      await tester.pumpWidget(wrap(EdenMeterReadingEntry(
+        onPhotoPick: EdenMeterReadingEntryFixtures.goodPhotoPick,
+      )));
+      // Initial: Capture button present, no auth image.
+      expect(find.widgetWithText(ElevatedButton, 'Capture photo'),
+          findsOneWidget);
+      expect(find.byType(EdenAuthenticatedImage), findsNothing);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Capture photo'));
+      await tester.pump(); // Process Future
+      await tester.pump();
+      // Now: Capture button gone, EdenAuthenticatedImage + Remove button.
+      expect(find.widgetWithText(ElevatedButton, 'Capture photo'),
+          findsNothing);
+      expect(find.byType(EdenAuthenticatedImage), findsOneWidget);
+      expect(find.text('Remove photo'), findsOneWidget);
+    });
+
+    testWidgets('tap Remove photo → resets state', (tester) async {
+      await tester.pumpWidget(wrap(EdenMeterReadingEntry(
+        onPhotoPick: EdenMeterReadingEntryFixtures.goodPhotoPick,
+      )));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Capture photo'));
+      await tester.pump();
+      await tester.pump();
+      // Drag scroll up if necessary — Remove may be off-screen.
+      await tester.ensureVisible(find.text('Remove photo'));
+      await tester.tap(find.text('Remove photo'));
+      await tester.pump();
+      expect(find.byType(EdenAuthenticatedImage), findsNothing);
+      expect(find.widgetWithText(ElevatedButton, 'Capture photo'),
+          findsOneWidget);
+    });
+
+    testWidgets('onPhotoPick returns null → no state change', (tester) async {
+      await tester.pumpWidget(wrap(EdenMeterReadingEntry(
+        onPhotoPick: EdenMeterReadingEntryFixtures.cancelledPhotoPick,
+      )));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Capture photo'));
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(EdenAuthenticatedImage), findsNothing);
+      expect(find.widgetWithText(ElevatedButton, 'Capture photo'),
+          findsOneWidget);
+    });
+  });
+
+  group('EdenMeterReadingEntry timestamp override', () {
+    testWidgets('Override button is wired', (tester) async {
+      await tester.pumpWidget(wrap(const EdenMeterReadingEntry()));
+      expect(find.widgetWithText(TextButton, 'Override'), findsOneWidget);
+    });
+  });
+
+  group('EdenMeterReadingEntry submit emission', () {
+    testWidgets('valid form submit emits EdenMeterReadingDraft with payload',
+        (tester) async {
+      EdenMeterReadingDraft? emitted;
+      await tester.pumpWidget(wrap(EdenMeterReadingEntry(
+        onSubmit: (draft) => emitted = draft,
+      )));
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Gallons'), '320.5');
+      await tester.tap(find.text('Telemetry'));
+      await tester.pump();
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Operator ID'), 'op-1');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Notes (optional)'),
+          'tank read at 9am');
+      await tester.pump();
+      await tester.ensureVisible(
+          find.widgetWithText(ElevatedButton, 'Record reading'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Record reading'));
+      await tester.pump();
+      expect(emitted, isNotNull);
+      expect(emitted!.gallons, 320.5);
+      expect(emitted!.source, EdenMeterReadingSource.telemetry);
+      expect(emitted!.operatorId, 'op-1');
+      expect(emitted!.notes, 'tank read at 9am');
+      expect(emitted!.photoSignedUrl, isNull);
+    });
+
+    testWidgets('empty notes → emitted notes is null', (tester) async {
+      EdenMeterReadingDraft? emitted;
+      await tester.pumpWidget(wrap(EdenMeterReadingEntry(
+        onSubmit: (draft) => emitted = draft,
+      )));
+      await tester.enterText(find.widgetWithText(TextField, 'Gallons'), '100');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Operator ID'), 'op-1');
+      await tester.pump();
+      await tester.ensureVisible(
+          find.widgetWithText(ElevatedButton, 'Record reading'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Record reading'));
+      await tester.pump();
+      expect(emitted, isNotNull);
+      expect(emitted!.notes, isNull,
+          reason: 'empty notes should be normalized to null');
+    });
+
+    testWidgets('onSubmit == null → tap does not throw', (tester) async {
+      await tester.pumpWidget(wrap(const EdenMeterReadingEntry()));
+      await tester.enterText(find.widgetWithText(TextField, 'Gallons'), '100');
+      await tester.enterText(
+          find.widgetWithText(TextField, 'Operator ID'), 'op-1');
+      await tester.pump();
+      await tester.ensureVisible(
+          find.widgetWithText(ElevatedButton, 'Record reading'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Record reading'));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('EdenMeterReadingEntry initialDraft pre-population', () {
+    testWidgets('initialDraft pre-fills all fields', (tester) async {
+      await tester.pumpWidget(wrap(EdenMeterReadingEntry(
+        initialDraft: EdenMeterReadingEntryFixtures.validDraft,
+      )));
+      expect(find.text('320.5'), findsOneWidget);
+      expect(find.text('op-1'), findsOneWidget);
+      expect(find.text('tank read at 9am'), findsOneWidget);
+      final radio = tester.widget<RadioListTile<EdenMeterReadingSource>>(
+        find.widgetWithText(
+            RadioListTile<EdenMeterReadingSource>, 'Telemetry'),
+      );
+      expect(radio.groupValue, EdenMeterReadingSource.telemetry);
+    });
+  });
+
+  group('EdenMeterReadingEntry iPhone-narrow safety', () {
+    testWidgets('390pt — no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenMeterReadingEntry(),
+        width: 390,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
