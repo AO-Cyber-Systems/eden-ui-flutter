@@ -4,6 +4,7 @@ import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_scheduler.dart';
+import 'scheduler_controller.dart';
 
 // ---------------------------------------------------------------------------
 // Toolbar
@@ -20,7 +21,44 @@ class SchedulerToolbar extends StatelessWidget {
     required this.onNext,
     required this.onToday,
     required this.onViewChanged,
+    this.visibleViews,
   });
+
+  /// Build a SchedulerToolbar wired to an [EdenSchedulerController]. The
+  /// toolbar reads `view` + `focusedDate` from the controller and routes
+  /// `onPrev`/`onNext`/`onToday`/`onViewChanged` through it.
+  ///
+  /// Wraps an [AnimatedBuilder] internally so the toolbar rebuilds when the
+  /// controller notifies.
+  static Widget fromController({
+    Key? key,
+    required EdenSchedulerController controller,
+    required bool isDark,
+    required ThemeData theme,
+    List<EdenSchedulerView>? visibleViews,
+    ValueChanged<EdenSchedulerView>? onViewChanged,
+  }) {
+    return AnimatedBuilder(
+      key: key,
+      animation: controller,
+      builder: (context, _) {
+        return SchedulerToolbar(
+          view: controller.view,
+          focusedDate: controller.focusedDate,
+          isDark: isDark,
+          theme: theme,
+          onPrev: () => controller.navigate(-1),
+          onNext: () => controller.navigate(1),
+          onToday: controller.goToday,
+          onViewChanged: (v) {
+            controller.setView(v);
+            onViewChanged?.call(v);
+          },
+          visibleViews: visibleViews,
+        );
+      },
+    );
+  }
 
   final EdenSchedulerView view;
   final DateTime focusedDate;
@@ -30,6 +68,9 @@ class SchedulerToolbar extends StatelessWidget {
   final VoidCallback onNext;
   final VoidCallback onToday;
   final ValueChanged<EdenSchedulerView> onViewChanged;
+
+  /// When non-null, restrict the ViewToggle to these variants. Default = all.
+  final List<EdenSchedulerView>? visibleViews;
 
   static const _months = [
     'January',
@@ -46,27 +87,60 @@ class SchedulerToolbar extends StatelessWidget {
     'December',
   ];
 
+  static const _monthsShort = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
   static const _shortDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   String get _title {
     switch (view) {
       case EdenSchedulerView.month:
         return '${_months[focusedDate.month - 1]} ${focusedDate.year}';
-      case EdenSchedulerView.week:
       case EdenSchedulerView.workWeek:
+        return _rangeTitle(_weekStart(focusedDate), 4);
+      case EdenSchedulerView.week:
+        return _rangeTitle(_weekStart(focusedDate), 6);
       case EdenSchedulerView.list:
+        final start = _weekStart(focusedDate);
+        return 'Week of ${_monthsShort[start.month - 1]} ${start.day}, ${start.year}';
       case EdenSchedulerView.swimlane:
-        final start = focusedDate
-            .subtract(Duration(days: focusedDate.weekday - 1));
-        final end = start.add(const Duration(days: 6));
-        if (start.month == end.month) {
-          return '${_months[start.month - 1]} ${start.day}–${end.day}, ${start.year}';
-        }
-        return '${_months[start.month - 1]} ${start.day} – ${_months[end.month - 1]} ${end.day}, ${end.year}';
+        // Donor TruckAvailabilityView spans 3 weeks (20 days inclusive); we
+        // anchor on the Monday of the focused week and show a 3-week range.
+        return _rangeTitle(_weekStart(focusedDate), 20);
       case EdenSchedulerView.day:
       case EdenSchedulerView.mobile:
-        return '${_shortDays[focusedDate.weekday - 1]}, ${_months[focusedDate.month - 1]} ${focusedDate.day}, ${focusedDate.year}';
+        return '${_shortDays[focusedDate.weekday - 1]}, '
+            '${_monthsShort[focusedDate.month - 1]} '
+            '${focusedDate.day}, ${focusedDate.year}';
     }
+  }
+
+  DateTime _weekStart(DateTime d) =>
+      DateTime(d.year, d.month, d.day).subtract(Duration(days: d.weekday - 1));
+
+  String _rangeTitle(DateTime start, int dayDelta) {
+    final end = start.add(Duration(days: dayDelta));
+    if (start.year == end.year) {
+      if (start.month == end.month) {
+        return '${_monthsShort[start.month - 1]} ${start.day}–${end.day}, ${start.year}';
+      }
+      return '${_monthsShort[start.month - 1]} ${start.day} – '
+          '${_monthsShort[end.month - 1]} ${end.day}, ${start.year}';
+    }
+    return '${_monthsShort[start.month - 1]} ${start.day}, ${start.year} – '
+        '${_monthsShort[end.month - 1]} ${end.day}, ${end.year}';
   }
 
   @override
@@ -138,6 +212,7 @@ class SchedulerToolbar extends StatelessWidget {
                 theme: theme,
                 onChanged: onViewChanged,
                 iconOnly: iconOnly,
+                visibleViews: visibleViews,
               ),
             ],
           ),

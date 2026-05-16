@@ -326,6 +326,7 @@ export 'src/widgets/eden_ai/eden_ai_insight_slot.dart';
 export 'src/widgets/scheduler/scheduler_models.dart';
 export 'src/widgets/scheduler/scheduler_controller.dart';
 export 'src/widgets/scheduler/scheduler_time_math.dart';
+export 'src/widgets/scheduler/scheduler_toolbar.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
