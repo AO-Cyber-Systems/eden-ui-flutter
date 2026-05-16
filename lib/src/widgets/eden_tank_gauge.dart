@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../tokens/colors.dart';
@@ -213,8 +215,34 @@ class _SegmentedBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Task 2 will flesh this out fully. Placeholder for Task 1.
-    return const SizedBox(width: 80, height: 160);
+    // Each segment represents 20% of capacity. floor((ratio * 5)) gives the
+    // number of fully-filled segments at 20% / 40% / 60% / 80% / 100%.
+    final filledCount = (ratio * 5).floor();
+    final outline = Theme.of(context).colorScheme.outlineVariant;
+    return SizedBox(
+      width: 80,
+      height: 160,
+      child: Column(
+        children: List.generate(5, (i) {
+          // Stack top→bottom; top is segment 4, bottom is segment 0.
+          final segIdx = 4 - i;
+          final isFilled = segIdx < filledCount;
+          return Expanded(
+            child: Container(
+              key: ValueKey(
+                'eden-tank-segment-$segIdx-${isFilled ? "filled" : "empty"}',
+              ),
+              margin: const EdgeInsets.symmetric(vertical: 1),
+              decoration: BoxDecoration(
+                color: isFilled ? color : Colors.transparent,
+                border: Border.all(color: outline),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }
 
@@ -226,7 +254,79 @@ class _DialBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Task 2 will flesh this out fully. Placeholder for Task 1.
-    return const SizedBox(width: 180, height: 100);
+    final trackColor = Theme.of(context).colorScheme.outlineVariant;
+    return SizedBox(
+      width: 180,
+      height: 100,
+      child: CustomPaint(
+        key: const ValueKey('eden-tank-dial'),
+        painter: _DialPainter(
+          ratio: ratio,
+          color: color,
+          trackColor: trackColor,
+        ),
+      ),
+    );
   }
+}
+
+class _DialPainter extends CustomPainter {
+  _DialPainter({
+    required this.ratio,
+    required this.color,
+    required this.trackColor,
+  });
+
+  final double ratio;
+  final Color color;
+  final Color trackColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height);
+    final radius = size.width / 2 - 8;
+    final track = Paint()
+      ..color = trackColor
+      ..strokeWidth = 8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    // Upper semicircle from -π to 0.
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi,
+      math.pi,
+      false,
+      track,
+    );
+    // Fill arc proportional to ratio.
+    final fill = Paint()
+      ..color = color
+      ..strokeWidth = 8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi,
+      math.pi * ratio,
+      false,
+      fill,
+    );
+    // Needle.
+    final needleAngle = -math.pi + math.pi * ratio;
+    final needleEnd = Offset(
+      center.dx + radius * math.cos(needleAngle),
+      center.dy + radius * math.sin(needleAngle),
+    );
+    final needle = Paint()
+      ..color = color
+      ..strokeWidth = 3;
+    canvas.drawLine(center, needleEnd, needle);
+    canvas.drawCircle(center, 5, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_DialPainter old) =>
+      old.ratio != ratio ||
+      old.color != color ||
+      old.trackColor != trackColor;
 }
