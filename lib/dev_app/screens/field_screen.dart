@@ -21,7 +21,9 @@ class FieldScreen extends StatelessWidget {
           // Wave 1 — Mobile-shell primitives
           _QuickAccessGridDemo(),
           _MobileAiFabDemo(),
-          // (TRD 007-05/06 will append GPS-aware page demos here)
+          // Wave 2 — GPS-aware pages
+          _CheckInPageDemo(),
+          // (TRD 007-06 will append _LocationMapPageDemo here)
           // (TRD 007-02/04 will append capture-flow page demos here)
           // (TRD 007-01/03 will append form-flow page demos here)
         ],
@@ -108,6 +110,44 @@ class _MobileAiFabDemoState extends State<_MobileAiFabDemo> {
           const SizedBox(height: 8),
           Text('Last sent: $_lastSent'),
         ],
+      ),
+    );
+  }
+}
+
+class _CheckInPageDemo extends StatelessWidget {
+  const _CheckInPageDemo();
+  @override
+  Widget build(BuildContext context) {
+    return Section(
+      title: 'EdenCheckInPage',
+      child: SizedBox(
+        height: 600,
+        child: EdenCheckInPage(
+          appointment: const EdenCheckInAppointment(
+            id: 'apt-123',
+            title: 'HVAC Repair — Johnson',
+            address: '742 Evergreen Terrace',
+            icon: Icons.event_available,
+          ),
+          gpsStatus: EdenGpsStatus.high,
+          gpsAccuracyMeters: 5.2,
+          gpsPosition: const EdenLatLng(lat: 37.7749, lng: -122.4194),
+          events: [
+            EdenCheckInEvent(
+              id: 'demo-e1',
+              type: EdenCheckInEventType.checkIn,
+              timestamp: DateTime.now()
+                  .subtract(const Duration(hours: 1, minutes: 5)),
+              isGeofenceVerified: true,
+            ),
+          ],
+          onSubmit: (s) async {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Demo submit: ${s.type.name}')),
+            );
+          },
+        ),
       ),
     );
   }

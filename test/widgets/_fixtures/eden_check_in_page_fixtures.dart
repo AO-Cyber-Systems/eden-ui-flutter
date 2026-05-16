@@ -22,7 +22,7 @@ class EdenCheckInPageFixtures {
         icon: Icons.medical_services_outlined,
       );
 
-  static EdenLatLng sfPos() => const EdenLatLng(37.7749, -122.4194);
+  static EdenLatLng sfPos() => const EdenLatLng(lat: 37.7749, lng: -122.4194);
 
   static EdenCheckInEvent checkInEvent() => EdenCheckInEvent(
         id: 'e1',

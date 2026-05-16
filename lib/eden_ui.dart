@@ -354,11 +354,13 @@ export 'src/widgets/eden_route_stop_list.dart';
 
 // Objective 005 — B-Fuel components Wave 2
 export 'src/widgets/eden_meter_reading_entry.dart';
+export 'src/widgets/eden_hazmat_doc_viewer.dart';
 
 // Objective 007 — B-Trades-A field/companion pages
 export 'src/widgets/eden_mobile_quick_access_grid.dart';
 export 'src/widgets/eden_mobile_ai_fab.dart';
 export 'src/widgets/eden_mobile_ai_chat_sheet.dart';
+export 'src/widgets/eden_check_in_page.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
