@@ -152,23 +152,48 @@ void main() {
 
   group('EdenAdaptiveLayout — unbounded width fallback', () {
     testWidgets('unbounded parent: falls back to MediaQuery (1200pt) and picks expandedBuilder', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(1200, 800));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await tester.pumpWidget(wrap(
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: 50, // bounded only by content; parent is unbounded
-            child: EdenAdaptiveLayout(
-              compactBuilder: EdenAdaptiveLayoutFixtures.compactTagged,
-              mediumBuilder: EdenAdaptiveLayoutFixtures.mediumTagged,
-              expandedBuilder: EdenAdaptiveLayoutFixtures.expandedTagged,
+      // OverflowBox gives EdenAdaptiveLayout's LayoutBuilder
+      // constraints.maxWidth == infinity. The widget then falls back
+      // to MediaQuery.of(context).size.width — we set MQ explicitly
+      // to 1200pt via a top-level MediaQuery widget. The widget must
+      // pick the expanded tier from the MQ fallback.
+      await tester.pumpWidget(MediaQuery(
+        data: const MediaQueryData(size: Size(1200, 800)),
+        child: MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: OverflowBox(
+                alignment: Alignment.topLeft,
+                minWidth: 0,
+                maxWidth: double.infinity,
+                minHeight: 0,
+                maxHeight: 200,
+                child: EdenAdaptiveLayout(
+                  compactBuilder: (_) => const SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: ColoredBox(
+                      color: Color(0xFF000000),
+                      child: Text('compact'),
+                    ),
+                  ),
+                  expandedBuilder: (_) => const SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: ColoredBox(
+                      color: Color(0xFFFFFFFF),
+                      child: Text('expanded'),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
       ));
-      // We expect to fall back to MediaQuery (1200pt surface) → expanded.
-      expect(find.byKey(const ValueKey('expanded')), findsOneWidget);
+      expect(find.text('expanded'), findsOneWidget);
+      expect(find.text('compact'), findsNothing);
     });
   });
 

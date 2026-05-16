@@ -292,6 +292,7 @@ export 'src/widgets/eden_map_preview.dart';
 
 // Companion Shell Foundation (objective 002)
 export 'src/widgets/eden_app_mode.dart';
+export 'src/widgets/eden_adaptive_layout.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
