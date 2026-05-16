@@ -200,7 +200,7 @@ void main() {
       expect(tapped, isTrue);
     });
 
-    testWidgets("action onTap=null shows 'Coming soon — $label' SnackBar",
+    testWidgets("action onTap=null shows 'Coming soon — label' SnackBar",
         (tester) async {
       await tester.pumpWidget(wrap(
         const EdenInsightCard(
