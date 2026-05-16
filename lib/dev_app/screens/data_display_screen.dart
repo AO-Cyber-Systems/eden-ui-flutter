@@ -441,6 +441,37 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenMediaRow — Phase 1 (objective 003)'),
+          Section(
+            title: '3-cell media row (photos + docs + budget)',
+            child: EdenMediaRow(items: [
+              EdenMediaRowItem(
+                icon: Icons.camera_alt,
+                label: 'photos',
+                count: '7',
+                onAddPressed: () {},
+              ),
+              EdenMediaRowItem(
+                icon: Icons.description,
+                label: 'documents',
+                count: '3',
+                onAddPressed: () {},
+              ),
+              const EdenMediaRowItem(
+                icon: Icons.attach_money,
+                label: 'budget',
+                count: r'$24,500',
+                trailingText: '1 CO',
+              ),
+            ]),
+          ),
+          const Section(
+            title: 'Label-only (no count, no trailing)',
+            child: EdenMediaRow(items: [
+              EdenMediaRowItem(icon: Icons.star, label: 'favorited'),
+            ]),
+          ),
         ],
       ),
     );
