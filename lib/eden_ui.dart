@@ -332,6 +332,7 @@ export 'src/widgets/scheduler/scheduler_toolbar.dart';
 export 'src/widgets/scheduler/scheduler_day_view.dart';
 export 'src/widgets/scheduler/scheduler_week_view.dart';
 export 'src/widgets/scheduler/scheduler_month_view.dart';
+export 'src/widgets/scheduler/scheduler_list_view.dart';
 
 // Utils
 export 'src/utils/responsive.dart';

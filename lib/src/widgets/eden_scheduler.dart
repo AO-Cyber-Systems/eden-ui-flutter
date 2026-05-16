@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'scheduler/scheduler_controller.dart';
 import 'scheduler/scheduler_day_view.dart';
+import 'scheduler/scheduler_list_view.dart';
 import 'scheduler/scheduler_models.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
@@ -325,9 +326,13 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           onTimeSlotTap: widget.onTimeSlotTap,
         );
       case EdenSchedulerView.list:
+        return EdenSchedulerListView(
+          focusedDate: _focusedDate,
+          events: _filteredEvents,
+          onEventTap: widget.onEventTap,
+        );
       case EdenSchedulerView.swimlane:
-        // TRD 07 (list) + TRD 09 (swimlane) replace this. For now, render
-        // the full week view so the variants don't crash.
+        // TRD 09 (swimlane) replaces this. For now, render the full week view.
         return EdenSchedulerWeekView(
           focusedDate: _focusedDate,
           events: _filteredEvents,
