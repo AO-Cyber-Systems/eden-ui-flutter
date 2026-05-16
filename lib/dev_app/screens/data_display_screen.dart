@@ -350,6 +350,37 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenCostSummaryCard — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Default 3-row breakdown',
+            child: EdenCostSummaryCard(
+              laborCents: 120000,
+              materialCents: 45000,
+              equipmentCents: 25000,
+            ),
+          ),
+          const Section(
+            title: 'With extraRows — note total still excludes them',
+            child: EdenCostSummaryCard(
+              laborCents: 120000,
+              materialCents: 45000,
+              equipmentCents: 25000,
+              extraRows: [
+                EdenCostRow(label: 'Subcontractor', cents: 50000),
+                EdenCostRow(label: 'Permits', cents: 7500),
+              ],
+            ),
+          ),
+          const Section(
+            title: 'Custom title — Project Budget',
+            child: EdenCostSummaryCard(
+              laborCents: 50000,
+              materialCents: 25000,
+              equipmentCents: 10000,
+              title: 'Project Budget',
+            ),
+          ),
         ],
       ),
     );

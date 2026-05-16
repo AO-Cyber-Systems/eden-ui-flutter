@@ -50,7 +50,7 @@ TRDs:
 - [x] 003-02-TRD.md — EdenPipelineBadge (Wave 1; outlined pill, draft/sent/won/lost/expired + aliases, donor trades-flutter)
 - [x] 003-03-TRD.md — EdenApprovalStatusBadge (Wave 1; filled pill, 10 statuses, donor trades-flutter)
 - [x] 003-04-TRD.md — EdenStockLevelIndicator (Wave 1; linear bar with green/amber/red thresholds, donor trades-flutter)
-- [ ] 003-05-TRD.md — EdenCostSummaryCard (Wave 2; labor/material/equipment/total breakdown card, composes EdenCurrencyDisplay)
+- [x] 003-05-TRD.md — EdenCostSummaryCard (Wave 2; labor/material/equipment/total breakdown card, composes EdenCurrencyDisplay)
 - [ ] 003-06-TRD.md — EdenActivityFeedItem (Wave 2; avatar + actor/action/entity + time row; inlined data class)
 - [ ] 003-07-TRD.md — EdenBlockingAlerts (Wave 2; collapsible severity-colored alert list; inlined types)
 - [ ] 003-08-TRD.md — EdenMediaRow (Wave 2; compact icon+count+label cells, + Add buttons; inlined item class)
