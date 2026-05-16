@@ -100,6 +100,22 @@ TRDs:
 - [ ] 005-05-TRD.md — EdenFuelPriceTicker (Wave 3; current + delta + as-of; composes EdenCurrencyDisplay; configurable delta polarity; hand-rolled relative-time formatter)
 - [ ] 005-06-TRD.md — EdenTruckInventoryCard (Wave 3; truck + fuel-type + capacity + fill bar; composes EdenStockLevelIndicator; donor trades-flutter truck_inventory_section.dart)
 
+### Objective 007: B-Trades-A — Field/Companion Pages (cross-vertical)
+
+**Goal:** Ship the 8 cross-vertical companion-mode page composites per `TRADES_REMAP_DEEP_AUDIT_2026-05-15.md` §5 B-trades-A. Full-page compositions (NOT shells) that drop into an `EdenCompanionShell` (objective 002) content slot: inspection-form-with-photos-and-signature, full-screen signature/photo capture flows, GPS clock-in/out with map confirm, full-bleed location map view, truck-load packout checklist, mobile launcher grid, AI FAB + bottom-sheet chat. After this objective ships, downstream `eden-platform-flutter` + any companion-mode vertical app (trades-hvac, medical home-visit, fuel-truck driver, gov caseworker site visits) compose a field-crew companion surface from library primitives. Library remains transport-agnostic (callbacks for camera/GPS/persistence/network/signature acquisition); no new pubspec deps. See `objectives/007-b-trades-a-field-companion/OBJECTIVE.md`.
+
+**TRDs:** 8 plans across 4 waves (~2-3 wk Claude execution)
+
+TRDs:
+- [ ] 007-07-TRD.md — EdenMobileQuickAccessGrid (Wave 1; icon-tile launcher with optional reorder; bootstraps `lib/dev_app/screens/field_screen.dart` + Obj-007 export section + home_screen.dart category)
+- [ ] 007-08-TRD.md — EdenMobileAiFab + EdenMobileAiChatSheet + EdenMobileAiQuickAction (Wave 1; bottom-sheet AI chat variant — pairs with obj-003 EdenAgentChatFab full-screen modal; composes EdenAgentChat or re-implements stream loop per Option A/B decision)
+- [ ] 007-05-TRD.md — EdenCheckInPage + 4 value types (Wave 2; GPS clock-in/out page; composes EdenGpsStatusIndicator from obj-002 + EdenCard/EdenDescriptionList/EdenBadge; 3-state action area: CheckIn | CheckOut | Complete)
+- [ ] 007-06-TRD.md — EdenLocationMapPage + EdenLocationPin + v1 clustering (Wave 2; full-bleed 3:2 map+list split; composes EdenMapPreview from Wave A + provider-agnostic; battery dot indicator inline)
+- [ ] 007-02-TRD.md — EdenSignatureCapturePage + EdenSignatureCaptureResult (Wave 3; full-screen signature flow composing existing EdenSignaturePad; returns List<EdenSignatureStroke> via Navigator.pop)
+- [ ] 007-04-TRD.md — EdenPhotoCapturePage + 3 value types (Wave 3; black-chrome full-screen capture with annotation overlay + optional categories; consumer wires camera via onCapture/onPickFromGallery callbacks)
+- [ ] 007-01-TRD.md — EdenInspectionFormPage + 4 value types + 8 field renderers (Wave 4; flagship multi-section form with progress + draft save + submit gating + photo/signature callback bridges)
+- [ ] 007-03-TRD.md — EdenPackoutPage + EdenPackoutItem + EdenPackoutEdit (Wave 4; truck-load checklist with per-item Loaded/Used/Returned + expand-to-edit + parallel save support)
+
 ### Objective 008: Dev Catalog Enrichment — Make Existing 52 Components Demo as Completely as They Test
 
 **Goal:** Enrich the live Flutter dev catalog (`lib/dev_app/screens/`) so the 52 components shipped across objectives 001/002/003/004 demo as completely as they test. Today's catalog makes the library look thinner than it is — 1041 tests pass but most components have 1-5 minimal demos with generic data. After this objective ships: every screen shows default + realistic-populated + edge + responsive + interactive states drawing on a shared cross-vertical sample-data library (trades / salon / fuel / medical / gov). Includes the side-by-side trades-react PNG embeds for EdenScheduler closing the objective-004 human-verify parity checkpoint. **Catalog-content objective — no component public APIs change.** See `objectives/008-dev-catalog-enrichment/OBJECTIVE.md`.
