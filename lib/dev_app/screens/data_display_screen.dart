@@ -381,6 +381,66 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               title: 'Project Budget',
             ),
           ),
+
+          const EdenDivider(label: 'EdenActivityFeedItem — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Activity feed (4 variants + tappable + long-entity wrap)',
+            child: Column(
+              children: [
+                EdenActivityFeedItem(
+                  item: EdenActivityFeedItemData(
+                    actorName: 'John Smith',
+                    actorInitials: 'JS',
+                    action: 'created',
+                    entityName: 'Customer #42',
+                    timeAgo: '5m ago',
+                    variant: EdenActivityVariant.success,
+                  ),
+                ),
+                EdenActivityFeedItem(
+                  item: EdenActivityFeedItemData(
+                    actorName: 'Maria Garcia',
+                    actorInitials: 'MG',
+                    action: 'flagged',
+                    entityName: 'Invoice #1029',
+                    timeAgo: '12m ago',
+                    variant: EdenActivityVariant.warning,
+                  ),
+                ),
+                EdenActivityFeedItem(
+                  item: EdenActivityFeedItemData(
+                    actorName: 'Alex Park',
+                    actorInitials: 'AP',
+                    action: 'deleted',
+                    entityName: 'Project Atlas',
+                    timeAgo: '1h ago',
+                    variant: EdenActivityVariant.danger,
+                  ),
+                ),
+                EdenActivityFeedItem(
+                  item: EdenActivityFeedItemData(
+                    actorName: 'Dev Bot',
+                    actorInitials: 'DB',
+                    action: 'commented on',
+                    entityName: 'Ticket T-501',
+                    timeAgo: 'just now',
+                    variant: EdenActivityVariant.info,
+                  ),
+                ),
+                EdenActivityFeedItem(
+                  item: EdenActivityFeedItemData(
+                    actorName: 'Long Name',
+                    actorInitials: 'LN',
+                    action: 'updated',
+                    entityName:
+                        'A really long entity name that should ellipsize gracefully on narrow viewports',
+                    timeAgo: 'yesterday',
+                    variant: EdenActivityVariant.info,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
