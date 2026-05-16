@@ -15,22 +15,23 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 import 'cross_cutting.dart';
 
 /// Job-cost breakdown used by EdenCostSummaryCard in catalog demos.
+///
+/// Values are stored in cents (int) to match `EdenCostSummaryCard`'s API;
+/// display-friendly strings are derived at call sites if needed.
 class TradesJobCostBreakdown {
   const TradesJobCostBreakdown({
-    required this.labor,
-    required this.material,
-    required this.equipment,
-    required this.total,
-    this.subContractors,
-    this.permits,
+    required this.laborCents,
+    required this.materialCents,
+    required this.equipmentCents,
+    this.permitsCents,
+    this.subContractorsCents,
   });
 
-  final String labor;
-  final String material;
-  final String equipment;
-  final String total;
-  final String? subContractors;
-  final String? permits;
+  final int laborCents;
+  final int materialCents;
+  final int equipmentCents;
+  final int? permitsCents;
+  final int? subContractorsCents;
 }
 
 /// Trades vertical (HVAC / electrical / plumbing) fixtures.
@@ -278,14 +279,17 @@ class TradesScenarios {
     ),
   ];
 
-  /// EdenCostSummaryCard fixture — sample job breakdown.
+  /// EdenCostSummaryCard fixture — sample job breakdown (cents).
+  ///
+  /// Note: EdenCostSummaryCard's total is laborCents + materialCents +
+  /// equipmentCents (extra rows NOT counted). $184000 + $321745 + $64000 = $569745
+  /// → displays as $5,697.45. Permits / subcontractors render as extra rows.
   static const TradesJobCostBreakdown jobCostBreakdown = TradesJobCostBreakdown(
-    labor: r'$1,840.00',
-    material: r'$3,217.45',
-    equipment: r'$640.00',
-    permits: r'$185.00',
-    subContractors: r'$0.00',
-    total: r'$5,882.45',
+    laborCents: 184000,
+    materialCents: 321745,
+    equipmentCents: 64000,
+    permitsCents: 18500,
+    subContractorsCents: 0,
   );
 
   /// EdenActivityFeedItem fixtures — trades-specific events.

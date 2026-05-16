@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../_sample_data/sample_data.dart';
 
 /// Shared nav items used by both desktop and mobile layout demos.
 final _navItems = [
@@ -41,7 +42,7 @@ class LayoutsScreen extends StatefulWidget {
 }
 
 /// Top-level preview mode for the Layouts dev screen.
-enum _LayoutPreview { desktop, mobile, scaffolds }
+enum _LayoutPreview { desktop, mobile, scaffolds, crossVertical }
 
 class _LayoutsScreenState extends State<LayoutsScreen> {
   _LayoutPreview _preview = _LayoutPreview.desktop;
@@ -58,6 +59,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
               ButtonSegment(value: _LayoutPreview.desktop, label: Text('Desktop'), icon: Icon(Icons.desktop_windows, size: 16)),
               ButtonSegment(value: _LayoutPreview.mobile, label: Text('Mobile'), icon: Icon(Icons.phone_iphone, size: 16)),
               ButtonSegment(value: _LayoutPreview.scaffolds, label: Text('Scaffolds'), icon: Icon(Icons.view_agenda_outlined, size: 16)),
+              ButtonSegment(value: _LayoutPreview.crossVertical, label: Text('Cross-vertical'), icon: Icon(Icons.public, size: 16)),
             ],
             selected: {_preview},
             onSelectionChanged: (v) => setState(() => _preview = v.first),
@@ -73,6 +75,7 @@ class _LayoutsScreenState extends State<LayoutsScreen> {
         _LayoutPreview.desktop => _desktopPreview(),
         _LayoutPreview.mobile => _mobilePreview(),
         _LayoutPreview.scaffolds => const _ScaffoldsPreview(),
+        _LayoutPreview.crossVertical => const _CrossVerticalScaffoldsPreview(),
       },
     );
   }
@@ -718,5 +721,704 @@ class _DemoFrame extends StatelessWidget {
         EdenCard(child: child),
       ],
     );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Cross-vertical scaffolds preview — Objective 008 Wave 2 (TRD 008-02)
+// -----------------------------------------------------------------------------
+//
+// Demos EdenListPageScaffold + EdenDetailPageScaffold + EdenDetailHeader
+// populated with realistic cross-vertical sample data (trades / salon / fuel /
+// medical / gov). Fixtures sourced from `lib/dev_app/_sample_data/`.
+//
+// File ownership boundary: this preview ONLY consumes library widgets via
+// `package:eden_ui_flutter/eden_ui.dart`. No `lib/src/widgets/` modifications.
+
+class _CrossVerticalScaffoldsPreview extends StatelessWidget {
+  const _CrossVerticalScaffoldsPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(EdenSpacing.space4),
+      children: <Widget>[
+        Text(
+          'EdenListPageScaffold — Realistic cross-vertical demos',
+          style: theme.textTheme.titleLarge,
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        Text(
+          'Each list pulls hand-built fixtures from lib/dev_app/_sample_data/.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Trades — this weekʼs jobs (8 events)',
+          child: _TradesJobsListDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Salon — this weekʼs appointments (11 events)',
+          child: _SalonAppointmentsListDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Fuel — weekʼs deliveries (7 events)',
+          child: _FuelDeliveriesListDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Medical — weekʼs visits (7 events)',
+          child: _MedicalVisitsListDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Gov — weekʼs case docket (6 events)',
+          child: _GovCasesListDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        Text(
+          'EdenListPageScaffold — Edge states',
+          style: theme.textTheme.titleLarge,
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Empty list (no rows)',
+          child: _EmptyListScaffoldDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Overflow (54 rows · TradesScenarios.monthEvents)',
+          child: _OverflowListScaffoldDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        Text(
+          'EdenListPageScaffold — Responsive variants (side-by-side)',
+          style: theme.textTheme.titleLarge,
+        ),
+        const SizedBox(height: EdenSpacing.space2),
+        Text(
+          'Compact (390pt) vs Medium (768pt) vs Expanded (1280pt). Scroll '
+          'horizontally on narrow hosts.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Compact · Medium · Expanded',
+          child: _ResponsiveListScaffoldDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        Text(
+          'EdenDetailPageScaffold + EdenDetailHeader',
+          style: theme.textTheme.titleLarge,
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Trades — job detail (cost summary + alerts + activity)',
+          child: _TradesJobDetailDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Salon — client detail (membership tier + activity)',
+          child: _SalonClientDetailDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const _DemoFrame(
+          label: 'Medical — patient detail (consent + intake + activity)',
+          child: _MedicalPatientDetailDemo(),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// List-scaffold demos (per-vertical) — each ~30 LOC: fixture → row builder
+// -----------------------------------------------------------------------------
+
+class _TradesJobsListDemo extends StatelessWidget {
+  const _TradesJobsListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final jobs = TradesScenarios.weekEvents;
+    return SizedBox(
+      height: 520,
+      child: EdenListPageScaffold(
+        title: 'Trades — jobs this week',
+        createLabel: 'New job',
+        onCreate: () {},
+        filterPills: const Wrap(
+          spacing: 6,
+          children: <Widget>[
+            Chip(label: Text('All')),
+            Chip(label: Text('Scheduled')),
+            Chip(label: Text('In progress')),
+            Chip(label: Text('Callback')),
+          ],
+        ),
+        searchHint: 'Search jobs, customers, addresses…',
+        onSearchChanged: (_) {},
+        alerts: const EdenBlockingAlerts(alerts: TradesScenarios.blockingAlerts),
+        body: ListView.builder(
+          itemCount: jobs.length,
+          itemBuilder: (_, i) => _SchedulerEventRow(
+            event: jobs[i],
+            verticalIcon: Icons.build,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SalonAppointmentsListDemo extends StatelessWidget {
+  const _SalonAppointmentsListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final appts = SalonScenarios.weekAppointments;
+    return SizedBox(
+      height: 480,
+      child: EdenListPageScaffold(
+        title: 'Salon — appointments',
+        createLabel: 'Book',
+        onCreate: () {},
+        filterPills: const Wrap(
+          spacing: 6,
+          children: <Widget>[
+            Chip(label: Text('All')),
+            Chip(label: Text('Cuts')),
+            Chip(label: Text('Color')),
+            Chip(label: Text('Chemical')),
+          ],
+        ),
+        searchHint: 'Client, stylist, service…',
+        onSearchChanged: (_) {},
+        body: ListView.builder(
+          itemCount: appts.length,
+          itemBuilder: (_, i) => _SchedulerEventRow(
+            event: appts[i],
+            verticalIcon: Icons.content_cut,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FuelDeliveriesListDemo extends StatelessWidget {
+  const _FuelDeliveriesListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final deliveries = FuelScenarios.weekDeliveries;
+    return SizedBox(
+      height: 460,
+      child: EdenListPageScaffold(
+        title: 'Fuel — deliveries this week',
+        createLabel: 'New route',
+        onCreate: () {},
+        filterPills: const Wrap(
+          spacing: 6,
+          children: <Widget>[
+            Chip(label: Text('All')),
+            Chip(label: Text('Diesel')),
+            Chip(label: Text('Unleaded')),
+            Chip(label: Text('Emergency')),
+          ],
+        ),
+        body: ListView.builder(
+          itemCount: deliveries.length,
+          itemBuilder: (_, i) => _SchedulerEventRow(
+            event: deliveries[i],
+            verticalIcon: Icons.local_shipping,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MedicalVisitsListDemo extends StatelessWidget {
+  const _MedicalVisitsListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final visits = MedicalScenarios.weekVisits;
+    return SizedBox(
+      height: 460,
+      child: EdenListPageScaffold(
+        title: 'Medical — visits this week',
+        createLabel: 'Schedule visit',
+        onCreate: () {},
+        filterPills: const Wrap(
+          spacing: 6,
+          children: <Widget>[
+            Chip(label: Text('All')),
+            Chip(label: Text('Home visit')),
+            Chip(label: Text('Telehealth')),
+            Chip(label: Text('Clinic')),
+          ],
+        ),
+        alerts: const EdenBlockingAlerts(alerts: MedicalScenarios.blockingAlerts),
+        body: ListView.builder(
+          itemCount: visits.length,
+          itemBuilder: (_, i) => _SchedulerEventRow(
+            event: visits[i],
+            verticalIcon: Icons.medical_services,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GovCasesListDemo extends StatelessWidget {
+  const _GovCasesListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final cases = GovScenarios.weekCases;
+    return SizedBox(
+      height: 460,
+      child: EdenListPageScaffold(
+        title: 'Gov — case docket',
+        createLabel: 'Open case',
+        onCreate: () {},
+        filterPills: const Wrap(
+          spacing: 6,
+          children: <Widget>[
+            Chip(label: Text('All')),
+            Chip(label: Text('Tier 2')),
+            Chip(label: Text('Board')),
+            Chip(label: Text('Audit')),
+          ],
+        ),
+        alerts: const EdenBlockingAlerts(alerts: GovScenarios.blockingAlerts),
+        body: ListView.builder(
+          itemCount: cases.length,
+          itemBuilder: (_, i) => _SchedulerEventRow(
+            event: cases[i],
+            verticalIcon: Icons.gavel,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Generic event-as-list-row, fed by EdenSchedulerEvent fixture data.
+class _SchedulerEventRow extends StatelessWidget {
+  const _SchedulerEventRow({required this.event, required this.verticalIcon});
+
+  final EdenSchedulerEvent event;
+  final IconData verticalIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final urgency = switch (event.readiness) {
+      EdenSchedulerEventReadiness.urgent => 'high',
+      EdenSchedulerEventReadiness.warning => 'medium',
+      _ => 'low',
+    };
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: (event.color ?? Theme.of(context).colorScheme.primary)
+            .withValues(alpha: 0.15),
+        child: Icon(verticalIcon,
+            color: event.color ?? Theme.of(context).colorScheme.primary,
+            size: 20),
+      ),
+      title: Text(event.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        '${event.assignee ?? "—"}  ·  ${event.status ?? "scheduled"}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: EdenUrgencyBadge(urgency: urgency),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Edge-state list demos
+// -----------------------------------------------------------------------------
+
+class _EmptyListScaffoldDemo extends StatelessWidget {
+  const _EmptyListScaffoldDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 320,
+      child: EdenListPageScaffold(
+        title: 'Customers',
+        createLabel: 'New customer',
+        onCreate: () {},
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.inbox_outlined,
+                size: 48,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 8),
+              const Text('No customers yet — tap + to create one.'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OverflowListScaffoldDemo extends StatelessWidget {
+  const _OverflowListScaffoldDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final events = TradesScenarios.monthEvents;
+    return SizedBox(
+      height: 480,
+      child: EdenListPageScaffold(
+        title: '${events.length} events',
+        searchHint: 'Filter…',
+        onSearchChanged: (_) {},
+        body: ListView.builder(
+          itemCount: events.length,
+          itemBuilder: (_, i) => _SchedulerEventRow(
+            event: events[i],
+            verticalIcon: Icons.build,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ResponsiveListScaffoldDemo extends StatelessWidget {
+  const _ResponsiveListScaffoldDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _ResponsiveColumn(width: 390, label: 'Compact (390pt)'),
+          SizedBox(width: 16),
+          _ResponsiveColumn(width: 768, label: 'Medium (768pt)'),
+          SizedBox(width: 16),
+          _ResponsiveColumn(width: 1280, label: 'Expanded (1280pt)'),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResponsiveColumn extends StatelessWidget {
+  const _ResponsiveColumn({required this.width, required this.label});
+
+  final double width;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: width,
+          height: 420,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              borderRadius: EdenRadii.borderRadiusMd,
+            ),
+            child: const _TradesJobsListDemo(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Detail-scaffold demos (3 verticals)
+// -----------------------------------------------------------------------------
+
+class _TradesJobDetailDemo extends StatelessWidget {
+  const _TradesJobDetailDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final job = TradesScenarios.weekEvents.first;
+    const cost = TradesScenarios.jobCostBreakdown;
+    return SizedBox(
+      height: 620,
+      child: DefaultTabController(
+        length: 3,
+        child: EdenDetailPageScaffold(
+          header: EdenDetailHeader(
+            title: job.title,
+            subtitle:
+                '${job.assignee ?? "Unassigned"} · ${job.status ?? "scheduled"}',
+            breadcrumb: const <String>['Jobs', 'This week'],
+            leading: const Icon(Icons.build),
+            statusBadge: const EdenUrgencyBadge(urgency: 'high'),
+            actions: <EdenDetailHeaderAction>[
+              EdenDetailHeaderAction(
+                icon: Icons.edit,
+                tooltip: 'Edit',
+                onPressed: () {},
+              ),
+              EdenDetailHeaderAction(
+                icon: Icons.archive,
+                tooltip: 'Archive',
+                onPressed: () {},
+              ),
+            ],
+          ),
+          tabs: const <EdenDetailTab>[
+            EdenDetailTab(label: 'Overview'),
+            EdenDetailTab(label: 'Activity'),
+            EdenDetailTab(label: 'Documents'),
+          ],
+          body: TabBarView(
+            children: <Widget>[
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(EdenSpacing.space4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    EdenCostSummaryCard(
+                      title: 'Job cost — Whitfield install',
+                      laborCents: cost.laborCents,
+                      materialCents: cost.materialCents,
+                      equipmentCents: cost.equipmentCents,
+                      extraRows: <EdenCostRow>[
+                        if (cost.permitsCents != null)
+                          EdenCostRow(label: 'Permits', cents: cost.permitsCents!),
+                      ],
+                    ),
+                    const SizedBox(height: EdenSpacing.space3),
+                    const EdenBlockingAlerts(
+                      alerts: TradesScenarios.blockingAlerts,
+                    ),
+                  ],
+                ),
+              ),
+              ListView(
+                padding: const EdgeInsets.all(EdenSpacing.space2),
+                children: <Widget>[
+                  for (final a in TradesScenarios.activityFeed)
+                    EdenActivityFeedItem(item: a),
+                ],
+              ),
+              const Center(child: Text('Documents (coming soon)')),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SalonClientDetailDemo extends StatelessWidget {
+  const _SalonClientDetailDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final client = SalonScenarios.memberClients.first;
+    return SizedBox(
+      height: 560,
+      child: DefaultTabController(
+        length: 2,
+        child: EdenDetailPageScaffold(
+          header: EdenDetailHeader(
+            title: client.name,
+            subtitle: client.notes ?? client.email,
+            breadcrumb: const <String>['Clients', 'Members'],
+            leading: const Icon(Icons.person_outline),
+            statusBadge: client.tier != null
+                ? EdenMembershipTierBadge(tier: client.tier!)
+                : null,
+            actions: <EdenDetailHeaderAction>[
+              EdenDetailHeaderAction(
+                icon: Icons.event_available,
+                tooltip: 'Rebook',
+                onPressed: () {},
+              ),
+              EdenDetailHeaderAction(
+                icon: Icons.message,
+                tooltip: 'Message',
+                onPressed: () {},
+              ),
+            ],
+          ),
+          tabs: const <EdenDetailTab>[
+            EdenDetailTab(label: 'Visits'),
+            EdenDetailTab(label: 'Activity'),
+          ],
+          body: TabBarView(
+            children: <Widget>[
+              ListView(
+                padding: const EdgeInsets.all(EdenSpacing.space2),
+                children: <Widget>[
+                  for (final e in SalonScenarios.weekAppointments.take(6))
+                    _SchedulerEventRow(
+                      event: e,
+                      verticalIcon: Icons.content_cut,
+                    ),
+                ],
+              ),
+              ListView(
+                padding: const EdgeInsets.all(EdenSpacing.space2),
+                children: <Widget>[
+                  for (final a in SalonScenarios.activityFeed)
+                    EdenActivityFeedItem(item: a),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MedicalPatientDetailDemo extends StatelessWidget {
+  const _MedicalPatientDetailDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final patient = MedicalScenarios.patients.first;
+    return SizedBox(
+      height: 620,
+      child: DefaultTabController(
+        length: 3,
+        child: EdenDetailPageScaffold(
+          header: EdenDetailHeader(
+            title: patient.name,
+            subtitle: patient.notes ?? 'Patient',
+            breadcrumb: const <String>['Patients', 'Active'],
+            leading: const Icon(Icons.medical_information_outlined),
+            statusBadge: const EdenUrgencyBadge(urgency: 'medium'),
+            actions: <EdenDetailHeaderAction>[
+              EdenDetailHeaderAction(
+                icon: Icons.event,
+                tooltip: 'Schedule visit',
+                onPressed: () {},
+              ),
+            ],
+          ),
+          tabs: const <EdenDetailTab>[
+            EdenDetailTab(label: 'Consent'),
+            EdenDetailTab(label: 'Intake'),
+            EdenDetailTab(label: 'Activity'),
+          ],
+          body: TabBarView(
+            children: <Widget>[
+              ListView(
+                padding: const EdgeInsets.all(EdenSpacing.space3),
+                children: <Widget>[
+                  for (final c in MedicalScenarios.consentClauses)
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: EdenSpacing.space2),
+                      child: EdenCard(
+                        child: Padding(
+                          padding: const EdgeInsets.all(EdenSpacing.space3),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: Text(
+                                      c.title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge,
+                                    ),
+                                  ),
+                                  if (c.required)
+                                    const Chip(label: Text('Required')),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                c.body,
+                                style:
+                                    Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              ListView(
+                padding: const EdgeInsets.all(EdenSpacing.space3),
+                children: <Widget>[
+                  for (final q in MedicalScenarios.intakeQuestions)
+                    ListTile(
+                      dense: true,
+                      leading: Icon(_iconForIntake(q.type)),
+                      title: Text(q.prompt),
+                      subtitle: Text(q.type),
+                      trailing: q.required ? const Text('*') : null,
+                    ),
+                ],
+              ),
+              ListView(
+                padding: const EdgeInsets.all(EdenSpacing.space2),
+                children: <Widget>[
+                  for (final a in MedicalScenarios.activityFeed)
+                    EdenActivityFeedItem(item: a),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _iconForIntake(String type) {
+    switch (type) {
+      case 'text':
+        return Icons.short_text;
+      case 'longText':
+        return Icons.notes;
+      case 'singleChoice':
+        return Icons.radio_button_checked;
+      case 'multipleChoice':
+        return Icons.check_box;
+      case 'number':
+        return Icons.numbers;
+      case 'date':
+        return Icons.calendar_today_outlined;
+      case 'yesNo':
+        return Icons.help_outline;
+      default:
+        return Icons.help_outline;
+    }
   }
 }

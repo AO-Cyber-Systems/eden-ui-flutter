@@ -48,21 +48,19 @@ class DemoNetworkStateSample {
   final String? detail;
 }
 
-/// Per-delivery cost breakdown for EdenCostSummaryCard demos.
+/// Per-delivery cost breakdown for EdenCostSummaryCard demos (cents).
 class FuelDeliveryCostBreakdown {
   const FuelDeliveryCostBreakdown({
-    required this.fuel,
-    required this.hauling,
-    required this.surcharge,
-    required this.tax,
-    required this.total,
+    required this.fuelCents,
+    required this.haulingCents,
+    required this.surchargeCents,
+    required this.taxCents,
   });
 
-  final String fuel;
-  final String hauling;
-  final String surcharge;
-  final String tax;
-  final String total;
+  final int fuelCents;
+  final int haulingCents;
+  final int surchargeCents;
+  final int taxCents;
 }
 
 /// Fuel vertical (truck deliveries / tank levels / dispatching).
@@ -229,13 +227,17 @@ class FuelScenarios {
     ),
   ];
 
+  /// EdenCostSummaryCard fixture for a fuel delivery (cents).
+  ///
+  /// EdenCostSummaryCard composes labor + material + equipment as the core
+  /// total; for fuel deliveries we map: fuel → material, hauling → labor,
+  /// surcharge → equipment. Tax renders as an extra row.
   static const FuelDeliveryCostBreakdown deliveryCostBreakdown =
       FuelDeliveryCostBreakdown(
-    fuel: r'$5,679.20',
-    hauling: r'$420.00',
-    surcharge: r'$87.50',
-    tax: r'$612.45',
-    total: r'$6,799.15',
+    fuelCents: 567920,
+    haulingCents: 42000,
+    surchargeCents: 8750,
+    taxCents: 61245,
   );
 
   /// Realistic network-state samples — driver radios go in/out of coverage.
