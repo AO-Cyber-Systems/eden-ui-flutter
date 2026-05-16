@@ -298,8 +298,79 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               ),
             ),
           ),
+
+          const EdenDivider(label: 'EdenStockLevelIndicator — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Capacity gauge — green / amber / red',
+            child: Column(
+              children: [
+                _StockSample(
+                  caption: 'currentStock=80, reorderPoint=50 → green',
+                  indicator: EdenStockLevelIndicator(
+                    currentStock: 80,
+                    reorderPoint: 50,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _StockSample(
+                  caption: 'currentStock=35, reorderPoint=0 → amber',
+                  indicator: EdenStockLevelIndicator(
+                    currentStock: 35,
+                    reorderPoint: 0,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _StockSample(
+                  caption:
+                      'currentStock=50, reorderPoint=100 → red (isBelowReorder)',
+                  indicator: EdenStockLevelIndicator(
+                    currentStock: 50,
+                    reorderPoint: 100,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _StockSample(
+                  caption:
+                      'currentStock=5, reorderPoint=0 → red (percent<0.25)',
+                  indicator: EdenStockLevelIndicator(
+                    currentStock: 5,
+                    reorderPoint: 0,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _StockSample(
+                  caption: 'showLabel=false, height=16',
+                  indicator: EdenStockLevelIndicator(
+                    currentStock: 60,
+                    reorderPoint: 50,
+                    showLabel: false,
+                    height: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _StockSample extends StatelessWidget {
+  const _StockSample({required this.caption, required this.indicator});
+
+  final String caption;
+  final EdenStockLevelIndicator indicator;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(caption, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 4),
+        indicator,
+      ],
     );
   }
 }
