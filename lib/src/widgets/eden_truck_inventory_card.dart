@@ -111,6 +111,7 @@ class EdenTruckInventoryCard extends StatelessWidget {
     );
     if (onTap == null) return card;
     return InkWell(
+      key: const ValueKey('eden-truck-inventory-card-tap'),
       onTap: onTap,
       borderRadius: EdenRadii.borderRadiusMd,
       child: card,
