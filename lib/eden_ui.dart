@@ -317,6 +317,8 @@ export 'src/widgets/eden_ai/eden_insight_card.dart';
 export 'src/widgets/eden_ai/eden_ai_panel.dart';
 export 'src/widgets/eden_ai/eden_ai_collapsible_section.dart';
 export 'src/widgets/eden_ai/eden_persona_selector.dart';
+export 'src/widgets/eden_ai/eden_chat_streaming_callbacks.dart';
+export 'src/widgets/eden_ai/eden_chat_message_bubble.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
