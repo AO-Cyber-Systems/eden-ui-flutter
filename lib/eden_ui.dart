@@ -341,6 +341,7 @@ export 'src/widgets/scheduler/scheduler_swimlane_view.dart';
 export 'src/widgets/scheduler/scheduler_all_day_row.dart';
 export 'src/widgets/scheduler/scheduler_conflict_layout.dart';
 export 'src/widgets/scheduler/scheduler_conflict_banner.dart';
+export 'src/widgets/scheduler/scheduler_pick_mode.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
