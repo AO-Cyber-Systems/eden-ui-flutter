@@ -16,18 +16,30 @@ class EdenDiagramPainter extends CustomPainter {
     required this.theme,
     this.selectedNodeId,
     this.hoveredNodeId,
+    this.dropTargetNodeId,
     this.dragEdgeStart,
     this.dragEdgeEnd,
     this.gridEnabled = true,
+    this.drawNodes = true,
   });
 
   final EdenDiagramData data;
   final ThemeData theme;
   final String? selectedNodeId;
   final String? hoveredNodeId;
+  /// Node id flagged as the current drop-target (objective 006, parity D-2).
+  ///
+  /// When set, the painter draws a primary-color ring around that node.
+  final String? dropTargetNodeId;
   final Offset? dragEdgeStart;
   final Offset? dragEdgeEnd;
   final bool gridEnabled;
+  /// When false, node shapes are not drawn (objective 006).
+  ///
+  /// Used when an external `customNodeRenderer` is active — the painter
+  /// still draws grid + edges + port dots; the consumer's widgets render
+  /// node visuals.
+  final bool drawNodes;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -38,8 +50,10 @@ class EdenDiagramPainter extends CustomPainter {
     if (dragEdgeStart != null && dragEdgeEnd != null) {
       _drawDragEdge(canvas);
     }
-    for (final node in data.nodes) {
-      _drawNode(canvas, node);
+    if (drawNodes) {
+      for (final node in data.nodes) {
+        _drawNode(canvas, node);
+      }
     }
   }
 
@@ -185,11 +199,73 @@ class EdenDiagramPainter extends CustomPainter {
 
     // Draw port dots when selected or hovered
     if (isSelected || isHovered) {
-      final portPaint = Paint()..color = theme.colorScheme.primary;
-      for (final side in EdenPortSide.values) {
-        canvas.drawCircle(node.portOffset(side), 4, portPaint);
+      if (node.ports != null && node.ports!.isNotEmpty) {
+        for (final port in node.ports!) {
+          final pos = customPortPixelPosition(node, port);
+          final color = port.color != null
+              ? _hexToColor(port.color!)
+              : theme.colorScheme.primary;
+          canvas.drawCircle(pos, 4, Paint()..color = color);
+        }
+      } else {
+        final portPaint = Paint()..color = theme.colorScheme.primary;
+        for (final side in EdenPortSide.values) {
+          canvas.drawCircle(node.portOffset(side), 4, portPaint);
+        }
       }
     }
+
+    // Drop-target ring (objective 006, parity D-2). Outset 4pt, primary
+    // color at 0.5 alpha, 2.5pt stroke.
+    if (node.id == dropTargetNodeId) {
+      final ringRect = rect.inflate(4);
+      final ringPaint = Paint()
+        ..color = theme.colorScheme.primary.withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(ringRect, const Radius.circular(10)),
+        ringPaint,
+      );
+    }
+  }
+
+  /// Compute the pixel position of a custom port (objective 006).
+  static Offset customPortPixelPosition(EdenDiagramNode node, EdenDiagramPort port) {
+    switch (port.side) {
+      case EdenPortSide.top:
+        return Offset(node.x + node.width * port.offset, node.y);
+      case EdenPortSide.right:
+        return Offset(node.x + node.width, node.y + node.height * port.offset);
+      case EdenPortSide.bottom:
+        return Offset(node.x + node.width * port.offset, node.y + node.height);
+      case EdenPortSide.left:
+        return Offset(node.x, node.y + node.height * port.offset);
+    }
+  }
+
+  /// Resolve the edge start offset, honoring custom ports if present.
+  static Offset resolveEdgeStart(EdenDiagramEdge edge, EdenDiagramNode source) {
+    if (edge.sourcePortId != null && source.ports != null) {
+      for (final p in source.ports!) {
+        if (p.id == edge.sourcePortId) {
+          return customPortPixelPosition(source, p);
+        }
+      }
+    }
+    return source.portOffset(edge.sourcePort);
+  }
+
+  /// Resolve the edge end offset, honoring custom ports if present.
+  static Offset resolveEdgeEnd(EdenDiagramEdge edge, EdenDiagramNode target) {
+    if (edge.targetPortId != null && target.ports != null) {
+      for (final p in target.ports!) {
+        if (p.id == edge.targetPortId) {
+          return customPortPixelPosition(target, p);
+        }
+      }
+    }
+    return target.portOffset(edge.targetPort);
   }
 
   void _drawCylinder(Canvas canvas, Rect rect, Paint fill, Paint border) {
@@ -240,8 +316,8 @@ class EdenDiagramPainter extends CustomPainter {
     final targetNode = data.nodeById(edge.targetId);
     if (sourceNode == null || targetNode == null) return;
 
-    final start = sourceNode.portOffset(edge.sourcePort);
-    final end = targetNode.portOffset(edge.targetPort);
+    final start = resolveEdgeStart(edge, sourceNode);
+    final end = resolveEdgeEnd(edge, targetNode);
 
     final edgeColor = edge.color != null
         ? _hexToColor(edge.color!)

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:flutter/widgets.dart' show Widget;
+
 import 'mermaid_parser.dart';
 
 /// Shape types for diagram nodes.
@@ -188,6 +190,8 @@ class EdenDiagramEdge {
     required this.targetId,
     this.sourcePort = EdenPortSide.right,
     this.targetPort = EdenPortSide.left,
+    this.sourcePortId,
+    this.targetPortId,
     this.label,
     this.style = EdenEdgeStyle.solid,
     this.arrowHead = EdenArrowHead.filledArrow,
@@ -200,6 +204,14 @@ class EdenDiagramEdge {
   String targetId;
   EdenPortSide sourcePort;
   EdenPortSide targetPort;
+  /// Custom-port id on source node (objective 006, parity E-5).
+  ///
+  /// When set AND source node has [EdenDiagramNode.ports], the canvas looks
+  /// up the port by id for edge anchor positioning. Falls back to [sourcePort]
+  /// when null or when the port id is not found.
+  String? sourcePortId;
+  /// Custom-port id on target node (objective 006, parity E-5).
+  String? targetPortId;
   String? label;
   EdenEdgeStyle style;
   EdenArrowHead arrowHead;
@@ -212,6 +224,8 @@ class EdenDiagramEdge {
     'targetId': targetId,
     'sourcePort': sourcePort.name,
     'targetPort': targetPort.name,
+    if (sourcePortId != null) 'sourcePortId': sourcePortId,
+    if (targetPortId != null) 'targetPortId': targetPortId,
     if (label != null) 'label': label,
     'style': style.name,
     'arrowHead': arrowHead.name,
@@ -231,6 +245,8 @@ class EdenDiagramEdge {
       (s) => s.name == json['targetPort'],
       orElse: () => EdenPortSide.left,
     ),
+    sourcePortId: json['sourcePortId'] as String?,
+    targetPortId: json['targetPortId'] as String?,
     label: json['label'] as String?,
     style: EdenEdgeStyle.values.firstWhere(
       (s) => s.name == json['style'],
@@ -244,6 +260,28 @@ class EdenDiagramEdge {
     data: (json['data'] as Map<String, dynamic>?) ?? {},
   );
 }
+
+/// Context passed to a [EdenDiagramNodeRenderer] (objective 006).
+///
+/// Conveys the node + selection / hover / drop-target state. The renderer is
+/// responsible for drawing its own selection ring + drop-target ring when
+/// using `customNodeRenderer`.
+class EdenDiagramNodeContext {
+  const EdenDiagramNodeContext({
+    required this.node,
+    this.selected = false,
+    this.hovered = false,
+    this.dropTarget = false,
+  });
+
+  final EdenDiagramNode node;
+  final bool selected;
+  final bool hovered;
+  final bool dropTarget;
+}
+
+/// Signature for custom node rendering (objective 006).
+typedef EdenDiagramNodeRenderer = Widget Function(EdenDiagramNodeContext context);
 
 /// Top-level diagram data structure — the full document.
 class EdenDiagramData {
