@@ -22,6 +22,8 @@ import 'devflow_tools_screen.dart';
 import 'trades_screen.dart';
 import 'companion_screen.dart';
 import 'scheduler_screen.dart';
+import 'field_screen.dart';
+import 'fuel_screen.dart';
 
 /// Root screen showing all component categories.
 class HomeScreen extends StatelessWidget {
@@ -336,5 +338,19 @@ final _categories = [
     title: 'EdenScheduler — Objective 004',
     subtitle: 'Multi-view scheduler enhancement — exact trades-react parity',
     builder: (_) => const SchedulerScreen(),
+  ),
+  _Category(
+    icon: Icons.engineering_outlined,
+    title: 'Field / Companion Pages — Obj 007',
+    subtitle:
+        'Inspection, signature, packout, photo, check-in, map, launcher grid, AI FAB',
+    builder: (_) => const FieldScreen(),
+  ),
+  _Category(
+    icon: Icons.local_gas_station_outlined,
+    title: 'B-Fuel — Vertical Components',
+    subtitle:
+        'Tank gauge, route stops, meter readings, hazmat docs, price ticker, truck inventory',
+    builder: (_) => const FuelScreen(),
   ),
 ];

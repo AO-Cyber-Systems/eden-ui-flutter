@@ -351,5 +351,8 @@ export 'src/widgets/scheduler/scheduler_performance.dart';
 // Objective 005 — B-Fuel components Wave 1
 export 'src/widgets/eden_tank_gauge.dart';
 
+// Objective 007 — B-Trades-A field/companion pages
+export 'src/widgets/eden_mobile_quick_access_grid.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
