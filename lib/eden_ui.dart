@@ -290,5 +290,8 @@ export 'src/widgets/eden_quick_action_bar.dart';
 export 'src/widgets/eden_address_input.dart';
 export 'src/widgets/eden_map_preview.dart';
 
+// Companion Shell Foundation (objective 002)
+export 'src/widgets/eden_app_mode.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
