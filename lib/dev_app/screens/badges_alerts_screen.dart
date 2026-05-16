@@ -199,6 +199,40 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenApprovalStatusBadge — Phase 1 (objective 003)'),
+          const Section(
+            title: 'Known approval statuses (10 + 1 alias)',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenApprovalStatusBadge(status: 'pending'),
+                EdenApprovalStatusBadge(status: 'pending_approval'),
+                EdenApprovalStatusBadge(status: 'approved'),
+                EdenApprovalStatusBadge(status: 'rejected'),
+                EdenApprovalStatusBadge(status: 'draft'),
+                EdenApprovalStatusBadge(status: 'ordered'),
+                EdenApprovalStatusBadge(status: 'received'),
+                EdenApprovalStatusBadge(status: 'in_transit'),
+                EdenApprovalStatusBadge(status: 'completed'),
+                EdenApprovalStatusBadge(status: 'fulfilled'),
+                EdenApprovalStatusBadge(status: 'cancelled'),
+              ],
+            ),
+          ),
+          const Section(
+            title: 'Unknown / case-mismatch (default-branch fallback)',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenApprovalStatusBadge(status: 'in_review'),
+                EdenApprovalStatusBadge(status: 'awaiting'),
+                EdenApprovalStatusBadge(status: 'Approved'),
+              ],
+            ),
+          ),
         ],
       ),
     );
