@@ -11,6 +11,7 @@ class MiscScreen extends StatefulWidget {
 
 class _MiscScreenState extends State<MiscScreen> {
   EdenNetworkStatus _networkStatus = EdenNetworkStatus.offline;
+  EdenAiPersona _persona = EdenAiPersona.operations;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +119,21 @@ class _MiscScreenState extends State<MiscScreen> {
                     onPressed: () {},
                   ),
                 ),
+              ],
+            ),
+          ),
+
+          const EdenDivider(label: 'EdenPersonaSelector — Phase 1 (objective 003)'),
+          Section(
+            title: 'Live persona selector — Riverpod-free, callback-driven',
+            child: Row(
+              children: [
+                EdenPersonaSelector(
+                  activePersona: _persona,
+                  onChanged: (p) => setState(() => _persona = p),
+                ),
+                const SizedBox(width: 12),
+                Text('Active: ${_persona.displayLabel}'),
               ],
             ),
           ),

@@ -58,7 +58,7 @@ TRDs:
 - [x] 003-10-TRD.md — EdenInsightCard + foundation eden_ai_models.dart (Wave 3; 6 layouts incl. CustomPainter chart; shared AI types: EdenInsightContent, EdenAiPersona, EdenChatMessage, etc.)
 - [x] 003-11-TRD.md — EdenAiPanel (Wave 3; 320/40 collapsible sidebar panel; composes EdenInsightCard; depends 003-10)
 - [x] 003-12-TRD.md — EdenAiCollapsibleSection (Wave 3; sparkle+title+chevron wrapper; independent)
-- [ ] 003-13-TRD.md — EdenPersonaSelector (Wave 3; popup-menu pill, Riverpod-stripped; depends 003-10)
+- [x] 003-13-TRD.md — EdenPersonaSelector (Wave 3; popup-menu pill, Riverpod-stripped; depends 003-10)
 - [ ] 003-14-TRD.md — EdenAgentChat + EdenAgentChatFab + EdenChatMessageBubble (Wave 3; chat FAB + modal sheet; callback-driven streaming + lazy conversation creation; depends 003-10 + 003-13)
 - [ ] 003-15-TRD.md — EdenAiInsightSlot (Wave 3; enabled-gate around EdenAiPanel; internal/external state pattern; depends 003-10 + 003-11)
 
