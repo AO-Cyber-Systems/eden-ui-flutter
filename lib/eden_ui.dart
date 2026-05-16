@@ -296,6 +296,7 @@ export 'src/widgets/eden_adaptive_layout.dart';
 export 'src/widgets/eden_ux_mode_toggle.dart';
 export 'src/widgets/eden_field_view_gate.dart';
 export 'src/widgets/eden_gps_status_indicator.dart';
+export 'src/widgets/eden_companion_shell.dart';
 
 // Utils
 export 'src/utils/responsive.dart';
