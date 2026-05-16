@@ -343,5 +343,8 @@ export 'src/widgets/scheduler/scheduler_conflict_layout.dart';
 export 'src/widgets/scheduler/scheduler_conflict_banner.dart';
 export 'src/widgets/scheduler/scheduler_pick_mode.dart';
 
+// Objective 004 — EdenScheduler Enhancement Wave 4
+export 'src/widgets/scheduler/scheduler_sidebar.dart';
+
 // Utils
 export 'src/utils/responsive.dart';
