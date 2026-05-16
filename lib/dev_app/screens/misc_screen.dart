@@ -121,6 +121,44 @@ class _MiscScreenState extends State<MiscScreen> {
               ],
             ),
           ),
+
+          const EdenDivider(label: 'EdenPlaceholderPage — Phase 1 (objective 003)'),
+          Section(
+            title: 'EdenPlaceholderPage preview (tap to open)',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                EdenButton(
+                  label: 'Open default (Coming soon)',
+                  variant: EdenButtonVariant.secondary,
+                  onPressed: () {
+                    Navigator.of(context).push<void>(MaterialPageRoute(
+                      builder: (_) => const EdenPlaceholderPage(
+                        title: 'Reports',
+                        icon: Icons.bar_chart,
+                      ),
+                    ));
+                  },
+                ),
+                EdenButton(
+                  label: 'Open with action',
+                  variant: EdenButtonVariant.secondary,
+                  onPressed: () {
+                    Navigator.of(context).push<void>(MaterialPageRoute(
+                      builder: (ctx) => EdenPlaceholderPage(
+                        title: 'Agent Builder',
+                        icon: Icons.smart_toy_outlined,
+                        subtitle: 'Migration in progress',
+                        actionLabel: 'Notify me when ready',
+                        onAction: () => Navigator.of(ctx).pop(),
+                      ),
+                    ));
+                  },
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
