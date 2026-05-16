@@ -78,6 +78,103 @@ class ChatScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          const EdenDivider(label: 'EdenInsightCard — Phase 1 (objective 003)'),
+          const Section(
+            title: '6 insight layouts',
+            child: Column(
+              children: [
+                EdenInsightCard(
+                  content: EdenInsightContent(
+                    id: 's',
+                    type: EdenInsightType.summary,
+                    title: 'Project Update',
+                    subtitle: '3 tasks remaining',
+                  ),
+                ),
+                EdenInsightCard(
+                  content: EdenInsightContent(
+                    id: 'm',
+                    type: EdenInsightType.metric,
+                    title: 'Revenue',
+                    data: {
+                      'value': r'$12,500',
+                      'trend': 'up',
+                      'change': '+8%',
+                    },
+                  ),
+                ),
+                EdenInsightCard(
+                  content: EdenInsightContent(
+                    id: 'a',
+                    type: EdenInsightType.alert,
+                    title: 'Permit expiring',
+                    severity: EdenInsightSeverity.warning,
+                  ),
+                ),
+                EdenInsightCard(
+                  content: EdenInsightContent(
+                    id: 'sg',
+                    type: EdenInsightType.suggestion,
+                    title: 'Try AI summary',
+                    subtitle:
+                        'Daily highlights of activity across all projects.',
+                    actions: [
+                      EdenInsightAction(label: 'View details'),
+                      EdenInsightAction(label: 'Dismiss'),
+                    ],
+                  ),
+                ),
+                EdenInsightCard(
+                  content: EdenInsightContent(
+                    id: 'c',
+                    type: EdenInsightType.chart,
+                    title: 'Weekly leads',
+                    chartType: EdenChartType.bar,
+                    data: {
+                      'values': [30, 60, 45, 80, 55, 70, 40],
+                      'labels': ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
+                    },
+                  ),
+                ),
+                EdenInsightCard(
+                  content: EdenInsightContent(
+                    id: 'd',
+                    type: EdenInsightType.diagram,
+                    title: 'Workflow',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Section(
+            title: 'Compact mode (sidebar layout @ 280pt)',
+            child: SizedBox(
+              width: 280,
+              child: Column(
+                children: [
+                  EdenInsightCard(
+                    compact: true,
+                    content: EdenInsightContent(
+                      id: 's2',
+                      type: EdenInsightType.summary,
+                      title: 'Project Update',
+                      subtitle: '3 tasks remaining',
+                    ),
+                  ),
+                  EdenInsightCard(
+                    compact: true,
+                    content: EdenInsightContent(
+                      id: 'a2',
+                      type: EdenInsightType.alert,
+                      title: 'Permit expiring',
+                      severity: EdenInsightSeverity.critical,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
