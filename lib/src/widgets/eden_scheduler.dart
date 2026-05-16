@@ -7,6 +7,7 @@ import 'scheduler/scheduler_day_view.dart';
 import 'scheduler/scheduler_list_view.dart';
 import 'scheduler/scheduler_mobile_view.dart';
 import 'scheduler/scheduler_models.dart';
+import 'scheduler/scheduler_swimlane_view.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
 import 'scheduler/scheduler_week_view.dart';
@@ -359,16 +360,11 @@ class _EdenSchedulerState extends State<EdenScheduler> {
           onEventTap: widget.onEventTap,
         );
       case EdenSchedulerView.swimlane:
-        // TRD 09 (swimlane) replaces this. For now, render the full week view.
-        return EdenSchedulerWeekView(
-          focusedDate: _focusedDate,
+        return EdenSchedulerSwimlaneView(
+          controller: _controller,
+          resources: widget.resources ?? const [],
           events: _filteredEvents,
-          mode: EdenSchedulerWeekMode.week,
-          config: widget.config,
-          scrollController: _scrollController,
-          onDateSelected: widget.onDateSelected,
           onEventTap: widget.onEventTap,
-          onTimeSlotTap: widget.onTimeSlotTap,
         );
     }
   }
