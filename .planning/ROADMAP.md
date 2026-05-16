@@ -39,6 +39,29 @@ TRDs:
 - [x] 002-06-TRD.md — EdenGpsStatusIndicator (Wave 2; cross-vertical promotion per P-17 evidence; T/F/M/G verticals)
 - [x] 002-05-TRD.md — EdenCompanionShell (Wave 3; composes Wave A EdenRoleDashboardShell + EdenNetworkStatusBar + TRD-01/02/03; CRITICAL lock E rule 3 enforcement at 1200pt)
 
+### Objective 003: Phase 1 — Widget donations from trades-flutter
+
+**Goal:** Donate 14 reusable widgets from `AOCyber-Trades/trades-flutter/lib/shared/widgets/` into eden-ui-flutter, completing Phase 1 of the trades-flutter absorption initiative (`TRADES_FLUTTER_ABSORPTION_PLAN_2026-05-15.md` §5.3). After this objective ships, every Band-1/2/3 trades-flutter feature folder absorption (absorption Phase 3) can `import 'package:eden_ui_flutter/eden_ui.dart'` instead of re-vendoring these primitives inline. Largest unblocker for the ~6-8 week Phase 3 work. See `objectives/003-phase-1-widget-donations/OBJECTIVE.md`. GitHub: AO-Cyber-Systems/eden-ui-flutter#10.
+
+**TRDs:** 15 plans across 3 waves (~3-4 wk Claude execution)
+
+TRDs:
+- [ ] 003-01-TRD.md — EdenUrgencyBadge (Wave 1; status pill, low/medium/high/critical, donor trades-flutter)
+- [ ] 003-02-TRD.md — EdenPipelineBadge (Wave 1; outlined pill, draft/sent/won/lost/expired + aliases, donor trades-flutter)
+- [ ] 003-03-TRD.md — EdenApprovalStatusBadge (Wave 1; filled pill, 10 statuses, donor trades-flutter)
+- [ ] 003-04-TRD.md — EdenStockLevelIndicator (Wave 1; linear bar with green/amber/red thresholds, donor trades-flutter)
+- [ ] 003-05-TRD.md — EdenCostSummaryCard (Wave 2; labor/material/equipment/total breakdown card, composes EdenCurrencyDisplay)
+- [ ] 003-06-TRD.md — EdenActivityFeedItem (Wave 2; avatar + actor/action/entity + time row; inlined data class)
+- [ ] 003-07-TRD.md — EdenBlockingAlerts (Wave 2; collapsible severity-colored alert list; inlined types)
+- [ ] 003-08-TRD.md — EdenMediaRow (Wave 2; compact icon+count+label cells, + Add buttons; inlined item class)
+- [ ] 003-09-TRD.md — EdenPlaceholderPage (Wave 2; coming-soon route screen + optional action button)
+- [ ] 003-10-TRD.md — EdenInsightCard + foundation eden_ai_models.dart (Wave 3; 6 layouts incl. CustomPainter chart; shared AI types: EdenInsightContent, EdenAiPersona, EdenChatMessage, etc.)
+- [ ] 003-11-TRD.md — EdenAiPanel (Wave 3; 320/40 collapsible sidebar panel; composes EdenInsightCard; depends 003-10)
+- [ ] 003-12-TRD.md — EdenAiCollapsibleSection (Wave 3; sparkle+title+chevron wrapper; independent)
+- [ ] 003-13-TRD.md — EdenPersonaSelector (Wave 3; popup-menu pill, Riverpod-stripped; depends 003-10)
+- [ ] 003-14-TRD.md — EdenAgentChat + EdenAgentChatFab + EdenChatMessageBubble (Wave 3; chat FAB + modal sheet; callback-driven streaming + lazy conversation creation; depends 003-10 + 003-13)
+- [ ] 003-15-TRD.md — EdenAiInsightSlot (Wave 3; enabled-gate around EdenAiPanel; internal/external state pattern; depends 003-10 + 003-11)
+
 ## v2 Future Objectives
 
 Tracked but not in current scope:
