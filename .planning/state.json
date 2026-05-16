@@ -1,99 +1,42 @@
 {
-  "objective": "001-wave-a-cross-vertical-fundamentals",
-  "wave": 4,
+  "objective": "003-phase-1-widget-donations",
+  "wave": 1,
   "current_trd": null,
-  "current_task": "Wave A 100% complete (15/15 TRDs — Waves 1-4 all GREEN)",
+  "current_task": "Wave 1 complete (4/4 TRDs — 003-01..04 GREEN). Moving to Wave 2.",
   "completed_tasks": [
-    "001-01 Task 1 — fixture builders",
-    "001-01 Task 2 — RED → GREEN EdenListPageScaffold (12 tests pass)",
-    "001-01 Task 3 — dev catalog entry",
-    "001-02 Task 1 — fixture builders (split into header / scaffold)",
-    "001-02 Task 2 — RED → GREEN EdenDetailHeader (9 tests pass)",
-    "001-02 Task 3 — RED → GREEN EdenDetailPageScaffold (8 tests pass) + dev catalog",
-    "001-03 Task 1 — value types + fixtures + EdenMapMarker collision fix",
-    "001-03 Task 2 — RED → GREEN EdenMapProvider interface + NoOpMapProvider (13 tests pass)",
-    "001-04 Task 1 — RED → GREEN EdenCurrencyDisplay (14 tests pass) + dev catalog",
-    "001-05 Task 1 — RED → GREEN EdenOtpInput (8 tests pass)",
-    "001-05 Task 2 — RED → GREEN EdenPhoneInput (8 tests pass) + dev catalog",
-    "001-06 Task 1 — RED → GREEN EdenMembershipTierBadge (10 tests pass) + dev catalog",
-    "001-07 Task 1 — RED → GREEN EdenAuthenticatedImage (10 tests pass) + dev catalog",
-    "001-08 Task 1 — RED → GREEN EdenNetworkStatusBar (8 tests pass) + dev catalog",
-    "001-09 Task 1 — value types (EdenConsentClause, EdenConsentRecord) + fixtures",
-    "001-09 Task 2 — RED → GREEN EdenConsentFlow (11 tests pass) + dev catalog",
-    "001-10 Task 1 — value types (EdenIntakeQuestion, EdenIntakeQuestionType) + fixtures",
-    "001-10 Task 2 — RED → GREEN EdenIntakeForm (14 tests pass) + dev catalog",
-    "001-11 Task 1 — value types (EdenDashboardSection, EdenRolePalette) + fixtures",
-    "001-11 Task 2 — RED → GREEN EdenRoleDashboardShell (11 tests pass) + dev catalog",
-    "001-12 Task 1 — RED → GREEN EdenStarterTemplateCard (5 tests pass) + shared triplet fixtures",
-    "001-12 Task 2 — RED → GREEN EdenContextualTip (4) + EdenAppTourOverlay (5) + dev catalog",
-    "001-13 Task 1 — value types (EdenOfflineQueueItem) + fixtures",
-    "001-13 Task 2 — RED → GREEN EdenOfflineQueueViewer (9 tests pass) + dev catalog",
-    "001-14 Task 1 — value types (EdenQuickAction) + fixtures + RED → GREEN EdenQuickActionBar (11 tests pass) + dev catalog",
-    "001-15 Task 1 — RED → GREEN RecordingMapProvider test double in lib/ (6 tests pass)",
-    "001-15 Task 2 — RED → GREEN EdenMapPreview (8 tests pass)",
-    "001-15 Task 3 — RED → GREEN EdenAddressInput (11 tests pass) + dev catalog"
+    "003-01 — RED→GREEN EdenUrgencyBadge (9/9 + 1 skip) + catalog + export",
+    "003-02 — RED→GREEN EdenPipelineBadge (11/11) + catalog + export",
+    "003-03 — RED→GREEN EdenApprovalStatusBadge (15/15) + catalog + export",
+    "003-04 — RED→GREEN EdenStockLevelIndicator (11/11) + catalog + export"
   ],
   "completed_trds": [
-    "001-01", "001-02", "001-03", "001-04", "001-05", "001-06", "001-07", "001-08",
-    "001-09", "001-10", "001-11", "001-12", "001-13", "001-14", "001-15"
+    "003-01",
+    "003-02",
+    "003-03",
+    "003-04"
   ],
   "started_at": "2026-05-15",
   "wave1_completed_at": "2026-05-15",
-  "wave1_tests_added": 42,
-  "wave2_completed_at": "2026-05-15",
-  "wave2_tests_added": 58,
-  "wave3_completed_at": "2026-05-15",
-  "wave3_tests_added": 70,
-  "wave4_completed_at": "2026-05-15",
-  "wave4_tests_added": 25,
+  "wave1_tests_added": 46,
+  "wave1_total_tests": 633,
   "deviations": [
     {
-      "trd": "001-03",
+      "trd": "003-01",
+      "rule": "Test-design adjustment (no rule deviation)",
+      "summary": "EdenUrgencyBadge labelSmall.fontSize-inheritance test skipped: ThemeData.light().textTheme.labelSmall.fontSize is null in this Flutter SDK while the rendered Text.style.fontSize falls through to 11.0 via internal text-style merging — the assertion was structurally wrong, not the implementation. Replaced with a differential override-vs-default assertion which captures the meaningful invariant (override sets 18; default is not 18)."
+    },
+    {
+      "trd": "003-03",
       "rule": "Rule 1 — auto-fix bug",
-      "summary": "EdenMapMarker name collision with pre-existing lib/src/widgets/eden_map_view.dart#EdenMapMarker. Resolved by hiding legacy from barrel (lib/eden_ui.dart re-exports eden_map_view.dart with `hide EdenMapMarker`) and updating the lone dev-catalog consumer (trades_screen.dart) to import the legacy class directly. Legacy class file is unchanged; consumers using `import 'package:eden_ui_flutter/src/widgets/eden_map_view.dart'` directly are unaffected."
+      "summary": "Donor wraps Text directly inside Container (no Flex ancestor); the TRD-prescribed `Flexible(child: Text(...))` wrapper threw ParentDataWidget assertions at runtime ('FlexParentData applied to RenderObject expecting BoxParentData'). Reverted to direct Text + TextOverflow.ellipsis for iPhone-narrow safety; verified iPhone-narrow 90pt path passes for all 11 statuses."
     },
     {
-      "trd": "001-07",
+      "trd": "003-04",
       "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "EdenAuthenticatedImage tests pivoted from end-to-end HTTP-override-based fixtures to structural assertions on the underlying NetworkImage provider (cast image.image as NetworkImage, assert headers + url). Rationale: flutter_test intercepts Image.network internally and bypasses HttpOverrides; structural assertions verify the widget contract (header forwarding) without requiring a fake HTTP stack. Fixture file simplified to bytes+headers constants."
-    },
-    {
-      "trd": "001-08",
-      "rule": "Rule 3 — auto-fix blocking issue",
-      "summary": "Tests using `pumpAndSettle()` after `status=reconnecting` deadlocked because the CircularProgressIndicator spins indefinitely. Replaced `pumpAndSettle()` with fixed-time `pump(Duration(milliseconds: 250))` to advance animation without waiting for steady-state. This matches the issue Wave 1 had flagged in deferred-items.md and resolves it at GREEN."
-    },
-    {
-      "trd": "001-09",
-      "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "TRD spec called for primarySignature: List<int> bytes in EdenConsentRecord. Implementation captures List<EdenSignatureStroke> instead — strokes are the canonical primitive EdenSignaturePad emits via onSignatureChanged, and storing strokes lets consumers rasterise at any resolution losslessly. Caller can convert strokes → bytes via their own raster pipeline."
-    },
-    {
-      "trd": "001-10",
-      "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "TRD test list specified 13 tests; shipped 14 (added a separate test that verifies number question answer is typed as num, alongside the original 7-question-types coverage)."
-    },
-    {
-      "trd": "001-12",
-      "rule": "Test-design adjustment (no rule deviation)",
-      "summary": "EdenAppTourOverlay GREEN: captured the inner BuildContext via ShowCaseWidget's builder param so startTour() can call ShowCaseWidget.of(innerCtx).startShowCase(keys). Calling .of() on the outer State context fails because ShowCaseWidget is a descendant, not an ancestor. Initial RED test had `isActive=false by default` and `startTour() flips isActive` both passing against the stub coincidentally; rewrote both to add sentinel-text assertions that only the real GREEN can satisfy."
-    },
-    {
-      "trd": "001-13",
-      "rule": "Rule 1 — auto-fix bug",
-      "summary": "Relative-time helper used `<30s` threshold for 'just now' which excluded an exactly-30-seconds-ago timestamp. Bumped to `<=30s` so the fixed-clock test on q1 (30s before referenceNow) deterministically renders 'just now'. Also: test for the Discard confirm dialog uses `find.text('Discard').last` because each row's Discard button + the dialog's Discard button both register the same Text — not a widget bug, a test scoping pattern."
-    },
-    {
-      "trd": "001-14",
-      "rule": "Rule 1 — auto-fix bug",
-      "summary": "EdenQuickActionBar initial inline-cap calculation always reserved one slot for the overflow menu (`computed - 1`), which forced overflow even at wide widths when all actions already fit. Fixed: `autoCap = slotCap >= actions.length ? actions.length : slotCap - 1` — only reserve the menu slot when overflow would actually be needed. Also: `constraints.maxWidth.isFinite` guard since LayoutBuilder can deliver double.infinity inside scrollable parents."
-    },
-    {
-      "trd": "001-15",
-      "rule": "Test-design adjustment (TRD recovery clause invoked)",
-      "summary": "EdenAddressInput uses a hand-rolled Material(Column) suggestion dropdown instead of Flutter's `Autocomplete<EdenPlaceSuggestion>` widget — invoking the TRD's <recovery> clause. Material `Autocomplete<>` builds an Overlay route that is not reachable from the standard test wrap() helper (MaterialApp(home: Scaffold(body: child))). Hand-rolled version is simpler to test and keeps the widget tree flat. No API impact; consumers see the same EdenAddressInput signature."
+      "summary": "Test helper colorOfBar return type required Color! (force-unwrap of Animation<Color>.value which is nullable) — donor always passes AlwaysStoppedAnimation<Color>(non-null color)."
     }
   ],
   "notes": [
-    "Wave 3 ran in parallel with Wave 4 (TRD 001-15). Both executors authored commits to lib/eden_ui.dart on the same file; coordination was handled via distinct section headers ('Wave A — Cross-vertical composers', 'Wave A — Onboarding triplet', 'Wave A — Cross-vertical primitives (offline + nav)' from Wave 3, vs 'Wave A — Address & map components' from Wave 4). One brief polluted commit (`4d1359f`) included transient .planning/.skill-active + .planning/.awareness-cache.json files; cleaned up in `7387302` which gitignored both. End-of-wave full-suite run: 70 Wave 3 tests + 25 Wave 4 tests pass."
+    "Wave 1 4 TRDs executed serially (shared lib/eden_ui.dart + badges_alerts_screen.dart + data_display_screen.dart). Commit cadence: test→feat→docs per TRD with df-tools commit + push after each docs commit. All commits land on main."
   ]
 }
