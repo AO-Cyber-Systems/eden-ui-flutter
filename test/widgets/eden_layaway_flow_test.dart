@@ -308,7 +308,11 @@ void main() {
         onSubmit: (_) {},
       )));
       await selectRelease(tester);
-      expect(find.textContaining('Balance due'), findsOneWidget);
+      // 'Balance due' appears both as a summary stat label AND in the
+      // release-form alert — assert at least one + button disabled.
+      expect(find.textContaining('Balance due'), findsAtLeastNWidgets(1));
+      // Alert specifically contains 'collect remaining'.
+      expect(find.textContaining('collect remaining'), findsOneWidget);
       final btn = tester.widget<ElevatedButton>(
         find.widgetWithText(ElevatedButton, 'Confirm release'),
       );
