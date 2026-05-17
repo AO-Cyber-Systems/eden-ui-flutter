@@ -43,7 +43,12 @@ class RetailPolishScreen extends StatelessWidget {
                 'EdenRefundFlow — multi-step refund (lookup → select → method → approve)',
             child: _RefundFlowDemoBlock(),
           ),
-          // TRD 018-05 will append:
+          // TRD 018-05 appended above.
+          Section(
+            title:
+                'EdenLayawayFlow — layaway lifecycle (create + manage)',
+            child: _LayawayFlowDemoBlock(),
+          ),
           // TRD 018-06 will append:
         ],
       ),
@@ -293,6 +298,109 @@ class _RefundFlowDemoBlock extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Hand-built demo for EdenLayawayFlow — toggle between create and manage.
+/// Do NOT regenerate via LLM.
+class _LayawayFlowDemoBlock extends StatefulWidget {
+  const _LayawayFlowDemoBlock();
+
+  @override
+  State<_LayawayFlowDemoBlock> createState() => _LayawayFlowDemoBlockState();
+}
+
+class _LayawayFlowDemoBlockState extends State<_LayawayFlowDemoBlock> {
+  bool _showManage = false;
+
+  static const _cart = [
+    EdenLayawayCartItem(
+      lineId: 'L-1',
+      sku: 'SKU-A',
+      name: 'Leather jacket',
+      qty: 1,
+      unitPriceCents: 25000,
+      taxCents: 2000,
+    ),
+    EdenLayawayCartItem(
+      lineId: 'L-2',
+      sku: 'SKU-B',
+      name: 'Belt',
+      qty: 1,
+      unitPriceCents: 3500,
+      taxCents: 280,
+    ),
+  ];
+
+  EdenLayawayState _manageState() {
+    final now = DateTime.now();
+    return EdenLayawayState(
+      id: 'LAY-001',
+      cartItems: _cart,
+      depositCents: 6156,
+      balanceCents: 18468,
+      pickupByDate: now.add(const Duration(days: 30)),
+      status: EdenLayawayStatus.active,
+      customerId: 'c-1',
+      customerName: 'Jane Doe',
+      installments: [
+        EdenLayawayInstallment(
+          id: 'INS-1',
+          paidAt: now.subtract(const Duration(days: 10)),
+          amountCents: 6156,
+          method: EdenPaymentMethod.card,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          title: const Text('Manage existing layaway'),
+          value: _showManage,
+          onChanged: (v) => setState(() => _showManage = v),
+        ),
+        SizedBox(
+          height: 600,
+          child: _showManage
+              ? EdenLayawayFlow.manage(
+                  state: _manageState(),
+                  onSubmit: (d) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Manage: ${d.kind.name}')),
+                    );
+                  },
+                  onNotifyCustomer: (ch, msg) async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Notify ${ch.name}: $msg')),
+                    );
+                  },
+                )
+              : EdenLayawayFlow.create(
+                  cartItems: _cart,
+                  onSubmit: (d) {
+                    final created = d as EdenLayawayCreatedDraft;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Created layaway: deposit \$${(created.depositCents / 100).toStringAsFixed(2)}',
+                        ),
+                      ),
+                    );
+                  },
+                  onNotifyCustomer: (ch, msg) async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Notify ${ch.name}: $msg')),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
