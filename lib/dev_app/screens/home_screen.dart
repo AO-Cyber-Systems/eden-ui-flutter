@@ -26,6 +26,7 @@ import 'composers_screen.dart';
 import 'scheduler_screen.dart';
 import 'field_screen.dart';
 import 'fuel_screen.dart';
+import 'compliance_screen.dart';
 
 /// Root screen showing all component categories.
 class HomeScreen extends StatelessWidget {
@@ -367,5 +368,12 @@ final _categories = [
     subtitle:
         'Tank gauge, route stops, meter readings, hazmat docs, price ticker, truck inventory',
     builder: (_) => const FuelScreen(),
+  ),
+  _Category(
+    icon: Icons.shield_outlined,
+    title: 'Compliance Overlay',
+    subtitle:
+        'Classification banners, audit log, FOIA card, CAC/PIV, MFA token, case file shell, permission matrix, secret field, file upload',
+    builder: (_) => const ComplianceScreen(),
   ),
 ];
