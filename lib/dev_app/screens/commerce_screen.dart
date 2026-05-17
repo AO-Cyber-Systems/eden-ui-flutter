@@ -651,6 +651,12 @@ class _CommerceScreenState extends State<CommerceScreen> {
                 'EdenTippingSelector + EdenTipSplitEditor — tip primitives',
             child: _Obj015TippingDemo(),
           ),
+          // TRD 015-03 appends here ↓ Objective 015 — Gift card manager
+          const Section(
+            title:
+                'EdenGiftCardManager — issue / redeem / lookup / balance / ledger',
+            child: _Obj015GiftCardDemo(),
+          ),
         ],
       ),
     );
@@ -784,6 +790,95 @@ class _Obj015TippingDemoState extends State<_Obj015TippingDemo> {
             'Captured allocations: '
             '${_splitAllocations!.map((a) => '${a.recipient.displayName}=${(a.share * 100).toStringAsFixed(0)}%').join(', ')}',
           ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TRD 015-03 — Gift card manager demo
+// ─────────────────────────────────────────────────────────────────────────
+
+class _Obj015GiftCardDemo extends StatefulWidget {
+  const _Obj015GiftCardDemo();
+  @override
+  State<_Obj015GiftCardDemo> createState() => _Obj015GiftCardDemoState();
+}
+
+class _Obj015GiftCardDemoState extends State<_Obj015GiftCardDemo> {
+  EdenGiftCardMode _mode = EdenGiftCardMode.issue;
+
+  static final _sampleCard = EdenGiftCardRecord(
+    code: 'GC123456789',
+    initialAmount: 100.0,
+    currentBalance: 67.50,
+    issuedAt: DateTime(2026, 1, 15),
+    recipientName: 'Maya Rivera',
+    recipientContact: 'maya@example.com',
+  );
+
+  static final _sampleLedger = <EdenGiftCardLedgerEntry>[
+    EdenGiftCardLedgerEntry(
+      occurredAt: DateTime(2026, 1, 15, 10, 30),
+      action: EdenGiftCardLedgerAction.issue,
+      amount: 100.0,
+      balanceAfter: 100.0,
+      memo: 'Original sale',
+    ),
+    EdenGiftCardLedgerEntry(
+      occurredAt: DateTime(2026, 1, 20, 14, 15),
+      action: EdenGiftCardLedgerAction.redeem,
+      amount: -25.0,
+      balanceAfter: 75.0,
+      memo: 'Haircut',
+    ),
+    EdenGiftCardLedgerEntry(
+      occurredAt: DateTime(2026, 2, 5, 11, 0),
+      action: EdenGiftCardLedgerAction.redeem,
+      amount: -7.50,
+      balanceAfter: 67.50,
+      memo: 'Tip add-on',
+    ),
+  ];
+
+  Future<EdenGiftCardRecord?> _demoLookup(String code) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    if (code.toUpperCase().contains('GC')) return _sampleCard;
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final m in EdenGiftCardMode.values)
+              ChoiceChip(
+                label: Text(m.name),
+                selected: _mode == m,
+                onSelected: (_) => setState(() => _mode = m),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        EdenGiftCardManager(
+          mode: _mode,
+          record: _mode == EdenGiftCardMode.issue ? null : _sampleCard,
+          ledgerEntries:
+              _mode == EdenGiftCardMode.ledger ? _sampleLedger : null,
+          onLookup: _demoLookup,
+          onDraftChanged: (draft) {
+            // Dev catalog logs to a SnackBar so demos are visibly wired.
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Draft emitted: ${draft.runtimeType}'),
+              duration: const Duration(milliseconds: 600),
+            ));
+          },
+        ),
       ],
     );
   }
