@@ -27,6 +27,7 @@ import 'scheduler_screen.dart';
 import 'field_screen.dart';
 import 'fuel_screen.dart';
 import 'compliance_screen.dart';
+import 'uswds_screen.dart';
 
 /// Root screen showing all component categories.
 class HomeScreen extends StatelessWidget {
@@ -375,5 +376,12 @@ final _categories = [
     subtitle:
         'Classification banners, audit log, FOIA card, CAC/PIV, MFA token, case file shell, permission matrix, secret field, file upload',
     builder: (_) => const ComplianceScreen(),
+  ),
+  _Category(
+    icon: Icons.account_balance_outlined,
+    title: 'USWDS Conformance',
+    subtitle:
+        'USWDS gov banner, agency identifier, memorable date, language selector',
+    builder: (_) => const UswdsScreen(),
   ),
 ];
