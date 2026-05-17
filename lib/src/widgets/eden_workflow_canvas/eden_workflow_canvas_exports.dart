@@ -7,3 +7,4 @@
 export 'workflow_models.dart';
 export 'workflow_category_registry.dart';
 export 'workflow_action_registry.dart';
+export 'workflow_graph_builder.dart';

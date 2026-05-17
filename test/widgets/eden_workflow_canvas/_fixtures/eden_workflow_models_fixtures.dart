@@ -1,6 +1,7 @@
 // Do NOT regenerate via LLM — hand-built fixtures for EdenWorkflowModels.
 
 import 'package:eden_ui_flutter/eden_ui.dart';
+import 'package:flutter/material.dart';
 
 /// Hand-built fixtures for workflow-canvas tests. Stable / deterministic /
 /// reviewable. Used across TRDs 020-01..020-07 (objective 020 — A4-b Visual
@@ -222,6 +223,28 @@ EdenWorkflowDefinition fullExampleDefinitionFixture() => EdenWorkflowDefinition(
     );
 
 // ─────────── Registry fixtures ───────────
-// Registered after Tasks 3 + 4 land (workflow_category_registry.dart +
-// workflow_action_registry.dart). Per task isolation: the registry test files
-// inline-construct these directly when those types exist.
+
+EdenWorkflowCategory visitCategoryFixture() => const EdenWorkflowCategory(
+      id: 'visit',
+      displayName: 'Patient Visit',
+      icon: Icons.local_hospital,
+    );
+
+EdenWorkflowCategory deliveryCategoryFixture() => const EdenWorkflowCategory(
+      id: 'delivery',
+      displayName: 'Delivery Route',
+      icon: Icons.local_shipping,
+    );
+
+EdenWorkflowActionType sendPushActionTypeFixture() => const EdenWorkflowActionType(
+      id: 'send_push',
+      displayName: 'Send Push Notification',
+      icon: Icons.notifications_active,
+    );
+
+EdenWorkflowActionType createInvoiceActionTypeFixture() =>
+    const EdenWorkflowActionType(
+      id: 'create_invoice',
+      displayName: 'Create Invoice',
+      icon: Icons.receipt_long,
+    );
