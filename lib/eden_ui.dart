@@ -522,3 +522,6 @@ export 'src/widgets/eden_equipment_record_card.dart';
 export 'src/widgets/eden_warranty_claim.dart';
 export 'src/widgets/eden_fuel_card_payment_entry.dart';
 export 'src/widgets/eden_tank_fleet_map.dart';
+
+// ─────────── Objective 020 — A4-b Visual Workflow Designer ───────────
+export 'src/widgets/eden_workflow_canvas/eden_workflow_canvas_exports.dart';
