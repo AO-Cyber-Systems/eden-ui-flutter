@@ -645,8 +645,146 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
+          // TRD 015-01 appends here ↓ Objective 015 — Tipping primitives
+          const Section(
+            title:
+                'EdenTippingSelector + EdenTipSplitEditor — tip primitives',
+            child: _Obj015TippingDemo(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TRD 015-01 — Tipping primitives demo
+// ─────────────────────────────────────────────────────────────────────────
+
+class _Obj015TippingDemo extends StatefulWidget {
+  const _Obj015TippingDemo();
+  @override
+  State<_Obj015TippingDemo> createState() => _Obj015TippingDemoState();
+}
+
+class _Obj015TippingDemoState extends State<_Obj015TippingDemo> {
+  EdenTipDraft? _salonDraft;
+  EdenTipDraft? _restaurantDraft;
+  EdenTipDraft? _retailDraft;
+  List<EdenTipSplitAllocation>? _splitAllocations;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Salon — 18% standard (subtotal \$100.00)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenTippingSelector(
+          subtotal: 100.0,
+          presets: EdenTipPresets.salonStandard,
+          onDraftChanged: (d) => setState(() => _salonDraft = d),
+        ),
+        if (_salonDraft != null)
+          Text(
+            'Captured: mode=${_salonDraft!.mode.name} '
+            'tip=\$${_salonDraft!.tipAmount.toStringAsFixed(2)}',
+          ),
+        const SizedBox(height: 24),
+        const Text(
+          'Restaurant — 22% mid-tier (subtotal \$78.50)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenTippingSelector(
+          subtotal: 78.50,
+          presets: EdenTipPresets.restaurantStandard,
+          onDraftChanged: (d) => setState(() => _restaurantDraft = d),
+        ),
+        if (_restaurantDraft != null)
+          Text(
+            'Captured: mode=${_restaurantDraft!.mode.name} '
+            'tip=\$${_restaurantDraft!.tipAmount.toStringAsFixed(2)}',
+          ),
+        const SizedBox(height: 24),
+        const Text(
+          'Retail counter — light tier, single flat custom (subtotal \$12.49)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenTippingSelector(
+          subtotal: 12.49,
+          presets: EdenTipPresets.lightTier,
+          onDraftChanged: (d) => setState(() => _retailDraft = d),
+        ),
+        if (_retailDraft != null)
+          Text(
+            'Captured: mode=${_retailDraft!.mode.name} '
+            'tip=\$${_retailDraft!.tipAmount.toStringAsFixed(2)}',
+          ),
+        const SizedBox(height: 24),
+        const Text(
+          'Multi-staff tip split — primary 60% / assistant 25% / shampoo 15%',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenTipSplitEditor(
+          totalTip: 24.00,
+          recipients: const [
+            EdenTipRecipient(
+              id: 'sarah',
+              displayName: 'Sarah',
+              roleLabel: 'Primary stylist',
+            ),
+            EdenTipRecipient(
+              id: 'mia',
+              displayName: 'Mia',
+              roleLabel: 'Assistant',
+            ),
+            EdenTipRecipient(
+              id: 'amy',
+              displayName: 'Amy',
+              roleLabel: 'Shampoo',
+            ),
+          ],
+          initialAllocations: const [
+            EdenTipSplitAllocation(
+              recipient: EdenTipRecipient(
+                id: 'sarah',
+                displayName: 'Sarah',
+                roleLabel: 'Primary stylist',
+              ),
+              share: 0.60,
+            ),
+            EdenTipSplitAllocation(
+              recipient: EdenTipRecipient(
+                id: 'mia',
+                displayName: 'Mia',
+                roleLabel: 'Assistant',
+              ),
+              share: 0.25,
+            ),
+            EdenTipSplitAllocation(
+              recipient: EdenTipRecipient(
+                id: 'amy',
+                displayName: 'Amy',
+                roleLabel: 'Shampoo',
+              ),
+              share: 0.15,
+            ),
+          ],
+          onAllocationsChanged: (a) =>
+              setState(() => _splitAllocations = a),
+        ),
+        if (_splitAllocations != null)
+          Text(
+            'Captured allocations: '
+            '${_splitAllocations!.map((a) => '${a.recipient.displayName}=${(a.share * 100).toStringAsFixed(0)}%').join(', ')}',
+          ),
+      ],
     );
   }
 }
