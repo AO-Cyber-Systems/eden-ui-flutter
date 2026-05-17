@@ -312,7 +312,104 @@ class _FuelScreenState extends State<FuelScreen> {
               ],
             ),
           ),
+
+          // ---------------------------------------------------------------
+          // Objective 019 — Trades polish + Fuel quick wins Wave 1
+          // ---------------------------------------------------------------
+          Section(
+            title: 'DISPATCH PAGE — fuel routing variant (Obj 019-03)',
+            child: SizedBox(
+              height: 720,
+              child: EdenDispatchPage(
+                data: _fuelDispatchFixture,
+                onDispatchAssignment: (a) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Assigned ${a.workItemId} → ${a.crewResourceId}',
+                      ),
+                    ),
+                  );
+                },
+                showAiZone: true,
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  EdenDispatchData get _fuelDispatchFixture {
+    final controller = EdenSchedulerController(
+      initialView: EdenSchedulerView.swimlane,
+      initialDate: DateTime(2026, 5, 18),
+    );
+    const trucks = [
+      EdenSchedulerResource(
+        id: 'truck-12',
+        name: 'Truck-12 (diesel)',
+        color: Color(0xFFE0F2FE),
+      ),
+      EdenSchedulerResource(
+        id: 'truck-14',
+        name: 'Truck-14 (propane)',
+        color: Color(0xFFFEF3C7),
+      ),
+      EdenSchedulerResource(
+        id: 'truck-22',
+        name: 'Truck-22 (heating oil)',
+        color: Color(0xFFFEE2E2),
+      ),
+    ];
+    return EdenDispatchData(
+      scheduler: EdenDispatchSchedulerSlot(
+        controller: controller,
+        events: const [],
+        crewResources: trucks,
+      ),
+      queue: const EdenDispatchWorkQueue(items: [
+        EdenDispatchWorkItem(
+          id: 'fdel-1',
+          title: 'Will-call: 200 gal propane',
+          customerName: 'Hansen Farm',
+          address: '4421 County Rd 12',
+          urgency: 'high',
+          estimatedDuration: Duration(minutes: 45),
+          requiredSkills: ['propane'],
+        ),
+        EdenDispatchWorkItem(
+          id: 'fdel-2',
+          title: 'Auto-fill: 500 gal diesel',
+          customerName: 'Roberts Trucking',
+          address: '12 Industrial Blvd',
+          urgency: 'medium',
+          estimatedDuration: Duration(hours: 1),
+          requiredSkills: ['diesel'],
+        ),
+        EdenDispatchWorkItem(
+          id: 'fdel-3',
+          title: 'Will-call: 300 gal heating oil',
+          customerName: 'Miller residence',
+          address: '78 Oak Ridge',
+          urgency: 'high',
+          estimatedDuration: Duration(minutes: 50),
+          requiredSkills: ['heating oil'],
+        ),
+      ]),
+      mapSlot: EdenDispatchMapSlot(
+        builder: (ctx, _) => Container(
+          color: const Color(0xFFE0F2FE),
+          alignment: Alignment.center,
+          child: const Text('[fuel map placeholder]'),
+        ),
+      ),
+      aiSlot: EdenDispatchAiSlot(
+        builder: (ctx, _) => Container(
+          color: const Color(0xFFF3E8FF),
+          alignment: Alignment.center,
+          child: const Text('[AI route optimizer]'),
+        ),
       ),
     );
   }

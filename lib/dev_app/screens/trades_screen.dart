@@ -1018,6 +1018,25 @@ class _TradesScreenState extends State<TradesScreen> {
           // Objective 019 — Trades polish + Fuel quick wins Wave 1
           // ---------------------------------------------------------------
           Section(
+            title: 'DISPATCH PAGE (Obj 019-03)',
+            child: SizedBox(
+              height: 720,
+              child: EdenDispatchPage(
+                data: _dispatchFixture,
+                onDispatchAssignment: (a) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Assigned ${a.workItemId} → ${a.crewResourceId}',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          Section(
             title: 'PRICE BOOK BUILDER (Obj 019-01)',
             child: SizedBox(
               height: 600,
@@ -1040,6 +1059,76 @@ class _TradesScreenState extends State<TradesScreen> {
 
           const SizedBox(height: EdenSpacing.space8),
         ],
+      ),
+    );
+  }
+
+  EdenDispatchData get _dispatchFixture {
+    final controller = EdenSchedulerController(
+      initialView: EdenSchedulerView.swimlane,
+      initialDate: DateTime(2026, 5, 18),
+    );
+    const crews = [
+      EdenSchedulerResource(
+        id: 'crew-a',
+        name: 'Crew A — HVAC',
+        crew: ['Bob T.', 'Sue M.'],
+        color: Color(0xFFE0F2FE),
+      ),
+      EdenSchedulerResource(
+        id: 'crew-b',
+        name: 'Crew B — Plumbing',
+        crew: ['Mike K.'],
+        color: Color(0xFFFEF3C7),
+      ),
+      EdenSchedulerResource(
+        id: 'crew-c',
+        name: 'Crew C — Electrical',
+        crew: ['Sarah W.'],
+        color: Color(0xFFFEE2E2),
+      ),
+    ];
+    return EdenDispatchData(
+      scheduler: EdenDispatchSchedulerSlot(
+        controller: controller,
+        events: const [],
+        crewResources: crews,
+      ),
+      queue: const EdenDispatchWorkQueue(items: [
+        EdenDispatchWorkItem(
+          id: 'demo-1',
+          title: 'AC not cooling',
+          customerName: 'Patel residence',
+          address: '124 Maple St',
+          urgency: 'high',
+          estimatedDuration: Duration(hours: 2),
+          requiredSkills: ['hvac'],
+        ),
+        EdenDispatchWorkItem(
+          id: 'demo-2',
+          title: 'Burst pipe — basement',
+          customerName: 'Garcia residence',
+          address: '7 Elm Ct',
+          urgency: 'critical',
+          estimatedDuration: Duration(hours: 3),
+          requiredSkills: ['plumbing'],
+        ),
+        EdenDispatchWorkItem(
+          id: 'demo-3',
+          title: 'Outlet install',
+          customerName: 'Brown residence',
+          address: '15 Spruce Way',
+          urgency: 'medium',
+          estimatedDuration: Duration(hours: 2),
+          requiredSkills: ['electrical'],
+        ),
+      ]),
+      mapSlot: EdenDispatchMapSlot(
+        builder: (ctx, _) => Container(
+          color: const Color(0xFFE0F2FE),
+          alignment: Alignment.center,
+          child: const Text('[map placeholder]'),
+        ),
       ),
     );
   }
