@@ -168,6 +168,44 @@ class EdenDiagramState extends State<EdenDiagram> {
     }
   }
 
+  /// Approximate edge hit-test (objective 006, additive in TRD 006-14).
+  ///
+  /// Takes a SCREEN coordinate and returns the topmost edge whose straight-
+  /// line segment from source-port to target-port lies within 8pt of the
+  /// canvas-space hit point. Iterates edges in reverse so the most-recently
+  /// added edge wins (z-order).
+  ///
+  /// Approximation: uses point-to-segment distance with the legacy 4-side
+  /// `portOffset` lookup. Custom-port edges with `sourcePortId`/`targetPortId`
+  /// still resolve via the fallback `sourcePort`/`targetPort` enums; v1
+  /// accepts the approximation and treats curved/bezier edges as straight
+  /// lines for hit-testing. Good enough for the canvas-composer's
+  /// edge-context-menu trigger.
+  EdenDiagramEdge? hitTestEdge(Offset screenPosition) {
+    final canvasPos = _toCanvas(screenPosition);
+    for (int i = widget.data.edges.length - 1; i >= 0; i--) {
+      final edge = widget.data.edges[i];
+      final source = widget.data.nodeById(edge.sourceId);
+      final target = widget.data.nodeById(edge.targetId);
+      if (source == null || target == null) continue;
+      final start = source.portOffset(edge.sourcePort);
+      final end = target.portOffset(edge.targetPort);
+      if (_distanceToSegment(canvasPos, start, end) < 8) return edge;
+    }
+    return null;
+  }
+
+  double _distanceToSegment(Offset p, Offset a, Offset b) {
+    final dx = b.dx - a.dx;
+    final dy = b.dy - a.dy;
+    if (dx == 0 && dy == 0) return (p - a).distance;
+    final t = ((p.dx - a.dx) * dx + (p.dy - a.dy) * dy) /
+        (dx * dx + dy * dy);
+    final tClamped = t.clamp(0.0, 1.0);
+    final projection = Offset(a.dx + tClamped * dx, a.dy + tClamped * dy);
+    return (p - projection).distance;
+  }
+
   /// Hit test for port dots (when a node is hovered/selected).
   ///
   /// Honors `EdenDiagramNode.ports` (objective 006, parity E-5) when non-null;

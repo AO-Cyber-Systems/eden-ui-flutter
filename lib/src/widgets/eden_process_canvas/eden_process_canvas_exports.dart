@@ -29,3 +29,7 @@ export 'eden_process_toolbox.dart';
 
 // Wave 5 — Validator (TRD 006-13)
 export 'process_validator.dart';
+
+// Wave 5 — Validation panel + composite canvas (TRD 006-14)
+export 'eden_process_validation_panel.dart';
+export 'eden_visual_process_canvas.dart';

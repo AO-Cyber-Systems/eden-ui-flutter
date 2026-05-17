@@ -120,6 +120,7 @@ class EdenSwimlaneLayout extends EdenProcessLayoutEngine {
     }
 
     final positions = <String, Offset>{};
+    final heightOverrides = <String, double>{};
     double currentY = _marginY;
 
     // Start node.
@@ -140,6 +141,7 @@ class EdenSwimlaneLayout extends EdenProcessLayoutEngine {
         final taskCount = (g.data['taskCount'] as int?) ?? 0;
         final groupHeight =
             _groupBaseHeight + (taskCount * _taskRowHeight);
+        heightOverrides[g.id] = groupHeight;
         groupColumnY += groupHeight + _groupGapY;
         totalGroupColumnHeight = groupColumnY - rowTopY - _groupGapY;
       }
@@ -165,10 +167,17 @@ class EdenSwimlaneLayout extends EdenProcessLayoutEngine {
           Offset(_marginX + i * _otherRowSpacing, currentY + 100);
     }
 
-    // Return new instances with updated positions.
+    // Return new instances with updated positions (and heights for groups
+    // when the algorithm computed a task-count-aware row size).
     return nodes.map((n) {
       final pos = positions[n.id];
-      return pos == null ? n : n.copyWith(x: pos.dx, y: pos.dy);
+      if (pos == null) return n;
+      final overrideHeight = heightOverrides[n.id];
+      return n.copyWith(
+        x: pos.dx,
+        y: pos.dy,
+        height: overrideHeight,
+      );
     }).toList();
   }
 }
