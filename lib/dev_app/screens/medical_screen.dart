@@ -65,6 +65,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenInsuranceCard — front/back capture + extracted data (017-02)',
             child: _InsuranceCardDemo(),
           ),
+          Section(
+            title: 'EdenAppointmentStatusFlow — 8-state appointment lifecycle (017-03)',
+            child: _AppointmentStatusFlowDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -1624,4 +1628,302 @@ final _demoCrossVerticalCdl = EdenInsurancePolicy(
   subscriberRelation: EdenSubscriberRelation.self,
   frontImageUrl: 'https://placehold.co/640x400/2e7d32/ffffff/png?text=CDL+Class+A',
   verifiedAt: DateTime(2024, 7, 1),
+);
+
+// ────────────────────────── 017-03 demo ──────────────────────────
+
+class _AppointmentStatusFlowDemo extends StatelessWidget {
+  const _AppointmentStatusFlowDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Scheduled (future) — step 0 current; advance + terminal menu wired',
+          child: EdenAppointmentStatusFlow(
+            event: _demoScheduledFuture,
+            now: DateTime(2026, 5, 17, 9, 0),
+            onStatusAdvance: (s) =>
+                debugPrint('Appt: advance to $s'),
+            onTerminalStateRequest: (s) =>
+                debugPrint('Appt: mark terminal as $s'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Arrived (waiting) — 32 minutes late, demonstrates late-arrival chip',
+          child: EdenAppointmentStatusFlow(
+            event: _demoArrivedLate,
+            // 32min past scheduledFor 10:00 → triggers the >15min warning.
+            now: DateTime(2026, 5, 17, 10, 32),
+            onStatusAdvance: (s) =>
+                debugPrint('Appt: advance to $s'),
+            onTerminalStateRequest: (s) =>
+                debugPrint('Appt: mark terminal as $s'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'In Room — step 3 current',
+          child: EdenAppointmentStatusFlow(
+            event: _demoInRoom,
+            now: DateTime(2026, 5, 17, 11, 30),
+            onStatusAdvance: (s) =>
+                debugPrint('Appt: advance to $s'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Completed — terminal-success; advance + terminal menu hidden',
+          child: EdenAppointmentStatusFlow(
+            event: _demoCompleted,
+            now: DateTime(2026, 5, 18),
+            onStatusAdvance: (s) =>
+                debugPrint('Appt: advance to $s'),
+            onTerminalStateRequest: (s) =>
+                debugPrint('Appt: mark terminal as $s'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'No-Show + Late Cancel + Cancelled — three terminal badges',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EdenAppointmentStatusFlow(
+                event: _demoNoShow,
+                now: DateTime(2026, 5, 17),
+              ),
+              const SizedBox(height: EdenSpacing.space4),
+              EdenAppointmentStatusFlow(
+                event: _demoLateCancel,
+                now: DateTime(2026, 5, 18),
+              ),
+              const SizedBox(height: EdenSpacing.space4),
+              EdenAppointmentStatusFlow(
+                event: _demoCancelled,
+                now: DateTime(2026, 5, 18),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Cross-vertical: trades job ticket lifecycle '
+              '(v1 ships medical-labeled; v2 will add stateLabels override)',
+          child: EdenAppointmentStatusFlow(
+            event: _demoTradesJobTicket,
+            now: DateTime(2026, 5, 17, 11, 5),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Inline catalog fixtures (no test/ imports from dev_app/).
+final _demoScheduledFuture = EdenAppointmentEvent(
+  id: 'demo-evt-001',
+  patientId: 'demo-appt-alpha',
+  appointmentId: 'demo-appt-001',
+  scheduledFor: DateTime(2026, 6, 15, 14, 0),
+  currentStatus: EdenAppointmentStatus.scheduled,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 17, 9, 0),
+      actorName: 'Front desk',
+    ),
+  ],
+  providerName: 'Dr. Smith, MD',
+  locationName: 'Main Clinic Suite 200',
+  visitType: 'Annual physical',
+);
+
+final _demoArrivedLate = EdenAppointmentEvent(
+  id: 'demo-evt-002',
+  patientId: 'demo-appt-alpha',
+  appointmentId: 'demo-appt-002',
+  scheduledFor: DateTime(2026, 5, 17, 10, 0),
+  currentStatus: EdenAppointmentStatus.arrived,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 10, 9, 0),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.confirmed,
+      timestamp: DateTime(2026, 5, 15, 18, 30),
+      actorName: 'Patient self-service',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.arrived,
+      timestamp: DateTime(2026, 5, 17, 10, 32),
+      actorName: 'Front desk',
+    ),
+  ],
+  providerName: 'Dr. Lee, MD',
+  locationName: 'Main Clinic Suite 200',
+  visitType: 'Annual physical',
+);
+
+final _demoInRoom = EdenAppointmentEvent(
+  id: 'demo-evt-003',
+  patientId: 'demo-appt-alpha',
+  appointmentId: 'demo-appt-003',
+  scheduledFor: DateTime(2026, 5, 17, 11, 0),
+  currentStatus: EdenAppointmentStatus.inRoom,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 10, 9, 0),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.confirmed,
+      timestamp: DateTime(2026, 5, 15, 18, 30),
+      actorName: 'Patient self-service',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.arrived,
+      timestamp: DateTime(2026, 5, 17, 10, 55),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.inRoom,
+      timestamp: DateTime(2026, 5, 17, 11, 8),
+      actorName: 'Front desk',
+    ),
+  ],
+  providerName: 'Dr. Lee, MD',
+  locationName: 'Main Clinic Suite 200',
+  visitType: 'Annual physical',
+);
+
+final _demoCompleted = EdenAppointmentEvent(
+  id: 'demo-evt-004',
+  patientId: 'demo-appt-alpha',
+  appointmentId: 'demo-appt-004',
+  scheduledFor: DateTime(2026, 5, 16, 14, 0),
+  currentStatus: EdenAppointmentStatus.completed,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 9, 9, 0),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.completed,
+      timestamp: DateTime(2026, 5, 16, 14, 52),
+      actorName: 'Dr. Smith',
+      notes: 'Visit complete; follow-up in 12 months.',
+    ),
+  ],
+  providerName: 'Dr. Smith, MD',
+  locationName: 'Main Clinic Suite 200',
+  visitType: 'Annual physical',
+);
+
+final _demoNoShow = EdenAppointmentEvent(
+  id: 'demo-evt-005',
+  patientId: 'demo-appt-bravo',
+  appointmentId: 'demo-appt-005',
+  scheduledFor: DateTime(2026, 5, 16, 9, 0),
+  currentStatus: EdenAppointmentStatus.noShow,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 5, 11, 0),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.noShow,
+      timestamp: DateTime(2026, 5, 16, 9, 30),
+      actorName: 'Front desk',
+      notes: 'Patient did not arrive, no contact.',
+    ),
+  ],
+  providerName: 'Dr. Smith, MD',
+  locationName: 'Main Clinic Suite 200',
+  visitType: 'Behavioral health follow-up',
+);
+
+final _demoLateCancel = EdenAppointmentEvent(
+  id: 'demo-evt-006',
+  patientId: 'demo-appt-charlie',
+  appointmentId: 'demo-appt-006',
+  scheduledFor: DateTime(2026, 5, 18, 10, 0),
+  currentStatus: EdenAppointmentStatus.lateCancel,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 11, 9, 0),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.lateCancel,
+      timestamp: DateTime(2026, 5, 17, 21, 0),
+      actorName: 'Patient self-service',
+      notes: 'Cancelled via portal 4h before appointment.',
+    ),
+  ],
+  providerName: 'Dr. Patel, ND',
+  locationName: 'Wellness Clinic',
+  visitType: 'Initial wellness consult',
+);
+
+final _demoCancelled = EdenAppointmentEvent(
+  id: 'demo-evt-007',
+  patientId: 'demo-appt-charlie',
+  appointmentId: 'demo-appt-007',
+  scheduledFor: DateTime(2026, 5, 22, 14, 0),
+  currentStatus: EdenAppointmentStatus.cancelled,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 10, 9, 0),
+      actorName: 'Front desk',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.cancelled,
+      timestamp: DateTime(2026, 5, 15, 11, 0),
+      actorName: 'Patient self-service',
+      notes: 'Cancelled 5d in advance.',
+    ),
+  ],
+  providerName: 'Dr. Patel, ND',
+  locationName: 'Wellness Clinic',
+  visitType: 'Initial wellness consult',
+);
+
+final _demoTradesJobTicket = EdenAppointmentEvent(
+  id: 'demo-evt-trades-001',
+  patientId: 'demo-job-12345',
+  appointmentId: 'demo-job-12345',
+  scheduledFor: DateTime(2026, 5, 17, 11, 0),
+  currentStatus: EdenAppointmentStatus.arrived,
+  statusHistory: [
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.scheduled,
+      timestamp: DateTime(2026, 5, 15, 9, 0),
+      actorName: 'Dispatch',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.confirmed,
+      timestamp: DateTime(2026, 5, 16, 17, 0),
+      actorName: 'Customer self-service',
+    ),
+    EdenAppointmentStatusEntry(
+      status: EdenAppointmentStatus.arrived,
+      timestamp: DateTime(2026, 5, 17, 11, 5),
+      actorName: 'Tech Bob',
+      notes: 'On site at customer location.',
+    ),
+  ],
+  providerName: 'Tech Bob',
+  locationName: '123 Main St',
+  visitType: 'HVAC install',
 );
