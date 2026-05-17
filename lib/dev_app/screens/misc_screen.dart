@@ -313,8 +313,85 @@ class _MiscScreenState extends State<MiscScreen> {
               ],
             ),
           ),
+          const EdenDivider(label: 'EdenSkeletonScope — skeleton-to-content morph (Obj 010)'),
+          const Section(
+            title: 'Single-card morph + list morph',
+            child: _SkeletonScopeDemos(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _SkeletonScopeDemos extends StatefulWidget {
+  const _SkeletonScopeDemos();
+
+  @override
+  State<_SkeletonScopeDemos> createState() => _SkeletonScopeDemosState();
+}
+
+class _SkeletonScopeDemosState extends State<_SkeletonScopeDemos> {
+  bool _isLoading = true;
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          Switch(value: _isLoading, onChanged: (v) => setState(() => _isLoading = v)),
+          const SizedBox(width: 8),
+          const Text('Show as loading skeleton'),
+        ]),
+        const SizedBox(height: EdenSpacing.space3),
+        const Text('Single-card morph'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenSkeletonScope(
+          isLoading: _isLoading,
+          skeleton: const EdenCard(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EdenSkeleton.text(width: 180),
+              SizedBox(height: 8),
+              EdenSkeleton.text(width: 240),
+              SizedBox(height: 8),
+              EdenSkeleton.text(width: 120),
+            ],
+          )),
+          content: EdenCard.interactive(
+            title: 'Loaded card',
+            subtitle: 'Cross-faded from skeleton',
+            onTap: () => _snack('Tap'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('List morph (3 items)'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenSkeletonScope(
+          isLoading: _isLoading,
+          skeleton: const Column(children: [
+            EdenSkeleton.block(width: double.infinity, height: 64),
+            SizedBox(height: 8),
+            EdenSkeleton.block(width: double.infinity, height: 64),
+            SizedBox(height: 8),
+            EdenSkeleton.block(width: double.infinity, height: 64),
+          ]),
+          content: Column(children: [
+            EdenCard.interactive(title: 'Item 1', subtitle: 'real card', onTap: () => _snack('1')),
+            const SizedBox(height: 8),
+            EdenCard.interactive(title: 'Item 2', subtitle: 'real card', onTap: () => _snack('2')),
+            const SizedBox(height: 8),
+            EdenCard.interactive(title: 'Item 3', subtitle: 'real card', onTap: () => _snack('3')),
+          ]),
+        ),
+      ],
     );
   }
 }
