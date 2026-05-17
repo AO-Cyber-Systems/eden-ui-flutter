@@ -62,11 +62,16 @@ void main() {
 
     testWidgets('second tap collapses panel', (tester) async {
       await tester.pumpWidget(wrap(const EdenUSWDSBanner()));
-      await tester.tap(find.byType(EdenUSWDSBanner));
+      // Tap on the collapsed-header InkWell (first descendant InkWell).
+      final inkWell = find.descendant(
+        of: find.byType(EdenUSWDSBanner),
+        matching: find.byType(InkWell),
+      ).first;
+      await tester.tap(inkWell);
       await tester.pumpAndSettle();
       expect(find.text(EdenUSWDSBannerFixtures.englishGovHeading), findsOneWidget);
 
-      await tester.tap(find.byType(EdenUSWDSBanner));
+      await tester.tap(inkWell);
       await tester.pumpAndSettle();
       expect(find.text(EdenUSWDSBannerFixtures.englishGovHeading), findsNothing);
     });
@@ -120,7 +125,7 @@ void main() {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(wrap(const EdenUSWDSBanner()));
       final semantics = tester.getSemantics(find.byType(EdenUSWDSBanner));
-      expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
+      expect(semantics.flagsCollection.isButton, isTrue);
       handle.dispose();
     });
   });
