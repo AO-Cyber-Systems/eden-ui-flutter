@@ -113,7 +113,43 @@ class ComplianceScreen extends StatelessWidget {
             title: 'EdenSecretField — CUI clipboard enhancement (classified mode)',
             child: _SecretFieldDemo(),
           ),
-          // TRD 011-09 will append: Section(title: 'EdenFileUpload virus-scan / spillage enhancement', child: ...).
+          Section(
+            title:
+                'EdenFileUpload — virus scan / CUI marking / spillage quarantine',
+            child: EdenFileUpload(
+              label: 'Upload classified document',
+              files: [
+                EdenUploadFile(
+                  name: 'normal.pdf',
+                  sizeBytes: 1024 * 30,
+                  status: EdenUploadStatus.complete,
+                ),
+                EdenUploadFile(
+                  name: 'scanning.pdf',
+                  sizeBytes: 1024 * 50,
+                  status: EdenUploadStatus.virusScanning,
+                  scanProgress: 0.6,
+                ),
+                EdenUploadFile(
+                  name: 'malware.exe',
+                  sizeBytes: 1024 * 200,
+                  status: EdenUploadStatus.virusScanFailed,
+                ),
+                EdenUploadFile(
+                  name: 'pii.csv',
+                  sizeBytes: 1024 * 10,
+                  status: EdenUploadStatus.cuiMarked,
+                  cuiMarking: 'CUI//SP-PII',
+                ),
+                EdenUploadFile(
+                  name: 'spillage.zip',
+                  sizeBytes: 1024 * 80,
+                  status: EdenUploadStatus.quarantined,
+                  quarantineReason: 'Trojan signature detected',
+                ),
+              ],
+            ),
+          ),
           Section(
             title: 'EdenMfaHardwareToken — Hardware MFA token entry (YubiKey / RSA / CAC backup)',
             child: Column(

@@ -5,7 +5,30 @@ import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
 
 /// Upload status for a single file.
-enum EdenUploadStatus { pending, uploading, complete, error }
+///
+/// Original four values (pending / uploading / complete / error) cover
+/// the standard upload pipeline. Four additional values added under
+/// Objective 011 Wave 3 cover federal compliance pipelines:
+///   - [virusScanning] — antivirus scan in progress.
+///   - [virusScanFailed] — scan detected malware; file blocked.
+///   - [cuiMarked] — file marked as Controlled Unclassified Information
+///     (see [EdenUploadFile.cuiMarking]).
+///   - [quarantined] — spillage / policy violation; file quarantined
+///     (see [EdenUploadFile.quarantineReason]).
+///
+/// New values are appended AFTER the original four to preserve
+/// existing enum indexes for any consumer serializing status as int.
+enum EdenUploadStatus {
+  pending,
+  uploading,
+  complete,
+  error,
+  // Objective 011 Wave 3 compliance additions (additive, indexes 4..7):
+  virusScanning,
+  virusScanFailed,
+  cuiMarked,
+  quarantined,
+}
 
 /// Represents a file in the upload queue.
 class EdenUploadFile {
@@ -18,6 +41,9 @@ class EdenUploadFile {
     this.error,
     this.previewUrl,
     this.platformFile,
+    this.scanProgress,
+    this.cuiMarking,
+    this.quarantineReason,
   });
 
   final String name;
@@ -29,6 +55,18 @@ class EdenUploadFile {
   final String? previewUrl;
   final dynamic platformFile;
 
+  /// Antivirus scan progress (0.0..1.0). `null` → indeterminate spinner.
+  /// Used when [status] is [EdenUploadStatus.virusScanning].
+  final double? scanProgress;
+
+  /// CUI marking string (e.g., `'CUI//SP-PII'`). Used when [status] is
+  /// [EdenUploadStatus.cuiMarked].
+  final String? cuiMarking;
+
+  /// Reason for quarantine (e.g., `'Trojan signature detected'`). Used
+  /// when [status] is [EdenUploadStatus.quarantined].
+  final String? quarantineReason;
+
   /// Creates a copy with updated fields.
   EdenUploadFile copyWith({
     String? name,
@@ -39,6 +77,9 @@ class EdenUploadFile {
     String? error,
     String? previewUrl,
     dynamic platformFile,
+    double? scanProgress,
+    String? cuiMarking,
+    String? quarantineReason,
   }) {
     return EdenUploadFile(
       name: name ?? this.name,
@@ -49,6 +90,9 @@ class EdenUploadFile {
       error: error ?? this.error,
       previewUrl: previewUrl ?? this.previewUrl,
       platformFile: platformFile ?? this.platformFile,
+      scanProgress: scanProgress ?? this.scanProgress,
+      cuiMarking: cuiMarking ?? this.cuiMarking,
+      quarantineReason: quarantineReason ?? this.quarantineReason,
     );
   }
 }
@@ -481,6 +525,116 @@ class _EdenFileUploadState extends State<EdenFileUpload> {
         return const Icon(Icons.check_circle, size: 20, color: EdenColors.success);
       case EdenUploadStatus.error:
         return const Icon(Icons.error_outline, size: 20, color: EdenColors.error);
+      // Objective 011 Wave 3 compliance additions:
+      case EdenUploadStatus.virusScanning:
+        return Semantics(
+          label: 'Virus scanning in progress',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 140),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    value: file.scanProgress,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    file.scanProgress != null
+                        ? 'Scanning ${(file.scanProgress! * 100).round()}%'
+                        : 'Scanning…',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      case EdenUploadStatus.virusScanFailed:
+        return Semantics(
+          label: 'Virus scan failed — file blocked',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 140),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shield_outlined,
+                    color: EdenColors.error, size: 16),
+                SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'Virus scan failed',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: EdenColors.error,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      case EdenUploadStatus.cuiMarked:
+        return Semantics(
+          label: 'Marked as Controlled Unclassified Information',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 140),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.warning_amber_outlined,
+                  color: EdenColors.warning,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'CUI: ${file.cuiMarking ?? "Controlled Unclassified"}',
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      case EdenUploadStatus.quarantined:
+        final reason = file.quarantineReason ?? 'spillage detected';
+        return Semantics(
+          label: 'Quarantined: $reason',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 140),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.lock_outline,
+                  color: EdenColors.error,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    'Quarantined: $reason',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: EdenColors.error,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
     }
   }
 
