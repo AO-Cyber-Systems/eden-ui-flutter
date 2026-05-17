@@ -442,7 +442,8 @@ export 'src/widgets/eden_problem_list.dart';
 export 'src/widgets/eden_allergy_list.dart';
 
 // ─────────── Objective 013 — B-Medical clinical primitives Wave 2 ───────────
-// (TRD 013-06 EdenSOAPNote + TRD 013-07 EdenChartTimeline append here.)
+export 'src/widgets/eden_soap_note.dart';
+export 'src/widgets/eden_chart_timeline.dart';
 
 // ─────────── Objective 013 — B-Medical clinical primitives Wave 3 ───────────
 // (TRD 013-08 EdenPatientChartScaffold + TRD 013-09 EdenVisitEncounterScaffold append here.)

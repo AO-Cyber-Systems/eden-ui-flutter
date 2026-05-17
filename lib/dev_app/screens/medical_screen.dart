@@ -41,6 +41,14 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenAllergyList — FHIR AllergyIntolerance + criticality banner (013-05)',
             child: _AllergyListDemo(),
           ),
+          Section(
+            title: 'EdenSOAPNote — SOAP composer + viewer (013-06)',
+            child: _SoapNoteDemo(),
+          ),
+          Section(
+            title: 'EdenChartTimeline — Clinical history timeline (013-07)',
+            child: _ChartTimelineDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -836,5 +844,174 @@ final _multiAllergy = <EdenAllergyIntolerance>[
     severity: EdenAllergySeverity.lifeThreatening,
     criticality: EdenAllergyCriticality.high,
     verifiedBy: 'Dr. Lee',
+  ),
+];
+
+// ────────────────────────── 013-06 demo ──────────────────────────
+
+class _SoapNoteDemo extends StatelessWidget {
+  const _SoapNoteDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Empty compose mode',
+          child: EdenSOAPNote(
+            data: EdenSoapNoteData(patientId: 'demo-soap-1'),
+            patientId: 'demo-soap-1',
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Partial draft compose mode',
+          child: EdenSOAPNote(
+            data: EdenSoapNoteData(
+              patientId: 'demo-soap-2',
+              subjective:
+                  '52yo F here for annual physical, no complaints. ROS negative.',
+              objective:
+                  'BP 124/78, HR 68, BMI 23. Exam: well-appearing, NAD.',
+            ),
+            patientId: 'demo-soap-2',
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Signed view mode (full content)',
+          child: EdenSOAPNote(
+            data: EdenSoapNoteData(
+              patientId: 'demo-soap-3',
+              subjective:
+                  '52yo F here for annual physical, no complaints. ROS negative.',
+              objective:
+                  'BP 124/78, HR 68, BMI 23. Exam: well-appearing, NAD. Lungs CTA. Heart RRR. Abdomen soft.',
+              assessment:
+                  'Z00.00 — Encounter for general adult medical exam without abnormal findings.',
+              plan:
+                  '1. Continue current meds. 2. Mammogram due — order placed. 3. RTC 12mo.',
+              signedBy: 'Dr. Chen (NPI 1234567890)',
+              signedAt: DateTime(2026, 5, 17, 14, 32),
+            ),
+            patientId: 'demo-soap-3',
+            mode: EdenSoapMode.view,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ────────────────────────── 013-07 demo ──────────────────────────
+
+class _ChartTimelineDemo extends StatelessWidget {
+  const _ChartTimelineDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Recent 30-day timeline',
+          child: EdenChartTimeline(events: _recent30Day),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: '5-year compressed timeline (quarterly headers for >12mo)',
+          child: EdenChartTimeline(events: _fiveYearTimeline),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Single encounter detail',
+          child: EdenChartTimeline(events: _singleEncounter),
+        ),
+      ],
+    );
+  }
+}
+
+final _recent30Day = <EdenChartTimelineEvent>[
+  EdenChartTimelineEvent(
+    id: 'demo-tl-1',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.encounter,
+    title: 'Annual Physical',
+    subtitle: 'Z00.00 routine',
+    occurredAt: DateTime.now(),
+    provider: 'Dr. Chen',
+  ),
+  EdenChartTimelineEvent(
+    id: 'demo-tl-2',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.lab,
+    title: 'CBC + CMP collected',
+    subtitle: '12 results, 1 H flag',
+    occurredAt: DateTime.now().subtract(const Duration(days: 1)),
+    provider: 'Lab',
+  ),
+  EdenChartTimelineEvent(
+    id: 'demo-tl-3',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.encounter,
+    title: 'ER Visit — Chest Pain',
+    subtitle: 'Ruled out STEMI',
+    occurredAt: DateTime.now().subtract(const Duration(days: 14)),
+    severity: EdenChartEventSeverity.caution,
+    provider: 'ER Provider',
+  ),
+];
+
+final _fiveYearTimeline = <EdenChartTimelineEvent>[
+  ..._recent30Day,
+  EdenChartTimelineEvent(
+    id: 'demo-tl-5y-1',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.medication,
+    title: 'Started Lisinopril 10mg',
+    occurredAt: DateTime(2024, 1, 8),
+    provider: 'Dr. Chen',
+  ),
+  EdenChartTimelineEvent(
+    id: 'demo-tl-5y-2',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.lab,
+    title: 'A1c 7.4',
+    occurredAt: DateTime(2023, 5, 10),
+    severity: EdenChartEventSeverity.caution,
+    provider: 'Lab',
+  ),
+  EdenChartTimelineEvent(
+    id: 'demo-tl-5y-3',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.problem,
+    title: 'Diagnosed T2DM',
+    subtitle: 'E11.9',
+    occurredAt: DateTime(2022, 8, 14),
+    provider: 'Dr. Chen',
+  ),
+  EdenChartTimelineEvent(
+    id: 'demo-tl-5y-4',
+    patientId: 'demo-tl',
+    category: EdenChartEventCategory.encounter,
+    title: 'Appendectomy',
+    subtitle: 'Laparoscopic, POD1 d/c',
+    occurredAt: DateTime(2019, 6, 5),
+    severity: EdenChartEventSeverity.resolved,
+    provider: 'Dr. Garcia',
+  ),
+];
+
+final _singleEncounter = <EdenChartTimelineEvent>[
+  EdenChartTimelineEvent(
+    id: 'demo-se-1',
+    patientId: 'demo-se',
+    category: EdenChartEventCategory.encounter,
+    title: 'Annual Physical',
+    subtitle: 'Z00.00 — routine annual exam',
+    occurredAt: DateTime.now(),
+    provider: 'Dr. Chen',
   ),
 ];
