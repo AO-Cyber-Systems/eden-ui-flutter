@@ -318,8 +318,85 @@ class _MiscScreenState extends State<MiscScreen> {
             title: 'Single-card morph + list morph',
             child: _SkeletonScopeDemos(),
           ),
+          const EdenDivider(label: 'EdenEmptyState — enhanced (Obj 010)'),
+          const Section(
+            title: 'Illustration + primary + secondary actions',
+            child: _EmptyStateDemos(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _EmptyStateDemos extends StatelessWidget {
+  const _EmptyStateDemos();
+
+  void _snack(BuildContext ctx, String msg) {
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Illustration variant'),
+        const SizedBox(height: EdenSpacing.space2),
+        Card(child: EdenEmptyState(
+          title: 'No appointments today',
+          description: 'Schedule a new booking to fill your calendar.',
+          illustration: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.event_available_outlined,
+                size: 64, color: theme.colorScheme.primary),
+          ),
+          actionLabel: 'New booking',
+          onAction: () => _snack(context, 'New booking'),
+        )),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Primary + secondary actions'),
+        const SizedBox(height: EdenSpacing.space2),
+        Card(child: EdenEmptyState(
+          title: 'Sync failed',
+          description: 'Could not reach the server.',
+          icon: Icons.cloud_off_outlined,
+          actionLabel: 'Try again',
+          onAction: () => _snack(context, 'Retry'),
+          secondaryActionLabel: 'Work offline',
+          onSecondaryAction: () => _snack(context, 'Offline mode'),
+        )),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Full combo (illustration + 2 actions + responsive)'),
+        const SizedBox(height: EdenSpacing.space2),
+        Card(child: EdenEmptyState(
+          title: 'No work orders assigned',
+          description:
+              'New jobs will appear here when dispatched by the office.',
+          illustration: Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondary.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.work_outline,
+                size: 48, color: theme.colorScheme.secondary),
+          ),
+          actionLabel: 'Refresh',
+          onAction: () => _snack(context, 'Refreshed'),
+          secondaryActionLabel: 'View past jobs',
+          onSecondaryAction: () => _snack(context, 'Past jobs'),
+        )),
+      ],
     );
   }
 }
