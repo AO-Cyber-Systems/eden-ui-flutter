@@ -2,4 +2,7 @@ export 'template_models.dart';
 export 'template_block_registry.dart';
 export 'template_variables_registry.dart';
 export 'template_variables_resolver.dart';
+export 'template_layout_engine.dart';
 export 'eden_template_block_palette.dart';
+export 'eden_template_block_placeholder.dart';
+export 'eden_template_builder_canvas.dart';
