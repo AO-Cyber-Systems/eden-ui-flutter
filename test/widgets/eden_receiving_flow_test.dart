@@ -250,7 +250,7 @@ void main() {
   });
 
   group('EdenReceivingFlow — step 4 Disposition + Submit', () {
-    Future<void> _toDisposition(WidgetTester tester) async {
+    Future<void> toDisposition(WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1100, 800));
       await tester.pumpWidget(
         wrap(EdenReceivingFlow(
@@ -285,7 +285,7 @@ void main() {
 
     testWidgets('Submit disabled until disposition is selected',
         (tester) async {
-      await _toDisposition(tester);
+      await toDisposition(tester);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       final submit = tester.widget<ElevatedButton>(
         find.widgetWithText(ElevatedButton, 'Submit'),
@@ -294,7 +294,7 @@ void main() {
     });
 
     testWidgets('selecting receiveFull → Submit enabled', (tester) async {
-      await _toDisposition(tester);
+      await toDisposition(tester);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.tap(find.text('Receive full'));
       await tester.pump();
@@ -306,7 +306,7 @@ void main() {
 
     testWidgets('selecting damaged → Attach photo button visible; Submit disabled until photo',
         (tester) async {
-      await _toDisposition(tester);
+      await toDisposition(tester);
       addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.tap(find.text('Damaged'));
       await tester.pump();
