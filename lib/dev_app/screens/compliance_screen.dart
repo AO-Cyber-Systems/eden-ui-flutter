@@ -20,8 +20,8 @@ class ComplianceScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Compliance Overlay Primitives')),
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
-        children: const [
-          Section(
+        children: [
+          const Section(
             title: 'EdenClassificationBanner — Federal + civilian sensitivity banners',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,23 +100,77 @@ class ComplianceScreen extends StatelessWidget {
               ],
             ),
           ),
-          Section(
+          const Section(
             title: 'EdenCacPivButton — CAC/PIV smartcard authentication',
             child: _CacPivDemo(),
           ),
-          Section(
+          const Section(
             title: 'EdenSection508Audit — Dev-tools a11y / Section 508 overlay',
             child: _Section508AuditDemo(),
           ),
-          // TRD 011-04 will append: Section(title: 'EdenAuditLogViewer — immutable activity stream', child: ...).
+          Section(
+            title: 'EdenAuditLogViewer — Immutable activity stream + hash chain',
+            child: SizedBox(
+              height: 400,
+              child: EdenAuditLogViewer(
+                entries: [
+                  EdenAuditLogEntry(
+                    id: 'evt-001',
+                    timestamp: DateTime(2026, 5, 16, 9, 30, 12),
+                    actor: 'alice@dod.gov',
+                    action: 'authenticated',
+                    target: 'session/web',
+                    category: 'auth',
+                    prevHash: '0000000000000000000000000000000000000000000000000000000000000000',
+                    currHash: 'a1b2000000000000000000000000000000000000000000000000000000000000',
+                  ),
+                  EdenAuditLogEntry(
+                    id: 'evt-002',
+                    timestamp: DateTime(2026, 5, 16, 9, 31, 5),
+                    actor: 'bob@dod.gov',
+                    action: 'read',
+                    target: 'case-file/2026-CASE-0042',
+                    category: 'data-access',
+                    details: {
+                      'file_size_bytes': '128048',
+                      'classification': 'CUI',
+                    },
+                    prevHash: 'a1b2000000000000000000000000000000000000000000000000000000000000',
+                    currHash: 'b3c4000000000000000000000000000000000000000000000000000000000000',
+                  ),
+                  EdenAuditLogEntry(
+                    id: 'evt-003',
+                    timestamp: DateTime(2026, 5, 16, 9, 32, 1),
+                    actor: 'alice@dod.gov',
+                    action: 'delete',
+                    target: 'case-file/2026-CASE-0042',
+                    category: 'data-access',
+                    failed: true,
+                    details: {'reason': 'insufficient_privileges'},
+                    prevHash: 'b3c4000000000000000000000000000000000000000000000000000000000000',
+                    currHash: 'c5d6000000000000000000000000000000000000000000000000000000000000',
+                  ),
+                  EdenAuditLogEntry(
+                    id: 'evt-004',
+                    timestamp: DateTime(2026, 5, 16, 9, 33, 12),
+                    actor: 'system',
+                    action: 'rotated',
+                    target: 'session-key',
+                    category: 'system',
+                  ),
+                ],
+                brokenChainIndices: const {2},
+              ),
+            ),
+          ),
           // TRD 011-05 will append: Section(title: 'EdenFoiaRequestCard — records-request workflow', child: ...).
           // TRD 011-06 will append: Section(title: 'EdenCaseFileShell — multi-tab dossier', child: ...).
           // TRD 011-07 will append: Section(title: 'EdenPermissionMatrix federal-roles enhancement', child: ...).
-          Section(
+          const Section(
             title: 'EdenSecretField — CUI clipboard enhancement (classified mode)',
             child: _SecretFieldDemo(),
           ),
-          Section(
+          const Section(
             title:
                 'EdenFileUpload — virus scan / CUI marking / spillage quarantine',
             child: EdenFileUpload(
@@ -153,7 +207,7 @@ class ComplianceScreen extends StatelessWidget {
               ],
             ),
           ),
-          Section(
+          const Section(
             title: 'EdenMfaHardwareToken — Hardware MFA token entry (YubiKey / RSA / CAC backup)',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
