@@ -79,5 +79,6 @@
     "Per-TRD commit cadence: 1 feat: commit per TRD with the screen change + test, pushed to origin/main. ~10 commits total for objective 008 (1 docs:plan + 9 feat: + 1 docs:close). Coordinated with concurrent obj-005/006/007 executors — no merge conflicts; my files are bounded to lib/dev_app/_sample_data/ + lib/dev_app/screens/{layouts,data_display,inputs,misc,companion,composers,badges_alerts,chat,scheduler,home}_screen.dart + lib/dev_app/_assets/trades_react_reference/ + pubspec.yaml.",
     "Pre-existing parallel-executor test failures (obj 006 eden_process_phase_node + others; obj 007 eden_check_in_page early-state) inherited but out-of-scope per executor scope-boundary rule. Some resolved by parallel work during obj 008 execution.",
     "Approximate test count: 22 new tests under test/dev_app/ across 10 files. Full-suite count fluctuated 1095 → 1373 → 1508 → 1524+ across the 5 waves as parallel obj-005/006/007 executors landed concurrently."
-  ]
+  ],
+  "progress_pct": 4
 }
