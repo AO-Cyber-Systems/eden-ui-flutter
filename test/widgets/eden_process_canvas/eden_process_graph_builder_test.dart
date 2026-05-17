@@ -332,9 +332,10 @@ void main() {
       expect(const EdenLinearLayout().id, 'linear');
     });
 
-    test('stub applyLayout returns input nodes unchanged', () {
+    test('stub applyLayout returns input nodes unchanged (free_form / grid / linear)', () {
+      // Note: EdenSwimlaneLayout is no longer a stub as of TRD 006-08; its
+      // dedicated test file (eden_swimlane_layout_test.dart) covers it.
       final nodes = [EdenDiagramNode(id: 'a', x: 0, y: 0)];
-      expect(const EdenSwimlaneLayout().applyLayout(nodes, []), nodes);
       expect(const EdenFreeFormLayout().applyLayout(nodes, []), nodes);
       expect(const EdenGridLayout().applyLayout(nodes, []), nodes);
       expect(const EdenLinearLayout().applyLayout(nodes, []), nodes);

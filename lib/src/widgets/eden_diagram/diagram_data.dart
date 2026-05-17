@@ -159,6 +159,41 @@ class EdenDiagramNode {
       'ports': ports!.map((p) => p.toJson()).toList(),
   };
 
+  /// Returns a new instance with selected fields overridden. Used by layout
+  /// engines to produce pure-function output (no mutation of input nodes).
+  EdenDiagramNode copyWith({
+    String? id,
+    EdenNodeShape? shape,
+    double? x,
+    double? y,
+    double? width,
+    double? height,
+    String? label,
+    String? sublabel,
+    String? color,
+    String? borderColor,
+    String? textColor,
+    String? icon,
+    Map<String, dynamic>? data,
+    List<EdenDiagramPort>? ports,
+  }) =>
+      EdenDiagramNode(
+        id: id ?? this.id,
+        shape: shape ?? this.shape,
+        x: x ?? this.x,
+        y: y ?? this.y,
+        width: width ?? this.width,
+        height: height ?? this.height,
+        label: label ?? this.label,
+        sublabel: sublabel ?? this.sublabel,
+        color: color ?? this.color,
+        borderColor: borderColor ?? this.borderColor,
+        textColor: textColor ?? this.textColor,
+        icon: icon ?? this.icon,
+        data: data ?? this.data,
+        ports: ports ?? this.ports,
+      );
+
   factory EdenDiagramNode.fromJson(Map<String, dynamic> json) => EdenDiagramNode(
     id: json['id'] as String,
     shape: EdenNodeShape.values.firstWhere(

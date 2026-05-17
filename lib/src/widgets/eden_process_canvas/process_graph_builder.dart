@@ -167,6 +167,9 @@ class EdenProcessGraphBuilder {
               'nodeType': 'taskGroup',
               'groupId': group.id,
               'phaseId': phase.id,
+              // TRD 006-08: swimlane layout uses this to compute group
+              // column height (groupBaseHeight + taskCount * taskRowHeight).
+              'taskCount': group.tasks.length,
             },
           ));
           edges.add(EdenProcessEdgeStyles.styledEdge(
