@@ -166,14 +166,31 @@ void main() {
   });
 
   group('EdenMfaHardwareToken — iPhone-narrow (390pt) safety', () {
-    testWidgets('all 3 types render without overflow at 390pt', (tester) async {
-      for (final type in EdenMfaTokenType.values) {
-        await tester.pumpWidget(wrap(
-          EdenMfaHardwareToken(type: type),
-          width: 390,
-        ));
-        expect(tester.takeException(), isNull, reason: 'type=$type overflow');
-      }
+    testWidgets('yubikey renders at 390pt: no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenMfaHardwareToken(type: EdenMfaTokenType.yubikey),
+        width: 390,
+      ));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('rsaSecurId renders at 390pt: no overflow', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenMfaHardwareToken(type: EdenMfaTokenType.rsaSecurId),
+        width: 390,
+      ));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('cacBackup renders at 390pt: no overflow (8-digit OTP scrolls horizontally)',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenMfaHardwareToken(type: EdenMfaTokenType.cacBackup),
+        width: 390,
+      ));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
     });
   });
 }

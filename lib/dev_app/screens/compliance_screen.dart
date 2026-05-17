@@ -111,7 +111,44 @@ class ComplianceScreen extends StatelessWidget {
           // TRD 011-07 will append: Section(title: 'EdenPermissionMatrix federal-roles enhancement', child: ...).
           // TRD 011-08 will append: Section(title: 'EdenSecretField CUI clipboard enhancement', child: ...).
           // TRD 011-09 will append: Section(title: 'EdenFileUpload virus-scan / spillage enhancement', child: ...).
-          // TRD 011-10 will append: Section(title: 'EdenMfaHardwareToken — YubiKey / RSA / CAC', child: ...).
+          Section(
+            title: 'EdenMfaHardwareToken — Hardware MFA token entry (YubiKey / RSA / CAC backup)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'YubiKey (FIDO2 tap)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenMfaHardwareToken(type: EdenMfaTokenType.yubikey),
+                SizedBox(height: 24),
+                Text(
+                  'RSA SecurID (6-digit rotating code)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenMfaHardwareToken(type: EdenMfaTokenType.rsaSecurId),
+                SizedBox(height: 24),
+                Text(
+                  'CAC backup (8-digit code)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenMfaHardwareToken(type: EdenMfaTokenType.cacBackup),
+                SizedBox(height: 24),
+                Text(
+                  'Error display variant',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenMfaHardwareToken(
+                  type: EdenMfaTokenType.rsaSecurId,
+                  errorMessage: 'Invalid code. Please try again.',
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
