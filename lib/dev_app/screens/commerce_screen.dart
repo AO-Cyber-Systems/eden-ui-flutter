@@ -316,7 +316,74 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
-          // TRD 012-04 appends: Section(title: 'EdenSplitTender — multi-method composer', child: ...).
+          Section(
+            title: 'EdenSplitTender — multi-method composer',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Retail POS — 3-way split', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenSplitTender(
+                  total: 87.50,
+                  allowedMethods: const [
+                    EdenPaymentMethod.cash,
+                    EdenPaymentMethod.card,
+                    EdenPaymentMethod.giftCard,
+                  ],
+                  onDraftsChanged: (_) {},
+                  initialDrafts: const [
+                    EdenPaymentDraft(
+                      method: EdenPaymentMethod.giftCard,
+                      amount: 25.00,
+                      reference: 'GC-1024',
+                    ),
+                    EdenPaymentDraft(
+                      method: EdenPaymentMethod.card,
+                      amount: 50.00,
+                      reference: '4242',
+                    ),
+                    EdenPaymentDraft(method: EdenPaymentMethod.cash, amount: 12.50),
+                  ],
+                  allowOverCapacity: true,
+                ),
+                const SizedBox(height: 24),
+                const Text('Trades invoice — 2-way split with reference', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenSplitTender(
+                  total: 1240.00,
+                  allowedMethods: const [
+                    EdenPaymentMethod.card,
+                    EdenPaymentMethod.ach,
+                    EdenPaymentMethod.check,
+                  ],
+                  onDraftsChanged: (_) {},
+                  initialDrafts: const [
+                    EdenPaymentDraft(
+                      method: EdenPaymentMethod.ach,
+                      amount: 1000.00,
+                      reference: '1234',
+                    ),
+                    EdenPaymentDraft(
+                      method: EdenPaymentMethod.check,
+                      amount: 240.00,
+                      reference: '#1003',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text('Single-tender baseline (balanced)', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenSplitTender(
+                  total: 50.00,
+                  allowedMethods: const [
+                    EdenPaymentMethod.cash,
+                    EdenPaymentMethod.card,
+                  ],
+                  onDraftsChanged: (_) {},
+                ),
+              ],
+            ),
+          ),
           // TRD 012-05 appends: Section(title: 'EdenSparkline — compact trend line (no axes, no animation)', child: ...).
           // TRD 012-06 appends: Section(title: 'EdenBarChart — grouped / stacked / horizontal', child: ...).
           // TRD 012-07 appends: Section(title: 'EdenDonutChart — center-label + legend', child: ...).

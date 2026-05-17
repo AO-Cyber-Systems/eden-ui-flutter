@@ -59,5 +59,17 @@ void main() {
       expect(find.text('Trades invoice — card / ACH / check'), findsOneWidget);
       expect(find.text('Fuel POD — cash / card / account'), findsOneWidget);
     });
+
+    testWidgets('renders SplitTender section with 3 vertical scenarios', (tester) async {
+      tester.view.physicalSize = const Size(1200, 12000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Retail POS — 3-way split'), findsOneWidget);
+      expect(find.text('Trades invoice — 2-way split with reference'), findsOneWidget);
+      expect(find.text('Single-tender baseline (balanced)'), findsOneWidget);
+    });
   });
 }
