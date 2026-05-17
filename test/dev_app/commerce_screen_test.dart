@@ -17,6 +17,12 @@ void main() {
     });
 
     testWidgets('renders LineItemEditor section with all 5 vertical scenario labels', (tester) async {
+      // Wide+tall viewport keeps every Section in a single render so the
+      // lazy ListView eagerly resolves all sections.
+      tester.view.physicalSize = const Size(1200, 6000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
       await tester.pumpAndSettle();
       expect(find.text('Retail cart'), findsOneWidget);
@@ -24,6 +30,21 @@ void main() {
       expect(find.text('Fuel POD (single-item delivery)'), findsOneWidget);
       expect(find.text('Trades quote (labor + material + tax)'), findsOneWidget);
       expect(find.text('Salon services (read-only checkout preview)'), findsOneWidget);
+    });
+
+    testWidgets('renders AggregateKpiStrip section with all 4 vertical scenarios', (tester) async {
+      // Wide+tall viewport keeps every Section in a single render so the
+      // lazy ListView eagerly resolves all sections.
+      tester.view.physicalSize = const Size(1200, 6000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Sales day (retail)'), findsOneWidget);
+      expect(find.text('Fuel volume (week)'), findsOneWidget);
+      expect(find.text('Medical claims rollup'), findsOneWidget);
+      expect(find.text('Trades revenue'), findsOneWidget);
     });
   });
 }

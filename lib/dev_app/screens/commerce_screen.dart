@@ -177,7 +177,89 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
-          // TRD 012-02 appends: Section(title: 'EdenAggregateKpiStrip — N-tile strip + aggregate footer', child: ...).
+          const Section(
+            title: 'EdenAggregateKpiStrip — N-tile strip + aggregate footer',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Sales day (retail)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                EdenAggregateKpiStrip(
+                  tiles: [
+                    EdenKpiTile(label: 'Sales', displayValue: r'$1,245', trend: 0.12),
+                    EdenKpiTile(label: 'Orders', displayValue: '47', trend: 0.04),
+                    EdenKpiTile(label: 'Avg ticket', displayValue: r'$26.49', trend: -0.02),
+                    EdenKpiTile(
+                      label: 'Refund rate',
+                      displayValue: '2.1%',
+                      trend: 0.01,
+                      polarity: EdenKpiTrendPolarity.negativeIsGood,
+                    ),
+                  ],
+                  aggregate: EdenKpiAggregate(
+                    label: 'Day total',
+                    displayValue: r'$1,245',
+                    mode: EdenKpiAggregateMode.sum,
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('Fuel volume (week)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                EdenAggregateKpiStrip(
+                  tiles: [
+                    EdenKpiTile(label: 'Gallons', displayValue: '8,420', trend: 0.08),
+                    EdenKpiTile(label: 'Stops', displayValue: '34', trend: 0.05),
+                    EdenKpiTile(label: 'Avg/stop', displayValue: '247.6 gal', trend: 0.03),
+                    EdenKpiTile(label: 'Truck util', displayValue: '82%', trend: 0.06),
+                    EdenKpiTile(label: 'Routes', displayValue: '6', trend: 0),
+                  ],
+                  aggregate: EdenKpiAggregate(
+                    label: 'Week gal',
+                    displayValue: '8,420',
+                    mode: EdenKpiAggregateMode.sum,
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('Medical claims rollup', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                EdenAggregateKpiStrip(
+                  tiles: [
+                    EdenKpiTile(label: 'Submitted', displayValue: '124', trend: 0.07),
+                    EdenKpiTile(label: 'Paid', displayValue: '108', trend: 0.09),
+                    EdenKpiTile(
+                      label: 'Denied',
+                      displayValue: '8',
+                      trend: -0.02,
+                      polarity: EdenKpiTrendPolarity.negativeIsGood,
+                    ),
+                    EdenKpiTile(
+                      label: 'AR days',
+                      displayValue: '42',
+                      trend: 0.03,
+                      polarity: EdenKpiTrendPolarity.negativeIsGood,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24),
+                Text('Trades revenue', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                EdenAggregateKpiStrip(
+                  tiles: [
+                    EdenKpiTile(label: 'Booked', displayValue: r'$24,600', trend: 0.15),
+                    EdenKpiTile(label: 'Completed', displayValue: r'$19,200', trend: 0.10),
+                    EdenKpiTile(
+                      label: 'Outstanding',
+                      displayValue: r'$5,400',
+                      trend: 0.03,
+                      polarity: EdenKpiTrendPolarity.negativeIsGood,
+                    ),
+                    EdenKpiTile(label: 'Win rate', displayValue: '34%', trend: 0.04),
+                  ],
+                  aggregate: EdenKpiAggregate(label: 'Net booked', displayValue: r'$24,600'),
+                ),
+              ],
+            ),
+          ),
           // TRD 012-03 appends: Section(title: 'EdenPaymentEntry — payment method + amount entry', child: ...).
           // TRD 012-04 appends: Section(title: 'EdenSplitTender — multi-method composer', child: ...).
           // TRD 012-05 appends: Section(title: 'EdenSparkline — compact trend line (no axes, no animation)', child: ...).
