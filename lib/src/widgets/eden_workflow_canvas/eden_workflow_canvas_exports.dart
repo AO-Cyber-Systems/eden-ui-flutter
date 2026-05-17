@@ -29,3 +29,10 @@ export 'nodes/eden_merge_node.dart';
 // Wave 4 — End node + Validator (TRD 020-06)
 export 'nodes/eden_workflow_end_node.dart';
 export 'workflow_validator.dart';
+
+// Wave 5 — Composite root + Toolbox + Controller + ValidationPanel (TRD 020-07)
+export 'workflow_toolbox_item_registry.dart';
+export 'workflow_controller.dart';
+export 'eden_workflow_toolbox.dart';
+export 'eden_workflow_validation_panel.dart';
+export 'eden_visual_workflow_canvas.dart';
