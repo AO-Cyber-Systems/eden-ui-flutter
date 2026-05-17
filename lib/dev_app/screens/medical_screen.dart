@@ -49,6 +49,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenChartTimeline — Clinical history timeline (013-07)',
             child: _ChartTimelineDemo(),
           ),
+          Section(
+            title: 'EdenPatientChartScaffold — 3-pane chart shell (013-08)',
+            child: _PatientChartScaffoldDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -1015,3 +1019,190 @@ final _singleEncounter = <EdenChartTimelineEvent>[
     provider: 'Dr. Chen',
   ),
 ];
+
+// ────────────────────────── 013-08 demo ──────────────────────────
+
+class _PatientChartScaffoldDemo extends StatelessWidget {
+  const _PatientChartScaffoldDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final data = _polychronicScaffoldData();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Expanded tier (1200×800) — three-pane layout',
+          child: SizedBox(
+            width: 1200,
+            height: 800,
+            child: EdenPatientChartScaffold(
+              data: data,
+              patientId: data.patientId,
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Compact tier (390×800) — collapsed to tabs',
+          child: SizedBox(
+            width: 390,
+            height: 800,
+            child: EdenPatientChartScaffold(
+              data: data,
+              patientId: data.patientId,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+EdenPatientChartData _polychronicScaffoldData() {
+  const pid = 'demo-chart';
+  final demographics = EdenPatientDemographics(
+    patientId: pid,
+    name: 'Jane Doe',
+    mrn: '123456',
+    dob: DateTime(1979, 3, 4),
+    sex: 'F',
+    payer: 'Aetna',
+    pcp: 'Dr. Chen',
+  );
+  final vitals = <EdenVitalSign>[
+    EdenVitalSign(
+      patientId: pid,
+      kind: EdenVitalKind.bloodPressure,
+      unit: 'mmHg',
+      systolic: 128,
+      diastolic: 82,
+      referenceMin: 90,
+      referenceMax: 140,
+    ),
+    EdenVitalSign(
+      patientId: pid,
+      kind: EdenVitalKind.heartRate,
+      unit: 'bpm',
+      value: 72,
+      referenceMin: 60,
+      referenceMax: 100,
+    ),
+    EdenVitalSign(
+      patientId: pid,
+      kind: EdenVitalKind.temperature,
+      unit: '°F',
+      value: 98.6,
+      referenceMin: 97.0,
+      referenceMax: 99.5,
+    ),
+    EdenVitalSign(
+      patientId: pid,
+      kind: EdenVitalKind.spo2,
+      unit: '%',
+      value: 98,
+      referenceMin: 95,
+      referenceMax: 100,
+      criticalMin: 90,
+    ),
+  ];
+  final meds = <EdenMedicationStatement>[
+    EdenMedicationStatement(
+      id: 'sc-med-1',
+      patientId: pid,
+      drugName: 'Metformin',
+      doseLabel: '500mg',
+      route: EdenMedicationRoute.oral,
+      frequency: 'Twice daily',
+      prescriber: 'Dr. Chen',
+      startDate: DateTime(2022, 8, 14),
+    ),
+  ];
+  final problems = <EdenCondition>[
+    EdenCondition(
+      id: 'sc-cond-1',
+      patientId: pid,
+      code: 'E11.9',
+      codeSystem: 'ICD-10-CM',
+      description: 'Type 2 diabetes mellitus without complications',
+      status: EdenConditionStatus.active,
+      onsetDate: DateTime(2022, 8, 14),
+      diagnosedBy: 'Dr. Chen',
+    ),
+  ];
+  final allergies = <EdenAllergyIntolerance>[
+    EdenAllergyIntolerance(
+      id: 'sc-all-1',
+      patientId: pid,
+      allergen: 'Penicillin',
+      type: EdenAllergenType.medication,
+      reaction: 'Anaphylaxis',
+      severity: EdenAllergySeverity.severe,
+      criticality: EdenAllergyCriticality.high,
+      verifiedBy: 'Dr. Chen',
+    ),
+  ];
+  final labs = <EdenLabResult>[
+    EdenLabResult(
+      id: 'sc-lab-1',
+      patientId: pid,
+      testName: 'Hemoglobin',
+      testCode: 'HGB',
+      value: 14.2,
+      unit: 'g/dL',
+      referenceMin: 12.0,
+      referenceMax: 16.0,
+      panelName: 'CBC',
+      collectedAt: DateTime(2026, 5, 17),
+    ),
+  ];
+  final notes = <EdenSoapNoteData>[
+    EdenSoapNoteData(
+      patientId: pid,
+      subjective: 'Annual physical, no complaints.',
+      objective: 'BP 128/82, HR 72, BMI 23.',
+      assessment: 'Z00.00 annual physical.',
+      plan: '1. Continue meds. 2. RTC 12mo.',
+      signedBy: 'Dr. Chen',
+    ),
+  ];
+  final timeline = <EdenChartTimelineEvent>[
+    EdenChartTimelineEvent(
+      id: 'sc-evt-1',
+      patientId: pid,
+      category: EdenChartEventCategory.encounter,
+      title: 'Annual Physical',
+      occurredAt: DateTime.now(),
+      provider: 'Dr. Chen',
+    ),
+  ];
+  final alerts = const <EdenBlockingAlertData>[
+    EdenBlockingAlertData(
+      task: 'Drug-drug check',
+      context: 'Med review',
+      reason: 'Verify INR before warfarin titration',
+    ),
+  ];
+  final audit = <EdenAuditLogEntry>[
+    EdenAuditLogEntry(
+      id: 'sc-aud-1',
+      timestamp: DateTime(2026, 5, 17, 8, 30),
+      actor: 'dr.chen@example.com',
+      action: 'VIEW_CHART',
+      target: 'Patient $pid',
+    ),
+  ];
+  return EdenPatientChartData(
+    patientId: pid,
+    demographics: demographics,
+    vitals: vitals,
+    medications: meds,
+    problems: problems,
+    allergies: allergies,
+    labs: labs,
+    notes: notes,
+    timelineEvents: timeline,
+    blockingAlerts: alerts,
+    auditEvents: audit,
+  );
+}
