@@ -298,6 +298,27 @@ void main() {
     });
   });
 
-  // Public-exports smoke test lives in the dedicated suite created by the
-  // REFACTOR task (post Task 5) once all four modules are exported.
+  group('Public exports — smoke import', () {
+    test('all workflow types resolvable from package root', () {
+      // Compile-time check: these references must resolve via the package
+      // root import. If any are missing from eden_workflow_canvas_exports.dart
+      // (or lib/eden_ui.dart), this test fails to compile.
+      const refs = <Type>[
+        EdenWorkflowDefinition,
+        EdenWorkflowCondition,
+        EdenWorkflowAction,
+        EdenWorkflowCanvasLayout,
+        EdenWorkflowSaveData,
+        EdenWorkflowTriggerType,
+        EdenWorkflowConditionOperator,
+        EdenWorkflowCategory,
+        EdenWorkflowCategoryRegistry,
+        EdenWorkflowActionType,
+        EdenWorkflowActionRegistry,
+        EdenWorkflowGraphBuilder,
+        EdenWorkflowEdgeStyle,
+      ];
+      expect(refs.length, 13);
+    });
+  });
 }
