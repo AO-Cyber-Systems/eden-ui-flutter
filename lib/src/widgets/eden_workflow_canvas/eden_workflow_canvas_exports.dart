@@ -21,3 +21,7 @@ export 'nodes/eden_action_node.dart';
 // Wave 3 — Branch + Condition nodes (TRD 020-04)
 export 'nodes/eden_branch_node.dart';
 export 'nodes/eden_condition_node.dart';
+
+// Wave 3 — Delay + Merge nodes + public port helpers (TRD 020-05)
+export 'nodes/eden_delay_node.dart';
+export 'nodes/eden_merge_node.dart';

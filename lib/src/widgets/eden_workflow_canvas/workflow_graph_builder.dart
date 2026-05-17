@@ -65,7 +65,7 @@ abstract class EdenWorkflowGraphBuilder {
         'category': definition.category,
         'config': definition.triggerConfig,
       },
-      ports: _triggerPorts(),
+      ports: triggerPorts(),
     ));
 
     var prevNodeId = 'trigger-0';
@@ -88,7 +88,7 @@ abstract class EdenWorkflowGraphBuilder {
           'operator': cond.operator.name,
           'value': cond.value,
         },
-        ports: _conditionPorts(),
+        ports: conditionPorts(),
       ));
       edges.add(EdenDiagramEdge(
         id: 'edge-$prevNodeId-$id',
@@ -120,7 +120,7 @@ abstract class EdenWorkflowGraphBuilder {
           'actionType': action.actionType,
           'config': action.config,
         },
-        ports: _actionPorts(),
+        ports: actionPorts(),
       ));
       edges.add(EdenDiagramEdge(
         id: 'edge-$prevNodeId-$id',
@@ -146,7 +146,7 @@ abstract class EdenWorkflowGraphBuilder {
       height: 48,
       label: 'End',
       data: const {'nodeType': 'end'},
-      ports: _endPorts(),
+      ports: endPorts(),
     ));
     edges.add(EdenDiagramEdge(
       id: 'edge-$prevNodeId-$endId',
@@ -342,12 +342,17 @@ abstract class EdenWorkflowGraphBuilder {
 
   // ── Port emission helpers (per-node-type canonical layout) ──
   // Trigger: 2 source ports (right, bottom).
-  // Condition: 2 target (top, left) + yes (right) + no (bottom) sources.
+  // Condition: 2 target (top, left) + yes (right, green) + no (bottom, red).
   // Action: 2 target (top, left) + 2 source (right, bottom).
   // End: 2 target (top, left); NO source.
-  // Note: branch/merge/delay port helpers ship in Waves 3–5 TRDs.
+  // Branch (TRD 020-05): 2 target + 3 source (right offset 0.33, right-2 0.66, bottom).
+  // Merge (TRD 020-05): 3 target (top, left 0.33, left-2 0.66) + 2 source.
+  // Delay (TRD 020-05): 2 target + 2 source (same shape as action).
+  //
+  // Public so toolbox/drop logic (TRD 020-07) can attach the right port list
+  // when creating a new node from a toolbox category.
 
-  static List<EdenDiagramPort> _triggerPorts() => const [
+  static List<EdenDiagramPort> triggerPorts() => const [
         EdenDiagramPort(
           id: 'right',
           side: EdenPortSide.right,
@@ -360,7 +365,7 @@ abstract class EdenWorkflowGraphBuilder {
         ),
       ];
 
-  static List<EdenDiagramPort> _conditionPorts() => const [
+  static List<EdenDiagramPort> conditionPorts() => const [
         EdenDiagramPort(
           id: 'top',
           side: EdenPortSide.top,
@@ -385,7 +390,7 @@ abstract class EdenWorkflowGraphBuilder {
         ),
       ];
 
-  static List<EdenDiagramPort> _actionPorts() => const [
+  static List<EdenDiagramPort> actionPorts() => const [
         EdenDiagramPort(
           id: 'top',
           side: EdenPortSide.top,
@@ -408,7 +413,7 @@ abstract class EdenWorkflowGraphBuilder {
         ),
       ];
 
-  static List<EdenDiagramPort> _endPorts() => const [
+  static List<EdenDiagramPort> endPorts() => const [
         EdenDiagramPort(
           id: 'top',
           side: EdenPortSide.top,
@@ -418,6 +423,94 @@ abstract class EdenWorkflowGraphBuilder {
           id: 'left',
           side: EdenPortSide.left,
           kind: EdenDiagramPortKind.target,
+        ),
+      ];
+
+  /// Branch node ports — 2 target + 3 source (right offset 0.33, right-2 0.66,
+  /// bottom). Used when EdenBranchNode is dropped from the toolbox.
+  static List<EdenDiagramPort> branchPorts() => const [
+        EdenDiagramPort(
+          id: 'top',
+          side: EdenPortSide.top,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'left',
+          side: EdenPortSide.left,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'right',
+          side: EdenPortSide.right,
+          offset: 0.33,
+          kind: EdenDiagramPortKind.source,
+        ),
+        EdenDiagramPort(
+          id: 'right-2',
+          side: EdenPortSide.right,
+          offset: 0.66,
+          kind: EdenDiagramPortKind.source,
+        ),
+        EdenDiagramPort(
+          id: 'bottom',
+          side: EdenPortSide.bottom,
+          kind: EdenDiagramPortKind.source,
+        ),
+      ];
+
+  /// Merge node ports — 3 target (top, left 0.33, left-2 0.66) + 2 source.
+  /// Used when EdenMergeNode is dropped from the toolbox.
+  static List<EdenDiagramPort> mergePorts() => const [
+        EdenDiagramPort(
+          id: 'top',
+          side: EdenPortSide.top,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'left',
+          side: EdenPortSide.left,
+          offset: 0.33,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'left-2',
+          side: EdenPortSide.left,
+          offset: 0.66,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'right',
+          side: EdenPortSide.right,
+          kind: EdenDiagramPortKind.source,
+        ),
+        EdenDiagramPort(
+          id: 'bottom',
+          side: EdenPortSide.bottom,
+          kind: EdenDiagramPortKind.source,
+        ),
+      ];
+
+  /// Delay node ports — same shape as action (2 target + 2 source).
+  static List<EdenDiagramPort> delayPorts() => const [
+        EdenDiagramPort(
+          id: 'top',
+          side: EdenPortSide.top,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'left',
+          side: EdenPortSide.left,
+          kind: EdenDiagramPortKind.target,
+        ),
+        EdenDiagramPort(
+          id: 'right',
+          side: EdenPortSide.right,
+          kind: EdenDiagramPortKind.source,
+        ),
+        EdenDiagramPort(
+          id: 'bottom',
+          side: EdenPortSide.bottom,
+          kind: EdenDiagramPortKind.source,
         ),
       ];
 }
