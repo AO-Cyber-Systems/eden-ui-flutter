@@ -488,6 +488,10 @@ export 'src/widgets/eden_time_slot_picker.dart';
 export 'src/widgets/eden_staff_schedule.dart';
 export 'src/widgets/eden_staff_capability_matrix.dart';
 
+// ─────────── Objective 016 — Salon-Specific Commerce Wave 3 ───────────
+export 'src/widgets/eden_membership_manager.dart';
+export 'src/widgets/eden_package_redeem.dart';
+
 // ─────────── Objective 017 — Medical Eden Notes SKU Wave 1 ───────────
 export 'src/widgets/eden_avs_generator.dart';
 export 'src/widgets/eden_insurance_card.dart';

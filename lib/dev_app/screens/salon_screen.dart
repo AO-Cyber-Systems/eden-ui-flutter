@@ -145,7 +145,27 @@ class _SalonScreenState extends State<SalonScreen> {
               child: _TimeSlotPickerDemo(),
             ),
           ),
-          // TRD 016-03 will append: Section(title: 'EdenMembershipManager + EdenPackageRedeem', child: ...).
+          Section(
+            title: 'EdenMembershipManager + EdenPackageRedeem',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Membership manager (Susan M. Goldman — Gold)',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: EdenSpacing.space2),
+                _MembershipManagerDemo(),
+                const SizedBox(height: EdenSpacing.space4),
+                Text(
+                  "Package redemption (for \"Women's Haircut\")",
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: EdenSpacing.space2),
+                _PackageRedeemDemo(),
+              ],
+            ),
+          ),
           Section(
             title: 'EdenIntakeFormBuilder — Form template authoring',
             child: SizedBox(
@@ -183,6 +203,172 @@ class _SalonScreenState extends State<SalonScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// TRD 016-03 — EdenMembershipManager + EdenPackageRedeem demos
+// -----------------------------------------------------------------------------
+
+class _MembershipManagerDemo extends StatefulWidget {
+  @override
+  State<_MembershipManagerDemo> createState() => _MembershipManagerDemoState();
+}
+
+class _MembershipManagerDemoState extends State<_MembershipManagerDemo> {
+  EdenMembership _m = EdenMembership(
+    id: 'mem-001',
+    customerId: 'cust-susan',
+    customerDisplayName: 'Susan M. Goldman',
+    tier: EdenMembershipTier.gold,
+    tierLabel: 'Gold',
+    monthlyPriceCents: 8900,
+    startedAt: DateTime(2025, 11, 17),
+    nextBillingAt: DateTime(2026, 6, 17),
+    status: EdenMembershipStatus.active,
+    benefits: const [
+      EdenMembershipBenefit(
+        id: 'b-cut',
+        label: 'Haircuts',
+        remainingThisCycle: 1,
+        totalThisCycle: 2,
+      ),
+      EdenMembershipBenefit(id: 'b-color', label: 'Color'),
+      EdenMembershipBenefit(
+        id: 'b-addon',
+        label: 'Add-ons',
+        remainingThisCycle: 3,
+        totalThisCycle: 5,
+      ),
+    ],
+  );
+
+  void _flip(EdenMembershipStatus next) {
+    setState(() {
+      _m = EdenMembership(
+        id: _m.id,
+        customerId: _m.customerId,
+        customerDisplayName: _m.customerDisplayName,
+        tier: _m.tier,
+        tierLabel: _m.tierLabel,
+        monthlyPriceCents: _m.monthlyPriceCents,
+        currency: _m.currency,
+        startedAt: _m.startedAt,
+        nextBillingAt: _m.nextBillingAt,
+        status: next,
+        benefits: _m.benefits,
+      );
+    });
+  }
+
+  void _toast(BuildContext c, String msg) {
+    ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenMembershipManager(
+      membership: _m,
+      onPause: () {
+        _flip(EdenMembershipStatus.paused);
+        _toast(context, 'Paused');
+      },
+      onResume: () {
+        _flip(EdenMembershipStatus.active);
+        _toast(context, 'Resumed');
+      },
+      onCancel: () {
+        _flip(EdenMembershipStatus.cancelled);
+        _toast(context, 'Cancelled');
+      },
+      onChangeCard: () => _toast(context, 'Change card flow'),
+      onUpdatePaymentMethod: () {
+        _flip(EdenMembershipStatus.active);
+        _toast(context, 'Payment updated');
+      },
+    );
+  }
+}
+
+class _PackageRedeemDemo extends StatefulWidget {
+  @override
+  State<_PackageRedeemDemo> createState() => _PackageRedeemDemoState();
+}
+
+class _PackageRedeemDemoState extends State<_PackageRedeemDemo> {
+  static const _haircut = EdenServiceCatalogEntry(
+    id: 'srv-haircut-women',
+    name: "Women's Haircut",
+    durationMinutes: 45,
+    priceCents: 8500,
+  );
+
+  List<EdenPackage> _packages = [
+    EdenPackage(
+      id: 'pkg-cutcolor-6',
+      customerId: 'cust-susan',
+      name: 'Cut & Color 6-Pack',
+      totalVisits: 6,
+      remainingVisits: 3,
+      purchasedAt: DateTime(2026, 3, 15),
+      expiresAt: DateTime(2026, 9, 15),
+      applicableServices: const ['srv-haircut-women', 'srv-full-color'],
+    ),
+    EdenPackage(
+      id: 'pkg-bday',
+      customerId: 'cust-susan',
+      name: 'Birthday Special',
+      totalVisits: 1,
+      remainingVisits: 1,
+      purchasedAt: DateTime(2026, 2, 3),
+      expiresAt: DateTime(2026, 8, 3),
+      applicableServices: const ['srv-haircut-women'],
+    ),
+    EdenPackage(
+      id: 'pkg-facial-10',
+      customerId: 'cust-susan',
+      name: 'Facial 10-Pack',
+      totalVisits: 10,
+      remainingVisits: 7,
+      purchasedAt: DateTime(2026, 1, 1),
+      applicableServices: const ['srv-facial-basic'],
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenPackageRedeem(
+      packages: _packages,
+      serviceEntry: _haircut,
+      onRedeem: (pkgId, visits) {
+        setState(() {
+          _packages = _packages
+              .map(
+                (p) => p.id == pkgId
+                    ? EdenPackage(
+                        id: p.id,
+                        customerId: p.customerId,
+                        name: p.name,
+                        totalVisits: p.totalVisits,
+                        remainingVisits: p.remainingVisits - visits,
+                        purchasedAt: p.purchasedAt,
+                        expiresAt: p.expiresAt,
+                        transferable: p.transferable,
+                        applicableServices: p.applicableServices,
+                      )
+                    : p,
+              )
+              .toList();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Applied $visits visit${visits == 1 ? '' : 's'} of $pkgId',
+            ),
+          ),
+        );
+      },
     );
   }
 }
