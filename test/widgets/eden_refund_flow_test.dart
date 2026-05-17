@@ -318,7 +318,7 @@ void main() {
       expect(submitted!.managerApproved, isFalse);
     });
 
-    testWidgets('$26 refund + storeCredit method → Step 4 entered',
+    testWidgets(r'$26 refund + storeCredit method → Step 4 entered',
         (tester) async {
       EdenRefundDraft? submitted;
       await tester.pumpWidget(wrap(EdenRefundFlow(
