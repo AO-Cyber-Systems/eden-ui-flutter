@@ -13,3 +13,7 @@ export 'workflow_graph_builder.dart';
 export 'workflow_field_registry.dart';
 export 'nodes/eden_trigger_node.dart';
 export 'nodes/eden_workflow_event_browser.dart';
+
+// Wave 2 — Action node + field specs (TRD 020-03)
+export 'workflow_action_field_spec.dart';
+export 'nodes/eden_action_node.dart';
