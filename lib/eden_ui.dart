@@ -418,3 +418,6 @@ export 'src/widgets/eden_loading_indicator.dart';
 // Objective 010 — Visual Polish Pass Wave 3 (Density + polish)
 export 'src/widgets/eden_skeleton_scope.dart';
 export 'src/widgets/eden_status_dot_overlay.dart';
+
+// ─────────── Objective 012 — Cross-vertical commerce primitives Wave 1 ───────────
+export 'src/widgets/eden_line_item_editor.dart';
