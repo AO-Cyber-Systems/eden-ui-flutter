@@ -748,6 +748,15 @@ class _PieChartPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 
 /// A minimal inline line chart intended for stat cards and compact contexts.
+///
+/// **Obj 012-05 — additive enhancements (backwards-compatible):**
+/// * [minValue] / [maxValue] override the auto-detected y-axis range
+///   (useful for 0..100% anchored tank-level charts and 0-anchored
+///   sales charts).
+/// * [referenceLines] renders 1pt horizontal lines at the given y-values
+///   in 30% color opacity (goal markers, low-threshold lines, etc.).
+/// * [nullablePoints] when true skips `double.nan` entries — the line
+///   segment is not drawn through gaps (offline-sensor scenarios).
 class EdenSparkline extends StatelessWidget {
   const EdenSparkline({
     super.key,
@@ -757,6 +766,10 @@ class EdenSparkline extends StatelessWidget {
     this.color,
     this.showArea = true,
     this.lineWidth = 2,
+    this.minValue,
+    this.maxValue,
+    this.referenceLines = const [],
+    this.nullablePoints = false,
   });
 
   final List<double> values;
@@ -765,6 +778,18 @@ class EdenSparkline extends StatelessWidget {
   final Color? color;
   final bool showArea;
   final double lineWidth;
+
+  /// Override auto-detected min (default null → derive from `values`).
+  final double? minValue;
+
+  /// Override auto-detected max (default null → derive from `values`).
+  final double? maxValue;
+
+  /// Y-values at which to draw 1pt reference lines (in 30% color opacity).
+  final List<double> referenceLines;
+
+  /// When true, NaN entries in `values` are skipped (gaps).
+  final bool nullablePoints;
 
   @override
   Widget build(BuildContext context) {
@@ -777,6 +802,10 @@ class EdenSparkline extends StatelessWidget {
         color: c,
         showArea: showArea,
         lineWidth: lineWidth,
+        minValueOverride: minValue,
+        maxValueOverride: maxValue,
+        referenceLines: referenceLines,
+        nullablePoints: nullablePoints,
       ),
     );
   }
@@ -788,62 +817,123 @@ class _SparklinePainter extends CustomPainter {
     required this.color,
     required this.showArea,
     required this.lineWidth,
+    this.minValueOverride,
+    this.maxValueOverride,
+    this.referenceLines = const [],
+    this.nullablePoints = false,
   });
 
   final List<double> values;
   final Color color;
   final bool showArea;
   final double lineWidth;
+  final double? minValueOverride;
+  final double? maxValueOverride;
+  final List<double> referenceLines;
+  final bool nullablePoints;
+
+  Iterable<double> get _validValues =>
+      values.where((v) => !v.isNaN);
+
+  double _minY() {
+    if (minValueOverride != null) return minValueOverride!;
+    final v = _validValues;
+    if (v.isEmpty) return 0;
+    return v.reduce(math.min);
+  }
+
+  double _maxY() {
+    if (maxValueOverride != null) return maxValueOverride!;
+    final v = _validValues;
+    if (v.isEmpty) return 1;
+    return v.reduce(math.max);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final minV = _minY();
+    final maxV = _maxY();
+    final range = (maxV - minV).abs() < 1e-9 ? 1.0 : (maxV - minV);
+
+    // 1. Reference lines (background, behind the data line).
+    if (referenceLines.isNotEmpty) {
+      final refPaint = Paint()
+        ..color = color.withValues(alpha: 0.30)
+        ..strokeWidth = 1
+        ..style = PaintingStyle.stroke;
+      for (final ref in referenceLines) {
+        final y = size.height - (ref - minV) / range * size.height;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), refPaint);
+      }
+    }
+
     if (values.length < 2) return;
 
-    final minV = values.reduce(math.min);
-    final maxV = values.reduce(math.max);
-    final range = maxV == minV ? 1.0 : maxV - minV;
     final step = size.width / (values.length - 1);
 
-    final points = <Offset>[];
+    // Build segments — drop NaN entries when nullablePoints is true. A
+    // "segment" is a contiguous run of non-NaN points (Path.moveTo +
+    // Path.lineTo for each).
+    final segments = <List<Offset>>[];
+    List<Offset> current = [];
     for (var i = 0; i < values.length; i++) {
-      final t = (values[i] - minV) / range;
-      points.add(Offset(i * step, size.height * (1 - t)));
+      final v = values[i];
+      if (v.isNaN && nullablePoints) {
+        if (current.length > 1) segments.add(current);
+        current = [];
+        continue;
+      }
+      if (v.isNaN && !nullablePoints) {
+        // Pass NaN through to render — Flutter Canvas will likely emit a
+        // skip but won't throw. Preserves backwards-compat: the original
+        // painter passed values directly without filtering.
+        continue;
+      }
+      final t = (v - minV) / range;
+      current.add(Offset(i * step, size.height * (1 - t)));
     }
+    if (current.length > 1) segments.add(current);
+    if (segments.isEmpty) return;
 
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (var i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = lineWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    for (final points in segments) {
+      final path = Path()..moveTo(points.first.dx, points.first.dy);
+      for (var i = 1; i < points.length; i++) {
+        path.lineTo(points[i].dx, points[i].dy);
+      }
+      if (showArea) {
+        final areaPath = Path.from(path)
+          ..lineTo(points.last.dx, size.height)
+          ..lineTo(points.first.dx, size.height)
+          ..close();
+        final gradient = ui.Gradient.linear(
+          Offset.zero,
+          Offset(0, size.height),
+          [color.withValues(alpha: 0.3), color.withValues(alpha: 0.0)],
+        );
+        canvas.drawPath(areaPath, Paint()..shader = gradient);
+      }
+      canvas.drawPath(path, linePaint);
     }
-
-    // Area gradient
-    if (showArea) {
-      final areaPath = Path.from(path)
-        ..lineTo(points.last.dx, size.height)
-        ..lineTo(points.first.dx, size.height)
-        ..close();
-      final gradient = ui.Gradient.linear(
-        Offset.zero,
-        Offset(0, size.height),
-        [color.withValues(alpha: 0.3), color.withValues(alpha: 0.0)],
-      );
-      canvas.drawPath(areaPath, Paint()..shader = gradient);
-    }
-
-    // Line
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = lineWidth
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
   }
 
   @override
   bool shouldRepaint(covariant _SparklinePainter old) =>
-      old.values != values || old.color != color;
+      old.values != values ||
+      old.color != color ||
+      old.showArea != showArea ||
+      old.lineWidth != lineWidth ||
+      old.minValueOverride != minValueOverride ||
+      old.maxValueOverride != maxValueOverride ||
+      old.referenceLines != referenceLines ||
+      old.nullablePoints != nullablePoints;
 }
 
 // ---------------------------------------------------------------------------
