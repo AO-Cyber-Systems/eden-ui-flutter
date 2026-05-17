@@ -73,13 +73,27 @@ void main() {
     });
   });
 
+  // GoogleFonts in the test environment populates TextStyle.fontFamily with
+  // a PascalCase-no-spaces variant of the family name plus a weight suffix
+  // (e.g., 'Plus Jakarta Sans' → 'PlusJakartaSans_regular'). The actual
+  // rendered family is correct; the assertion needs to match the test-env
+  // shape, not the canonical Google Fonts catalog string. Use a startsWith
+  // matcher built from the family name with spaces stripped.
+  Matcher hasFontFamilyPrefix(String googleFontsFamily) {
+    final pascal = googleFontsFamily.replaceAll(' ', '');
+    return predicate<String?>(
+      (value) => value != null && value.startsWith(pascal),
+      'fontFamily starting with "$pascal" (canonical family: "$googleFontsFamily")',
+    );
+  }
+
   group('EdenProfileFonts.bodyTextStyle (TextStyle builder)', () {
     testWidgets('commercialWarm body has fontFamily Plus Jakarta Sans',
         (tester) async {
       // Test list item 12 — back-compat fallback.
       final style =
           EdenProfileFonts.bodyTextStyle(EdenThemeProfile.commercialWarm);
-      expect(style.fontFamily, 'Plus Jakarta Sans');
+      expect(style.fontFamily, hasFontFamilyPrefix('Plus Jakarta Sans'));
     });
 
     testWidgets('medicalInstitutional body has fontFamily IBM Plex Sans',
@@ -87,14 +101,14 @@ void main() {
       // Test list item 13.
       final style = EdenProfileFonts.bodyTextStyle(
           EdenThemeProfile.medicalInstitutional);
-      expect(style.fontFamily, 'IBM Plex Sans');
+      expect(style.fontFamily, hasFontFamilyPrefix('IBM Plex Sans'));
     });
 
     testWidgets('govFederal body has fontFamily Public Sans', (tester) async {
       // Test list item 14.
       final style =
           EdenProfileFonts.bodyTextStyle(EdenThemeProfile.govFederal);
-      expect(style.fontFamily, 'Public Sans');
+      expect(style.fontFamily, hasFontFamilyPrefix('Public Sans'));
     });
   });
 
@@ -103,7 +117,7 @@ void main() {
       // Test list item 15 — back-compat fallback.
       final style =
           EdenProfileFonts.displayTextStyle(EdenThemeProfile.commercialWarm);
-      expect(style.fontFamily, 'Outfit');
+      expect(style.fontFamily, hasFontFamilyPrefix('Outfit'));
     });
 
     testWidgets('govFederal display has fontFamily Public Sans',
@@ -111,7 +125,7 @@ void main() {
       // Test list item 16.
       final style =
           EdenProfileFonts.displayTextStyle(EdenThemeProfile.govFederal);
-      expect(style.fontFamily, 'Public Sans');
+      expect(style.fontFamily, hasFontFamilyPrefix('Public Sans'));
     });
 
     testWidgets('legalProfessional display has fontFamily Crimson Pro',
@@ -119,7 +133,7 @@ void main() {
       // Test list item 17.
       final style = EdenProfileFonts.displayTextStyle(
           EdenThemeProfile.legalProfessional);
-      expect(style.fontFamily, 'Crimson Pro');
+      expect(style.fontFamily, hasFontFamilyPrefix('Crimson Pro'));
     });
   });
 
@@ -129,7 +143,7 @@ void main() {
       // Test list item 18.
       for (final profile in EdenThemeProfile.values) {
         final style = EdenProfileFonts.monoTextStyle(profile);
-        expect(style.fontFamily, 'JetBrains Mono',
+        expect(style.fontFamily, hasFontFamilyPrefix('JetBrains Mono'),
             reason: '$profile mono should fall back to JetBrains Mono in v1');
       }
     });
@@ -142,7 +156,7 @@ void main() {
       // Test list item 19.
       final ours =
           EdenProfileFonts.bodyTextStyle(EdenThemeProfile.commercialWarm);
-      expect(ours.fontFamily, 'Plus Jakarta Sans');
+      expect(ours.fontFamily, hasFontFamilyPrefix('Plus Jakarta Sans'));
       expect(ours.fontSize, isNull);
       expect(ours.fontWeight, isNull);
     });
@@ -157,7 +171,7 @@ void main() {
         height: 1.5,
         color: Colors.black,
       );
-      expect(ours.fontFamily, 'Plus Jakarta Sans');
+      expect(ours.fontFamily, hasFontFamilyPrefix('Plus Jakarta Sans'));
       expect(ours.fontSize, 16);
       expect(ours.fontWeight, FontWeight.w600);
       expect(ours.height, 1.5);
@@ -171,7 +185,7 @@ void main() {
         EdenThemeProfile.medicalInstitutional,
         fontSize: 14,
       );
-      expect(style.fontFamily, 'IBM Plex Sans');
+      expect(style.fontFamily, hasFontFamilyPrefix('IBM Plex Sans'));
       expect(style.fontSize, 14);
     });
 
@@ -185,8 +199,11 @@ void main() {
           EdenProfileFonts.displayTextStyle(profile),
           EdenProfileFonts.monoTextStyle(profile),
         ]) {
-          expect(style.fontFamily, isNot('Roboto'),
-              reason: '$profile produced Roboto fallback — back-compat broken');
+          // 'Roboto' is the Material default fallback that we must never see.
+          // The GoogleFonts test-env suffix means we check for a Roboto prefix.
+          expect(style.fontFamily, isNot(startsWith('Roboto')),
+              reason:
+                  '$profile produced Roboto fallback — back-compat broken');
           expect(style.fontFamily, isNotNull,
               reason: '$profile produced null fontFamily');
         }

@@ -382,6 +382,7 @@ export 'src/theme/eden_theme_profile.dart';
 export 'src/theme/eden_theme_profile_scope.dart';
 export 'src/theme/eden_status_palette.dart';
 export 'src/theme/eden_brand_preset.dart';
+export 'src/theme/eden_profile_fonts.dart';
 
 // ─────────── Objective 011 — Compliance overlay primitives Wave 1 ───────────
 export 'src/widgets/eden_classification_banner.dart';
