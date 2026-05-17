@@ -8,3 +8,6 @@ export 'workflow_models.dart';
 export 'workflow_category_registry.dart';
 export 'workflow_action_registry.dart';
 export 'workflow_graph_builder.dart';
+
+// Wave 2 — Trigger node + Field registry + Event browser (TRD 020-02)
+export 'workflow_field_registry.dart';
