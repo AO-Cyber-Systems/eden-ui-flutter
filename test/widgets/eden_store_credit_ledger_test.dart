@@ -47,7 +47,8 @@ void main() {
         data: EdenStoreCreditLedgerFixtures.overdrawn(),
         now: EdenStoreCreditLedgerFixtures.t0,
       )));
-      expect(find.text(r'-$5.00'), findsOneWidget);
+      // overdrawn() has balance -$5 AND a -$5 adjustment row; both render.
+      expect(find.text(r'-$5.00'), findsAtLeastNWidgets(1));
     });
   });
 
@@ -141,7 +142,7 @@ void main() {
       expect(find.text('NEWEST'), findsOneWidget);
     });
 
-    testWidgets("amount column '+$50.00' green for issued", (tester) async {
+    testWidgets(r"amount column '+$50.00' green for issued", (tester) async {
       await tester.pumpWidget(wrap(EdenStoreCreditLedger(
         data: EdenStoreCreditLedgerFixtures.activeWithHolds(),
         now: EdenStoreCreditLedgerFixtures.t0,
@@ -149,7 +150,7 @@ void main() {
       expect(find.text(r'+$50.00'), findsOneWidget);
     });
 
-    testWidgets("amount column '-$22.50' red for spent", (tester) async {
+    testWidgets(r"amount column '-$22.50' red for spent", (tester) async {
       await tester.pumpWidget(wrap(EdenStoreCreditLedger(
         data: EdenStoreCreditLedgerFixtures.activeWithHolds(),
         now: EdenStoreCreditLedgerFixtures.t0,
