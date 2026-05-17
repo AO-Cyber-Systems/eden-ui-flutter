@@ -455,3 +455,4 @@ export 'src/widgets/eden_receipt_preview.dart';
 export 'src/widgets/eden_inventory_row_editor.dart';
 // Wave 2
 export 'src/widgets/eden_receiving_flow.dart';
+export 'src/widgets/eden_sales_analytics_scaffold.dart';
