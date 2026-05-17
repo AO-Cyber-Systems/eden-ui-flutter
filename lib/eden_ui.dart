@@ -520,3 +520,4 @@ export 'src/widgets/eden_delivery_variance_card.dart';
 // ─────────── Objective 019 — Trades polish + Fuel quick wins Wave 2 ───────────
 export 'src/widgets/eden_equipment_record_card.dart';
 export 'src/widgets/eden_warranty_claim.dart';
+export 'src/widgets/eden_fuel_card_payment_entry.dart';

@@ -314,6 +314,36 @@ class _FuelScreenState extends State<FuelScreen> {
           ),
 
           // ---------------------------------------------------------------
+          // Objective 019 — Trades polish + Fuel quick wins Wave 2
+          // ---------------------------------------------------------------
+          Section(
+            title: 'FUEL CARD PAYMENT ENTRY (Obj 019-04)',
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final n in EdenFuelCardNetwork.values)
+                  SizedBox(
+                    width: 460,
+                    child: EdenFuelCardPaymentEntry(
+                      network: n,
+                      prefilledAmount: 125.50,
+                      onSubmit: (draft) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Charged \$${draft.amountUsd.toStringAsFixed(2)} to •••• ${draft.panLast4} on ${EdenFuelCardPaymentEntry.networkLabel(draft.network)}',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          // ---------------------------------------------------------------
           // Objective 019 — Trades polish + Fuel quick wins Wave 1
           // ---------------------------------------------------------------
           Section(
