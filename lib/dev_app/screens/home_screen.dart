@@ -32,6 +32,7 @@ import 'commerce_screen.dart';
 import 'compliance_screen.dart';
 import 'medical_screen.dart';
 import 'eod_screen.dart';
+import 'retail_polish_screen.dart';
 import 'retail_screen.dart';
 import 'salon_screen.dart';
 import 'staff_screen.dart';
@@ -393,6 +394,14 @@ final _categories = [
     subtitle:
         'POS register, quick-add grid, receipt preview, inventory row editor, receiving flow, sales analytics',
     builder: (_) => const RetailScreen(),
+  ),
+  // Objective 018 — Retail-Specific Polish
+  _Category(
+    icon: Icons.loyalty_outlined,
+    title: 'B-Retail — Customer & Service Flows',
+    subtitle:
+        'Loyalty member detail, store credit ledger, gift card balance lookup, refund flow, layaway flow, store transfer',
+    builder: (_) => const RetailPolishScreen(),
   ),
   // Objective 016 — Salon-Specific Commerce
   _Category(
