@@ -469,3 +469,5 @@ export 'src/widgets/eden_commissions_editor.dart';
 export 'src/widgets/eden_gift_card_manager.dart';
 export 'src/widgets/eden_time_clock.dart';
 export 'src/widgets/eden_time_card.dart';
+export 'src/widgets/eden_promotion_author.dart';
+export 'src/widgets/eden_promotion_apply.dart';

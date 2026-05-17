@@ -657,6 +657,12 @@ class _CommerceScreenState extends State<CommerceScreen> {
                 'EdenGiftCardManager — issue / redeem / lookup / balance / ledger',
             child: _Obj015GiftCardDemo(),
           ),
+          // TRD 015-08 appends here ↓ Objective 015 — Promotions
+          const Section(
+            title:
+                'EdenPromotionAuthor + EdenPromotionApply — promotion authoring + apply',
+            child: _Obj015PromotionsDemo(),
+          ),
         ],
       ),
     );
@@ -876,6 +882,116 @@ class _Obj015GiftCardDemoState extends State<_Obj015GiftCardDemo> {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Draft emitted: ${draft.runtimeType}'),
               duration: const Duration(milliseconds: 600),
+            ));
+          },
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TRD 015-08 — Promotion author + apply demo
+// ─────────────────────────────────────────────────────────────────────────
+
+class _Obj015PromotionsDemo extends StatefulWidget {
+  const _Obj015PromotionsDemo();
+  @override
+  State<_Obj015PromotionsDemo> createState() =>
+      _Obj015PromotionsDemoState();
+}
+
+class _Obj015PromotionsDemoState extends State<_Obj015PromotionsDemo> {
+  EdenPromotionRule _authoredRule = const EdenPromotionRule(
+    id: 'demo-author',
+    label: 'Demo BOGO',
+    type: EdenPromotionType.bogo,
+    discountKind: EdenPromotionDiscountKind.buyXgetYfree,
+    buyQuantity: 2,
+    getQuantity: 1,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Author mode — live-edit a promotion rule',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenPromotionAuthor(
+          rule: _authoredRule,
+          memberTierOptions: const [
+            (id: 'gold', label: 'Gold'),
+            (id: 'vip', label: 'VIP'),
+          ],
+          onRuleChanged: (r) => setState(() => _authoredRule = r),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Apply mode — eligibility check + apply',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenPromotionApply(
+          context: EdenPromotionApplyContext(
+            lineItems: const [
+              EdenLineItem<String>(
+                id: 'sku-1',
+                payload: 'sku-1',
+                description: 'Aloe mask',
+                quantity: 2,
+                unitPrice: 15.00,
+              ),
+              EdenLineItem<String>(
+                id: 'sku-2',
+                payload: 'sku-2',
+                description: 'Charcoal mask',
+                quantity: 1,
+                unitPrice: 18.00,
+              ),
+            ],
+            subtotal: 100.00,
+            currentTime: DateTime(2026, 7, 1),
+            customerMemberTierIds: const ['gold'],
+          ),
+          availableRules: const [
+            EdenPromotionRule(
+              id: 'p-bogo',
+              label: 'Buy 2 get 1 free — masks',
+              type: EdenPromotionType.bogo,
+              discountKind: EdenPromotionDiscountKind.buyXgetYfree,
+              buyQuantity: 2,
+              getQuantity: 1,
+            ),
+            EdenPromotionRule(
+              id: 'p-gold',
+              label: 'Gold-tier 15% off',
+              type: EdenPromotionType.memberPricing,
+              discountKind: EdenPromotionDiscountKind.percentOff,
+              discountValue: 0.15,
+              constraints: EdenPromotionConstraint(
+                eligibleMemberTierIds: ['gold'],
+              ),
+            ),
+            EdenPromotionRule(
+              id: 'p-summer',
+              label: 'Summer 20% off — code SUMMER20',
+              type: EdenPromotionType.couponCode,
+              discountKind: EdenPromotionDiscountKind.percentOff,
+              discountValue: 0.20,
+              couponCode: 'SUMMER20',
+            ),
+          ],
+          onPromotionApplied: (r) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(r == null
+                  ? 'Promotion cleared'
+                  : 'Applied: ${r.appliedRule.label} '
+                      '(\$${r.discountAmount.toStringAsFixed(2)} off)'),
+              duration: const Duration(milliseconds: 800),
             ));
           },
         ),
