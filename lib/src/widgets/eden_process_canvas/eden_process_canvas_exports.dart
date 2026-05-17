@@ -26,3 +26,6 @@ export 'eden_edge_context_menu.dart';
 
 // Wave 4 — Toolbox (TRD 006-12)
 export 'eden_process_toolbox.dart';
+
+// Wave 5 — Validator (TRD 006-13)
+export 'process_validator.dart';
