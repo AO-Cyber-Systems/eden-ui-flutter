@@ -383,6 +383,10 @@ export 'src/theme/eden_theme_profile_scope.dart';
 export 'src/theme/eden_status_palette.dart';
 export 'src/theme/eden_brand_preset.dart';
 export 'src/theme/eden_profile_fonts.dart';
+export 'src/theme/eden_adaptive_theme.dart';
 
 // ─────────── Objective 011 — Compliance overlay primitives Wave 1 ───────────
 export 'src/widgets/eden_classification_banner.dart';
+
+// Objective 010 — Visual Polish Pass Wave 1 (Foundation tokens)
+export 'src/tokens/springs.dart';
