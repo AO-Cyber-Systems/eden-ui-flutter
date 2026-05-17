@@ -1014,11 +1014,97 @@ class _TradesScreenState extends State<TradesScreen> {
             ),
           ),
 
+          // ---------------------------------------------------------------
+          // Objective 019 — Trades polish + Fuel quick wins Wave 1
+          // ---------------------------------------------------------------
+          Section(
+            title: 'PRICE BOOK BUILDER (Obj 019-01)',
+            child: SizedBox(
+              height: 600,
+              child: EdenPriceBookBuilder(
+                initialData: _priceBookFixture,
+                onSave: (draft) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Saved: ${draft.categories.length} categories, '
+                        '${draft.categories.fold<int>(0, (s, c) => s + c.items.length)} items, '
+                        '${draft.tiers.length} tiers',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
           const SizedBox(height: EdenSpacing.space8),
         ],
       ),
     );
   }
+
+  EdenPriceBookData get _priceBookFixture => EdenPriceBookData(
+        categories: const [
+          EdenPriceBookCategory(
+            id: 'cat-repair',
+            name: 'Repair',
+            items: [
+              EdenPriceBookItem(
+                id: 'item-cap',
+                name: 'Capacitor replacement',
+                description: 'Replace failed run capacitor',
+                baseFlatRate: 285.0,
+                skuCode: 'HVAC-CAP',
+                laborHoursLabel: '0.75h labor included',
+              ),
+              EdenPriceBookItem(
+                id: 'item-comp',
+                name: 'Compressor repair',
+                description: 'Replace outdoor compressor',
+                baseFlatRate: 1850.0,
+                skuCode: 'HVAC-COMP',
+                gbb: EdenPriceBookGoodBetterBest(
+                  goodPrice: 1850.0,
+                  goodLabel: 'Repair existing',
+                  betterPrice: 2950.0,
+                  betterLabel: 'Replace + 1-yr warranty',
+                  bestPrice: 4250.0,
+                  bestLabel: 'Replace + 5-yr warranty',
+                ),
+              ),
+            ],
+          ),
+          EdenPriceBookCategory(
+            id: 'cat-maint',
+            name: 'Maintenance',
+            items: [
+              EdenPriceBookItem(
+                id: 'item-tune',
+                name: 'Annual AC tune-up',
+                description: '21-point inspection + coil clean',
+                baseFlatRate: 149.0,
+              ),
+            ],
+          ),
+        ],
+        tiers: const [
+          EdenPriceBookTier(id: 'tier-std', name: 'Standard'),
+          EdenPriceBookTier(
+            id: 'tier-gold',
+            name: 'Gold Member',
+            defaultMarkupPct: -0.10,
+            description: '10% discount for plan members',
+          ),
+        ],
+        taxMatrix: const EdenPriceBookTaxMatrix(
+          jurisdictions: ['CA'],
+          itemTypes: ['service', 'parts', 'labor'],
+          rates: {
+            'CA': {'service': 0.0825, 'parts': 0.0825, 'labor': 0.0},
+          },
+        ),
+      );
 
   /// Creates a simple solid-color MemoryImage provider as a photo placeholder.
   ImageProvider _colorImageProvider(Color color) {
