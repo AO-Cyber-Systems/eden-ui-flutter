@@ -33,6 +33,57 @@ class EdenPermission {
 }
 
 /// A role column in the matrix.
+/// Federal role presets per NIST 800-53 — Privileged User, ISSO, ISSM.
+///
+/// Shipped with [EdenPermissionMatrix] under Objective 011 Wave 4 as
+/// realistic federal-context defaults. Consumers can pass
+/// `roles: EdenFederalRoles.allFederal` to get the full set, or pick
+/// individual roles.
+///
+/// Civilian re-use: also useful as a starting template for any
+/// SOC 2 / HIPAA / security-tier role hierarchy in commercial apps.
+class EdenFederalRoles {
+  EdenFederalRoles._();
+
+  /// Privileged User — administrative tasks per NIST 800-53 AC-2.
+  static const privilegedUser = EdenRole(
+    id: 'federal-privileged-user',
+    name: 'Privileged User',
+    permissions: {
+      'create_user',
+      'modify_user',
+      'reset_password',
+      'view_audit_log',
+    },
+  );
+
+  /// Information System Security Officer — security oversight.
+  static const isso = EdenRole(
+    id: 'federal-isso',
+    name: 'ISSO',
+    permissions: {
+      'view_audit_log',
+      'export_audit_log',
+      'modify_security_policy',
+      'view_classified_metadata',
+    },
+  );
+
+  /// Information System Security Manager — policy + break-glass approval.
+  static const issm = EdenRole(
+    id: 'federal-issm',
+    name: 'ISSM',
+    permissions: {
+      'view_audit_log',
+      'modify_security_policy',
+      'approve_break_glass',
+      'manage_classification',
+    },
+  );
+
+  static const allFederal = [privilegedUser, isso, issm];
+}
+
 class EdenRole {
   /// Creates a role.
   const EdenRole({
@@ -117,6 +168,8 @@ class EdenPermissionMatrix extends StatefulWidget {
     this.onBulkChange,
     this.readOnly = false,
     this.cellStateOverrides,
+    this.breakGlassMode = false,
+    this.onBreakGlass,
   });
 
   /// All permissions to display as rows.
@@ -144,6 +197,21 @@ class EdenPermissionMatrix extends StatefulWidget {
 
   /// Optional per-cell state override map keyed by (roleId, permissionId).
   final Map<(String, String), EdenPermissionCellState>? cellStateOverrides;
+
+  /// When true, denied cells display a small `Icons.lock_open_outlined`
+  /// break-glass affordance. Tapping opens a justification dialog
+  /// (minimum 20 chars) and, on confirm, fires [onBreakGlass].
+  ///
+  /// Per locked decision, the widget DOES NOT grant the permission —
+  /// consumer captures the justification, audits it, and applies the
+  /// override server-side (or via its own state machine).
+  final bool breakGlassMode;
+
+  /// Fires when a user confirms a break-glass override with valid
+  /// justification (≥ 20 chars). Signature:
+  /// `(roleId, permissionId, justification)`.
+  final void Function(String roleId, String permissionId, String justification)?
+      onBreakGlass;
 
   @override
   State<EdenPermissionMatrix> createState() => _EdenPermissionMatrixState();
@@ -353,6 +421,8 @@ class _EdenPermissionMatrixState extends State<EdenPermissionMatrix> {
                 final granted = current != EdenPermissionCellState.granted;
                 widget.onPermissionToggled?.call(role.id, perm.id, granted);
               },
+              breakGlassMode: widget.breakGlassMode,
+              onBreakGlass: widget.onBreakGlass,
             ),
           );
         }

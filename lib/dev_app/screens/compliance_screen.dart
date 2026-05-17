@@ -165,7 +165,11 @@ class ComplianceScreen extends StatelessWidget {
           ),
           // TRD 011-05 will append: Section(title: 'EdenFoiaRequestCard — records-request workflow', child: ...).
           // TRD 011-06 will append: Section(title: 'EdenCaseFileShell — multi-tab dossier', child: ...).
-          // TRD 011-07 will append: Section(title: 'EdenPermissionMatrix federal-roles enhancement', child: ...).
+          const Section(
+            title:
+                'EdenPermissionMatrix — Federal roles + break-glass override',
+            child: _PermissionMatrixDemo(),
+          ),
           const Section(
             title: 'EdenSecretField — CUI clipboard enhancement (classified mode)',
             child: _SecretFieldDemo(),
@@ -471,6 +475,87 @@ class _Section508AuditDemoState extends State<_Section508AuditDemo> {
               ),
               EdenSection508Audit(controller: _controller),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Interactive demo of [EdenPermissionMatrix] with [EdenFederalRoles]
+/// preset + break-glass override. Tapping a denied cell's lock icon
+/// opens the justification dialog; on confirm, a SnackBar surfaces the
+/// captured override.
+class _PermissionMatrixDemo extends StatefulWidget {
+  const _PermissionMatrixDemo();
+
+  @override
+  State<_PermissionMatrixDemo> createState() => _PermissionMatrixDemoState();
+}
+
+class _PermissionMatrixDemoState extends State<_PermissionMatrixDemo> {
+  static const _permissions = [
+    EdenPermission(
+      id: 'view_audit_log',
+      label: 'View audit log',
+      category: 'Audit',
+    ),
+    EdenPermission(
+      id: 'export_audit_log',
+      label: 'Export audit log',
+      category: 'Audit',
+    ),
+    EdenPermission(
+      id: 'modify_security_policy',
+      label: 'Modify security policy',
+      category: 'Security',
+    ),
+    EdenPermission(
+      id: 'approve_break_glass',
+      label: 'Approve break-glass override',
+      category: 'Security',
+    ),
+    EdenPermission(
+      id: 'create_user',
+      label: 'Create user',
+      category: 'User management',
+    ),
+    EdenPermission(
+      id: 'reset_password',
+      label: 'Reset password',
+      category: 'User management',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Federal roles preset: Privileged User / ISSO / ISSM. '
+          'Tap any denied cell’s lock-open icon to open the '
+          'break-glass justification dialog (≥ 20 chars).',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 400,
+          child: EdenPermissionMatrix(
+            permissions: _permissions,
+            roles: EdenFederalRoles.allFederal,
+            breakGlassMode: true,
+            onBreakGlass: (roleId, permId, just) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Break-glass: $roleId/$permId — "$just"',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],

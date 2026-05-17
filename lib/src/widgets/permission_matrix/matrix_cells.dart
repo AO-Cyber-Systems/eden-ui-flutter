@@ -238,7 +238,7 @@ class CategoryToggleButton extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class PermissionRow extends StatelessWidget {
-  const PermissionRow({super.key, 
+  const PermissionRow({super.key,
     required this.permission,
     required this.roles,
     required this.isDark,
@@ -251,6 +251,8 @@ class PermissionRow extends StatelessWidget {
     required this.cellState,
     required this.isChanged,
     required this.onToggle,
+    this.breakGlassMode = false,
+    this.onBreakGlass,
   });
 
   final EdenPermission permission;
@@ -265,6 +267,9 @@ class PermissionRow extends StatelessWidget {
   final EdenPermissionCellState Function(EdenRole role) cellState;
   final bool Function(String roleId) isChanged;
   final void Function(EdenRole role) onToggle;
+  final bool breakGlassMode;
+  final void Function(String roleId, String permissionId, String justification)?
+      onBreakGlass;
 
   @override
   Widget build(BuildContext context) {
@@ -311,6 +316,10 @@ class PermissionRow extends StatelessWidget {
               roleColor: role.color ?? theme.colorScheme.primary,
               readOnly: readOnly,
               onTap: () => onToggle(role),
+              breakGlassMode: breakGlassMode,
+              role: role,
+              permission: permission,
+              onBreakGlass: onBreakGlass,
             ),
         ],
       ),
@@ -323,7 +332,7 @@ class PermissionRow extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class PermissionCell extends StatelessWidget {
-  const PermissionCell({super.key, 
+  const PermissionCell({super.key,
     required this.state,
     required this.changed,
     required this.width,
@@ -333,6 +342,10 @@ class PermissionCell extends StatelessWidget {
     required this.roleColor,
     required this.readOnly,
     required this.onTap,
+    this.breakGlassMode = false,
+    this.role,
+    this.permission,
+    this.onBreakGlass,
   });
 
   final EdenPermissionCellState state;
@@ -344,6 +357,11 @@ class PermissionCell extends StatelessWidget {
   final Color roleColor;
   final bool readOnly;
   final VoidCallback onTap;
+  final bool breakGlassMode;
+  final EdenRole? role;
+  final EdenPermission? permission;
+  final void Function(String roleId, String permissionId, String justification)?
+      onBreakGlass;
 
   @override
   Widget build(BuildContext context) {
@@ -353,6 +371,11 @@ class PermissionCell extends StatelessWidget {
             : EdenColors.warning.withValues(alpha: 0.08))
         : null;
 
+    final showBreakGlass = breakGlassMode &&
+        state == EdenPermissionCellState.denied &&
+        role != null &&
+        permission != null;
+
     return SizedBox(
       width: width,
       height: height,
@@ -360,8 +383,47 @@ class PermissionCell extends StatelessWidget {
         color: changeBg ?? Colors.transparent,
         child: InkWell(
           onTap: readOnly ? null : onTap,
-          child: Center(child: _buildIcon()),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              _buildIcon(),
+              if (showBreakGlass)
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Semantics(
+                    button: true,
+                    label:
+                        'Break-glass override for ${permission!.label} on ${role!.name}',
+                    child: Tooltip(
+                      message: 'Break-glass override',
+                      child: InkWell(
+                        onTap: () => _openBreakGlassDialog(context),
+                        child: const Icon(
+                          Icons.lock_open_outlined,
+                          size: 12,
+                          color: EdenColors.error,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _openBreakGlassDialog(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _BreakGlassJustificationDialog(
+        roleId: role!.id,
+        permissionId: permission!.id,
+        onConfirm: (justification) {
+          onBreakGlass?.call(role!.id, permission!.id, justification);
+        },
       ),
     );
   }
@@ -412,5 +474,75 @@ class PermissionCell extends StatelessWidget {
           ),
         );
     }
+  }
+}
+
+/// Break-glass justification dialog — captured before the consumer's
+/// `onBreakGlass` callback fires. Enforces minimum 20-character
+/// justification (Confirm disabled below threshold).
+class _BreakGlassJustificationDialog extends StatefulWidget {
+  const _BreakGlassJustificationDialog({
+    required this.roleId,
+    required this.permissionId,
+    required this.onConfirm,
+  });
+
+  final String roleId;
+  final String permissionId;
+  final ValueChanged<String> onConfirm;
+
+  @override
+  State<_BreakGlassJustificationDialog> createState() =>
+      _BreakGlassJustificationDialogState();
+}
+
+class _BreakGlassJustificationDialogState
+    extends State<_BreakGlassJustificationDialog> {
+  String _justification = '';
+
+  bool get _canConfirm => _justification.trim().length >= 20;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Break-glass override'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Override "${widget.permissionId}" for role "${widget.roleId}".',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            autofocus: true,
+            minLines: 3,
+            maxLines: 6,
+            decoration: const InputDecoration(
+              labelText: 'Justification (≥ 20 characters)',
+              helperText: 'Required for audit trail',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (v) => setState(() => _justification = v),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _canConfirm
+              ? () {
+                  widget.onConfirm(_justification.trim());
+                  Navigator.of(context).pop();
+                }
+              : null,
+          child: const Text('Confirm'),
+        ),
+      ],
+    );
   }
 }
