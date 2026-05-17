@@ -164,6 +164,10 @@ class _RetailScreenState extends State<RetailScreen> {
             child: _ReceiptDemoBlock(),
           ),
           // ─── Objective 014 anchor: TRD 014-04 EdenInventoryRowEditor ───
+          const Section(
+            title: 'EdenInventoryRowEditor — Inline-edit inventory row',
+            child: _InventoryRowDemoBlock(),
+          ),
           // ─── Objective 014 anchor: TRD 014-05 EdenReceivingFlow ───
           // ─── Objective 014 anchor: TRD 014-06 EdenSalesAnalyticsScaffold ───
           // ─── Objective 014 anchor: TRD 014-01 EdenPOSRegisterScaffold ───
@@ -270,6 +274,129 @@ class _ReceiptDemoBlockState extends State<_ReceiptDemoBlock> {
               mode: _mode,
               printWidth: _printWidth,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// TRD 014-04 — EdenInventoryRowEditor demo block
+// ───────────────────────────────────────────────────────────────────────────
+
+class _InventoryRowDemoBlock extends StatefulWidget {
+  const _InventoryRowDemoBlock();
+
+  @override
+  State<_InventoryRowDemoBlock> createState() => _InventoryRowDemoBlockState();
+}
+
+class _InventoryRowDemoBlockState extends State<_InventoryRowDemoBlock> {
+  // Hand-built demo rows — NOT LLM-generated. Mixes cost/price/onHand
+  // permutations to exercise null-field handling + stock-indicator
+  // thresholds.
+  static const _rows = <EdenInventoryRowData>[
+    EdenInventoryRowData(
+      rowId: 'r-1',
+      sku: 'CB-001',
+      name: 'Espresso Blend 1kg',
+      costCents: 1200,
+      priceCents: 2400,
+      onHand: 18,
+      reorderPoint: 10,
+      location: 'A-12',
+    ),
+    EdenInventoryRowData(
+      rowId: 'r-2',
+      sku: 'TS-RED-M',
+      name: 'T-shirt Red Medium',
+      costCents: 700,
+      priceCents: 1995,
+      onHand: 35,
+      reorderPoint: 20,
+      location: 'B-04',
+    ),
+    EdenInventoryRowData(
+      rowId: 'r-3',
+      sku: 'PG-090',
+      name: 'PVC Elbow 90deg',
+      costCents: 80,
+      priceCents: 350,
+      onHand: 3,
+      reorderPoint: 20,
+      location: 'C-08',
+    ),
+    EdenInventoryRowData(
+      rowId: 'r-4',
+      sku: 'NA-NEW',
+      name: 'New product (no stock data)',
+      costCents: 150,
+      priceCents: 300,
+    ),
+    EdenInventoryRowData(
+      rowId: 'r-5',
+      sku: 'MN',
+      name: 'Minimal placeholder',
+    ),
+  ];
+
+  final Set<String> _selected = <String>{};
+  String? _editingId;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_selected.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              '${_selected.length} selected',
+              style: theme.textTheme.labelMedium,
+            ),
+          ),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLow,
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              for (final row in _rows) ...[
+                EdenInventoryRowEditor(
+                  data: row,
+                  editable: _editingId == row.rowId,
+                  selected: _selected.contains(row.rowId),
+                  onSelectionChanged: (id, sel) => setState(() {
+                    if (sel) {
+                      _selected.add(id);
+                    } else {
+                      _selected.remove(id);
+                    }
+                  }),
+                  onRequestEdit: () =>
+                      setState(() => _editingId = row.rowId),
+                  onCommit: (d) {
+                    setState(() => _editingId = null);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Committed: ${d.rowId} cost=${d.costCents} '
+                          'price=${d.priceCents} onHand=${d.onHand} '
+                          'reorder=${d.reorderPoint} loc=${d.location}',
+                        ),
+                      ),
+                    );
+                  },
+                  onCancel: () => setState(() => _editingId = null),
+                ),
+                if (row != _rows.last) const Divider(height: 1),
+              ],
+            ],
           ),
         ),
       ],
