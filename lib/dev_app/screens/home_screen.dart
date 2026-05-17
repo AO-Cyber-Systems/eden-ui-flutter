@@ -30,6 +30,8 @@ import 'theme_profiles_screen.dart';
 import 'motion_screen.dart';
 import 'commerce_screen.dart';
 import 'compliance_screen.dart';
+import 'medical_screen.dart';
+import 'retail_screen.dart';
 import 'uswds_screen.dart';
 
 /// Root screen showing all component categories.
@@ -372,6 +374,22 @@ final _categories = [
     subtitle:
         'Tank gauge, route stops, meter readings, hazmat docs, price ticker, truck inventory',
     builder: (_) => const FuelScreen(),
+  ),
+  // Objective 013 — B-Medical clinical primitives
+  _Category(
+    icon: Icons.monitor_heart_outlined,
+    title: 'B-Medical — Clinical Components',
+    subtitle:
+        'Vitals, meds, labs, problems, allergies, SOAP note, chart timeline, patient chart, visit encounter',
+    builder: (_) => const MedicalScreen(),
+  ),
+  // Objective 014 — B-Retail back-office + cross-vertical polish
+  _Category(
+    icon: Icons.point_of_sale_outlined,
+    title: 'B-Retail — Back-Office + POS',
+    subtitle:
+        'POS register, quick-add grid, receipt preview, inventory row editor, receiving flow, sales analytics',
+    builder: (_) => const RetailScreen(),
   ),
   _Category(
     icon: Icons.shield_outlined,
