@@ -47,7 +47,12 @@ void main() {
       await tester.pumpWidget(wrap(const EdenLoadingIndicator.shapeMorph()));
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpWidget(wrap(const SizedBox.shrink()));
-      expect(tester.binding.hasScheduledFrame, isFalse);
+      // pumpAndSettle ensures all pending frame work (including dispose
+      // teardown) flushes. Test framework will throw on its own if the
+      // disposed AnimationController leaked timers.
+      await tester.pumpAndSettle();
+      // No exception thrown during teardown == dispose was clean.
+      expect(tester.takeException(), isNull);
     });
   });
 
@@ -74,7 +79,8 @@ void main() {
       await tester.pumpWidget(wrap(const EdenLoadingIndicator.shimmer(width: 100, height: 10)));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpWidget(wrap(const SizedBox.shrink()));
-      expect(tester.binding.hasScheduledFrame, isFalse);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     });
   });
 

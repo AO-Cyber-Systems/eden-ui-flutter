@@ -390,6 +390,9 @@ export 'src/widgets/eden_classification_banner.dart';
 export 'src/widgets/eden_uswds_banner.dart';
 export 'src/widgets/eden_agency_identifier.dart';
 
+// ─────────── Objective 011 — Compliance overlay primitives Wave 2 ───────────
+export 'src/widgets/eden_cac_piv_button.dart';
+
 // Objective 010 — Visual Polish Pass Wave 1 (Foundation tokens)
 export 'src/tokens/springs.dart';
 
@@ -397,3 +400,4 @@ export 'src/tokens/springs.dart';
 export 'src/widgets/eden_button_group.dart';
 export 'src/widgets/eden_split_button.dart';
 export 'src/widgets/eden_fab_menu.dart';
+export 'src/widgets/eden_loading_indicator.dart';
