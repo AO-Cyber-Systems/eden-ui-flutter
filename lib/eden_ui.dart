@@ -485,3 +485,4 @@ export 'src/widgets/eden_appointment_status_flow.dart';
 
 // ─────────── Objective 017 — Medical Eden Notes SKU Wave 2 ───────────
 export 'src/widgets/eden_eligibility_result_card.dart';
+export 'src/widgets/eden_secure_messaging_thread.dart';

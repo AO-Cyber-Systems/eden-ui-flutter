@@ -73,6 +73,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenEligibilityResultCard — 270/271 eligibility display (017-04)',
             child: _EligibilityResultCardDemo(),
           ),
+          Section(
+            title: 'EdenSecureMessagingThread — HIPAA-aware secure messaging (017-05)',
+            child: _SecureMessagingThreadDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -2111,4 +2115,229 @@ final _demoStaleCheck = EdenEligibilityResult(
   serviceType: 'Office visit (99213)',
   coinsurancePercent: 20.0,
   networkStatus: EdenInsuranceNetworkStatus.inNetwork,
+);
+
+// ────────────────────────── 017-05 demo ──────────────────────────
+
+class _SecureMessagingThreadDemo extends StatelessWidget {
+  const _SecureMessagingThreadDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Active provider/patient thread '
+              '(reply input live; encryption + audit indicators visible)',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 720),
+            child: EdenSecureMessagingThread(
+              thread: _demoActiveThread,
+              onSendMessage: (body) =>
+                  debugPrint('SecureMsg: send "$body"'),
+              onMessageTap: (m) => debugPrint('SecureMsg: tap ${m.id}'),
+              onAttachmentTap: (m) =>
+                  debugPrint('SecureMsg: attachment tap on ${m.id}'),
+              onAuditTrailRequested: () =>
+                  debugPrint('SecureMsg: audit trail requested'),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'System notification thread '
+              '(isReadOnly=true; centered system messages)',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 480),
+            child: EdenSecureMessagingThread(
+              thread: _demoSystemThread,
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Closed read-only thread '
+              '("thread closed" banner instead of input)',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 480),
+            child: EdenSecureMessagingThread(
+              thread: _demoClosedThread,
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Thread with audit log expanded '
+              '(showAuditLog=true; EdenAuditLogViewer composed below)',
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 900),
+            child: EdenSecureMessagingThread(
+              thread: _demoAttachmentsThread,
+              showAuditLog: true,
+              onSendMessage: (body) =>
+                  debugPrint('SecureMsg: send "$body"'),
+              onAttachmentTap: (m) =>
+                  debugPrint('SecureMsg: attachment tap on ${m.id}'),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Inline catalog fixtures.
+final _demoActiveThread = EdenSecureMessageThread(
+  id: 'demo-thread-active',
+  patientId: 'demo-thread-alpha',
+  subject: 'Sertraline dosage follow-up',
+  participantNames: const ['Alex Alpha', 'Dr. Smith, PsyD'],
+  lastActivityAt: DateTime(2026, 5, 17, 14, 30),
+  messages: [
+    EdenSecureMessage(
+      id: 'd-msg-001',
+      threadId: 'demo-thread-active',
+      patientId: 'demo-thread-alpha',
+      senderId: 'u-pat',
+      senderName: 'Alex Alpha',
+      senderRole: EdenMessageSenderRole.patient,
+      sentAt: DateTime(2026, 5, 16, 9, 15),
+      body: 'Hi Dr. Smith, the new dose seems to be working well — '
+          'sleep has improved. Should I continue at 50mg or step up?',
+      readAt: DateTime(2026, 5, 16, 10, 30),
+    ),
+    EdenSecureMessage(
+      id: 'd-msg-002',
+      threadId: 'demo-thread-active',
+      patientId: 'demo-thread-alpha',
+      senderId: 'u-prv',
+      senderName: 'Dr. Smith',
+      senderRole: EdenMessageSenderRole.provider,
+      sentAt: DateTime(2026, 5, 16, 11, 5),
+      body: 'Great to hear. Let\'s stay at 50mg for another 4 weeks, then '
+          'we can reassess at your follow-up. Any side effects?',
+      readAt: DateTime(2026, 5, 16, 11, 30),
+    ),
+    EdenSecureMessage(
+      id: 'd-msg-003',
+      threadId: 'demo-thread-active',
+      patientId: 'demo-thread-alpha',
+      senderId: 'u-pat',
+      senderName: 'Alex Alpha',
+      senderRole: EdenMessageSenderRole.patient,
+      sentAt: DateTime(2026, 5, 17, 14, 30),
+      body: 'Sounds good — see you June 14.',
+    ),
+  ],
+);
+
+final _demoSystemThread = EdenSecureMessageThread(
+  id: 'demo-thread-system',
+  patientId: 'demo-thread-bravo',
+  subject: 'Appointment reminders',
+  participantNames: const ['Brett Bravo', 'System'],
+  lastActivityAt: DateTime(2026, 5, 17, 9, 0),
+  isReadOnly: true,
+  messages: [
+    EdenSecureMessage(
+      id: 'd-sys-001',
+      threadId: 'demo-thread-system',
+      patientId: 'demo-thread-bravo',
+      senderId: 'system',
+      senderName: 'System',
+      senderRole: EdenMessageSenderRole.system,
+      sentAt: DateTime(2026, 5, 10, 9, 0),
+      body: 'Your appointment with Dr. Smith is confirmed for May 17 at 10am.',
+    ),
+    EdenSecureMessage(
+      id: 'd-sys-002',
+      threadId: 'demo-thread-system',
+      patientId: 'demo-thread-bravo',
+      senderId: 'system',
+      senderName: 'System',
+      senderRole: EdenMessageSenderRole.system,
+      sentAt: DateTime(2026, 5, 17, 9, 0),
+      body: 'Reminder: appointment in 1 hour.',
+    ),
+  ],
+);
+
+final _demoClosedThread = EdenSecureMessageThread(
+  id: 'demo-thread-closed',
+  patientId: 'demo-thread-charlie',
+  subject: 'Billing dispute (resolved)',
+  participantNames: const ['Casey Charlie', 'Billing Staff'],
+  lastActivityAt: DateTime(2026, 4, 10),
+  isReadOnly: true,
+  messages: [
+    EdenSecureMessage(
+      id: 'd-cl-001',
+      threadId: 'demo-thread-closed',
+      patientId: 'demo-thread-charlie',
+      senderId: 'u-pat',
+      senderName: 'Casey Charlie',
+      senderRole: EdenMessageSenderRole.patient,
+      sentAt: DateTime(2026, 4, 1),
+      body: 'I have a question about my recent statement.',
+      readAt: DateTime(2026, 4, 1, 12, 0),
+    ),
+    EdenSecureMessage(
+      id: 'd-cl-002',
+      threadId: 'demo-thread-closed',
+      patientId: 'demo-thread-charlie',
+      senderId: 'u-staff',
+      senderName: 'Billing Staff',
+      senderRole: EdenMessageSenderRole.staff,
+      sentAt: DateTime(2026, 4, 2),
+      body: 'Thanks for reaching out. We have reviewed your statement and '
+          'applied a credit. Dispute resolved.',
+      readAt: DateTime(2026, 4, 2, 11, 0),
+    ),
+  ],
+);
+
+final _demoAttachmentsThread = EdenSecureMessageThread(
+  id: 'demo-thread-att',
+  patientId: 'demo-thread-alpha',
+  subject: 'Lab results review',
+  participantNames: const ['Alex Alpha', 'Dr. Smith, PsyD'],
+  lastActivityAt: DateTime(2026, 5, 17, 12, 0),
+  messages: [
+    EdenSecureMessage(
+      id: 'd-att-001',
+      threadId: 'demo-thread-att',
+      patientId: 'demo-thread-alpha',
+      senderId: 'u-prv',
+      senderName: 'Dr. Smith',
+      senderRole: EdenMessageSenderRole.provider,
+      sentAt: DateTime(2026, 5, 17, 10, 0),
+      body: 'Your CBC + TSH results are in. Both look great. '
+          'Attached PDFs for your records.',
+      attachments: const [
+        EdenAttachment(
+          name: 'cbc-2026-05-15.pdf',
+          size: 245000,
+          type: 'application/pdf',
+        ),
+        EdenAttachment(
+          name: 'tsh-2026-05-15.pdf',
+          size: 124000,
+          type: 'application/pdf',
+        ),
+      ],
+      readAt: DateTime(2026, 5, 17, 11, 0),
+    ),
+    EdenSecureMessage(
+      id: 'd-att-002',
+      threadId: 'demo-thread-att',
+      patientId: 'demo-thread-alpha',
+      senderId: 'u-pat',
+      senderName: 'Alex Alpha',
+      senderRole: EdenMessageSenderRole.patient,
+      sentAt: DateTime(2026, 5, 17, 11, 30),
+      body: 'Thank you!',
+      readAt: DateTime(2026, 5, 17, 11, 45),
+    ),
+  ],
 );
