@@ -6,7 +6,8 @@ import '../widgets/section.dart';
 /// Dev-catalog screen for Objective 011 (Compliance Overlay Primitives).
 ///
 /// TRD 011-01 creates the file with the ClassificationBanner section.
-/// Subsequent TRDs (011-02 .. 011-10) APPEND additional Section(...)
+/// TRD 011-02 appends the EdenCacPivButton interactive demo.
+/// Subsequent TRDs (011-03 .. 011-10) APPEND additional Section(...)
 /// entries beneath the placeholder comments below.
 ///
 /// Reference layout: see scheduler_screen.dart / data_display_screen.dart.
@@ -99,7 +100,10 @@ class ComplianceScreen extends StatelessWidget {
               ],
             ),
           ),
-          // TRD 011-02 will append: Section(title: 'EdenCacPivButton — smartcard auth', child: ...).
+          Section(
+            title: 'EdenCacPivButton — CAC/PIV smartcard authentication',
+            child: _CacPivDemo(),
+          ),
           // TRD 011-03 will append: Section(title: 'EdenSection508Audit — a11y QA overlay', child: ...).
           // TRD 011-04 will append: Section(title: 'EdenAuditLogViewer — immutable activity stream', child: ...).
           // TRD 011-05 will append: Section(title: 'EdenFoiaRequestCard — records-request workflow', child: ...).
@@ -110,6 +114,69 @@ class ComplianceScreen extends StatelessWidget {
           // TRD 011-10 will append: Section(title: 'EdenMfaHardwareToken — YubiKey / RSA / CAC', child: ...).
         ],
       ),
+    );
+  }
+}
+
+/// Interactive demo of [EdenCacPivButton] cycling through all 5 states.
+/// Accepts PIN "123456" as the success path; any other PIN triggers
+/// the error state with a 'Try again' affordance.
+class _CacPivDemo extends StatefulWidget {
+  const _CacPivDemo();
+
+  @override
+  State<_CacPivDemo> createState() => _CacPivDemoState();
+}
+
+class _CacPivDemoState extends State<_CacPivDemo> {
+  final _controller = EdenCacPivController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _simulateFlow() async {
+    _controller.transitionTo(EdenCacPivState.reading);
+    await Future<void>.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    _controller.transitionTo(EdenCacPivState.promptPin);
+  }
+
+  Future<void> _simulatePinVerify(String pin) async {
+    _controller.transitionTo(EdenCacPivState.authenticating);
+    await Future<void>.delayed(const Duration(seconds: 1));
+    if (!mounted) return;
+    if (pin == '123456') {
+      _controller.reset(); // success → idle for demo loop
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authenticated! (demo)')),
+      );
+    } else {
+      _controller.transitionTo(
+        EdenCacPivState.error,
+        errorMessage: 'PIN verification failed. Demo accepts "123456".',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Interactive demo (PIN = "123456")',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        EdenCacPivButton(
+          controller: _controller,
+          onInsertRequested: _simulateFlow,
+          onPinSubmitted: _simulatePinVerify,
+        ),
+      ],
     );
   }
 }
