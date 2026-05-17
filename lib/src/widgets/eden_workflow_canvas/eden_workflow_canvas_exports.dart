@@ -17,3 +17,7 @@ export 'nodes/eden_workflow_event_browser.dart';
 // Wave 2 — Action node + field specs (TRD 020-03)
 export 'workflow_action_field_spec.dart';
 export 'nodes/eden_action_node.dart';
+
+// Wave 3 — Branch + Condition nodes (TRD 020-04)
+export 'nodes/eden_branch_node.dart';
+export 'nodes/eden_condition_node.dart';
