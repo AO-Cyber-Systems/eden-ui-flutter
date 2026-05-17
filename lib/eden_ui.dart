@@ -515,3 +515,4 @@ export 'src/widgets/eden_store_transfer.dart';
 export 'src/widgets/eden_price_book_builder.dart';
 export 'src/widgets/eden_dispatch_page.dart';
 export 'src/widgets/eden_route_optimization_result.dart';
+export 'src/widgets/eden_delivery_variance_card.dart';

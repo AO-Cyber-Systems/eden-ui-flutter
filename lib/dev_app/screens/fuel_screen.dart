@@ -317,6 +317,74 @@ class _FuelScreenState extends State<FuelScreen> {
           // Objective 019 — Trades polish + Fuel quick wins Wave 1
           // ---------------------------------------------------------------
           Section(
+            title: 'DELIVERY VARIANCE CARD (Obj 019-07)',
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: 480,
+                  child: EdenDeliveryVarianceCard(
+                    data: const EdenDeliveryVarianceData(
+                      scheduled: 850.0,
+                      actual: 700.0,
+                      metric: EdenVarianceMetric.gallons,
+                    ),
+                    onSubmit: (d) => ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Submitted: ${d.reason?.name}')),
+                    ),
+                    onPickPhoto: (ctx) async =>
+                        'https://example.com/meter.jpg',
+                  ),
+                ),
+                SizedBox(
+                  width: 480,
+                  child: EdenDeliveryVarianceCard(
+                    data: const EdenDeliveryVarianceData(
+                      scheduled: 500.0,
+                      actual: 540.0,
+                      metric: EdenVarianceMetric.gallons,
+                    ),
+                    onSubmit: (_) {},
+                  ),
+                ),
+                SizedBox(
+                  width: 480,
+                  child: EdenDeliveryVarianceCard(
+                    data: const EdenDeliveryVarianceData(
+                      scheduled: 2.0,
+                      actual: 2.5,
+                      metric: EdenVarianceMetric.hours,
+                    ),
+                    onSubmit: (_) {},
+                  ),
+                ),
+                SizedBox(
+                  width: 480,
+                  child: EdenDeliveryVarianceCard(
+                    data: const EdenDeliveryVarianceData(
+                      scheduled: 850.0,
+                      actual: 700.0,
+                      metric: EdenVarianceMetric.gallons,
+                    ),
+                    onSubmit: (_) {},
+                    readOnly: true,
+                    initialDraft: const EdenDeliveryVarianceDraft(
+                      data: EdenDeliveryVarianceData(
+                        scheduled: 850.0,
+                        actual: 700.0,
+                        metric: EdenVarianceMetric.gallons,
+                      ),
+                      reason: EdenDeliveryVarianceReason.tankCapEarly,
+                      disposition: EdenDeliveryVarianceDisposition.accepted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Section(
             title: 'ROUTE OPTIMIZATION RESULT (Obj 019-06)',
             child: SizedBox(
               height: 900,
