@@ -1015,6 +1015,64 @@ class _TradesScreenState extends State<TradesScreen> {
           ),
 
           // ---------------------------------------------------------------
+          // Objective 019 — Trades polish + Fuel quick wins Wave 2
+          // ---------------------------------------------------------------
+          Section(
+            title: 'EQUIPMENT RECORD + WARRANTY CLAIM (Obj 019-02)',
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: 480,
+                  child: EdenEquipmentRecordCard(
+                    data: _hvacCompressorData,
+                    onAddService: () {},
+                    onFileWarrantyClaim: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Filing warranty claim...')),
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(
+                  width: 480,
+                  child: EdenEquipmentRecordCard(
+                    data: _propaneTankData,
+                    variant: EdenEquipmentRecordVariant.compact,
+                    onAddService: () {},
+                  ),
+                ),
+                SizedBox(
+                  width: 480,
+                  child: EdenWarrantyClaim(
+                    equipment: _hvacCompressorData,
+                    submittedBy: 'tech-bob',
+                    onSubmit: (draft) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              'Submitted claim: ${draft.partLabel} (${draft.severity.name})'),
+                        ),
+                      );
+                    },
+                    partCandidates: const [
+                      EdenWarrantyClaimPartCandidate(
+                        sku: 'HVAC-CAP-45-5',
+                        label: 'Run capacitor 45/5 µF',
+                      ),
+                      EdenWarrantyClaimPartCandidate(
+                        sku: 'HVAC-CONT-24V',
+                        label: 'Contactor 24V coil',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ---------------------------------------------------------------
           // Objective 019 — Trades polish + Fuel quick wins Wave 1
           // ---------------------------------------------------------------
           Section(
@@ -1062,6 +1120,51 @@ class _TradesScreenState extends State<TradesScreen> {
       ),
     );
   }
+
+  EdenEquipmentRecordData get _hvacCompressorData => EdenEquipmentRecordData(
+        id: 'eq-1',
+        name: 'Lennox XC25 Condenser',
+        type: 'HVAC',
+        customerId: 'cust-patel',
+        location: 'Side yard, north wall',
+        make: 'Lennox',
+        model: 'XC25-048-230',
+        serialNumber: '5824L09887',
+        installDate: DateTime(2024, 5, 12),
+        warrantyStatus: EdenEquipmentWarrantyStatus(
+          expiresOn: DateTime.now().add(const Duration(days: 320)),
+          type: EdenEquipmentWarrantyType.manufacturer,
+          coverageNotes: '10-year compressor + 5-year parts',
+        ),
+        agreementStatus: EdenEquipmentAgreementStatus(
+          tierName: 'Gold Annual',
+          renewsOn: DateTime.now().add(const Duration(days: 180)),
+          isActive: true,
+        ),
+        serviceHistory: [
+          EdenEquipmentServiceHistoryEntry(
+            id: 'sh-1',
+            serviceDate: DateTime(2025, 4, 2),
+            summary: 'Annual tune-up — filter + coil',
+            technicianName: 'Bob T.',
+          ),
+        ],
+        photoUrls: const ['photo://1', 'photo://2'],
+      );
+
+  EdenEquipmentRecordData get _propaneTankData => EdenEquipmentRecordData(
+        id: 'eq-tank-1',
+        name: '500-gal propane tank',
+        type: 'Tank',
+        customerId: 'cust-hansen',
+        location: 'Behind workshop',
+        make: 'Worthington',
+        model: 'WPT-500-AS',
+        warrantyStatus: EdenEquipmentWarrantyStatus(
+          expiresOn: DateTime.now().add(const Duration(days: 45)),
+          type: EdenEquipmentWarrantyType.parts,
+        ),
+      );
 
   EdenDispatchData get _dispatchFixture {
     final controller = EdenSchedulerController(
