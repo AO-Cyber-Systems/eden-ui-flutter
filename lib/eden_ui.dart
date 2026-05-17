@@ -426,3 +426,10 @@ export 'src/widgets/eden_aggregate_kpi_strip.dart';
 // ─────────── Objective 012 — Cross-vertical commerce primitives Wave 2 ───────────
 export 'src/widgets/eden_payment_entry.dart';
 export 'src/widgets/eden_split_tender.dart';
+
+// ─────────── Objective 012 — Cross-vertical commerce primitives Wave 3 ───────────
+// EdenSparkline / EdenBarChart / EdenPieChart / EdenDonutChart all ship
+// via the existing `export 'src/widgets/eden_chart.dart'` line above
+// (no new export lines required — Wave 3 adds test coverage + additive
+// constructor params + the EdenDonutChart wrapper widget, all inside
+// the already-exported eden_chart.dart).

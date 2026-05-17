@@ -71,5 +71,19 @@ void main() {
       expect(find.text('Trades invoice — 2-way split with reference'), findsOneWidget);
       expect(find.text('Single-tender baseline (balanced)'), findsOneWidget);
     });
+
+    testWidgets('renders Sparkline section with 5 cross-vertical scenarios', (tester) async {
+      tester.view.physicalSize = const Size(1200, 14000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Lab trend — hemoglobin'), findsOneWidget);
+      expect(find.text('Sales 7-day trend (in KPI tile)'), findsOneWidget);
+      expect(find.text('Tank level history'), findsOneWidget);
+      expect(find.text('Flat line baseline'), findsOneWidget);
+      expect(find.text('Sparkline with NaN gaps'), findsOneWidget);
+    });
   });
 }

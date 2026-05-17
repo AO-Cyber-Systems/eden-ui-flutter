@@ -384,7 +384,81 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
-          // TRD 012-05 appends: Section(title: 'EdenSparkline — compact trend line (no axes, no animation)', child: ...).
+          const Section(
+            title: 'EdenSparkline — compact trend line (no axes, no animation)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Lab trend — hemoglobin', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      child: EdenSparkline(
+                        values: [12.5, 13.1, 12.8, 11.9, 12.2, 12.5],
+                        referenceLines: [12.0], // low-normal threshold
+                        height: 48,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Hgb: 12.5 g/dL (ref ≥ 12)'),
+                  ],
+                ),
+                SizedBox(height: 24),
+                Text('Sales 7-day trend (in KPI tile)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                EdenAggregateKpiStrip(
+                  tiles: [
+                    EdenKpiTile(
+                      label: 'Sales',
+                      displayValue: r'$1,245',
+                      trend: 0.12,
+                      trailingSlot: SizedBox(
+                        width: 80,
+                        height: 24,
+                        child: EdenSparkline(
+                          values: [1200, 1340, 1180, 1420, 1520, 1480, 1245],
+                          height: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24),
+                Text('Tank level history', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  width: 300,
+                  child: EdenSparkline(
+                    values: [88, 75, 62, 51, 40, 30, 23],
+                    minValue: 0,
+                    maxValue: 100,
+                    referenceLines: [25.0], // refill threshold
+                    height: 60,
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('Flat line baseline', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  width: 200,
+                  child: EdenSparkline(values: [50, 50, 50, 50], height: 40),
+                ),
+                SizedBox(height: 24),
+                Text('Sparkline with NaN gaps', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  width: 200,
+                  child: EdenSparkline(
+                    values: [10.0, double.nan, 15.0, 12.0, double.nan, 14.0],
+                    nullablePoints: true,
+                    height: 40,
+                  ),
+                ),
+              ],
+            ),
+          ),
           // TRD 012-06 appends: Section(title: 'EdenBarChart — grouped / stacked / horizontal', child: ...).
           // TRD 012-07 appends: Section(title: 'EdenDonutChart — center-label + legend', child: ...).
         ],
