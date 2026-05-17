@@ -109,7 +109,10 @@ class ComplianceScreen extends StatelessWidget {
           // TRD 011-05 will append: Section(title: 'EdenFoiaRequestCard — records-request workflow', child: ...).
           // TRD 011-06 will append: Section(title: 'EdenCaseFileShell — multi-tab dossier', child: ...).
           // TRD 011-07 will append: Section(title: 'EdenPermissionMatrix federal-roles enhancement', child: ...).
-          // TRD 011-08 will append: Section(title: 'EdenSecretField CUI clipboard enhancement', child: ...).
+          Section(
+            title: 'EdenSecretField — CUI clipboard enhancement (classified mode)',
+            child: _SecretFieldDemo(),
+          ),
           // TRD 011-09 will append: Section(title: 'EdenFileUpload virus-scan / spillage enhancement', child: ...).
           Section(
             title: 'EdenMfaHardwareToken — Hardware MFA token entry (YubiKey / RSA / CAC backup)',
@@ -213,6 +216,78 @@ class _CacPivDemoState extends State<_CacPivDemo> {
           onInsertRequested: _simulateFlow,
           onPinSubmitted: _simulatePinVerify,
         ),
+      ],
+    );
+  }
+}
+
+/// Interactive demo of [EdenSecretField] showing standard vs classified
+/// clipboard mode side-by-side. Classified mode suppresses the copy
+/// affordance and warns on outside-paste (>4-char delta heuristic).
+class _SecretFieldDemo extends StatefulWidget {
+  const _SecretFieldDemo();
+
+  @override
+  State<_SecretFieldDemo> createState() => _SecretFieldDemoState();
+}
+
+class _SecretFieldDemoState extends State<_SecretFieldDemo> {
+  String _standardValue = 'my-api-key-abc123';
+  String _classifiedValue = 'CUI-PII-SSN-456-78-9012';
+  String? _warning;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Standard mode (default — backwards compatible)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenSecretField(
+          label: 'API key',
+          value: _standardValue,
+          onChanged: (v) => setState(() => _standardValue = v),
+          onCopy: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Copied to clipboard (standard mode allows it)'),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Classified mode (CUI — copy disabled, paste warns)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenSecretField(
+          label: 'CUI PII data',
+          value: _classifiedValue,
+          clipboardMode: EdenSecretClipboardMode.classified,
+          onChanged: (v) => setState(() => _classifiedValue = v),
+          onCopy: () {
+            // Will not fire in classified mode — button suppressed.
+          },
+          onPasteFromOutsideWarning: () {
+            setState(() => _warning =
+                'WARNING: paste from outside detected — content may be from non-classified source');
+          },
+        ),
+        if (_warning != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            color: Colors.orange.shade100,
+            child: Text(
+              _warning!,
+              style: const TextStyle(color: Colors.orange),
+            ),
+          ),
+        ],
       ],
     );
   }

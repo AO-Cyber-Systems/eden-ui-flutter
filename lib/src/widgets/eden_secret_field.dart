@@ -4,6 +4,22 @@ import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radii.dart';
 
+/// Clipboard handling mode for [EdenSecretField].
+///
+/// Default [standard] preserves existing behavior: the copy button (when
+/// `onCopy` is registered) is visible; paste is accepted silently.
+///
+/// [classified] is the DoD CUI pattern:
+///   - copy affordance is suppressed (an Icon + Tooltip / Semantics
+///     announces 'Classified — copy disabled' in its place);
+///   - paste-from-outside detection fires
+///     [EdenSecretField.onPasteFromOutsideWarning] when an `onChanged`
+///     delta exceeds 4 characters in a single tick (heuristic).
+///
+/// Civilian re-use: PCI clipboard confinement / password-manager handoff
+/// guards in commercial contexts.
+enum EdenSecretClipboardMode { standard, classified }
+
 /// A password/secret input field with reveal toggle and optional copy button.
 class EdenSecretField extends StatefulWidget {
   const EdenSecretField({
@@ -13,6 +29,8 @@ class EdenSecretField extends StatefulWidget {
     this.onChanged,
     this.onCopy,
     this.readOnly = false,
+    this.clipboardMode = EdenSecretClipboardMode.standard,
+    this.onPasteFromOutsideWarning,
   });
 
   final String value;
@@ -21,6 +39,16 @@ class EdenSecretField extends StatefulWidget {
   final VoidCallback? onCopy;
   final bool readOnly;
 
+  /// Clipboard mode. [EdenSecretClipboardMode.standard] preserves current
+  /// behavior. [EdenSecretClipboardMode.classified] suppresses copy and
+  /// warns on outside-paste (DoD CUI pattern).
+  final EdenSecretClipboardMode clipboardMode;
+
+  /// Fires when paste-from-outside is detected (only in
+  /// [EdenSecretClipboardMode.classified] mode). Heuristic: an
+  /// `onChanged` delta of more than 4 characters in a single tick.
+  final VoidCallback? onPasteFromOutsideWarning;
+
   @override
   State<EdenSecretField> createState() => _EdenSecretFieldState();
 }
@@ -28,11 +56,13 @@ class EdenSecretField extends StatefulWidget {
 class _EdenSecretFieldState extends State<EdenSecretField> {
   bool _obscured = true;
   late TextEditingController _controller;
+  late String _lastText;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.value);
+    _lastText = widget.value;
   }
 
   @override
@@ -40,7 +70,18 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
       _controller.text = widget.value;
+      _lastText = widget.value;
     }
+  }
+
+  void _handleChange(String newText) {
+    final delta = newText.length - _lastText.length;
+    _lastText = newText;
+    if (widget.clipboardMode == EdenSecretClipboardMode.classified &&
+        delta > 4) {
+      widget.onPasteFromOutsideWarning?.call();
+    }
+    widget.onChanged?.call(newText);
   }
 
   @override
@@ -150,7 +191,7 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
       child: TextField(
         controller: _controller,
         obscureText: _obscured,
-        onChanged: widget.onChanged,
+        onChanged: _handleChange,
         style: theme.textTheme.bodyMedium?.copyWith(
           fontFamily: 'monospace',
           fontFamilyFallback: const ['Courier New', 'Courier'],
@@ -183,6 +224,8 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
   }
 
   List<Widget> _buildSuffixButtons(ThemeData theme) {
+    final isClassified =
+        widget.clipboardMode == EdenSecretClipboardMode.classified;
     return [
       IconButton(
         icon: Icon(
@@ -194,7 +237,10 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
         onPressed: _toggleObscured,
         visualDensity: VisualDensity.compact,
       ),
-      if (widget.onCopy != null)
+      // Standard mode: copy button visible if onCopy registered.
+      // Classified mode: copy suppressed; a disabled-marker Semantics
+      // Icon takes its place announcing 'Classified — copy disabled'.
+      if (widget.onCopy != null && !isClassified)
         IconButton(
           icon: Icon(
             Icons.copy,
@@ -204,6 +250,21 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
           tooltip: 'Copy to clipboard',
           onPressed: widget.onCopy,
           visualDensity: VisualDensity.compact,
+        ),
+      if (isClassified)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Semantics(
+            label: 'Classified — copy disabled',
+            child: Tooltip(
+              message: 'Classified — copy disabled',
+              child: Icon(
+                Icons.copy_outlined,
+                color: EdenColors.neutral[400],
+                size: 18,
+              ),
+            ),
+          ),
         ),
     ];
   }
