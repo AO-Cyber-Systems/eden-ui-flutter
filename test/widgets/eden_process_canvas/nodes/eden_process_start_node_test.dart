@@ -17,6 +17,20 @@ void main() {
         ),
       );
 
+  /// Wider sizing for dispatcher tests where the dispatched node may be an
+  /// orphan card (180×56), not a 48×48 circle.
+  Widget wrapDispatch(Widget child) => MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 600,
+            child: Center(
+              child: SizedBox(width: 200, height: 80, child: child),
+            ),
+          ),
+        ),
+      );
+
   group('EdenProcessStartNode', () {
     testWidgets('renders Play icon inside a green circle', (tester) async {
       await tester.pumpWidget(wrap(EdenProcessStartNode(
@@ -99,7 +113,7 @@ void main() {
     testWidgets('returns EdenProcessOrphanNode for nodeType=orphan',
         (tester) async {
       final ctx = nodeCtx(phaseOrphanFixture());
-      await tester.pumpWidget(wrap(EdenProcessNodeRenderer.dispatch(ctx)));
+      await tester.pumpWidget(wrapDispatch(EdenProcessNodeRenderer.dispatch(ctx)));
 
       expect(find.byType(EdenProcessOrphanNode), findsOneWidget);
     });
@@ -114,7 +128,7 @@ void main() {
         label: 'mystery-node',
         data: const {'nodeType': 'something_unknown'},
       );
-      await tester.pumpWidget(wrap(EdenProcessNodeRenderer.dispatch(nodeCtx(node))));
+      await tester.pumpWidget(wrapDispatch(EdenProcessNodeRenderer.dispatch(nodeCtx(node))));
 
       // _UnknownNodeFallback is a private class; we detect it via its red text label
       expect(find.text('mystery-node'), findsOneWidget);
@@ -129,7 +143,7 @@ void main() {
         height: 40,
         label: 'no-type-node',
       );
-      await tester.pumpWidget(wrap(EdenProcessNodeRenderer.dispatch(nodeCtx(node))));
+      await tester.pumpWidget(wrapDispatch(EdenProcessNodeRenderer.dispatch(nodeCtx(node))));
 
       expect(find.text('no-type-node'), findsOneWidget);
     });
@@ -141,7 +155,7 @@ void main() {
         onDeleteOrphan: (id) => deletedId = id,
       );
       final ctx = nodeCtx(phaseOrphanFixture(id: 'orphan-X'));
-      await tester.pumpWidget(wrap(
+      await tester.pumpWidget(wrapDispatch(
         EdenProcessNodeRenderer.dispatch(ctx, config: config),
       ));
 

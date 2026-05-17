@@ -1,4 +1,5 @@
 import 'package:eden_ui_flutter/eden_ui.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
