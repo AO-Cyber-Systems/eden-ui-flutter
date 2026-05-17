@@ -49,7 +49,12 @@ class RetailPolishScreen extends StatelessWidget {
                 'EdenLayawayFlow — layaway lifecycle (create + manage)',
             child: _LayawayFlowDemoBlock(),
           ),
-          // TRD 018-06 will append:
+          // TRD 018-06 appended above.
+          Section(
+            title:
+                'EdenStoreTransferFlow — inter-location inventory transfer (dispatch + receive)',
+            child: _StoreTransferDemoBlock(),
+          ),
         ],
       ),
     );
@@ -396,6 +401,108 @@ class _LayawayFlowDemoBlockState extends State<_LayawayFlowDemoBlock> {
                   onNotifyCustomer: (ch, msg) async {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Notify ${ch.name}: $msg')),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Hand-built demo for EdenStoreTransferFlow — toggle dispatch vs receive.
+/// Do NOT regenerate via LLM.
+class _StoreTransferDemoBlock extends StatefulWidget {
+  const _StoreTransferDemoBlock();
+
+  @override
+  State<_StoreTransferDemoBlock> createState() =>
+      _StoreTransferDemoBlockState();
+}
+
+class _StoreTransferDemoBlockState extends State<_StoreTransferDemoBlock> {
+  bool _showReceive = false;
+
+  static const _locations = [
+    EdenLocation(id: 'L-DOWN', name: 'Downtown'),
+    EdenLocation(id: 'L-AIR', name: 'Airport'),
+    EdenLocation(id: 'L-FLAG', name: 'Flagship'),
+  ];
+
+  EdenStoreTransfer _inTransitDemoTransfer() {
+    return EdenStoreTransfer(
+      id: 'XFR-101',
+      sourceLocation: _locations[0],
+      destLocation: _locations[1],
+      items: const [
+        EdenStoreTransferItem(
+          lineId: 'I-1',
+          sku: 'SKU-A',
+          name: 'Espresso 1kg',
+          qty: 12,
+          unitLabel: 'kg',
+        ),
+        EdenStoreTransferItem(
+          lineId: 'I-2',
+          sku: 'SKU-B',
+          name: 'Mocha mix',
+          qty: 6,
+        ),
+      ],
+      status: EdenStoreTransferStatus.inTransit,
+      shippingCarrier: 'FedEx',
+      trackingRef: 'TRK-999-001',
+      dispatchedAt: DateTime.now().subtract(const Duration(hours: 12)),
+    );
+  }
+
+  Future<EdenStoreTransferItem?> _demoItemLookup(String q) async {
+    final clean = q.trim();
+    if (clean.isEmpty || clean.toLowerCase() == 'nope') return null;
+    return EdenStoreTransferItem(
+      lineId: 'D-${clean.hashCode.abs()}',
+      sku: clean,
+      name: 'Item for $clean',
+      qty: 1,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SwitchListTile(
+          title: const Text('Receive existing in-transit'),
+          value: _showReceive,
+          onChanged: (v) => setState(() => _showReceive = v),
+        ),
+        SizedBox(
+          height: 600,
+          child: _showReceive
+              ? EdenStoreTransferFlow.receive(
+                  initialTransfer: _inTransitDemoTransfer(),
+                  onSubmit: (d) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Received transfer ${d.transferId} (${d.perLineVariance.length} variance)',
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : EdenStoreTransferFlow.dispatch(
+                  availableLocations: _locations,
+                  onItemLookup: _demoItemLookup,
+                  onSubmit: (d) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Dispatched ${d.items.length} items '
+                          '${d.sourceLocationId} → ${d.destLocationId}',
+                        ),
+                      ),
                     );
                   },
                 ),
