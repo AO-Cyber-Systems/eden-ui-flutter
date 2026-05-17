@@ -56,7 +56,8 @@ void main() {
   testWidgets(
     'UswdsScreen renders AgencyIdentifier section (DOD header + HHS footer)',
     (tester) async {
-      tester.view.physicalSize = const Size(800, 2000);
+      // Make surface tall enough that everything fits without scrolling.
+      tester.view.physicalSize = const Size(800, 4000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -64,14 +65,12 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: UswdsScreen()));
       await tester.pump(const Duration(milliseconds: 200));
 
-      // Scroll the AgencyIdentifier section into view via dragUntilVisible.
-      final hhsFinder = find.text('Department of Health and Human Services');
-      await tester.scrollUntilVisible(hhsFinder, 400);
-      await tester.pump();
-
       expect(find.text('Department of Defense'), findsOneWidget);
       expect(find.text('General Services Administration'), findsOneWidget);
-      expect(hhsFinder, findsOneWidget);
+      expect(
+        find.text('Department of Health and Human Services'),
+        findsOneWidget,
+      );
       expect(find.text('About HHS'), findsOneWidget);
     },
   );

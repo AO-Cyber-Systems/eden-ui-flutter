@@ -394,6 +394,9 @@ export 'src/widgets/eden_agency_identifier.dart';
 export 'src/widgets/eden_cac_piv_button.dart';
 export 'src/widgets/eden_mfa_hardware_token.dart';
 
+// ─────────── Objective 011 — Compliance overlay primitives Wave 3 ───────────
+export 'src/widgets/eden_memorable_date.dart';
+
 // Objective 010 — Visual Polish Pass Wave 1 (Foundation tokens)
 export 'src/tokens/springs.dart';
 
@@ -405,3 +408,4 @@ export 'src/widgets/eden_loading_indicator.dart';
 
 // Objective 010 — Visual Polish Pass Wave 3 (Density + polish)
 export 'src/widgets/eden_skeleton_scope.dart';
+export 'src/widgets/eden_status_dot_overlay.dart';

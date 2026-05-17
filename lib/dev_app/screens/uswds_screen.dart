@@ -110,10 +110,80 @@ class UswdsScreen extends StatelessWidget {
               ],
             ),
           ),
-          // TRD 011-13 will append: Section(title: 'EdenMemorableDate — USWDS M/D/Y input', child: ...).
+          const Section(
+            title: 'EdenMemorableDate — USWDS M/D/Y input pattern',
+            child: _MemorableDateDemo(),
+          ),
           // TRD 011-14 will append: Section(title: 'EdenLanguageSelector — Language toggle', child: ...).
         ],
       ),
+    );
+  }
+}
+
+/// Interactive demo of [EdenMemorableDate] with 4 variants: default,
+/// pre-filled, range-constrained, and text-month.
+class _MemorableDateDemo extends StatefulWidget {
+  const _MemorableDateDemo();
+
+  @override
+  State<_MemorableDateDemo> createState() => _MemorableDateDemoState();
+}
+
+class _MemorableDateDemoState extends State<_MemorableDateDemo> {
+  DateTime? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Default (dropdown month)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenMemorableDate(
+          label: 'Date of birth',
+          helperText: 'For example, January 1 1985',
+          onChanged: (v) => setState(() => _selected = v),
+        ),
+        if (_selected != null) ...[
+          const SizedBox(height: 8),
+          Text('Selected: ${_selected!.toIso8601String().split('T').first}'),
+        ],
+        const SizedBox(height: 24),
+        const Text(
+          'Pre-filled value',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenMemorableDate(
+          label: 'Effective date',
+          value: DateTime(2024, 6, 15),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'With range constraint (1990-2025)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenMemorableDate(
+          label: 'License issue date',
+          firstDate: DateTime(1990, 1, 1),
+          lastDate: DateTime(2025, 12, 31),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Text-month variant (monthAsText: true)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        const EdenMemorableDate(
+          label: 'Hire date',
+          monthAsText: true,
+        ),
+      ],
     );
   }
 }
