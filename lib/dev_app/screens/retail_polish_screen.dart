@@ -37,7 +37,12 @@ class RetailPolishScreen extends StatelessWidget {
             child: _GiftCardBalanceLookupDemoBlock(),
           ),
           // ─── Wave 2 — Multi-step flows ─────────────────────────────────
-          // TRD 018-04 will append:
+          // TRD 018-04 appended above.
+          Section(
+            title:
+                'EdenRefundFlow — multi-step refund (lookup → select → method → approve)',
+            child: _RefundFlowDemoBlock(),
+          ),
           // TRD 018-05 will append:
           // TRD 018-06 will append:
         ],
@@ -210,6 +215,84 @@ class _GiftCardBalanceLookupDemoBlock extends StatelessWidget {
     return const SizedBox(
       width: 600,
       child: EdenGiftCardBalanceLookup(onLookup: _demoLookup),
+    );
+  }
+}
+
+/// Hand-built demo lookup + approval functions for EdenRefundFlow.
+/// Do NOT regenerate via LLM.
+class _RefundFlowDemoBlock extends StatelessWidget {
+  const _RefundFlowDemoBlock();
+
+  static Future<EdenSaleRecord?> _lookup(String query) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    final trimmed = query.trim();
+    if (trimmed.isEmpty || trimmed.toLowerCase() == 'no-sale') return null;
+    final now = DateTime.now();
+    return EdenSaleRecord(
+      saleId: 'S-1042',
+      occurredAt: now.subtract(const Duration(days: 3)),
+      originalTender: EdenPaymentMethod.card,
+      originalTotalCents: 8950,
+      customerId: 'c-1',
+      customerName: 'Jane Doe',
+      receiptRef: 'R-1042',
+      lines: const [
+        EdenSaleLine(
+          lineId: 'L-1',
+          sku: 'SKU-A',
+          name: 'Espresso 1kg',
+          originalQty: 2,
+          unitPriceCents: 2500,
+          taxCents: 200,
+          refundableQty: 2,
+        ),
+        EdenSaleLine(
+          lineId: 'L-2',
+          sku: 'SKU-B',
+          name: 'Mocha mix',
+          originalQty: 1,
+          unitPriceCents: 900,
+          taxCents: 75,
+          refundableQty: 1,
+        ),
+        EdenSaleLine(
+          lineId: 'L-3',
+          sku: 'SKU-C',
+          name: 'Filter coffee',
+          originalQty: 3,
+          unitPriceCents: 800,
+          taxCents: 175,
+          refundableQty: 3,
+        ),
+      ],
+    );
+  }
+
+  static Future<bool> _managerApprove() async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 720,
+      child: EdenRefundFlow(
+        onLookupSale: _lookup,
+        onManagerApprove: _managerApprove,
+        onSubmit: (draft) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Refund submitted: ${draft.refundLines.length} lines, '
+                '${draft.method.name}, '
+                'total \$${(draft.totalRefundCents / 100).toStringAsFixed(2)}',
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
