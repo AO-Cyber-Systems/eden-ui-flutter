@@ -46,5 +46,18 @@ void main() {
       expect(find.text('Medical claims rollup'), findsOneWidget);
       expect(find.text('Trades revenue'), findsOneWidget);
     });
+
+    testWidgets('renders PaymentEntry section with all 4 vertical scenarios', (tester) async {
+      tester.view.physicalSize = const Size(1200, 8000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Retail POS — cash / card / gift'), findsOneWidget);
+      expect(find.text('Medical copay — card / check / portal'), findsOneWidget);
+      expect(find.text('Trades invoice — card / ACH / check'), findsOneWidget);
+      expect(find.text('Fuel POD — cash / card / account'), findsOneWidget);
+    });
   });
 }

@@ -260,7 +260,62 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
-          // TRD 012-03 appends: Section(title: 'EdenPaymentEntry — payment method + amount entry', child: ...).
+          Section(
+            title: 'EdenPaymentEntry — payment method + amount entry',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Retail POS — cash / card / gift', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenPaymentEntry(
+                  allowedMethods: const [
+                    EdenPaymentMethod.cash,
+                    EdenPaymentMethod.card,
+                    EdenPaymentMethod.giftCard,
+                  ],
+                  onDraftChanged: (_) {},
+                  expectedAmount: 47.50,
+                ),
+                const SizedBox(height: 24),
+                const Text('Medical copay — card / check / portal', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenPaymentEntry(
+                  allowedMethods: const [
+                    EdenPaymentMethod.card,
+                    EdenPaymentMethod.check,
+                    EdenPaymentMethod.portal,
+                  ],
+                  onDraftChanged: (_) {},
+                  expectedAmount: 25.00,
+                ),
+                const SizedBox(height: 24),
+                const Text('Trades invoice — card / ACH / check', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenPaymentEntry(
+                  allowedMethods: const [
+                    EdenPaymentMethod.card,
+                    EdenPaymentMethod.ach,
+                    EdenPaymentMethod.check,
+                  ],
+                  onDraftChanged: (_) {},
+                  expectedAmount: 1240.00,
+                  requireReference: true,
+                ),
+                const SizedBox(height: 24),
+                const Text('Fuel POD — cash / card / account', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                EdenPaymentEntry(
+                  allowedMethods: const [
+                    EdenPaymentMethod.cash,
+                    EdenPaymentMethod.card,
+                    EdenPaymentMethod.accountOnFile,
+                  ],
+                  onDraftChanged: (_) {},
+                  expectedAmount: 690.00,
+                ),
+              ],
+            ),
+          ),
           // TRD 012-04 appends: Section(title: 'EdenSplitTender — multi-method composer', child: ...).
           // TRD 012-05 appends: Section(title: 'EdenSparkline — compact trend line (no axes, no animation)', child: ...).
           // TRD 012-06 appends: Section(title: 'EdenBarChart — grouped / stacked / horizontal', child: ...).
