@@ -85,8 +85,65 @@ class _CardsScreenState extends State<CardsScreen> {
               },
             ),
           ),
+          const Section(
+            title: 'Interactive variant — hover lift + focus ring (Obj 010)',
+            child: _InteractiveCardDemos(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _InteractiveCardDemos extends StatelessWidget {
+  const _InteractiveCardDemos();
+
+  void _snack(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Side-by-side comparison'),
+        const SizedBox(height: EdenSpacing.space2),
+        Row(children: [
+          Expanded(child: EdenCard(
+            title: 'Default',
+            subtitle: 'Tap → ripple only',
+            onTap: () => _snack(context, 'Default tap'),
+          )),
+          const SizedBox(width: EdenSpacing.space2),
+          Expanded(child: EdenCard.interactive(
+            title: 'Interactive',
+            subtitle: 'Hover → lift + focus ring + ripple',
+            onTap: () => _snack(context, 'Interactive tap'),
+          )),
+        ]),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Focus traversal (tab between)'),
+        const SizedBox(height: EdenSpacing.space2),
+        Column(children: [
+          EdenCard.interactive(title: 'First',  subtitle: 'Tab to focus', onTap: () => _snack(context, 'First')),
+          const SizedBox(height: EdenSpacing.space2),
+          EdenCard.interactive(title: 'Second', subtitle: 'Tab to focus', onTap: () => _snack(context, 'Second')),
+          const SizedBox(height: EdenSpacing.space2),
+          EdenCard.interactive(title: 'Third',  subtitle: 'Tab to focus', onTap: () => _snack(context, 'Third')),
+        ]),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Long-press handler'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenCard.interactive(
+          title: 'Long-press me',
+          subtitle: 'Try a long press',
+          onTap: () => _snack(context, 'Tap'),
+          onLongPress: () => _snack(context, 'Long-press!'),
+        ),
+      ],
     );
   }
 }
