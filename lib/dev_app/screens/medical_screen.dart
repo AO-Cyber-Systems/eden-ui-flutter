@@ -37,6 +37,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenProblemList — FHIR Condition list with ICD-10 (013-04)',
             child: _ProblemListDemo(),
           ),
+          Section(
+            title: 'EdenAllergyList — FHIR AllergyIntolerance + criticality banner (013-05)',
+            child: _AllergyListDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -747,5 +751,90 @@ final _resolvedPostSurgical = <EdenCondition>[
     onsetDate: DateTime(2019, 6, 3),
     resolvedDate: DateTime(2019, 6, 5),
     diagnosedBy: 'Dr. Garcia',
+  ),
+];
+
+// ────────────────────────── 013-05 demo ──────────────────────────
+
+class _AllergyListDemo extends StatelessWidget {
+  const _AllergyListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'PCN anaphylaxis (high-criticality banner active)',
+          child: EdenAllergyList(allergies: _pcnAnaphylaxis),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Multi-allergy elderly (3 high-criticality, 1 low)',
+          child: EdenAllergyList(allergies: _multiAllergy),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'NKDA empty state',
+          child: EdenAllergyList(allergies: const []),
+        ),
+      ],
+    );
+  }
+}
+
+final _pcnAnaphylaxis = <EdenAllergyIntolerance>[
+  EdenAllergyIntolerance(
+    id: 'demo-all-1',
+    patientId: 'demo-all-pt-1',
+    allergen: 'Penicillin',
+    type: EdenAllergenType.medication,
+    reaction: 'Anaphylaxis',
+    severity: EdenAllergySeverity.severe,
+    criticality: EdenAllergyCriticality.high,
+    verifiedBy: 'Dr. Chen',
+  ),
+];
+
+final _multiAllergy = <EdenAllergyIntolerance>[
+  EdenAllergyIntolerance(
+    id: 'demo-mall-1',
+    patientId: 'demo-mall-pt',
+    allergen: 'Penicillin',
+    type: EdenAllergenType.medication,
+    reaction: 'Anaphylaxis',
+    severity: EdenAllergySeverity.severe,
+    criticality: EdenAllergyCriticality.high,
+    verifiedBy: 'Dr. Lee',
+  ),
+  EdenAllergyIntolerance(
+    id: 'demo-mall-2',
+    patientId: 'demo-mall-pt',
+    allergen: 'Codeine',
+    type: EdenAllergenType.medication,
+    reaction: 'GI upset',
+    severity: EdenAllergySeverity.mild,
+    criticality: EdenAllergyCriticality.low,
+    verifiedBy: 'Patient-reported',
+  ),
+  EdenAllergyIntolerance(
+    id: 'demo-mall-3',
+    patientId: 'demo-mall-pt',
+    allergen: 'Latex',
+    type: EdenAllergenType.environmental,
+    reaction: 'Contact dermatitis',
+    severity: EdenAllergySeverity.severe,
+    criticality: EdenAllergyCriticality.high,
+    verifiedBy: 'Dr. Lee',
+  ),
+  EdenAllergyIntolerance(
+    id: 'demo-mall-4',
+    patientId: 'demo-mall-pt',
+    allergen: 'Peanuts',
+    type: EdenAllergenType.food,
+    reaction: 'Anaphylaxis',
+    severity: EdenAllergySeverity.lifeThreatening,
+    criticality: EdenAllergyCriticality.high,
+    verifiedBy: 'Dr. Lee',
   ),
 ];
