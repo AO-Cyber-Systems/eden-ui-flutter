@@ -169,6 +169,10 @@ class _RetailScreenState extends State<RetailScreen> {
             child: _InventoryRowDemoBlock(),
           ),
           // ─── Objective 014 anchor: TRD 014-05 EdenReceivingFlow ───
+          const Section(
+            title: 'EdenReceivingFlow — PO receiving multi-step',
+            child: _ReceivingFlowDemoBlock(),
+          ),
           // ─── Objective 014 anchor: TRD 014-06 EdenSalesAnalyticsScaffold ───
           // ─── Objective 014 anchor: TRD 014-01 EdenPOSRegisterScaffold ───
         ],
@@ -400,6 +404,99 @@ class _InventoryRowDemoBlockState extends State<_InventoryRowDemoBlock> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// TRD 014-05 — EdenReceivingFlow demo block
+// ───────────────────────────────────────────────────────────────────────────
+
+// Hand-built sample data — mirrors test/widgets/_fixtures/
+// eden_receiving_flow_fixtures.dart::acmeCoffeePo. Do NOT regenerate via LLM.
+const _kAcmeCoffeePo = EdenReceivingDoc(
+  poNumber: 'PO-4827',
+  vendor: 'Acme Coffee Co.',
+  expectedItems: <EdenReceivingExpectedItem>[
+    EdenReceivingExpectedItem(
+      lineId: 'L-1',
+      sku: 'CB-001',
+      name: 'Espresso Blend 1kg',
+      expectedQty: 10,
+      expectedUnitCostCents: 1200,
+    ),
+    EdenReceivingExpectedItem(
+      lineId: 'L-2',
+      sku: 'AM-FLT',
+      name: 'Americano filter',
+      expectedQty: 5,
+      expectedUnitCostCents: 800,
+    ),
+    EdenReceivingExpectedItem(
+      lineId: 'L-3',
+      sku: 'CP-SYR',
+      name: 'Cappuccino syrup',
+      expectedQty: 3,
+      expectedUnitCostCents: 600,
+    ),
+    EdenReceivingExpectedItem(
+      lineId: 'L-4',
+      sku: 'MO-MIX',
+      name: 'Mocha mix',
+      expectedQty: 2,
+      expectedUnitCostCents: 900,
+    ),
+    EdenReceivingExpectedItem(
+      lineId: 'L-5',
+      sku: 'SW-024',
+      name: 'Sparkling Water 24-pack',
+      expectedQty: 24,
+      expectedUnitCostCents: 100,
+    ),
+  ],
+  expectedTotalCents: 20600,
+);
+
+class _ReceivingFlowDemoBlock extends StatelessWidget {
+  const _ReceivingFlowDemoBlock();
+
+  Future<EdenReceivingDoc?> _lookup(String query) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    final trimmed = query.trim().toLowerCase();
+    if (trimmed.isEmpty || trimmed == 'po-not-found') return null;
+    return _kAcmeCoffeePo;
+  }
+
+  Future<String?> _capturePhoto() async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    return 'demo://damaged-photo-${DateTime.now().millisecondsSinceEpoch}.jpg';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: SizedBox(
+        height: 560,
+        child: EdenReceivingFlow(
+          onPoLookup: _lookup,
+          onPhotoCapture: _capturePhoto,
+          onSubmit: (draft) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                'Submitted ${draft.poNumber} → ${draft.disposition.name} '
+                '(${draft.receivedItems.length} lines, '
+                'photoRef=${draft.damagedPhotoRef})',
+              ),
+            ));
+          },
+        ),
+      ),
     );
   }
 }
