@@ -33,6 +33,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenLabResultTable — Compact clinical lab table (013-03)',
             child: _LabResultTableDemo(),
           ),
+          Section(
+            title: 'EdenProblemList — FHIR Condition list with ICD-10 (013-04)',
+            child: _ProblemListDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -651,5 +655,97 @@ final _criticalFlagged = <EdenLabResult>[
     criticalMax: 6.0,
     flag: EdenLabFlag.criticalHigh,
     collectedAt: DateTime(2026, 5, 17),
+  ),
+];
+
+// ────────────────────────── 013-04 demo ──────────────────────────
+
+class _ProblemListDemo extends StatelessWidget {
+  const _ProblemListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'T2DM + HTN combo (active chronic problems)',
+          child: EdenProblemList(conditions: _polychronicCombo),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Single chronic (T2DM only)',
+          child: EdenProblemList(conditions: _singleChronic),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Resolved post-surgical (showResolved=true)',
+          child: EdenProblemList(
+            conditions: _resolvedPostSurgical,
+            showResolved: true,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+final _polychronicCombo = <EdenCondition>[
+  EdenCondition(
+    id: 'demo-cond-1',
+    patientId: 'demo-prob',
+    code: 'E11.9',
+    codeSystem: 'ICD-10-CM',
+    description: 'Type 2 diabetes mellitus without complications',
+    status: EdenConditionStatus.active,
+    onsetDate: DateTime(2022, 8, 14),
+    diagnosedBy: 'Dr. Chen',
+  ),
+  EdenCondition(
+    id: 'demo-cond-2',
+    patientId: 'demo-prob',
+    code: 'I10',
+    codeSystem: 'ICD-10-CM',
+    description: 'Essential (primary) hypertension',
+    status: EdenConditionStatus.active,
+    onsetDate: DateTime(2021, 3, 2),
+    diagnosedBy: 'Dr. Chen',
+  ),
+  EdenCondition(
+    id: 'demo-cond-3',
+    patientId: 'demo-prob',
+    code: 'E78.5',
+    codeSystem: 'ICD-10-CM',
+    description: 'Hyperlipidemia, unspecified',
+    status: EdenConditionStatus.active,
+    onsetDate: DateTime(2023, 5, 10),
+    diagnosedBy: 'Dr. Chen',
+  ),
+];
+
+final _singleChronic = <EdenCondition>[
+  EdenCondition(
+    id: 'demo-sc-1',
+    patientId: 'demo-sc',
+    code: 'E11.9',
+    codeSystem: 'ICD-10-CM',
+    description: 'Type 2 diabetes mellitus without complications',
+    status: EdenConditionStatus.active,
+    onsetDate: DateTime(2022, 8, 14),
+    diagnosedBy: 'Dr. Chen',
+  ),
+];
+
+final _resolvedPostSurgical = <EdenCondition>[
+  EdenCondition(
+    id: 'demo-rps-1',
+    patientId: 'demo-rps',
+    code: 'K35.80',
+    codeSystem: 'ICD-10-CM',
+    description: 'Acute appendicitis',
+    status: EdenConditionStatus.resolved,
+    onsetDate: DateTime(2019, 6, 3),
+    resolvedDate: DateTime(2019, 6, 5),
+    diagnosedBy: 'Dr. Garcia',
   ),
 ];

@@ -438,6 +438,7 @@ export 'src/widgets/eden_split_tender.dart';
 export 'src/widgets/eden_vitals_row.dart';
 export 'src/widgets/eden_medication_list.dart';
 export 'src/widgets/eden_lab_result_table.dart';
+export 'src/widgets/eden_problem_list.dart';
 
 // ─────────── Objective 013 — B-Medical clinical primitives Wave 2 ───────────
 // (TRD 013-06 EdenSOAPNote + TRD 013-07 EdenChartTimeline append here.)
