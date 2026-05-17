@@ -156,6 +156,19 @@ TRDs (9/9 GREEN — 2026-05-16):
 - [x] 008-08-TRD.md — `chat_screen.dart` AI surface — EdenInsightCard 6 layouts × cross-vertical + EdenAiPanel persona-keyed insights + EdenAiCollapsibleSection / EdenPersonaSelector / EdenAgentChat per-vertical streaming presets / EdenAiInsightSlot (Wave 4)
 - [x] 008-09-TRD.md — `scheduler_screen.dart` HEADLINE — side-by-side trades-react PNG embeds (5 view modes) + 50+ event live perf demo + cross-vertical scheduler scenarios (trades/salon/medical/fuel/gov) + pubspec.yaml asset registration (Wave 5)
 
+### Objective 009: Vertical Theme System + Brand Preset Registry
+
+**Goal:** Ship the foundational theme infrastructure that lets eden-ui-flutter present 5 distinct aesthetic profiles (commercial / medical / gov / retail / legal) and per-tenant brand color overrides without changing a single line of consumer widget code. After this objective ships, downstream `eden-biz-flutter` and other Eden Flutter apps wrap their MaterialApp in `EdenAdaptiveTheme(profile: ..., brand: ..., child: ...)` and the entire 230+ widget catalog renders in the chosen aesthetic. The current `EdenTheme.light()/dark()` API continues to work unchanged — new profiles are strictly opt-in. Per `VERTICAL_UX_RESEARCH_2026-05-16.md` §2.4 + §3.1: single highest-leverage step in the eden-ui-flutter roadmap, unlocks all 7 verticals on the existing shell + 230+ component catalog. Required precursor to medical (Obj 013) and gov-compliance (Obj 011) downstream work. See `objectives/009-vertical-theme-system/OBJECTIVE.md`.
+
+**TRDs:** 5 plans across 3 waves (~2-3 wk Claude execution)
+
+TRDs:
+- [ ] 009-01-TRD.md — EdenThemeProfile enum (5 locked profiles) + EdenThemeProfileData immutable value class + EdenThemeProfileScope InheritedWidget; pure data + context, no Material wiring (Wave 1; foundation)
+- [ ] 009-02-TRD.md — EdenStatusPalette ThemeExtension<EdenStatusPalette> with 5 semantic × 3 facet color fields per profile + EdenTheme.light/dark extended to attach extension; back-compat anchor commercialWarm reproduces today's EdenColors values exactly (Wave 1; depends 009-01)
+- [ ] 009-03-TRD.md — EdenBrandPreset value class + EdenBrandPresetRegistry with 15 ship-with presets (7 bridges from EdenColors.presets + 8 vertically-flavored: salon-coral / trades-industrial-blue / medical-teal / fuel-energy-orange / gov-federal-navy / legal-navy / retail-vibrant-magenta / wellness-sage) (Wave 2; parallel with 009-04)
+- [ ] 009-04-TRD.md — EdenProfileFonts static resolver: per-profile body/display/mono TextStyle helpers using existing google_fonts ^6.1.0 (IBM Plex Sans medical, Public Sans gov, Crimson Pro legal); zero new pubspec deps (Wave 2; parallel with 009-03)
+- [ ] 009-05-TRD.md — EdenAdaptiveTheme StatelessWidget + EdenAdaptiveTheme.light/dark static factories composing 009-01..04 + profile-aware TextTheme overlay + theme_profiles_screen.dart visual catalog showing all 5 profiles side-by-side with sample triptychs + home_screen nav tile (Wave 3; capstone)
+
 ### Objective 010: Eden Visual Polish Pass — Material 3 Expressive + Density Adjustments + Animation Token Library
 
 **Goal:** Absorb the 5 Material 3 Expressive (May 2025) patterns Eden lags on (button group, split button, FAB menu, loading indicator, spring-physics motion), close the dense-enterprise data-table gap vs Polaris/Carbon/USWDS/Square POS, and ship a hand-rolled spring-physics animation token library (EdenSprings) that future Eden widgets compose from. All additive — every existing widget continues to work unchanged. Per `VERTICAL_UX_RESEARCH_2026-05-16.md` §3.2 + §2.1 + §2.2 + §6 aesthetic-preservation principles. Depends on objective 009 (Vertical Theme System) for full profile-aware density tokens + status palette; degrades gracefully when 009 not yet shipped. See `objectives/010-visual-polish-pass/OBJECTIVE.md`.
