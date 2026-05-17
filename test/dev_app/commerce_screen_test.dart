@@ -98,5 +98,27 @@ void main() {
       expect(find.text('Medical claims by status (stacked)'), findsOneWidget);
       expect(find.text('Trades revenue by service category (horizontal)'), findsOneWidget);
     });
+
+    testWidgets('renders DonutChart section with 4 vertical scenarios', (tester) async {
+      tester.view.physicalSize = const Size(1400, 18000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Service mix (salon)'), findsOneWidget);
+      expect(
+        find.text('Inventory by category (retail — centerLabelSlot composition)'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Payment method split (medical — legend right)'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Revenue distribution (trades — default bottom legend)'),
+        findsOneWidget,
+      );
+    });
   });
 }

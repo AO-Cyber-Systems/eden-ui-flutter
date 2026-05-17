@@ -565,7 +565,86 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
-          // TRD 012-07 appends: Section(title: 'EdenDonutChart — center-label + legend', child: ...).
+          const Section(
+            title: 'EdenDonutChart — center-label + legend',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Service mix (salon)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                EdenDonutChart(
+                  data: [
+                    EdenChartDataPoint(label: 'Cut', value: 40),
+                    EdenChartDataPoint(label: 'Color', value: 30),
+                    EdenChartDataPoint(label: 'Treatment', value: 20),
+                    EdenChartDataPoint(label: 'Retail', value: 10),
+                  ],
+                  size: 200,
+                  centerLabel: r'$2,400 total',
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Inventory by category (retail — centerLabelSlot composition)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenDonutChart(
+                  data: [
+                    EdenChartDataPoint(label: 'Apparel', value: 1850),
+                    EdenChartDataPoint(label: 'Accessories', value: 1200),
+                    EdenChartDataPoint(label: 'Footwear', value: 980),
+                    EdenChartDataPoint(label: 'Home', value: 640),
+                    EdenChartDataPoint(label: 'Other', value: 220),
+                  ],
+                  size: 220,
+                  centerLabelSlot: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.inventory_2_outlined, size: 28),
+                      SizedBox(height: 4),
+                      Text(
+                        r'$4,890',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                      ),
+                      Text('On-hand', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Payment method split (medical — legend right)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenDonutChart(
+                  data: [
+                    EdenChartDataPoint(label: 'Insurance', value: 65),
+                    EdenChartDataPoint(label: 'Patient card', value: 20),
+                    EdenChartDataPoint(label: 'Check', value: 10),
+                    EdenChartDataPoint(label: 'Portal', value: 5),
+                  ],
+                  size: 200,
+                  centerLabel: r'$8,420',
+                  legendPosition: EdenChartLegendPosition.right,
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Revenue distribution (trades — default bottom legend)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                EdenDonutChart(
+                  data: [
+                    EdenChartDataPoint(label: 'HVAC', value: 56),
+                    EdenChartDataPoint(label: 'Plumbing', value: 28),
+                    EdenChartDataPoint(label: 'Electrical', value: 16),
+                  ],
+                  size: 200,
+                  centerLabel: r'$48,200',
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
