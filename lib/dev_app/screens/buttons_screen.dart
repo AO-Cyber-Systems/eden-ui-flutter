@@ -139,8 +139,52 @@ class _ButtonsScreenState extends State<ButtonsScreen> {
             title: 'M3 Expressive — Button Group (Obj 010)',
             child: _ButtonGroupDemos(),
           ),
+          const Section(
+            title: 'M3 Expressive — Split Button (Obj 010)',
+            child: _SplitButtonDemos(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _SplitButtonDemos extends StatelessWidget {
+  const _SplitButtonDemos();
+
+  void _snack(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Save + variants'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenSplitButton(
+          primaryLabel: 'Save',
+          onPrimary: () => _snack(context, 'Save'),
+          menuItems: [
+            EdenSplitMenuItem(label: 'Save & New', icon: Icons.add_circle_outline, onSelected: () => _snack(context, 'Save & New')),
+            EdenSplitMenuItem(label: 'Save & Close', icon: Icons.close, onSelected: () => _snack(context, 'Save & Close')),
+          ],
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Send now + variants'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenSplitButton(
+          primaryLabel: 'Send now',
+          onPrimary: () => _snack(context, 'Sent'),
+          menuItems: [
+            EdenSplitMenuItem(label: 'Schedule send', icon: Icons.schedule, onSelected: () => _snack(context, 'Scheduled')),
+            EdenSplitMenuItem(label: 'Save draft', icon: Icons.save_outlined, onSelected: () => _snack(context, 'Draft saved')),
+          ],
+        ),
+      ],
     );
   }
 }
