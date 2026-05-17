@@ -45,8 +45,10 @@ void main() {
     });
 
     testWidgets('shows initials when avatarUrl is null (Jane Doe → JD)', (tester) async {
+      // Use tierless (no recent purchases) to isolate the avatar's "JD" so
+      // we don't conflict with EdenActivityFeedItem.actorInitials.
       await tester.pumpWidget(wrap(EdenLoyaltyMemberDetail(
-        member: EdenLoyaltyMemberFixtures.janeGold(),
+        member: const EdenLoyaltyMember(id: 'c-jd', name: 'Jane Doe'),
         now: EdenLoyaltyMemberFixtures.t0,
       )));
       expect(find.text('JD'), findsOneWidget);
