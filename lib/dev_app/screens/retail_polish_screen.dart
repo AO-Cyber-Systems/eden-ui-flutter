@@ -24,7 +24,12 @@ class RetailPolishScreen extends StatelessWidget {
                 'EdenLoyaltyMemberDetail — loyalty profile (tier + points + recent purchases)',
             child: _LoyaltyMemberDetailDemoBlock(),
           ),
-          // TRD 018-02 will append:
+          // TRD 018-02 appended above.
+          Section(
+            title:
+                'EdenStoreCreditLedger — store-credit balance + history + holds',
+            child: _StoreCreditLedgerDemoBlock(),
+          ),
           // TRD 018-03 will append:
           // ─── Wave 2 — Multi-step flows ─────────────────────────────────
           // TRD 018-04 will append:
@@ -81,5 +86,63 @@ class _LoyaltyMemberDetailDemoBlock extends StatelessWidget {
       width: 600,
       child: EdenLoyaltyMemberDetail(member: member),
     );
+  }
+}
+
+/// Hand-built sample data — mirrors
+/// test/widgets/_fixtures/eden_store_credit_ledger_fixtures.dart::activeWithHolds().
+/// Do NOT regenerate via LLM.
+class _StoreCreditLedgerDemoBlock extends StatelessWidget {
+  const _StoreCreditLedgerDemoBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final data = EdenStoreCreditLedgerData(
+      customerId: 'c-1',
+      customerName: 'Jane Doe',
+      balanceCents: 8750,
+      holds: [
+        EdenStoreCreditHold(
+          id: 'h-1',
+          holdAmountCents: 1500,
+          holdReason: 'Pending refund verification',
+          placedAt: now.subtract(const Duration(hours: 6)),
+        ),
+      ],
+      history: [
+        EdenStoreCreditEntry(
+          id: 'e-1',
+          occurredAt: now.subtract(const Duration(days: 2)),
+          type: EdenStoreCreditEntryType.issued,
+          amountCents: 5000,
+          reason: 'No-receipt return',
+          receiptRef: 'R-1003',
+        ),
+        EdenStoreCreditEntry(
+          id: 'e-2',
+          occurredAt: now.subtract(const Duration(days: 5)),
+          type: EdenStoreCreditEntryType.spent,
+          amountCents: -2250,
+          reason: 'Applied to sale',
+          receiptRef: 'R-1011',
+        ),
+        EdenStoreCreditEntry(
+          id: 'e-3',
+          occurredAt: now.subtract(const Duration(days: 15)),
+          type: EdenStoreCreditEntryType.issued,
+          amountCents: 6000,
+          reason: 'Loyalty bonus',
+        ),
+        EdenStoreCreditEntry(
+          id: 'e-4',
+          occurredAt: now.subtract(const Duration(days: 30)),
+          type: EdenStoreCreditEntryType.adjustment,
+          amountCents: -750,
+          reason: 'Manager correction',
+        ),
+      ],
+    );
+    return SizedBox(width: 800, child: EdenStoreCreditLedger(data: data));
   }
 }
