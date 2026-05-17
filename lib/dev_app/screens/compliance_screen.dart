@@ -104,7 +104,10 @@ class ComplianceScreen extends StatelessWidget {
             title: 'EdenCacPivButton — CAC/PIV smartcard authentication',
             child: _CacPivDemo(),
           ),
-          // TRD 011-03 will append: Section(title: 'EdenSection508Audit — a11y QA overlay', child: ...).
+          Section(
+            title: 'EdenSection508Audit — Dev-tools a11y / Section 508 overlay',
+            child: _Section508AuditDemo(),
+          ),
           // TRD 011-04 will append: Section(title: 'EdenAuditLogViewer — immutable activity stream', child: ...).
           // TRD 011-05 will append: Section(title: 'EdenFoiaRequestCard — records-request workflow', child: ...).
           // TRD 011-06 will append: Section(title: 'EdenCaseFileShell — multi-tab dossier', child: ...).
@@ -324,6 +327,98 @@ class _SecretFieldDemoState extends State<_SecretFieldDemo> {
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Interactive demo of [EdenSection508Audit] — populates the controller
+/// with 3 example issues spanning all three severities + categories.
+class _Section508AuditDemo extends StatefulWidget {
+  const _Section508AuditDemo();
+
+  @override
+  State<_Section508AuditDemo> createState() => _Section508AuditDemoState();
+}
+
+class _Section508AuditDemoState extends State<_Section508AuditDemo> {
+  final _controller = EdenSection508AuditController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _runDemoScan() async {
+    _controller.startScan();
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    _controller.completeScan(const [
+      EdenSection508Issue(
+        severity: EdenSection508Severity.error,
+        category: EdenSection508Category.missingSemanticLabel,
+        description: 'IconButton at home_screen.dart:75 has no Semantics label',
+        fixHint: 'Wrap with Semantics(label: "Open settings")',
+        widgetTypeName: 'IconButton',
+      ),
+      EdenSection508Issue(
+        severity: EdenSection508Severity.warning,
+        category: EdenSection508Category.insufficientContrast,
+        description: 'Subtitle text on light gray ratio 3.8:1',
+        fixHint: 'Switch to Theme.of(context).colorScheme.onSurfaceVariant',
+        widgetTypeName: 'Text',
+      ),
+      EdenSection508Issue(
+        severity: EdenSection508Severity.info,
+        category: EdenSection508Category.missingFocusOrder,
+        description: 'Form lacks FocusTraversalGroup',
+        fixHint: 'Wrap form Column in FocusTraversalGroup',
+      ),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Demo populates the audit controller with 3 example issues.',
+          style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: _runDemoScan,
+              child: const Text('Run demo scan'),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton(
+              onPressed: _controller.reset,
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'The audit panel renders as a floating button (bottom-right) '
+          'inside the surface below. Tap it to view detected issues.',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        SizedBox(
+          height: 400,
+          child: Stack(
+            children: [
+              Container(
+                color: Colors.grey.shade100,
+                child: const Center(child: Text('(host app surface)')),
+              ),
+              EdenSection508Audit(controller: _controller),
+            ],
+          ),
+        ),
       ],
     );
   }
