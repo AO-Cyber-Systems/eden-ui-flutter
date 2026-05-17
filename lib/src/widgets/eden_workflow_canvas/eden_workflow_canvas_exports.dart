@@ -25,3 +25,7 @@ export 'nodes/eden_condition_node.dart';
 // Wave 3 — Delay + Merge nodes + public port helpers (TRD 020-05)
 export 'nodes/eden_delay_node.dart';
 export 'nodes/eden_merge_node.dart';
+
+// Wave 4 — End node + Validator (TRD 020-06)
+export 'nodes/eden_workflow_end_node.dart';
+export 'workflow_validator.dart';
