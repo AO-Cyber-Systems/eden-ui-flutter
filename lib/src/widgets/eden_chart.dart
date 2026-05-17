@@ -354,6 +354,13 @@ class _LineChartPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 
 /// A vertical (or horizontal) bar chart supporting grouped and stacked modes.
+///
+/// **Obj 012-06 — additive enhancements (backwards-compatible):**
+/// * [xAxisLabel] / [yAxisLabel] render text labels around the chart
+///   canvas (xAxisLabel below, yAxisLabel rotated 90° on the left).
+/// * [minValue] / [maxValue] override the auto-detected y-axis range.
+/// * [referenceLines] renders 1pt horizontal lines at the given y-values
+///   in 30% gridColor opacity (target markers).
 class EdenBarChart extends StatelessWidget {
   const EdenBarChart({
     super.key,
@@ -365,6 +372,11 @@ class EdenBarChart extends StatelessWidget {
     this.horizontal = false,
     this.barWidth = 20,
     this.barSpacing = 4,
+    this.xAxisLabel,
+    this.yAxisLabel,
+    this.minValue,
+    this.maxValue,
+    this.referenceLines = const [],
   });
 
   final List<EdenChartSeries> series;
@@ -375,11 +387,16 @@ class EdenBarChart extends StatelessWidget {
   final bool horizontal;
   final double barWidth;
   final double barSpacing;
+  final String? xAxisLabel;
+  final String? yAxisLabel;
+  final double? minValue;
+  final double? maxValue;
+  final List<double> referenceLines;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return CustomPaint(
+    final chart = CustomPaint(
       size: Size(double.infinity, height),
       painter: _BarChartPainter(
         series: series,
@@ -391,7 +408,46 @@ class EdenBarChart extends StatelessWidget {
         barSpacing: barSpacing,
         gridColor: theme.colorScheme.outlineVariant,
         labelColor: theme.colorScheme.onSurfaceVariant,
+        minValueOverride: minValue,
+        maxValueOverride: maxValue,
+        referenceLines: referenceLines,
       ),
+    );
+
+    // Without axis labels, return the bare CustomPaint to preserve
+    // backwards-compat layout (consumers that wrap in SizedBox(height) get
+    // exactly that height).
+    if ((xAxisLabel == null && yAxisLabel == null) || !showLabels) {
+      return chart;
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              if (yAxisLabel != null)
+                RotatedBox(
+                  quarterTurns: -1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(yAxisLabel!,
+                        style: theme.textTheme.labelSmall),
+                  ),
+                ),
+              Expanded(child: chart),
+            ],
+          ),
+        ),
+        if (xAxisLabel != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Center(
+              child: Text(xAxisLabel!, style: theme.textTheme.labelSmall),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -407,12 +463,18 @@ class _BarChartPainter extends CustomPainter {
     required this.barSpacing,
     required this.gridColor,
     required this.labelColor,
+    this.minValueOverride,
+    this.maxValueOverride,
+    this.referenceLines = const [],
   });
 
   final List<EdenChartSeries> series;
   final bool showLabels, showValues, stacked, horizontal;
   final double barWidth, barSpacing;
   final Color gridColor, labelColor;
+  final double? minValueOverride;
+  final double? maxValueOverride;
+  final List<double> referenceLines;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -424,24 +486,44 @@ class _BarChartPainter extends CustomPainter {
     final chartW = size.width - left - EdenSpacing.space2;
     final chartH = size.height - bottom - EdenSpacing.space2;
 
-    // Compute max value
-    double maxV = 0;
-    if (stacked) {
-      for (var ci = 0; ci < catCount; ci++) {
-        double sum = 0;
-        for (final s in series) {
-          if (ci < s.data.length) sum += s.data[ci].value;
-        }
-        if (sum > maxV) maxV = sum;
-      }
+    // Compute max value (respect override if set)
+    double maxV;
+    if (maxValueOverride != null) {
+      maxV = maxValueOverride!;
     } else {
-      for (final s in series) {
-        for (final d in s.data) {
-          if (d.value > maxV) maxV = d.value;
+      maxV = 0;
+      if (stacked) {
+        for (var ci = 0; ci < catCount; ci++) {
+          double sum = 0;
+          for (final s in series) {
+            if (ci < s.data.length) sum += s.data[ci].value;
+          }
+          if (sum > maxV) maxV = sum;
         }
+      } else {
+        for (final s in series) {
+          for (final d in s.data) {
+            if (d.value > maxV) maxV = d.value;
+          }
+        }
+      }
+      if (maxV == 0) maxV = 1;
+    }
+    // minV defaults to 0 (the existing baseline); override when supplied.
+    final minV = minValueOverride ?? 0.0;
+
+    // 1. Reference lines (background, before bars and grid).
+    if (referenceLines.isNotEmpty) {
+      final refPaint = Paint()
+        ..color = gridColor.withValues(alpha: 0.30)
+        ..strokeWidth = 1
+        ..style = PaintingStyle.stroke;
+      final range = (maxV - minV).abs() < 1e-9 ? 1.0 : (maxV - minV);
+      for (final ref in referenceLines) {
+        final y = EdenSpacing.space1 + chartH * (1 - (ref - minV) / range);
+        canvas.drawLine(Offset(left, y), Offset(size.width, y), refPaint);
       }
     }
-    if (maxV == 0) maxV = 1;
 
     // Grid
     const gridLines = 4;
