@@ -156,6 +156,25 @@ TRDs (9/9 GREEN — 2026-05-16):
 - [x] 008-08-TRD.md — `chat_screen.dart` AI surface — EdenInsightCard 6 layouts × cross-vertical + EdenAiPanel persona-keyed insights + EdenAiCollapsibleSection / EdenPersonaSelector / EdenAgentChat per-vertical streaming presets / EdenAiInsightSlot (Wave 4)
 - [x] 008-09-TRD.md — `scheduler_screen.dart` HEADLINE — side-by-side trades-react PNG embeds (5 view modes) + 50+ event live perf demo + cross-vertical scheduler scenarios (trades/salon/medical/fuel/gov) + pubspec.yaml asset registration (Wave 5)
 
+### Objective 010: Eden Visual Polish Pass — Material 3 Expressive + Density Adjustments + Animation Token Library
+
+**Goal:** Absorb the 5 Material 3 Expressive (May 2025) patterns Eden lags on (button group, split button, FAB menu, loading indicator, spring-physics motion), close the dense-enterprise data-table gap vs Polaris/Carbon/USWDS/Square POS, and ship a hand-rolled spring-physics animation token library (EdenSprings) that future Eden widgets compose from. All additive — every existing widget continues to work unchanged. Per `VERTICAL_UX_RESEARCH_2026-05-16.md` §3.2 + §2.1 + §2.2 + §6 aesthetic-preservation principles. Depends on objective 009 (Vertical Theme System) for full profile-aware density tokens + status palette; degrades gracefully when 009 not yet shipped. See `objectives/010-visual-polish-pass/OBJECTIVE.md`.
+
+**TRDs:** 10 plans across 3 waves (~2 wk Claude execution)
+
+TRDs:
+- [ ] 010-01-TRD.md — EdenSprings token class — hand-rolled spring physics, 4 presets (snap/smooth/bouncy/rubber) + simulationFor + curveFor helpers (Wave 1; foundation; TRDs 02-10 all consume EdenSprings)
+- [ ] 010-02-TRD.md — EdenButtonGroup — M3 Expressive connected pill cluster, 2-6 buttons, shape-morph on press (Wave 2; M3 Expressive batch)
+- [ ] 010-03-TRD.md — EdenSplitButton — primary action + dropdown menu, Save/Save & New form-flow pattern (Wave 2; M3 Expressive batch)
+- [ ] 010-04-TRD.md — EdenFabMenu — expandable FAB with 2-6 action children, spring unfurl with stagger, scrim close; sibling (NOT replacement) of EdenMobileAiFab (Wave 2; M3 Expressive batch)
+- [ ] 010-05-TRD.md — EdenLoadingIndicator — M3 Expressive shape-morph + shimmer + crossFade variants; EdenSpinner + EdenSkeleton preserved (Wave 2; M3 Expressive batch)
+- [ ] 010-06-TRD.md — EdenDataTable.dense — 32pt rows + sticky header + freeze-pane col 1 + bulk-select; closes biggest competitive gap vs Polaris/Carbon/Square POS/Epic chart screens (Wave 3; density)
+- [ ] 010-07-TRD.md — EdenCard.interactive — hover lift + focus ring + 44pt min tap target + onLongPress (Wave 3; polish)
+- [ ] 010-08-TRD.md — EdenSkeletonScope — Stack+Opacity cross-fade wrapper (Hero/Focus preserving); composes EdenSkeleton (Wave 3; polish)
+- [ ] 010-09-TRD.md — EdenEmptyState enhancement — illustration slot + secondary action with responsive primary/secondary layout (Wave 3; polish)
+- [ ] 010-10-TRD.md — EdenStatusDotOverlay — composable status dot + count badge overlay (online/offline/away/busy/sync/unread+count); sibling of EdenAvatar.status (Wave 3; polish)
+
+
 ## v2 Future Objectives
 
 Tracked but not in current scope:
