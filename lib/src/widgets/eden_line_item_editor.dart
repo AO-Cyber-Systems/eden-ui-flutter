@@ -289,10 +289,13 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
     return palette?.dangerFg ?? EdenColors.error;
   }
 
-  /// Decimal-friendly input filter. Allows up to 3 decimal digits to
-  /// support precise quantities (e.g. 0.125 lbs) while still rejecting
-  /// leading minus, second period, and non-numeric characters.
-  static final RegExp _decimalRegex = RegExp(r'^\d*\.?\d{0,3}');
+  /// Decimal-friendly input filter. Allows digits and a single decimal
+  /// point. Rejects leading minus and non-numeric characters. The
+  /// `FilteringTextInputFormatter.allow` semantics keep only characters
+  /// that individually match the pattern, so we constrain to `[0-9.]`
+  /// and rely on `double.tryParse` to discard malformed multi-period
+  /// strings (e.g. `'2.5.3'` → tryParse returns null → no emit).
+  static final RegExp _decimalRegex = RegExp(r'[0-9.]');
 
   TextInputFormatter _decimalFormatter() =>
       FilteringTextInputFormatter.allow(_decimalRegex);
