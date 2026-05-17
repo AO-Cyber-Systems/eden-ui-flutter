@@ -26,6 +26,7 @@ import 'composers_screen.dart';
 import 'scheduler_screen.dart';
 import 'field_screen.dart';
 import 'fuel_screen.dart';
+import 'theme_profiles_screen.dart';
 import 'motion_screen.dart';
 import 'compliance_screen.dart';
 import 'uswds_screen.dart';
@@ -390,5 +391,13 @@ final _categories = [
     title: 'Motion (Obj 010)',
     subtitle: 'FAB menu, loading indicators, spring-physics motion tokens',
     builder: (_) => const MotionScreen(),
+  ),
+  // Objective 009 — Vertical Theme System
+  _Category(
+    icon: Icons.color_lens_outlined,
+    title: 'Theme Profiles — Objective 009',
+    subtitle:
+        '5 vertical aesthetic profiles: commercial / medical / gov / retail / legal',
+    builder: (_) => const ThemeProfilesScreen(),
   ),
 ];
