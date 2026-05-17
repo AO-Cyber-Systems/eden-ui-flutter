@@ -19,3 +19,7 @@ export 'nodes/eden_process_node_renderer.dart';
 export 'dialogs/eden_process_phase_editor_dialog.dart';
 export 'dialogs/eden_process_task_group_editor_dialog.dart';
 export 'dialogs/eden_process_task_editor_dialog.dart';
+
+// Wave 4 — Context menus (TRD 006-11)
+export 'eden_node_context_menu.dart';
+export 'eden_edge_context_menu.dart';
