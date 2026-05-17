@@ -159,12 +159,120 @@ class _RetailScreenState extends State<RetailScreen> {
             ),
           ),
           // ─── Objective 014 anchor: TRD 014-03 EdenReceiptPreview ───
+          const Section(
+            title: 'EdenReceiptPreview — Configurable receipt layout',
+            child: _ReceiptDemoBlock(),
+          ),
           // ─── Objective 014 anchor: TRD 014-04 EdenInventoryRowEditor ───
           // ─── Objective 014 anchor: TRD 014-05 EdenReceivingFlow ───
           // ─── Objective 014 anchor: TRD 014-06 EdenSalesAnalyticsScaffold ───
           // ─── Objective 014 anchor: TRD 014-01 EdenPOSRegisterScaffold ───
         ],
       ),
+    );
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// TRD 014-03 — EdenReceiptPreview demo block
+// ───────────────────────────────────────────────────────────────────────────
+
+class _ReceiptDemoBlock extends StatefulWidget {
+  const _ReceiptDemoBlock();
+
+  @override
+  State<_ReceiptDemoBlock> createState() => _ReceiptDemoBlockState();
+}
+
+class _ReceiptDemoBlockState extends State<_ReceiptDemoBlock> {
+  EdenReceiptPreviewMode _mode = EdenReceiptPreviewMode.web;
+  EdenReceiptPrintWidth _printWidth = EdenReceiptPrintWidth.mm80;
+
+  // Hand-built demo transaction: 3-item coffee shop with discount + tax +
+  // cash change-due + footer. NOT LLM-generated.
+  static const _data = EdenReceiptData(
+    storeHeader: EdenReceiptStoreHeader(
+      storeName: 'Eden Coffee Co.',
+      address: '123 Main St, Springfield IL 62701',
+      phone: '(555) 123-4567',
+    ),
+    lineItems: <EdenReceiptLineItem>[
+      EdenReceiptLineItem(
+        name: 'Espresso Single',
+        qty: 2,
+        unitPriceCents: 350,
+      ),
+      EdenReceiptLineItem(name: 'Croissant', qty: 1, unitPriceCents: 425),
+      EdenReceiptLineItem(name: 'Mocha', qty: 1, unitPriceCents: 575),
+    ],
+    subtotalCents: 1700,
+    discountCents: 200,
+    taxCents: 105,
+    totalCents: 1605,
+    tenderSummary: <EdenReceiptTender>[
+      EdenReceiptTender(
+        method: EdenReceiptTenderMethod.cash,
+        amountCents: 1605,
+        cashGivenCents: 2000,
+      ),
+    ],
+    footer: EdenReceiptFooter(
+      returnPolicy: 'Returns within 30 days with receipt.',
+      taxId: 'EIN: 12-3456789',
+      thankYouMessage: 'Thank you for visiting!',
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final m in EdenReceiptPreviewMode.values)
+              ChoiceChip(
+                label: Text(m.name),
+                selected: _mode == m,
+                onSelected: (_) => setState(() => _mode = m),
+              ),
+          ],
+        ),
+        if (_mode == EdenReceiptPreviewMode.print) ...[
+          const SizedBox(height: EdenSpacing.space2),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final w in EdenReceiptPrintWidth.values)
+                ChoiceChip(
+                  label: Text(w.name),
+                  selected: _printWidth == w,
+                  onSelected: (_) => setState(() => _printWidth = w),
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: EdenSpacing.space3),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLow,
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.all(8),
+          child: SizedBox(
+            height: 520,
+            child: EdenReceiptPreview(
+              data: _data,
+              mode: _mode,
+              printWidth: _printWidth,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
