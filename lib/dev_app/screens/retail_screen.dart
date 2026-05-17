@@ -182,6 +182,10 @@ class _RetailScreenState extends State<RetailScreen> {
             ),
           ),
           // ─── Objective 014 anchor: TRD 014-01 EdenPOSRegisterScaffold ───
+          const Section(
+            title: 'EdenPOSRegisterScaffold — Full POS register 3-zone',
+            child: _PosRegisterDemoBlock(),
+          ),
         ],
       ),
     );
@@ -614,3 +618,187 @@ const _analyticsDemoData = EdenSalesAnalyticsData(
     EdenAnalyticsCategorySlice(label: 'Merchandise', value: 558),
   ],
 );
+
+// ───────────────────────────────────────────────────────────────────────────
+// TRD 014-01 — EdenPOSRegisterScaffold capstone demo
+// ───────────────────────────────────────────────────────────────────────────
+
+// Hand-built sample products — mirrors test/widgets/_fixtures/
+// eden_pos_register_scaffold_fixtures.dart::sampleProducts. Do NOT
+// regenerate via LLM.
+const _kPosDemoProducts = <EdenQuickAddProduct>[
+  EdenQuickAddProduct(
+    id: 'p-1',
+    name: 'Espresso Single',
+    priceCents: 350,
+    onHand: 25,
+    reorderPoint: 10,
+    categoryId: 'hot',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-2',
+    name: 'Americano',
+    priceCents: 400,
+    onHand: 18,
+    reorderPoint: 10,
+    categoryId: 'hot',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-3',
+    name: 'Cappuccino',
+    priceCents: 475,
+    onHand: 7,
+    reorderPoint: 10,
+    categoryId: 'hot',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-4',
+    name: 'Latte',
+    priceCents: 525,
+    onHand: 30,
+    reorderPoint: 10,
+    categoryId: 'hot',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-5',
+    name: 'Mocha',
+    priceCents: 575,
+    categoryId: 'hot',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-6',
+    name: 'Cortado',
+    priceCents: 425,
+    onHand: 0,
+    reorderPoint: 10,
+    categoryId: 'hot',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-7',
+    name: 'Iced Coffee',
+    priceCents: 425,
+    onHand: 20,
+    reorderPoint: 10,
+    categoryId: 'cold',
+  ),
+  EdenQuickAddProduct(
+    id: 'p-8',
+    name: 'Cold Brew',
+    priceCents: 525,
+    onHand: 12,
+    reorderPoint: 10,
+    categoryId: 'cold',
+  ),
+];
+
+const _kPosDemoCategories = <EdenQuickAddCategory>[
+  EdenQuickAddCategory(id: 'hot', label: 'Hot'),
+  EdenQuickAddCategory(id: 'cold', label: 'Cold'),
+];
+
+class _PosRegisterDemoBlock extends StatefulWidget {
+  const _PosRegisterDemoBlock();
+
+  @override
+  State<_PosRegisterDemoBlock> createState() =>
+      _PosRegisterDemoBlockState();
+}
+
+class _PosRegisterDemoBlockState extends State<_PosRegisterDemoBlock> {
+  /// `null` = auto responsive; `true` = forced compact (tabbed);
+  /// `false` = forced expanded (3-zone).
+  bool? _forceCompact;
+  EdenPosSession _session = const EdenPosSession();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              label: const Text('Auto responsive'),
+              selected: _forceCompact == null,
+              onSelected: (_) => setState(() => _forceCompact = null),
+            ),
+            FilterChip(
+              label: const Text('Force 3-zone'),
+              selected: _forceCompact == false,
+              onSelected: (_) => setState(() => _forceCompact = false),
+            ),
+            FilterChip(
+              label: const Text('Force tabbed'),
+              selected: _forceCompact == true,
+              onSelected: (_) => setState(() => _forceCompact = true),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: SizedBox(
+            height: 720,
+            child: EdenPOSRegisterScaffold(
+              session: _session,
+              products: _kPosDemoProducts,
+              categories: _kPosDemoCategories,
+              forceCompact: _forceCompact == true ? true : null,
+              forceExpanded: _forceCompact == false ? true : null,
+              onAttachCustomerRequest: () {
+                setState(() {
+                  _session = EdenPosSession(
+                    cartItems: _session.cartItems,
+                    customer: const EdenPosCustomer(
+                      id: 'c-1',
+                      name: 'Jane Doe',
+                      tier: 'gold',
+                      points: 1247,
+                    ),
+                    tenderState: _session.tenderState,
+                  );
+                });
+              },
+              onSessionEvent: (e) {
+                if (e is EdenPosProductAdded) {
+                  setState(() {
+                    final newItems =
+                        List<EdenPosCartItem>.from(_session.cartItems);
+                    newItems.add(EdenPosCartItem(
+                      id: 'ci-${DateTime.now().microsecondsSinceEpoch}',
+                      productId: e.product.id,
+                      name: e.product.name,
+                      qty: 1,
+                      unitPriceCents: e.product.priceCents,
+                    ));
+                    _session = EdenPosSession(
+                      cartItems: newItems,
+                      customer: _session.customer,
+                      tenderState: _session.tenderState,
+                    );
+                  });
+                } else if (e is EdenPosCustomerDetached) {
+                  setState(() {
+                    _session = EdenPosSession(cartItems: _session.cartItems);
+                  });
+                } else if (e is EdenPosPaymentSubmitted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                      'Payment submitted — ${_session.cartItems.length} cart items',
+                    ),
+                  ));
+                }
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
