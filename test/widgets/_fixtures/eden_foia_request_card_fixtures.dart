@@ -5,13 +5,14 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 class EdenFoiaRequestCardFixtures {
   EdenFoiaRequestCardFixtures._();
 
-  static final fixedNow = DateTime(2026, 5, 15, 12, 0);
+  // Use 00:00 (midnight) so DateTime.difference.inDays counts whole days.
+  static final fixedNow = DateTime(2026, 5, 15);
 
   static final farFuture = EdenFoiaRequest(
     id: 'FOIA-2026-0042',
     requesterName: 'Jane Citizen',
     submittedAt: DateTime(2026, 5, 1),
-    dueAt: DateTime(2026, 6, 14), // ~30 days from fixedNow
+    dueAt: DateTime(2026, 6, 14), // exactly 30 days from fixedNow midnight
     subject: 'Records concerning policy memo X-2025',
     assignedTo: 'analyst.foia@agency.gov',
     responseDocCount: 12,
@@ -31,7 +32,7 @@ class EdenFoiaRequestCardFixtures {
     id: 'FOIA-2026-0044',
     requesterName: 'Press Corp',
     submittedAt: DateTime(2026, 5, 1),
-    dueAt: DateTime(2026, 5, 20),
+    dueAt: DateTime(2026, 5, 20), // exactly 5 days from fixedNow
     subject: 'Budget allocation Q1',
     exemptionCodes: const ['b1', 'b5', 'b7'],
     redactionPassStatus: EdenFoiaRedactionStatus.complete,

@@ -163,7 +163,74 @@ class ComplianceScreen extends StatelessWidget {
               ),
             ),
           ),
-          // TRD 011-05 will append: Section(title: 'EdenFoiaRequestCard — records-request workflow', child: ...).
+          Section(
+            title:
+                'EdenFoiaRequestCard — Records request workflow (FOIA / GDPR DSAR)',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EdenFoiaRequestCard(
+                  request: EdenFoiaRequest(
+                    id: 'FOIA-2026-0042',
+                    requesterName: 'Jane Citizen',
+                    submittedAt: DateTime(2026, 5, 1),
+                    dueAt: DateTime.now().add(const Duration(days: 28)),
+                    subject: 'Records concerning policy memo X-2025',
+                    assignedTo: 'analyst.foia@agency.gov',
+                    responseDocCount: 12,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                EdenFoiaRequestCard(
+                  request: EdenFoiaRequest(
+                    id: 'FOIA-2026-0043',
+                    requesterName: 'John Public',
+                    submittedAt: DateTime(2026, 5, 1),
+                    dueAt: DateTime.now().add(const Duration(days: 10)),
+                    subject: 'Emails between agency leadership Q1 2026',
+                    assignedTo: 'analyst.foia@agency.gov',
+                    redactionPassStatus: EdenFoiaRedactionStatus.inProgress,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                EdenFoiaRequestCard(
+                  request: EdenFoiaRequest(
+                    id: 'FOIA-2026-0044',
+                    requesterName: 'Press Corp',
+                    submittedAt: DateTime(2026, 5, 1),
+                    dueAt: DateTime.now().add(const Duration(days: 5)),
+                    subject: 'Budget allocation Q1',
+                    exemptionCodes: const ['b1', 'b5', 'b7'],
+                    redactionPassStatus: EdenFoiaRedactionStatus.complete,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                EdenFoiaRequestCard(
+                  request: EdenFoiaRequest(
+                    id: 'FOIA-2026-0010',
+                    requesterName: 'Watchdog NGO',
+                    submittedAt: DateTime(2026, 3, 1),
+                    dueAt: DateTime.now().subtract(const Duration(days: 3)),
+                    subject: 'Personnel records for Director Smith',
+                    exemptionCodes: const ['b6'],
+                    redactionPassStatus: EdenFoiaRedactionStatus.blocked,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                EdenFoiaRequestCard(
+                  request: EdenFoiaRequest(
+                    id: 'FOIA-2026-0099',
+                    requesterName: 'Inter-agency request',
+                    submittedAt: DateTime(2026, 5, 1),
+                    dueAt: DateTime.now().add(const Duration(days: 20)),
+                    subject: 'Classified materials review',
+                    classification: EdenClassificationLevel.secret,
+                    exemptionCodes: const ['b1'],
+                  ),
+                ),
+              ],
+            ),
+          ),
           // TRD 011-06 will append: Section(title: 'EdenCaseFileShell — multi-tab dossier', child: ...).
           const Section(
             title:

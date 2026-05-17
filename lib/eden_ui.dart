@@ -402,6 +402,9 @@ export 'src/widgets/eden_language_selector.dart';
 export 'src/widgets/eden_section508_audit.dart';
 export 'src/widgets/eden_audit_log_viewer.dart';
 
+// ─────────── Objective 011 — Compliance overlay primitives Wave 5 ───────────
+export 'src/widgets/eden_foia_request_card.dart';
+
 // Objective 010 — Visual Polish Pass Wave 1 (Foundation tokens)
 export 'src/tokens/springs.dart';
 
