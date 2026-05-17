@@ -422,3 +422,6 @@ export 'src/widgets/eden_status_dot_overlay.dart';
 // ─────────── Objective 012 — Cross-vertical commerce primitives Wave 1 ───────────
 export 'src/widgets/eden_line_item_editor.dart';
 export 'src/widgets/eden_aggregate_kpi_strip.dart';
+
+// ─────────── Objective 012 — Cross-vertical commerce primitives Wave 2 ───────────
+export 'src/widgets/eden_payment_entry.dart';
