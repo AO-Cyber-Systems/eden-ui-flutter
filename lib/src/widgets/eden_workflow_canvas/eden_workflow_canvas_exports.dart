@@ -12,3 +12,4 @@ export 'workflow_graph_builder.dart';
 // Wave 2 — Trigger node + Field registry + Event browser (TRD 020-02)
 export 'workflow_field_registry.dart';
 export 'nodes/eden_trigger_node.dart';
+export 'nodes/eden_workflow_event_browser.dart';
