@@ -394,3 +394,4 @@ export 'src/tokens/springs.dart';
 
 // Objective 010 — Visual Polish Pass Wave 2 (M3 Expressive batch)
 export 'src/widgets/eden_button_group.dart';
+export 'src/widgets/eden_split_button.dart';
