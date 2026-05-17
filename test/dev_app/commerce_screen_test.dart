@@ -85,5 +85,18 @@ void main() {
       expect(find.text('Flat line baseline'), findsOneWidget);
       expect(find.text('Sparkline with NaN gaps'), findsOneWidget);
     });
+
+    testWidgets('renders BarChart section with 4 vertical scenarios', (tester) async {
+      tester.view.physicalSize = const Size(1200, 16000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(const MaterialApp(home: CommerceScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('Retail daily sales (single series + target line)'), findsOneWidget);
+      expect(find.text('Fuel monthly volume by truck (grouped)'), findsOneWidget);
+      expect(find.text('Medical claims by status (stacked)'), findsOneWidget);
+      expect(find.text('Trades revenue by service category (horizontal)'), findsOneWidget);
+    });
   });
 }

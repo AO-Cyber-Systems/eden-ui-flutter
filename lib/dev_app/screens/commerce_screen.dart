@@ -459,7 +459,112 @@ class _CommerceScreenState extends State<CommerceScreen> {
               ],
             ),
           ),
-          // TRD 012-06 appends: Section(title: 'EdenBarChart — grouped / stacked / horizontal', child: ...).
+          const Section(
+            title: 'EdenBarChart — grouped / stacked / horizontal',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Retail daily sales (single series + target line)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  height: 280,
+                  child: EdenBarChart(
+                    series: [
+                      EdenChartSeries(name: 'Sales', data: [
+                        EdenChartDataPoint(label: 'Mon', value: 1200),
+                        EdenChartDataPoint(label: 'Tue', value: 1340),
+                        EdenChartDataPoint(label: 'Wed', value: 1180),
+                        EdenChartDataPoint(label: 'Thu', value: 1420),
+                        EdenChartDataPoint(label: 'Fri', value: 1520),
+                        EdenChartDataPoint(label: 'Sat', value: 1680),
+                        EdenChartDataPoint(label: 'Sun', value: 1245),
+                      ]),
+                    ],
+                    xAxisLabel: 'Day of week',
+                    yAxisLabel: r'Sales ($)',
+                    referenceLines: [1500.0],
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('Fuel monthly volume by truck (grouped)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  height: 280,
+                  child: EdenBarChart(
+                    series: [
+                      EdenChartSeries(name: 'Truck A', data: [
+                        EdenChartDataPoint(label: 'W1', value: 2400),
+                        EdenChartDataPoint(label: 'W2', value: 2600),
+                        EdenChartDataPoint(label: 'W3', value: 2200),
+                        EdenChartDataPoint(label: 'W4', value: 2800),
+                      ]),
+                      EdenChartSeries(name: 'Truck B', data: [
+                        EdenChartDataPoint(label: 'W1', value: 2100),
+                        EdenChartDataPoint(label: 'W2', value: 2400),
+                        EdenChartDataPoint(label: 'W3', value: 2000),
+                        EdenChartDataPoint(label: 'W4', value: 2500),
+                      ]),
+                      EdenChartSeries(name: 'Truck C', data: [
+                        EdenChartDataPoint(label: 'W1', value: 1800),
+                        EdenChartDataPoint(label: 'W2', value: 2000),
+                        EdenChartDataPoint(label: 'W3', value: 1900),
+                        EdenChartDataPoint(label: 'W4', value: 2100),
+                      ]),
+                    ],
+                    xAxisLabel: 'Week',
+                    yAxisLabel: 'Gallons',
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('Medical claims by status (stacked)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  height: 280,
+                  child: EdenBarChart(
+                    stacked: true,
+                    series: [
+                      EdenChartSeries(name: 'Paid', data: [
+                        EdenChartDataPoint(label: 'Jan', value: 92),
+                        EdenChartDataPoint(label: 'Feb', value: 88),
+                        EdenChartDataPoint(label: 'Mar', value: 95),
+                        EdenChartDataPoint(label: 'Apr', value: 91),
+                        EdenChartDataPoint(label: 'May', value: 94),
+                        EdenChartDataPoint(label: 'Jun', value: 89),
+                      ]),
+                      EdenChartSeries(name: 'Denied', data: [
+                        EdenChartDataPoint(label: 'Jan', value: 8),
+                        EdenChartDataPoint(label: 'Feb', value: 12),
+                        EdenChartDataPoint(label: 'Mar', value: 5),
+                        EdenChartDataPoint(label: 'Apr', value: 9),
+                        EdenChartDataPoint(label: 'May', value: 6),
+                        EdenChartDataPoint(label: 'Jun', value: 11),
+                      ]),
+                    ],
+                    xAxisLabel: 'Month',
+                    yAxisLabel: 'Claims',
+                  ),
+                ),
+                SizedBox(height: 24),
+                Text('Trades revenue by service category (horizontal)', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                SizedBox(
+                  height: 280,
+                  child: EdenBarChart(
+                    horizontal: true,
+                    series: [
+                      EdenChartSeries(name: 'Revenue', data: [
+                        EdenChartDataPoint(label: 'HVAC Install', value: 24600),
+                        EdenChartDataPoint(label: 'HVAC Repair', value: 18200),
+                        EdenChartDataPoint(label: 'Plumbing', value: 12400),
+                        EdenChartDataPoint(label: 'Electrical', value: 9800),
+                        EdenChartDataPoint(label: 'Refrig.', value: 6200),
+                      ]),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           // TRD 012-07 appends: Section(title: 'EdenDonutChart — center-label + legend', child: ...).
         ],
       ),
