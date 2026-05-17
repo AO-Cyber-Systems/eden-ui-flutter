@@ -231,7 +231,119 @@ class ComplianceScreen extends StatelessWidget {
               ],
             ),
           ),
-          // TRD 011-06 will append: Section(title: 'EdenCaseFileShell — multi-tab dossier', child: ...).
+          Section(
+            title:
+                'EdenCaseFileShell — Multi-tab regulated dossier (CAPSTONE: composes 011-01 + 011-04)',
+            child: SizedBox(
+              height: 600,
+              child: EdenCaseFileShell(
+                data: EdenCaseFileData(
+                  caseId: 'CASE-2026-0042',
+                  caseTitle: 'Smith Family — Social services intake',
+                  status: 'Open',
+                  openedAt: DateTime(2026, 5, 10),
+                  classification: EdenClassificationLevel.controlledUnclassified,
+                  assignedTo: 'caseworker.jones@dhhs.gov',
+                  headerMetadata: const {
+                    'County': 'Cobb',
+                    'Program': 'Child welfare',
+                    'Priority': 'Standard',
+                  },
+                  activityEntries: [
+                    EdenCaseFileActivity(
+                      id: 'a1',
+                      actor: 'caseworker.jones@dhhs.gov',
+                      timestamp: DateTime(2026, 5, 10, 9, 14),
+                      title: 'Case opened',
+                      body: 'Initial intake interview scheduled.',
+                    ),
+                    EdenCaseFileActivity(
+                      id: 'a2',
+                      actor: 'supervisor@dhhs.gov',
+                      timestamp: DateTime(2026, 5, 11, 12, 0),
+                      title: 'Supervisor review completed',
+                    ),
+                  ],
+                  documents: [
+                    EdenCaseFileDocument(
+                      id: 'd1',
+                      name: 'intake-form.pdf',
+                      sizeBytes: 1024 * 80,
+                      uploadedAt: DateTime(2026, 5, 10, 9, 14),
+                      uploadedBy: 'caseworker.jones@dhhs.gov',
+                    ),
+                    EdenCaseFileDocument(
+                      id: 'd2',
+                      name: 'medical-history.pdf',
+                      sizeBytes: 1024 * 240,
+                      uploadedAt: DateTime(2026, 5, 11, 11, 30),
+                      uploadedBy: 'caseworker.jones@dhhs.gov',
+                    ),
+                  ],
+                  contacts: const [
+                    EdenCaseFileContact(
+                      id: 'c1',
+                      name: 'Alex Subject',
+                      role: 'Subject',
+                      contactInfo: {
+                        'phone': '555-0101',
+                        'email': 'alex@example.com',
+                      },
+                    ),
+                    EdenCaseFileContact(
+                      id: 'c2',
+                      name: 'Dana Counsel',
+                      role: 'Counsel',
+                      contactInfo: {'phone': '555-0202'},
+                    ),
+                  ],
+                  notes: [
+                    EdenCaseFileNote(
+                      id: 'n1',
+                      author: 'caseworker.jones@dhhs.gov',
+                      timestamp: DateTime(2026, 5, 10, 10, 0),
+                      content:
+                          'Initial intake interview completed. No follow-up issues raised.',
+                    ),
+                    EdenCaseFileNote(
+                      id: 'n2',
+                      author: 'counsel.smith@law.dhhs.gov',
+                      timestamp: DateTime(2026, 5, 12, 14, 30),
+                      content:
+                          'Attorney-client confidential strategy note — do not share.',
+                      isPrivileged: true,
+                    ),
+                  ],
+                  auditEntries: [
+                    EdenAuditLogEntry(
+                      id: 'evt-001',
+                      timestamp: DateTime(2026, 5, 10, 9, 0),
+                      actor: 'caseworker.jones@dhhs.gov',
+                      action: 'created',
+                      target: 'case-file/CASE-2026-0042',
+                      category: 'lifecycle',
+                      prevHash:
+                          '0000000000000000000000000000000000000000000000000000000000000000',
+                      currHash:
+                          'a1b2000000000000000000000000000000000000000000000000000000000000',
+                    ),
+                    EdenAuditLogEntry(
+                      id: 'evt-002',
+                      timestamp: DateTime(2026, 5, 11, 12, 0),
+                      actor: 'supervisor@dhhs.gov',
+                      action: 'reviewed',
+                      target: 'case-file/CASE-2026-0042',
+                      category: 'review',
+                      prevHash:
+                          'a1b2000000000000000000000000000000000000000000000000000000000000',
+                      currHash:
+                          'b3c4000000000000000000000000000000000000000000000000000000000000',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const Section(
             title:
                 'EdenPermissionMatrix — Federal roles + break-glass override',
