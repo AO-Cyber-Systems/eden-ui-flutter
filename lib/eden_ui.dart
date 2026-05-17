@@ -380,3 +380,4 @@ export 'src/utils/responsive.dart';
 // ─────────── Objective 009 — Vertical Theme System ───────────
 export 'src/theme/eden_theme_profile.dart';
 export 'src/theme/eden_theme_profile_scope.dart';
+export 'src/theme/eden_status_palette.dart';
