@@ -33,6 +33,7 @@ import 'compliance_screen.dart';
 import 'medical_screen.dart';
 import 'eod_screen.dart';
 import 'retail_screen.dart';
+import 'salon_screen.dart';
 import 'staff_screen.dart';
 import 'uswds_screen.dart';
 
@@ -392,6 +393,14 @@ final _categories = [
     subtitle:
         'POS register, quick-add grid, receipt preview, inventory row editor, receiving flow, sales analytics',
     builder: (_) => const RetailScreen(),
+  ),
+  // Objective 016 — Salon-Specific Commerce
+  _Category(
+    icon: Icons.spa_outlined,
+    title: 'B-Salon — Salon-Specific Commerce',
+    subtitle:
+        'Service catalog tile, time slot picker, membership manager, intake form builder, two-way SMS thread, staff schedule + capability matrix',
+    builder: (_) => const SalonScreen(),
   ),
   // Objective 015 — Staff cluster (commissions, time clock, time card)
   _Category(
