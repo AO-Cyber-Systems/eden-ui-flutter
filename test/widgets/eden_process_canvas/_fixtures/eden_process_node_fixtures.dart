@@ -246,3 +246,143 @@ EdenProcessNodeRendererConfig phaseRendererConfigFixture({
       onDeletePhase: onDeletePhase,
       onOpenPhaseEditor: onOpenPhaseEditor,
     );
+
+// ─────────── Task-group-node fixtures (TRD 006-06) ───────────
+
+EdenDiagramNode taskGroupDiagramNodeFixture({
+  int groupId = 10,
+  int phaseId = 1,
+  String displayName = 'Site Inspection',
+}) =>
+    EdenDiagramNode(
+      id: 'group-$groupId',
+      shape: EdenNodeShape.roundedRect,
+      x: 100,
+      y: 100,
+      width: 260,
+      height: 200,
+      label: displayName,
+      data: {
+        'nodeType': 'taskGroup',
+        'groupId': groupId,
+        'phaseId': phaseId,
+      },
+    );
+
+EdenProcessTaskTemplate taskTemplateFixture({
+  required int id,
+  required int groupId,
+  String? displayName,
+  int sortOrder = 0,
+  bool isRequired = false,
+  bool photoRequired = false,
+  bool signatureRequired = false,
+  bool approvalRequired = false,
+  String runtimeComponent = 'checklist',
+  int? onCompleteWorkflowId,
+  int? onBlockedWorkflowId,
+  int? onNaWorkflowId,
+  int? onCantDoWorkflowId,
+}) =>
+    EdenProcessTaskTemplate(
+      id: id,
+      taskGroupId: groupId,
+      name: 't_$id',
+      displayName: displayName ?? 'Task $id',
+      sortOrder: sortOrder,
+      runtimeComponent: runtimeComponent,
+      runtimeComponentConfig: const {},
+      isRequired: isRequired,
+      photoRequired: photoRequired,
+      signatureRequired: signatureRequired,
+      approvalRequired: approvalRequired,
+      descriptionRequired: false,
+      attachmentRequired: false,
+      allowsNa: true,
+      allowsBlocked: false,
+      allowsCantDo: false,
+      blockingBehavior: 'none',
+      onCompleteWorkflowId: onCompleteWorkflowId,
+      onBlockedWorkflowId: onBlockedWorkflowId,
+      onNaWorkflowId: onNaWorkflowId,
+      onCantDoWorkflowId: onCantDoWorkflowId,
+    );
+
+EdenProcessTaskGroup taskGroupFixture({
+  int id = 10,
+  int phaseId = 1,
+  String displayName = 'Site Inspection',
+  bool isCollapsedDefault = false,
+  int? taskGroupTemplateId,
+  int? onAllCompleteWorkflowId,
+  int? onItemNaWorkflowId,
+  int? onItemCantDoWorkflowId,
+  List<EdenProcessTaskTemplate> tasks = const [],
+}) =>
+    EdenProcessTaskGroup(
+      id: id,
+      processPhaseId: phaseId,
+      name: displayName.toLowerCase().replaceAll(' ', '_'),
+      displayName: displayName,
+      sortOrder: 0,
+      isCollapsedDefault: isCollapsedDefault,
+      isRequired: true,
+      taskGroupTemplateId: taskGroupTemplateId,
+      onAllCompleteWorkflowId: onAllCompleteWorkflowId,
+      onItemNaWorkflowId: onItemNaWorkflowId,
+      onItemCantDoWorkflowId: onItemCantDoWorkflowId,
+      tasks: tasks,
+    );
+
+EdenProcessTaskGroup groupWithFiveTasksFixture({int id = 10, int phaseId = 1}) =>
+    taskGroupFixture(
+      id: id,
+      phaseId: phaseId,
+      tasks: [
+        taskTemplateFixture(id: 101, groupId: id, sortOrder: 0, displayName: 'Arrive on site', isRequired: true),
+        taskTemplateFixture(id: 102, groupId: id, sortOrder: 1, displayName: 'Take photos', photoRequired: true),
+        taskTemplateFixture(id: 103, groupId: id, sortOrder: 2, displayName: 'Sign waiver', signatureRequired: true),
+        taskTemplateFixture(id: 104, groupId: id, sortOrder: 3, displayName: 'Get approval', approvalRequired: true),
+        taskTemplateFixture(id: 105, groupId: id, sortOrder: 4, displayName: 'Wrap up'),
+      ],
+    );
+
+EdenProcessTaskGroup groupWithTemplateFixture({int id = 10, int phaseId = 1}) =>
+    taskGroupFixture(
+      id: id,
+      phaseId: phaseId,
+      displayName: 'Template-derived group',
+      taskGroupTemplateId: 999,
+    );
+
+EdenProcessTaskGroup groupWithHooksFixture({int id = 10, int phaseId = 1}) =>
+    taskGroupFixture(
+      id: id,
+      phaseId: phaseId,
+      onAllCompleteWorkflowId: 1,
+      onItemNaWorkflowId: 2,
+      onItemCantDoWorkflowId: 3,
+    );
+
+EdenProcessNodeRendererConfig taskGroupRendererConfigFixture({
+  Map<int, EdenProcessTaskGroup>? groupsById,
+  void Function(int, Map<String, dynamic>)? onUpdateTaskGroup,
+  void Function(int)? onDeleteTaskGroup,
+  void Function(int)? onOpenTaskGroupEditor,
+  void Function(int)? onOpenTaskEditor,
+  void Function(int, Map<String, dynamic>?)? onAddTaskInGroup,
+  void Function(int, Map<String, dynamic>)? onUpdateTask,
+  void Function(int)? onDeleteTask,
+  void Function(int, int)? onSplitTaskToNewGroup,
+}) =>
+    EdenProcessNodeRendererConfig(
+      groupsById: groupsById ?? const {},
+      onUpdateTaskGroup: onUpdateTaskGroup,
+      onDeleteTaskGroup: onDeleteTaskGroup,
+      onOpenTaskGroupEditor: onOpenTaskGroupEditor,
+      onOpenTaskEditor: onOpenTaskEditor,
+      onAddTaskInGroup: onAddTaskInGroup,
+      onUpdateTask: onUpdateTask,
+      onDeleteTask: onDeleteTask,
+      onSplitTaskToNewGroup: onSplitTaskToNewGroup,
+    );
