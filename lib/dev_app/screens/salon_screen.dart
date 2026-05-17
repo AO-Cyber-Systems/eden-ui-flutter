@@ -147,7 +147,13 @@ class _SalonScreenState extends State<SalonScreen> {
               child: _IntakeFormBuilderDemo(),
             ),
           ),
-          // TRD 016-05 will append: Section(title: 'EdenClientSmsThread — Two-way SMS thread', child: ...).
+          Section(
+            title: 'EdenClientSmsThread — Two-way SMS thread',
+            child: SizedBox(
+              height: 500,
+              child: _SmsThreadDemo(),
+            ),
+          ),
           // TRD 016-06 will append: Section(title: 'EdenStaffSchedule + EdenStaffCapabilityMatrix', child: ...).
         ],
       ),
@@ -206,6 +212,105 @@ class _IntakeFormBuilderDemoState extends State<_IntakeFormBuilderDemo> {
             'Published "${_schema.name}" v${_schema.version} with ${_schema.fields.length} fields',
           ),
         ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// TRD 016-05 — EdenClientSmsThread demo
+// -----------------------------------------------------------------------------
+
+class _SmsThreadDemo extends StatefulWidget {
+  @override
+  State<_SmsThreadDemo> createState() => _SmsThreadDemoState();
+}
+
+class _SmsThreadDemoState extends State<_SmsThreadDemo> {
+  late List<EdenSmsMessage> _messages = [
+    EdenSmsMessage(
+      id: 's1',
+      body: 'Hi! Can you confirm my appointment for Thursday 3pm?',
+      direction: EdenSmsDirection.inbound,
+      sentAt: DateTime.now().subtract(const Duration(days: 2, hours: 5)),
+    ),
+    EdenSmsMessage(
+      id: 's2',
+      body:
+          'Yes — you are confirmed for Thursday May 18 at 3:00 PM with Aisha.',
+      direction: EdenSmsDirection.outbound,
+      status: EdenSmsDeliveryStatus.delivered,
+      sentAt: DateTime.now().subtract(const Duration(days: 2, hours: 5)),
+    ),
+    EdenSmsMessage(
+      id: 's3',
+      body: 'Perfect, thank you!',
+      direction: EdenSmsDirection.inbound,
+      sentAt: DateTime.now().subtract(const Duration(days: 2, hours: 4)),
+    ),
+    EdenSmsMessage(
+      id: 's4',
+      body:
+          'Quick question — what dye brand do you carry? I want to match my current color.',
+      direction: EdenSmsDirection.inbound,
+      sentAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+    ),
+    EdenSmsMessage(
+      id: 's5',
+      body:
+          'We use Wella Professionals + Redken. Send a photo of your current color and Aisha can preview matches.',
+      direction: EdenSmsDirection.outbound,
+      status: EdenSmsDeliveryStatus.read,
+      sentAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+    ),
+    EdenSmsMessage(
+      id: 's6',
+      body: "Sure! Here's a photo from yesterday.",
+      direction: EdenSmsDirection.inbound,
+      mediaUrls: const ['https://example.com/photo.jpg'],
+      sentAt: DateTime.now().subtract(const Duration(hours: 6)),
+    ),
+    EdenSmsMessage(
+      id: 's7',
+      body:
+          'Beautiful — Aisha will bring out the warm copper tones to match. See you Thursday.',
+      direction: EdenSmsDirection.outbound,
+      status: EdenSmsDeliveryStatus.delivered,
+      sentAt: DateTime.now().subtract(const Duration(hours: 5)),
+    ),
+    EdenSmsMessage(
+      id: 's8',
+      body: 'Looking forward to it!',
+      direction: EdenSmsDirection.inbound,
+      sentAt: DateTime.now().subtract(const Duration(hours: 3)),
+    ),
+  ];
+  int _idCounter = 9;
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenClientSmsThread(
+      messages: _messages,
+      onSend: (draft) {
+        setState(() {
+          _messages = [
+            ..._messages,
+            EdenSmsMessage(
+              id: 's${_idCounter++}',
+              body: draft.body,
+              direction: EdenSmsDirection.outbound,
+              sentAt: DateTime.now(),
+              status: EdenSmsDeliveryStatus.queued,
+              mediaUrls: draft.mediaUrls,
+            ),
+          ];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sent: ${draft.body}')),
+        );
+      },
+      onMediaTap: (url) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Open media: $url')),
       ),
     );
   }

@@ -481,6 +481,7 @@ export 'src/widgets/eden_shift_close.dart';
 // ─────────── Objective 016 — Salon-Specific Commerce Wave 1 ───────────
 export 'src/widgets/eden_service_catalog_tile.dart';
 export 'src/widgets/eden_intake_form_builder.dart';
+export 'src/widgets/eden_client_sms_thread.dart';
 
 // ─────────── Objective 017 — Medical Eden Notes SKU Wave 1 ───────────
 export 'src/widgets/eden_avs_generator.dart';
