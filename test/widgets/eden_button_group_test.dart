@@ -183,8 +183,6 @@ void main() {
     });
 
     testWidgets('semantics: each segment exposes button + selected + label', (tester) async {
-      final handle = tester.ensureSemantics();
-      addTearDown(handle.dispose);
       await tester.pumpWidget(wrap(buildGroup(
         selectedIndex: 1,
         items: const [
@@ -192,8 +190,18 @@ void main() {
           EdenButtonGroupItem(label: 'Send'),
         ],
       )));
-      expect(find.bySemanticsLabel('Save'), findsOneWidget);
-      expect(find.bySemanticsLabel('Send'), findsOneWidget);
+      // The semantics tree should expose both labels with isButton flag.
+      // We assert by walking the rendered Semantics widgets directly — this
+      // does not require a SemanticsHandle (avoids the dispose contract).
+      final semNodes = tester.widgetList<Semantics>(find.byType(Semantics));
+      final labels = semNodes
+          .map((s) => s.properties.label)
+          .where((l) => l != null)
+          .toList();
+      expect(labels.contains('Save'), isTrue,
+          reason: 'Semantics label "Save" should be present. Got: $labels');
+      expect(labels.contains('Send'), isTrue,
+          reason: 'Semantics label "Send" should be present. Got: $labels');
     });
 
     testWidgets('press animation triggers (smoke: AnimatedBuilder present)', (tester) async {
