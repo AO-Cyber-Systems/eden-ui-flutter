@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../eden_ui.dart';
-import '../../src/widgets/eden_vitals_row.dart';
 import '../widgets/section.dart';
 
 /// Dev-catalog screen for Objective 013 (B-Medical clinical primitives).
@@ -25,6 +24,10 @@ class MedicalScreen extends StatelessWidget {
           Section(
             title: 'EdenVitalsRow — Clinical vital signs strip (013-01)',
             child: _VitalsRowDemo(),
+          ),
+          Section(
+            title: 'EdenMedicationList — FHIR-shape medication list (013-02)',
+            child: _MedicationListDemo(),
           ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
@@ -337,5 +340,155 @@ const _copdFlare = <EdenVitalSign>[
     kind: EdenVitalKind.weight,
     unit: 'kg',
     value: 79,
+  ),
+];
+
+// ────────────────────────── 013-02 demo ──────────────────────────
+
+class _MedicationListDemo extends StatelessWidget {
+  const _MedicationListDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'T2DM + HTN combo (3 active meds)',
+          child: EdenMedicationList(medications: _t2dmCombo),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Polypharmacy elderly (warfarin + aspirin interaction)',
+          child: EdenMedicationList(medications: _polypharmacyElderly),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Post-op pain regimen',
+          child: EdenMedicationList(medications: _postOpPain),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Single-med adult (refill needed)',
+          child: EdenMedicationList(medications: _refillNeeded),
+        ),
+      ],
+    );
+  }
+}
+
+final _t2dmCombo = <EdenMedicationStatement>[
+  EdenMedicationStatement(
+    id: 'demo-med-1',
+    patientId: 'demo-pt-1',
+    drugName: 'Metformin',
+    doseLabel: '500mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Twice daily',
+    prescriber: 'Dr. Chen',
+    startDate: DateTime(2024, 3, 12),
+  ),
+  EdenMedicationStatement(
+    id: 'demo-med-2',
+    patientId: 'demo-pt-1',
+    drugName: 'Lisinopril',
+    doseLabel: '10mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Once daily',
+    prescriber: 'Dr. Chen',
+    startDate: DateTime(2024, 1, 8),
+  ),
+  EdenMedicationStatement(
+    id: 'demo-med-3',
+    patientId: 'demo-pt-1',
+    drugName: 'Atorvastatin',
+    doseLabel: '40mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'At bedtime',
+    prescriber: 'Dr. Chen',
+    startDate: DateTime(2023, 11, 5),
+  ),
+];
+
+final _polypharmacyElderly = <EdenMedicationStatement>[
+  EdenMedicationStatement(
+    id: 'demo-poly-1',
+    patientId: 'demo-pt-2',
+    drugName: 'Warfarin',
+    doseLabel: '5mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Once daily',
+    prescriber: 'Dr. Lee',
+    startDate: DateTime(2022, 6, 14),
+  ),
+  EdenMedicationStatement(
+    id: 'demo-poly-2',
+    patientId: 'demo-pt-2',
+    drugName: 'Aspirin',
+    doseLabel: '81mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Once daily',
+    prescriber: 'Dr. Lee',
+    startDate: DateTime(2023, 2, 20),
+    interactionWarning: 'Increased bleeding risk — monitor INR (warfarin)',
+  ),
+  EdenMedicationStatement(
+    id: 'demo-poly-3',
+    patientId: 'demo-pt-2',
+    drugName: 'Levothyroxine',
+    doseLabel: '75mcg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Once daily, AM',
+    prescriber: 'Dr. Lee',
+    startDate: DateTime(2020, 9, 3),
+  ),
+  EdenMedicationStatement(
+    id: 'demo-poly-4',
+    patientId: 'demo-pt-2',
+    drugName: 'Amlodipine',
+    doseLabel: '5mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Once daily',
+    prescriber: 'Dr. Lee',
+    startDate: DateTime(2023, 8, 1),
+  ),
+];
+
+final _postOpPain = <EdenMedicationStatement>[
+  EdenMedicationStatement(
+    id: 'demo-pp-1',
+    patientId: 'demo-pt-3',
+    drugName: 'Oxycodone',
+    doseLabel: '5mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'q6h PRN pain',
+    prescriber: 'Dr. Garcia',
+    startDate: DateTime.now().subtract(const Duration(days: 2)),
+    interactionWarning: 'Schedule II — monitor for misuse',
+  ),
+  EdenMedicationStatement(
+    id: 'demo-pp-2',
+    patientId: 'demo-pt-3',
+    drugName: 'Acetaminophen',
+    doseLabel: '650mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'q6h',
+    prescriber: 'Dr. Garcia',
+    startDate: DateTime.now().subtract(const Duration(days: 2)),
+  ),
+];
+
+final _refillNeeded = <EdenMedicationStatement>[
+  EdenMedicationStatement(
+    id: 'demo-r-1',
+    patientId: 'demo-pt-4',
+    drugName: 'Lisinopril',
+    doseLabel: '10mg',
+    route: EdenMedicationRoute.oral,
+    frequency: 'Once daily',
+    prescriber: 'Dr. Chen',
+    startDate: DateTime(2024, 1, 8),
+    needsRefill: true,
+    refillsRemaining: 0,
   ),
 ];

@@ -436,6 +436,7 @@ export 'src/widgets/eden_split_tender.dart';
 
 // ─────────── Objective 013 — B-Medical clinical primitives Wave 1 ───────────
 export 'src/widgets/eden_vitals_row.dart';
+export 'src/widgets/eden_medication_list.dart';
 
 // ─────────── Objective 013 — B-Medical clinical primitives Wave 2 ───────────
 // (TRD 013-06 EdenSOAPNote + TRD 013-07 EdenChartTimeline append here.)
@@ -446,3 +447,4 @@ export 'src/widgets/eden_vitals_row.dart';
 // ─────────── Objective 014 — B-Retail back-office + cross-vertical polish ───────────
 // Wave 1
 export 'src/widgets/eden_quick_add_product_grid.dart';
+export 'src/widgets/eden_receipt_preview.dart';
