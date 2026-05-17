@@ -9,4 +9,5 @@ export 'process_graph_builder.dart';
 export 'nodes/eden_process_start_node.dart';
 export 'nodes/eden_process_end_node.dart';
 export 'nodes/eden_process_orphan_node.dart';
+export 'nodes/eden_process_phase_node.dart';
 export 'nodes/eden_process_node_renderer.dart';

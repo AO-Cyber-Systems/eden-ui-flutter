@@ -1,5 +1,6 @@
 import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../_fixtures/eden_process_node_fixtures.dart';
@@ -244,8 +245,9 @@ void main() {
         context: nodeCtx(phaseDiagramNodeFixture(phaseId: 1)),
         config: phaseRendererConfigFixture(phasesById: {1: phase}, expanded: {1}),
       )));
-      expect(find.textContaining('Group 1'), findsOneWidget);
-      expect(find.textContaining('Group 2'), findsOneWidget);
+      // RichText composes the group name into TextSpan; use findRichText.
+      expect(find.textContaining('Group 1', findRichText: true), findsOneWidget);
+      expect(find.textContaining('Group 2', findRichText: true), findsOneWidget);
     });
 
     testWidgets('expanded with no groups shows empty-state italic placeholder',
@@ -319,7 +321,7 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
     });
 
-    testWidgets('typing new name + tapping outside saves via onUpdatePhase',
+    testWidgets('typing new name + Enter saves via onUpdatePhase',
         (tester) async {
       Map<String, dynamic>? updates;
       int? updatedId;
@@ -336,10 +338,11 @@ void main() {
       )));
 
       await tester.tap(find.text('Planning'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Discovery');
-      // Trigger blur by tapping outside.
-      await tester.tap(find.byIcon(Icons.layers));
+      await tester.pump();
+      // Submit via Enter.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
 
       expect(updatedId, 1);
@@ -359,12 +362,36 @@ void main() {
       )));
 
       await tester.tap(find.text('Planning'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), '   ');
-      await tester.tap(find.byIcon(Icons.layers));
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
 
       expect(callCount, 0);
+    });
+
+    testWidgets('Esc cancels edit mode without firing onUpdatePhase',
+        (tester) async {
+      int callCount = 0;
+      final phase = phaseFixture(id: 1, displayName: 'Planning');
+      await tester.pumpWidget(wrap(EdenProcessPhaseNode(
+        context: nodeCtx(phaseDiagramNodeFixture(phaseId: 1)),
+        config: phaseRendererConfigFixture(
+          phasesById: {1: phase},
+          onUpdatePhase: (_, __) => callCount += 1,
+        ),
+      )));
+
+      await tester.tap(find.text('Planning'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Discovery');
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(callCount, 0);
+      expect(find.byType(TextField), findsNothing);
     });
 
     testWidgets('saving the exact same name does NOT fire onUpdatePhase',
@@ -380,9 +407,9 @@ void main() {
       )));
 
       await tester.tap(find.text('Planning'));
-      await tester.pump();
-      // Leave text unchanged.
-      await tester.tap(find.byIcon(Icons.layers));
+      await tester.pumpAndSettle();
+      // Leave text unchanged. Press Enter.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
 
       expect(callCount, 0);
