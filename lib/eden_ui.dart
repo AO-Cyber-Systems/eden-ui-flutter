@@ -402,3 +402,6 @@ export 'src/widgets/eden_button_group.dart';
 export 'src/widgets/eden_split_button.dart';
 export 'src/widgets/eden_fab_menu.dart';
 export 'src/widgets/eden_loading_indicator.dart';
+
+// Objective 010 — Visual Polish Pass Wave 3 (Density + polish)
+export 'src/widgets/eden_skeleton_scope.dart';
