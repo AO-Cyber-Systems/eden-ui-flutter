@@ -477,3 +477,6 @@ export 'src/widgets/eden_cash_drawer_close.dart';
 export 'src/widgets/eden_checkout_sheet.dart';
 export 'src/widgets/eden_xz_report.dart';
 export 'src/widgets/eden_shift_close.dart';
+
+// ─────────── Objective 017 — Medical Eden Notes SKU Wave 1 ───────────
+export 'src/widgets/eden_avs_generator.dart';

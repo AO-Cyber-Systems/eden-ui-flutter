@@ -57,6 +57,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenVisitEncounterScaffold — during-visit workflow (013-09)',
             child: _VisitEncounterDemo(),
           ),
+          Section(
+            title: 'EdenAVSGenerator — patient-facing After Visit Summary (017-01)',
+            child: _AvsGeneratorDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -1297,3 +1301,189 @@ class _VisitEncounterDemo extends StatelessWidget {
     );
   }
 }
+
+// ────────────────────────── 017-01 demo ──────────────────────────
+
+class _AvsGeneratorDemo extends StatelessWidget {
+  const _AvsGeneratorDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Behavioral-health follow-up (compact, all callbacks wired)',
+          child: EdenAVSGenerator(
+            document: _avsBehavioralHealthFollowUp,
+            onPrintRequested: () => debugPrint('AVS: Print tapped'),
+            onEmailRequested: (e) => debugPrint('AVS: Email tapped — ${e.format}'),
+            onPortalShareRequested: (e) =>
+                debugPrint('AVS: Portal share tapped — ${e.format}'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Cash-pay new-patient eval (compact, only Print callback — '
+              'demonstrates callback-gating)',
+          child: EdenAVSGenerator(
+            document: _avsCashPayNewPatientEval,
+            onPrintRequested: () => debugPrint('AVS: Print tapped'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Concierge annual physical (printFriendly layout, all callbacks)',
+          child: EdenAVSGenerator(
+            document: _avsConciergeAnnualPhysical,
+            layout: EdenAvsLayout.printFriendly,
+            onPrintRequested: () => debugPrint('AVS: Print tapped'),
+            onEmailRequested: (e) => debugPrint('AVS: Email tapped — ${e.format}'),
+            onPortalShareRequested: (e) =>
+                debugPrint('AVS: Portal share tapped — ${e.format}'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Inline demo fixtures for catalog use (NOT shared with test fixtures —
+// dev_app/ must not import test/).
+final _avsBehavioralHealthFollowUp = EdenAvsDocument(
+  patientId: 'demo-avs-alpha',
+  patientDisplayName: 'Alex Alpha',
+  encounterDate: DateTime(2026, 5, 17, 10, 30),
+  providerName: 'Dr. Jane Smith',
+  providerCredentials: 'PsyD',
+  facilityName: 'Eden Behavioral Health Center',
+  visitReason: 'Anxiety follow-up',
+  soapData: const EdenSoapNoteData(
+    patientId: 'demo-avs-alpha',
+    subjective:
+        'Patient reports improvement in anxiety since starting sertraline. '
+        'GAD-7 score down from 14 to 8.',
+    objective: 'Affect brighter. GAD-7 score 8 (mild).',
+    assessment: 'F41.1 — Generalized anxiety disorder, improving on sertraline.',
+    plan: 'Continue sertraline 50mg. Continue weekly CBT. RTC 4 weeks.',
+  ),
+  medications: [
+    EdenMedicationStatement(
+      id: 'demo-med-001',
+      patientId: 'demo-avs-alpha',
+      drugName: 'Sertraline',
+      doseLabel: '50mg',
+      route: EdenMedicationRoute.oral,
+      frequency: 'Once daily, morning',
+      prescriber: 'Dr. Jane Smith',
+      status: EdenMedicationStatus.active,
+    ),
+  ],
+  problems: [
+    EdenCondition(
+      id: 'demo-cond-001',
+      patientId: 'demo-avs-alpha',
+      code: 'F41.1',
+      codeSystem: 'ICD-10-CM',
+      description: 'Generalized anxiety disorder',
+      status: EdenConditionStatus.active,
+      onsetDate: DateTime(2025, 11, 1),
+      diagnosedBy: 'Dr. Jane Smith',
+    ),
+  ],
+  followUpInstructions:
+      'Continue sertraline 50mg daily. Follow up in 4 weeks for medication review.',
+  nextAppointmentAt: DateTime(2026, 6, 14, 10, 30),
+);
+
+final _avsCashPayNewPatientEval = EdenAvsDocument(
+  patientId: 'demo-avs-bravo',
+  patientDisplayName: 'Blake Bravo',
+  encounterDate: DateTime(2026, 5, 17, 13, 0),
+  providerName: 'Dr. Maya Patel',
+  providerCredentials: 'ND',
+  facilityName: 'Eden Wellness Clinic',
+  visitReason: 'Initial wellness consult',
+  soapData: const EdenSoapNoteData(
+    patientId: 'demo-avs-bravo',
+    subjective: '34yo presenting with persistent fatigue x 4 months.',
+    objective: 'BP 118/72, HR 68, BMI 22.1. Exam unremarkable.',
+    assessment: 'R53.83 — Other fatigue. Differential includes anemia, hypothyroidism.',
+    plan: 'CBC, CMP, TSH, vitamin D, ferritin. RTC for lab review in 2 weeks.',
+  ),
+  medications: const [],
+  problems: [
+    EdenCondition(
+      id: 'demo-cond-002',
+      patientId: 'demo-avs-bravo',
+      code: 'R53.83',
+      codeSystem: 'ICD-10-CM',
+      description: 'Other fatigue',
+      status: EdenConditionStatus.active,
+      onsetDate: DateTime(2026, 1, 15),
+      diagnosedBy: 'Dr. Maya Patel',
+    ),
+  ],
+  followUpInstructions:
+      'Lab orders sent to your portal. Schedule labs within the next week.',
+);
+
+final _avsConciergeAnnualPhysical = EdenAvsDocument(
+  patientId: 'demo-avs-charlie',
+  patientDisplayName: 'Casey Charlie',
+  encounterDate: DateTime(2026, 5, 17, 8, 0),
+  providerName: 'Dr. Robert Kim',
+  providerCredentials: 'MD',
+  facilityName: 'Eden Concierge Health',
+  visitReason: 'Annual physical',
+  soapData: const EdenSoapNoteData(
+    patientId: 'demo-avs-charlie',
+    subjective: '58yo M here for annual physical. No new complaints.',
+    objective: 'BP 128/78. HR 72. Full ROS negative. Exam NAD.',
+    assessment: 'Hyperlipidemia controlled. Hypertension well-controlled.',
+    plan: 'Continue atorvastatin + lisinopril. Repeat lipid panel in 6 months.',
+  ),
+  medications: [
+    EdenMedicationStatement(
+      id: 'demo-med-003',
+      patientId: 'demo-avs-charlie',
+      drugName: 'Atorvastatin',
+      doseLabel: '40mg',
+      route: EdenMedicationRoute.oral,
+      frequency: 'Once daily, evening',
+      status: EdenMedicationStatus.active,
+    ),
+    EdenMedicationStatement(
+      id: 'demo-med-004',
+      patientId: 'demo-avs-charlie',
+      drugName: 'Lisinopril',
+      doseLabel: '10mg',
+      route: EdenMedicationRoute.oral,
+      frequency: 'Once daily, morning',
+      status: EdenMedicationStatus.active,
+    ),
+  ],
+  problems: [
+    EdenCondition(
+      id: 'demo-cond-003',
+      patientId: 'demo-avs-charlie',
+      code: 'E78.5',
+      codeSystem: 'ICD-10-CM',
+      description: 'Hyperlipidemia, unspecified',
+      status: EdenConditionStatus.active,
+      onsetDate: DateTime(2024, 6, 1),
+    ),
+    EdenCondition(
+      id: 'demo-cond-004',
+      patientId: 'demo-avs-charlie',
+      code: 'I10',
+      codeSystem: 'ICD-10-CM',
+      description: 'Essential (primary) hypertension',
+      status: EdenConditionStatus.active,
+      onsetDate: DateTime(2023, 9, 12),
+    ),
+  ],
+  followUpInstructions:
+      'Continue current medications. Annual physical scheduled in 12 months.',
+  nextAppointmentAt: DateTime(2027, 5, 17, 8, 0),
+);
