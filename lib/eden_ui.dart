@@ -525,3 +525,6 @@ export 'src/widgets/eden_tank_fleet_map.dart';
 
 // ─────────── Objective 020 — A4-b Visual Workflow Designer ───────────
 export 'src/widgets/eden_workflow_canvas/eden_workflow_canvas_exports.dart';
+
+// ─────────── Objective 021 — A4-c Template Block Builder ───────────
+export 'src/widgets/eden_template_builder/eden_template_builder_exports.dart';
