@@ -317,6 +317,70 @@ class _FuelScreenState extends State<FuelScreen> {
           // Objective 019 — Trades polish + Fuel quick wins Wave 2
           // ---------------------------------------------------------------
           Section(
+            title: 'TANK FLEET MAP (Obj 019-05)',
+            child: SizedBox(
+              height: 600,
+              child: EdenTankFleetMap(
+                data: EdenFleetMapData(
+                  markers: [
+                    for (int i = 1; i <= 8; i++)
+                      EdenFleetMapMarker(
+                        id: 'tank-full-$i',
+                        lat: 40.0 + i * 0.01,
+                        lng: -74.0 + i * 0.01,
+                        severity: EdenFleetMapSeverity.full,
+                        label: 'Tank F$i',
+                        lastReadingAgeMinutes: 15,
+                      ),
+                    for (int i = 1; i <= 6; i++)
+                      EdenFleetMapMarker(
+                        id: 'tank-warn-$i',
+                        lat: 40.1 + i * 0.01,
+                        lng: -74.1 + i * 0.01,
+                        severity: EdenFleetMapSeverity.warning,
+                        label: 'Tank W$i',
+                        lastReadingAgeMinutes: 60,
+                      ),
+                    for (int i = 1; i <= 4; i++)
+                      EdenFleetMapMarker(
+                        id: 'tank-crit-$i',
+                        lat: 40.2 + i * 0.01,
+                        lng: -74.2 + i * 0.01,
+                        severity: EdenFleetMapSeverity.critical,
+                        label: 'Tank C$i',
+                        lastReadingAgeMinutes: 30,
+                      ),
+                    for (int i = 1; i <= 3; i++)
+                      EdenFleetMapMarker(
+                        id: 'tank-stale-$i',
+                        lat: 40.3 + i * 0.01,
+                        lng: -74.3 + i * 0.01,
+                        severity: EdenFleetMapSeverity.staleTelemetry,
+                        label: 'Tank S$i',
+                        lastReadingAgeMinutes: 60 * 24 * 4,
+                      ),
+                    for (int i = 1; i <= 4; i++)
+                      EdenFleetMapMarker(
+                        id: 'tank-unk-$i',
+                        lat: 40.4 + i * 0.01,
+                        lng: -74.4 + i * 0.01,
+                        severity: EdenFleetMapSeverity.unknown,
+                        label: 'Tank U$i',
+                      ),
+                  ],
+                ),
+                onMarkerTap: (id) => ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Tapped $id')),
+                ),
+                onMultiSelect: (ids) =>
+                    ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Build route for ${ids.length} tanks')),
+                ),
+              ),
+            ),
+          ),
+
+          Section(
             title: 'FUEL CARD PAYMENT ENTRY (Obj 019-04)',
             child: Wrap(
               spacing: 16,

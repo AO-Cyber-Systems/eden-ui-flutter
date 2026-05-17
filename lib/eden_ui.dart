@@ -521,3 +521,4 @@ export 'src/widgets/eden_delivery_variance_card.dart';
 export 'src/widgets/eden_equipment_record_card.dart';
 export 'src/widgets/eden_warranty_claim.dart';
 export 'src/widgets/eden_fuel_card_payment_entry.dart';
+export 'src/widgets/eden_tank_fleet_map.dart';
