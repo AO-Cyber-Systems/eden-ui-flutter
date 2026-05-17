@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../_sample_data/sample_data.dart';
 import '../widgets/interactive_controls.dart';
 import '../widgets/section.dart';
 
@@ -266,6 +267,324 @@ class _BadgesAlertsScreenState extends State<BadgesAlertsScreen> {
               ),
             ]),
           ),
+
+          // ----------------------------------------------------------------
+          // Objective 008 Wave 4 (TRD 008-07) — cross-vertical realistic
+          // contexts. Variant enumerations above remain as quick-reference;
+          // these sections show each badge family attached to realistic
+          // operational data from lib/dev_app/_sample_data/.
+          // ----------------------------------------------------------------
+          const EdenDivider(
+            label: 'Cross-vertical realistic contexts — Obj 008',
+          ),
+          const Section(
+            title: 'EdenUrgencyBadge — realistic urgency contexts',
+            child: _CrossVerticalUrgencyDemo(),
+          ),
+          const Section(
+            title: 'EdenPipelineBadge — pipeline stages by vertical',
+            child: _CrossVerticalPipelineDemo(),
+          ),
+          const Section(
+            title: 'EdenApprovalStatusBadge — realistic approval scenarios',
+            child: _CrossVerticalApprovalDemo(),
+          ),
+          const Section(
+            title: 'EdenMembershipTierBadge — real customers + custom tiers',
+            child: _CrossVerticalMembershipDemo(),
+          ),
+          const Section(
+            title: 'EdenBlockingAlerts — Trades fixtures',
+            child: EdenBlockingAlerts(
+              alerts: TradesScenarios.blockingAlerts,
+            ),
+          ),
+          const Section(
+            title: 'EdenBlockingAlerts — Salon fixtures',
+            child: EdenBlockingAlerts(
+              alerts: SalonScenarios.blockingAlerts,
+            ),
+          ),
+          const Section(
+            title: 'EdenBlockingAlerts — Medical fixtures',
+            child: EdenBlockingAlerts(
+              alerts: MedicalScenarios.blockingAlerts,
+            ),
+          ),
+          const Section(
+            title: 'EdenBlockingAlerts — Gov fixtures',
+            child: EdenBlockingAlerts(
+              alerts: GovScenarios.blockingAlerts,
+            ),
+          ),
+          const Section(
+            title: 'Edge — Long-text badge wrapping at narrow viewport',
+            child: _LongTextBadgeWrapDemo(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Objective 008 Wave 4 (TRD 008-07) — cross-vertical context demos.
+// Demo-only; no library widget changes.
+// =============================================================================
+
+class _CrossVerticalUrgencyDemo extends StatelessWidget {
+  const _CrossVerticalUrgencyDemo();
+  @override
+  Widget build(BuildContext context) {
+    const rows = <(String, String, String)>[
+      (
+        'Trades',
+        'AC out · 1 child + 1 elderly in home · Atlanta heat advisory',
+        'critical',
+      ),
+      (
+        'Trades',
+        'Routine HVAC tune-up · scheduled next month',
+        'low',
+      ),
+      (
+        'Salon',
+        'Bridal updo · ceremony in 3h · cannot reschedule',
+        'high',
+      ),
+      (
+        'Medical',
+        'Walk-in triage · chest pain · 67yo male',
+        'critical',
+      ),
+      (
+        'Medical',
+        'Routine 6-week post-op follow-up',
+        'low',
+      ),
+      (
+        'Fuel',
+        'Terminal tank at 8% · industrial customer · winter',
+        'critical',
+      ),
+      (
+        'Gov',
+        'SLA breach · case 12d past 10-day target window',
+        'high',
+      ),
+      (
+        'Gov',
+        'Routine quarterly compliance review',
+        'low',
+      ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (final r in rows) _ContextRow(vertical: r.$1, label: r.$2, badge: EdenUrgencyBadge(urgency: r.$3)),
+      ],
+    );
+  }
+}
+
+class _CrossVerticalPipelineDemo extends StatelessWidget {
+  const _CrossVerticalPipelineDemo();
+  @override
+  Widget build(BuildContext context) {
+    const rows = <(String, String, String)>[
+      ('Trades', 'Whitfield HVAC install estimate', 'draft'),
+      ('Trades', 'Bartholomew ranch panel upgrade', 'sent'),
+      ('Trades', 'Pierre furnace tune-up', 'won'),
+      ('Trades', 'Smith roof inspection', 'lost'),
+      ('Fuel', 'Northpoint annual contract', 'accepted'),
+      ('Fuel', 'Sauk Trail outpost · new account', 'sent'),
+      ('Gov', 'Vendor RFP · radio replacement', 'rejected'),
+      ('Gov', 'Pending board approval · CCM-0427', 'expired'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (final r in rows) _ContextRow(vertical: r.$1, label: r.$2, badge: EdenPipelineBadge(stage: r.$3)),
+      ],
+    );
+  }
+}
+
+class _CrossVerticalApprovalDemo extends StatelessWidget {
+  const _CrossVerticalApprovalDemo();
+  @override
+  Widget build(BuildContext context) {
+    const rows = <(String, String, String)>[
+      ('Trades', 'Change order #CO-1142 · +\$1,840 labor', 'pending_approval'),
+      ('Trades', 'Permit fee passthrough · #M-2026-04419', 'approved'),
+      ('Trades', 'Overtime request · Bob · Saturday callout', 'rejected'),
+      ('Salon', 'Refund · \$92 · color did not take', 'pending'),
+      ('Medical', 'Lab order · A1C + CMP · MRN 44291', 'approved'),
+      ('Medical', 'Imaging request · chest x-ray', 'in_transit'),
+      ('Gov', 'Clearance renewal · Avery Kim · Tier 2', 'pending_approval'),
+      ('Gov', 'Case escalation · CCM-2026-0427 → Tier 3', 'approved'),
+      ('Fuel', 'Truck T7 maintenance PO', 'completed'),
+      ('Fuel', 'Driver schedule adjustment · Tomás week 2', 'cancelled'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        for (final r in rows)
+          _ContextRow(
+            vertical: r.$1,
+            label: r.$2,
+            badge: EdenApprovalStatusBadge(status: r.$3),
+          ),
+      ],
+    );
+  }
+}
+
+class _CrossVerticalMembershipDemo extends StatelessWidget {
+  const _CrossVerticalMembershipDemo();
+  @override
+  Widget build(BuildContext context) {
+    final tieredCustomers =
+        CrossCuttingFixtures.customers.where((c) => c.tier != null).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const Text(
+          'Real customers from CrossCuttingFixtures (tier-tagged):',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        for (final c in tieredCustomers)
+          _ContextRow(
+            vertical: c.vertical ?? '—',
+            label: c.name,
+            badge: EdenMembershipTierBadge(tier: c.tier!),
+          ),
+        const SizedBox(height: 12),
+        const Text(
+          'Custom-tier escape hatch (per-vertical bespoke tiers):',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        _ContextRow(
+          vertical: 'Trades',
+          label: 'Premier service contract (24/7)',
+          badge: EdenMembershipTierBadge.custom(
+            label: 'PREMIER',
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          ),
+        ),
+        const _ContextRow(
+          vertical: 'Salon',
+          label: 'Founder Club · lifetime member',
+          badge: EdenMembershipTierBadge.custom(
+            label: 'FOUNDER',
+            backgroundColor: Color(0xFFFCE7F3),
+            foregroundColor: Color(0xFFDB2777),
+          ),
+        ),
+        const _ContextRow(
+          vertical: 'Medical',
+          label: 'Concierge tier · same-day access',
+          badge: EdenMembershipTierBadge.custom(
+            label: 'CONCIERGE',
+            backgroundColor: Color(0xFFCFFAFE),
+            foregroundColor: Color(0xFF0E7490),
+          ),
+        ),
+        const _ContextRow(
+          vertical: 'Gov',
+          label: 'TS-SCI clearance · compartment-aware routing',
+          badge: EdenMembershipTierBadge.custom(
+            label: 'TS-SCI',
+            backgroundColor: Color(0xFFE2E8F0),
+            foregroundColor: Color(0xFF334155),
+          ),
+        ),
+        const _ContextRow(
+          vertical: 'Fuel',
+          label: 'Bulk-fleet contract · NET-30',
+          badge: EdenMembershipTierBadge.custom(
+            label: 'BULK',
+            backgroundColor: Color(0xFFD1FAE5),
+            foregroundColor: Color(0xFF15803D),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LongTextBadgeWrapDemo extends StatelessWidget {
+  const _LongTextBadgeWrapDemo();
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 390,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: const <Widget>[
+              EdenUrgencyBadge(
+                urgency: 'EXTREMELY-LONG-CUSTOM-LEVEL-XYZ',
+              ),
+              EdenPipelineBadge(stage: 'awaiting-vendor-counter-signature'),
+              EdenApprovalStatusBadge(
+                status: 'pending_co_signature_from_provider',
+              ),
+              EdenMembershipTierBadge.custom(
+                label: 'VERY-LONG-CUSTOM-TIER-LABEL',
+                backgroundColor: Color(0xFFFEE2E2),
+                foregroundColor: Color(0xFF7C2D12),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shared row used by all cross-vertical context demos: vertical prefix
+/// (monospace, 70pt) + label (Expanded) + the badge widget on the right.
+class _ContextRow extends StatelessWidget {
+  const _ContextRow({
+    required this.vertical,
+    required this.label,
+    required this.badge,
+  });
+
+  final String vertical;
+  final String label;
+  final Widget badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          SizedBox(
+            width: 60,
+            child: Text(
+              vertical,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(label, maxLines: 2, overflow: TextOverflow.ellipsis),
+          ),
+          const SizedBox(width: 8),
+          badge,
         ],
       ),
     );
