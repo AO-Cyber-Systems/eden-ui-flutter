@@ -6,3 +6,6 @@ export 'template_layout_engine.dart';
 export 'eden_template_block_palette.dart';
 export 'eden_template_block_placeholder.dart';
 export 'eden_template_builder_canvas.dart';
+export 'eden_template_variables_panel.dart';
+export 'eden_template_styles_panel.dart';
+export 'eden_template_layout_panel.dart';

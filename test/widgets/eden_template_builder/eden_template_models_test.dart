@@ -381,6 +381,33 @@ void main() {
     });
   });
 
+  group('copyWith — settings classes (TRD-04 ergonomics)', () {
+    test('EdenTemplateLayoutSettings.copyWith preserves untouched fields', () {
+      const original = EdenTemplateLayoutSettings();
+      final modified = original.copyWith(pageSize: EdenTemplatePageSize.a4);
+      expect(modified.pageSize, EdenTemplatePageSize.a4);
+      expect(modified.orientation, original.orientation);
+      expect(modified.marginTop, original.marginTop);
+      expect(modified.marginRight, original.marginRight);
+      expect(modified.marginBottom, original.marginBottom);
+      expect(modified.marginLeft, original.marginLeft);
+      expect(
+        modified.differentFirstPageHeader,
+        original.differentFirstPageHeader,
+      );
+      expect(modified.pageNumbersInFooter, original.pageNumbersInFooter);
+    });
+
+    test('EdenTemplateStyleSettings.copyWith preserves untouched fields', () {
+      const original = EdenTemplateStyleSettings();
+      final modified = original.copyWith(brandColor: const Color(0xFF000000));
+      expect(modified.brandColor, const Color(0xFF000000));
+      expect(modified.fontFamily, original.fontFamily);
+      expect(modified.headerFontSize, original.headerFontSize);
+      expect(modified.bodyFontSize, original.bodyFontSize);
+    });
+  });
+
   group('EdenTemplateMissingVariableException', () {
     test('carries path', () {
       const e = EdenTemplateMissingVariableException('customer.name');
