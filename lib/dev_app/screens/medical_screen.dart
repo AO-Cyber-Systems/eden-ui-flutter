@@ -69,6 +69,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenAppointmentStatusFlow — 8-state appointment lifecycle (017-03)',
             child: _AppointmentStatusFlowDemo(),
           ),
+          Section(
+            title: 'EdenEligibilityResultCard — 270/271 eligibility display (017-04)',
+            child: _EligibilityResultCardDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -1926,4 +1930,185 @@ final _demoTradesJobTicket = EdenAppointmentEvent(
   providerName: 'Tech Bob',
   locationName: '123 Main St',
   visitType: 'HVAC install',
+);
+
+// ────────────────────────── 017-04 demo ──────────────────────────
+
+class _EligibilityResultCardDemo extends StatelessWidget {
+  const _EligibilityResultCardDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime(2026, 5, 17);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Covered in-network, low copay '
+              '(layout=standard, all callbacks wired)',
+          child: EdenEligibilityResultCard(
+            result: _demoCoveredInNetwork,
+            now: now,
+            onRecheckRequested: (r) => debugPrint('Eligibility: recheck ${r.id}'),
+            onAuthRequestRequested: (r) =>
+                debugPrint('Eligibility: request auth ${r.id}'),
+            onTapPatientResponsibilityBreakdown: (r) =>
+                debugPrint('Eligibility: breakdown tap ${r.id}'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Partial coverage, deductible not met',
+          child: EdenEligibilityResultCard(
+            result: _demoPartialDeductible,
+            now: now,
+            onRecheckRequested: (r) => debugPrint('Eligibility: recheck ${r.id}'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Out of network, denied (OON danger badge)',
+          child: EdenEligibilityResultCard(
+            result: _demoOutOfNetwork,
+            now: now,
+            onRecheckRequested: (r) => debugPrint('Eligibility: recheck ${r.id}'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Needs auth (Cigna TMS) — pending status visible',
+          child: EdenEligibilityResultCard(
+            result: _demoNeedsAuthPending,
+            now: now,
+            onRecheckRequested: (r) => debugPrint('Eligibility: recheck ${r.id}'),
+            onAuthRequestRequested: (r) =>
+                debugPrint('Eligibility: request auth ${r.id}'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Stale check — 91 days old, stale warning banner visible',
+          child: EdenEligibilityResultCard(
+            result: _demoStaleCheck,
+            now: now,
+            onRecheckRequested: (r) => debugPrint('Eligibility: recheck ${r.id}'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Layout variants (same fixture, 3 densities)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('layout=standard'),
+              const SizedBox(height: EdenSpacing.space2),
+              EdenEligibilityResultCard(
+                result: _demoCoveredInNetwork,
+                now: now,
+                onRecheckRequested: (r) =>
+                    debugPrint('Eligibility: recheck ${r.id}'),
+              ),
+              const SizedBox(height: EdenSpacing.space4),
+              const Text('layout=compact'),
+              const SizedBox(height: EdenSpacing.space2),
+              EdenEligibilityResultCard(
+                result: _demoCoveredInNetwork,
+                now: now,
+                layout: EdenEligibilityCardLayout.compact,
+                onRecheckRequested: (r) =>
+                    debugPrint('Eligibility: recheck ${r.id}'),
+              ),
+              const SizedBox(height: EdenSpacing.space4),
+              const Text('layout=kpiStrip'),
+              const SizedBox(height: EdenSpacing.space2),
+              EdenEligibilityResultCard(
+                result: _demoCoveredInNetwork,
+                now: now,
+                layout: EdenEligibilityCardLayout.kpiStrip,
+                onRecheckRequested: (r) =>
+                    debugPrint('Eligibility: recheck ${r.id}'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Inline catalog fixtures.
+final _demoCoveredInNetwork = EdenEligibilityResult(
+  id: 'demo-elig-001',
+  patientId: 'demo-elig-alpha',
+  policyId: 'demo-policy-aetna-001',
+  checkedAt: DateTime(2026, 5, 15),
+  coverageStatus: EdenCoverageStatus.covered,
+  planName: 'Aetna Choice POS II',
+  serviceType: 'Office visit (PCP)',
+  copayCents: 2500,
+  deductibleAmountCents: 250000,
+  deductibleMetCents: 250000,
+  deductibleRemainingCents: 0,
+  outOfPocketMaxCents: 750000,
+  outOfPocketMetCents: 250000,
+  outOfPocketRemainingCents: 500000,
+  networkStatus: EdenInsuranceNetworkStatus.inNetwork,
+);
+
+final _demoPartialDeductible = EdenEligibilityResult(
+  id: 'demo-elig-002',
+  patientId: 'demo-elig-alpha',
+  policyId: 'demo-policy-bcbs-001',
+  checkedAt: DateTime(2026, 5, 16),
+  coverageStatus: EdenCoverageStatus.partiallyCovered,
+  planName: 'BCBS HDHP Silver',
+  serviceType: 'Behavioral health outpatient (90837)',
+  coinsurancePercent: 20.0,
+  deductibleAmountCents: 350000,
+  deductibleMetCents: 120000,
+  deductibleRemainingCents: 230000,
+  outOfPocketMaxCents: 700000,
+  outOfPocketMetCents: 120000,
+  outOfPocketRemainingCents: 580000,
+  networkStatus: EdenInsuranceNetworkStatus.inNetwork,
+);
+
+final _demoOutOfNetwork = EdenEligibilityResult(
+  id: 'demo-elig-003',
+  patientId: 'demo-elig-bravo',
+  policyId: 'demo-policy-uhc-001',
+  checkedAt: DateTime(2026, 5, 16),
+  coverageStatus: EdenCoverageStatus.notCovered,
+  planName: 'UnitedHealthcare Choice Plus',
+  serviceType: 'Specialist visit (psychiatry)',
+  networkStatus: EdenInsuranceNetworkStatus.outOfNetwork,
+);
+
+final _demoNeedsAuthPending = EdenEligibilityResult(
+  id: 'demo-elig-004',
+  patientId: 'demo-elig-charlie',
+  policyId: 'demo-policy-cigna-001',
+  checkedAt: DateTime(2026, 5, 14),
+  coverageStatus: EdenCoverageStatus.needsAuth,
+  planName: 'Cigna Open Access Plus',
+  serviceType: 'TMS therapy (90867)',
+  coinsurancePercent: 30.0,
+  deductibleAmountCents: 150000,
+  deductibleMetCents: 150000,
+  deductibleRemainingCents: 0,
+  networkStatus: EdenInsuranceNetworkStatus.inNetwork,
+  priorAuthRequired: true,
+  priorAuthStatus: EdenPriorAuthStatus.pending,
+);
+
+final _demoStaleCheck = EdenEligibilityResult(
+  id: 'demo-elig-005',
+  patientId: 'demo-elig-delta',
+  policyId: 'demo-policy-medicare-001',
+  checkedAt: DateTime(2026, 2, 15),
+  coverageStatus: EdenCoverageStatus.covered,
+  planName: 'Medicare Part B',
+  serviceType: 'Office visit (99213)',
+  coinsurancePercent: 20.0,
+  networkStatus: EdenInsuranceNetworkStatus.inNetwork,
 );
