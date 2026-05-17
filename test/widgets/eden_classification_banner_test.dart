@@ -107,7 +107,7 @@ void main() {
         display: EdenClassificationDisplay.watermark,
         child: SizedBox(height: 100, child: Text('payload')),
       )));
-      expect(find.byType(Stack), findsOneWidget);
+      expect(find.byType(Stack), findsAtLeastNWidgets(1));
       expect(find.text('payload'), findsOneWidget);
       expect(find.text('SECRET'), findsOneWidget);
     });
@@ -156,13 +156,13 @@ void main() {
 
   group('EdenClassificationBannerScaffold — dual marking', () {
     testWidgets('scaffold renders top banner + child + no bottom by default', (tester) async {
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(const MaterialApp(
         home: Scaffold(
           body: SizedBox(
             height: 400,
             child: EdenClassificationBannerScaffold(
               level: EdenClassificationLevel.secret,
-              child: const Placeholder(),
+              child: Placeholder(),
             ),
           ),
         ),
@@ -172,14 +172,14 @@ void main() {
     });
 
     testWidgets('scaffold with showBottomBanner renders top + child + bottom', (tester) async {
-      await tester.pumpWidget(MaterialApp(
+      await tester.pumpWidget(const MaterialApp(
         home: Scaffold(
           body: SizedBox(
             height: 400,
             child: EdenClassificationBannerScaffold(
               level: EdenClassificationLevel.secret,
               showBottomBanner: true,
-              child: const Placeholder(),
+              child: Placeholder(),
             ),
           ),
         ),

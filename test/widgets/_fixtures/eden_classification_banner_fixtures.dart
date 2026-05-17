@@ -51,9 +51,10 @@ class EdenClassificationBannerFixtures {
   }
 
   static double _relativeLuminance(Color c) {
-    final r = _channelToLinear(c.red / 255.0);
-    final g = _channelToLinear(c.green / 255.0);
-    final b = _channelToLinear(c.blue / 255.0);
+    // Flutter's newer Color API exposes r/g/b as 0..1 doubles directly.
+    final r = _channelToLinear(c.r);
+    final g = _channelToLinear(c.g);
+    final b = _channelToLinear(c.b);
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
 
