@@ -93,4 +93,129 @@ void main() {
       expect(scope.profile, EdenThemeProfile.commercialWarm);
     });
   });
+
+  group('commercialWarm back-compat anchor (Constraint 1)', () {
+    // The CRITICAL group. Drift here breaks back-compat with today's behavior.
+    // If any of these fail: roll back the offending change. Do NOT relax the test.
+    test('primaryColor identity-equals EdenColors.gold', () {
+      // Test list item 10.
+      expect(
+        identical(
+          EdenThemeProfileData.commercialWarmData.primaryColor,
+          EdenColors.gold,
+        ),
+        isTrue,
+        reason:
+            'commercialWarm.primaryColor MUST be EdenColors.gold — back-compat lock',
+      );
+    });
+
+    test('surfaceTonalSeed hex matches EdenColors.neutral[50] (0xFFFAFAFA)', () {
+      // Test list item 11.
+      expect(
+        EdenThemeProfileData.commercialWarmData.surfaceTonalSeed.value,
+        0xFFFAFAFA,
+        reason: 'commercialWarm.surfaceTonalSeed MUST equal neutral[50] hex',
+      );
+    });
+
+    test('radiusMultiplier == 1.0', () {
+      // Test list item 12.
+      expect(EdenThemeProfileData.commercialWarmData.radiusMultiplier, 1.0);
+    });
+
+    test('minimumTouchTargetPx == 0', () {
+      // Test list item 13.
+      expect(EdenThemeProfileData.commercialWarmData.minimumTouchTargetPx, 0);
+    });
+
+    test('all font families are null (use defaults)', () {
+      // Test list item 14.
+      expect(EdenThemeProfileData.commercialWarmData.bodyFontFamily, isNull);
+      expect(EdenThemeProfileData.commercialWarmData.displayFontFamily, isNull);
+      expect(EdenThemeProfileData.commercialWarmData.monoFontFamily, isNull);
+    });
+
+    test('preferBorderOverShadow == false', () {
+      // Test list item 15.
+      expect(
+        EdenThemeProfileData.commercialWarmData.preferBorderOverShadow,
+        isFalse,
+      );
+    });
+
+    test('density == comfortable', () {
+      // Test list item 16.
+      expect(
+        EdenThemeProfileData.commercialWarmData.density,
+        EdenThemeProfileDensity.comfortable,
+      );
+    });
+  });
+
+  group('medicalInstitutional data correctness', () {
+    test('matches VERTICAL_UX_RESEARCH §2.4.2 spec', () {
+      // Test list item 17.
+      final data = EdenThemeProfileData.medicalInstitutionalData;
+      expect(identical(data.primaryColor, EdenColors.cyan), isTrue);
+      expect(data.radiusMultiplier, closeTo(0.667, 0.001),
+          reason: '12pt lg → 8pt');
+      expect(data.bodyFontFamily, 'IBM Plex Sans');
+      expect(data.preferBorderOverShadow, isTrue);
+    });
+  });
+
+  group('govFederal data correctness', () {
+    test('matches USWDS approximation spec', () {
+      // Test list item 18.
+      final data = EdenThemeProfileData.govFederalData;
+      expect(identical(data.primaryColor, EdenColors.blue), isTrue,
+          reason: 'blue[900] == #1E3A8A federal navy');
+      expect(data.radiusMultiplier, closeTo(0.333, 0.001),
+          reason: '12pt lg → 4pt');
+      expect(data.minimumTouchTargetPx, 48.0,
+          reason: 'USWDS ≥48pt touch floor');
+      expect(data.bodyFontFamily, 'Public Sans');
+      expect(data.displayFontFamily, 'Public Sans');
+      expect(data.preferBorderOverShadow, isTrue);
+    });
+  });
+
+  group('retailVibrant data correctness', () {
+    test('matches Shopify POS brand-expression spec', () {
+      // Test list item 19.
+      final data = EdenThemeProfileData.retailVibrantData;
+      expect(identical(data.primaryColor, EdenColors.purple), isTrue);
+      expect(data.radiusMultiplier, 1.0);
+      expect(data.bodyFontFamily, isNull);
+      expect(data.displayFontFamily, isNull);
+      expect(data.monoFontFamily, isNull);
+    });
+  });
+
+  group('legalProfessional data correctness', () {
+    test('matches Clio-style legal-gravitas spec', () {
+      // Test list item 20.
+      final data = EdenThemeProfileData.legalProfessionalData;
+      expect(identical(data.primaryColor, EdenColors.slate), isTrue);
+      expect(data.displayFontFamily, 'Crimson Pro');
+      expect(data.bodyFontFamily, isNull,
+          reason: 'Body stays Plus Jakarta default — only display goes serif');
+    });
+  });
+
+  group('EdenThemeProfileDataLookup extension', () {
+    test('.data getter returns correct instance for each profile', () {
+      expect(EdenThemeProfile.commercialWarm.data,
+          same(EdenThemeProfileData.commercialWarmData));
+      expect(EdenThemeProfile.medicalInstitutional.data,
+          same(EdenThemeProfileData.medicalInstitutionalData));
+      expect(EdenThemeProfile.govFederal.data,
+          same(EdenThemeProfileData.govFederalData));
+      expect(EdenThemeProfile.retailVibrant.data,
+          same(EdenThemeProfileData.retailVibrantData));
+      expect(EdenThemeProfile.legalProfessional.data,
+          same(EdenThemeProfileData.legalProfessionalData));
+    });
+  });
 }
