@@ -509,3 +509,4 @@ export 'src/widgets/eden_gift_card_balance_lookup.dart';
 // ─────────── Objective 018 — Retail-Specific Polish Wave 2 ───────────
 export 'src/widgets/eden_refund_flow.dart';
 export 'src/widgets/eden_layaway_flow.dart';
+export 'src/widgets/eden_store_transfer.dart';

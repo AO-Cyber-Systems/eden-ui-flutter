@@ -115,6 +115,7 @@ void main() {
         ),
         'SKU-A',
       );
+      await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Scan'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Espresso 1kg'), findsOneWidget);
@@ -134,6 +135,7 @@ void main() {
         ),
         'NOPE',
       );
+      await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Scan'));
       await tester.pumpAndSettle();
       expect(find.textContaining('not found'), findsOneWidget);
@@ -165,6 +167,7 @@ void main() {
         ),
         'SKU-A',
       );
+      await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Scan'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Next'));
@@ -208,6 +211,7 @@ void main() {
         ),
         'SKU-A',
       );
+      await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Scan'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ElevatedButton, 'Next'));
