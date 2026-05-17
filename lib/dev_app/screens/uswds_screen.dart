@@ -114,7 +114,10 @@ class UswdsScreen extends StatelessWidget {
             title: 'EdenMemorableDate — USWDS M/D/Y input pattern',
             child: _MemorableDateDemo(),
           ),
-          // TRD 011-14 will append: Section(title: 'EdenLanguageSelector — Language toggle', child: ...).
+          const Section(
+            title: 'EdenLanguageSelector — Language toggle (USWDS / EO 13166)',
+            child: _LanguageSelectorDemo(),
+          ),
         ],
       ),
     );
@@ -183,6 +186,50 @@ class _MemorableDateDemoState extends State<_MemorableDateDemo> {
           label: 'Hire date',
           monthAsText: true,
         ),
+      ],
+    );
+  }
+}
+
+/// Interactive demo of [EdenLanguageSelector] — shows button + chips
+/// layouts with live language switching.
+class _LanguageSelectorDemo extends StatefulWidget {
+  const _LanguageSelectorDemo();
+
+  @override
+  State<_LanguageSelectorDemo> createState() => _LanguageSelectorDemoState();
+}
+
+class _LanguageSelectorDemoState extends State<_LanguageSelectorDemo> {
+  EdenLanguageOption _current = EdenLanguageOptions.usFederalDefault.first;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Button layout (compact)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenLanguageSelector(
+          current: _current,
+          onLanguageChanged: (o) => setState(() => _current = o),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Chips layout (horizontal Wrap)',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        EdenLanguageSelector(
+          current: _current,
+          layout: EdenLanguageSelectorLayout.chips,
+          onLanguageChanged: (o) => setState(() => _current = o),
+        ),
+        const SizedBox(height: 16),
+        Text('Selected: ${_current.nativeLabel} (${_current.englishLabel})'),
       ],
     );
   }
