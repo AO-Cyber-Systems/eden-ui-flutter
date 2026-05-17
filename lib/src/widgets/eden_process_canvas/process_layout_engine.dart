@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' show Offset;
 
 import '../eden_diagram/eden_diagram_exports.dart';
@@ -175,9 +176,23 @@ class EdenSwimlaneLayout extends EdenProcessLayoutEngine {
 /// Free-form layout: graph-based left-to-right flow with column ranks
 /// computed from edge dependencies (hand-rolled BFS — no Dagre dep).
 ///
-/// **Stub today (returns input unchanged); real impl lands in TRD 09.**
+/// Approximates Dagre's rank-assignment algorithm with a simpler iterate-
+/// until-stable longest-path BFS. Not optimal — for dense graphs with many
+/// cross-rank edges, edge crossings will be present. Acceptable for v1
+/// process-builder workloads (<50 nodes). If you need optimal layouts, the
+/// future enhancement is to add a Dagre-equivalent Dart package.
 class EdenFreeFormLayout extends EdenProcessLayoutEngine {
-  const EdenFreeFormLayout();
+  const EdenFreeFormLayout({
+    this.colSpacing = 280,
+    this.rowSpacing = 140,
+    this.originX = 100,
+    this.originY = 100,
+  });
+
+  final double colSpacing;
+  final double rowSpacing;
+  final double originX;
+  final double originY;
 
   @override
   String get id => 'free_form';
@@ -186,18 +201,114 @@ class EdenFreeFormLayout extends EdenProcessLayoutEngine {
   List<EdenDiagramNode> applyLayout(
     List<EdenDiagramNode> nodes,
     List<EdenDiagramEdge> edges,
-  ) =>
-      nodes;
+  ) {
+    if (nodes.isEmpty) return const [];
+
+    // Build adjacency (source → targets).
+    final adjacency = <String, List<String>>{};
+    for (final e in edges) {
+      adjacency.putIfAbsent(e.sourceId, () => []).add(e.targetId);
+    }
+
+    // Identify root candidates: prefer 'start' node, else any node with no
+    // incoming edge. Fall back to first node if everything has incoming.
+    final incoming = <String>{};
+    for (final e in edges) {
+      incoming.add(e.targetId);
+    }
+    final roots = <String>[];
+    EdenDiagramNode? startNode;
+    for (final n in nodes) {
+      if (n.data['nodeType'] == 'start') {
+        startNode = n;
+        break;
+      }
+    }
+    if (startNode != null) {
+      roots.add(startNode.id);
+    } else {
+      for (final n in nodes) {
+        if (!incoming.contains(n.id)) roots.add(n.id);
+      }
+    }
+    if (roots.isEmpty) roots.add(nodes.first.id);
+
+    // Longest-path rank assignment, iterate until stable (or cycle bound hit).
+    final ranks = <String, int>{};
+    for (final r in roots) {
+      ranks[r] = 0;
+    }
+    bool changed = true;
+    int iterations = 0;
+    const maxIterations = 100;
+    while (changed && iterations < maxIterations) {
+      changed = false;
+      iterations++;
+      for (final source in ranks.keys.toList()) {
+        final sourceRank = ranks[source]!;
+        for (final target in adjacency[source] ?? const <String>[]) {
+          final newRank = sourceRank + 1;
+          if (newRank > (ranks[target] ?? -1)) {
+            ranks[target] = newRank;
+            changed = true;
+          }
+        }
+      }
+    }
+
+    // Disconnected nodes → rank = maxRank + 1.
+    final maxRank =
+        ranks.values.isEmpty ? 0 : ranks.values.reduce(math.max);
+    final disconnectedRank = maxRank + 1;
+    for (final n in nodes) {
+      ranks.putIfAbsent(n.id, () => disconnectedRank);
+    }
+
+    // Group node ids by rank, preserving input order within rank.
+    final byRank = <int, List<String>>{};
+    for (final n in nodes) {
+      final r = ranks[n.id]!;
+      byRank.putIfAbsent(r, () => []).add(n.id);
+    }
+
+    // Compute positions.
+    final positions = <String, Offset>{};
+    for (final entry in byRank.entries) {
+      final rank = entry.key;
+      final ids = entry.value;
+      for (int i = 0; i < ids.length; i++) {
+        positions[ids[i]] = Offset(
+          originX + rank * colSpacing,
+          originY + i * rowSpacing,
+        );
+      }
+    }
+
+    return nodes.map((n) {
+      final pos = positions[n.id];
+      return pos == null ? n : n.copyWith(x: pos.dx, y: pos.dy);
+    }).toList();
+  }
 }
 
 /// Grid layout: simple N-column wrap.
 ///
-/// **Stub today; real impl lands in TRD 09.**
+/// Positions nodes at `(col*spacing + startX, row*rowHeight + startY)` where
+/// `col = i % columns` and `row = i ~/ columns`.
 class EdenGridLayout extends EdenProcessLayoutEngine {
-  const EdenGridLayout({this.columns = 3, this.spacing = 300});
+  const EdenGridLayout({
+    this.columns = 3,
+    this.spacing = 300,
+    this.startX = 100,
+    this.startY = 100,
+    this.rowHeight = 200,
+  });
 
   final int columns;
   final double spacing;
+  final double startX;
+  final double startY;
+  final double rowHeight;
 
   @override
   String get id => 'grid';
@@ -206,13 +317,20 @@ class EdenGridLayout extends EdenProcessLayoutEngine {
   List<EdenDiagramNode> applyLayout(
     List<EdenDiagramNode> nodes,
     List<EdenDiagramEdge> edges,
-  ) =>
-      nodes;
+  ) {
+    return [
+      for (int i = 0; i < nodes.length; i++)
+        nodes[i].copyWith(
+          x: (i % columns) * spacing + startX,
+          y: (i ~/ columns) * rowHeight + startY,
+        ),
+    ];
+  }
 }
 
 /// Linear layout: single horizontal row.
 ///
-/// **Stub today; real impl lands in TRD 09.**
+/// Positions nodes at `(startX + i*spacing, startY)`.
 class EdenLinearLayout extends EdenProcessLayoutEngine {
   const EdenLinearLayout({
     this.spacing = 300,
@@ -231,6 +349,10 @@ class EdenLinearLayout extends EdenProcessLayoutEngine {
   List<EdenDiagramNode> applyLayout(
     List<EdenDiagramNode> nodes,
     List<EdenDiagramEdge> edges,
-  ) =>
-      nodes;
+  ) {
+    return [
+      for (int i = 0; i < nodes.length; i++)
+        nodes[i].copyWith(x: startX + i * spacing, y: startY),
+    ];
+  }
 }

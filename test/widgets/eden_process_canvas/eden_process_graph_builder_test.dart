@@ -332,17 +332,23 @@ void main() {
       expect(const EdenLinearLayout().id, 'linear');
     });
 
-    test('stub applyLayout returns input nodes unchanged (free_form / grid / linear)', () {
-      // Note: EdenSwimlaneLayout is no longer a stub as of TRD 006-08; its
-      // dedicated test file (eden_swimlane_layout_test.dart) covers it.
+    test('all layouts preserve input length (smoke)', () {
+      // Note: EdenSwimlaneLayout (TRD 006-08) and EdenFreeFormLayout /
+      // EdenGridLayout / EdenLinearLayout (TRD 006-09) all ship real
+      // algorithms now. Their dedicated test files cover positions; this
+      // test just guards the length invariant.
       final nodes = [EdenDiagramNode(id: 'a', x: 0, y: 0)];
-      expect(const EdenFreeFormLayout().applyLayout(nodes, []), nodes);
-      expect(const EdenGridLayout().applyLayout(nodes, []), nodes);
-      expect(const EdenLinearLayout().applyLayout(nodes, []), nodes);
+      expect(const EdenSwimlaneLayout().applyLayout(nodes, []), hasLength(1));
+      expect(const EdenFreeFormLayout().applyLayout(nodes, []), hasLength(1));
+      expect(const EdenGridLayout().applyLayout(nodes, []), hasLength(1));
+      expect(const EdenLinearLayout().applyLayout(nodes, []), hasLength(1));
     });
 
-    test('stub applyLayout([], []) returns []', () {
+    test('all layouts return [] for empty input', () {
       expect(const EdenSwimlaneLayout().applyLayout(const [], const []), isEmpty);
+      expect(const EdenFreeFormLayout().applyLayout(const [], const []), isEmpty);
+      expect(const EdenGridLayout().applyLayout(const [], const []), isEmpty);
+      expect(const EdenLinearLayout().applyLayout(const [], const []), isEmpty);
     });
   });
 }
