@@ -17,6 +17,7 @@ import 'compound_screen.dart';
 import 'diagram_screen.dart';
 import 'process_builder_screen.dart';
 import 'workflow_designer_screen.dart';
+import 'template_builder_screen.dart';
 import 'layouts_screen.dart';
 import 'devflow_infra_screen.dart';
 import 'devflow_project_screen.dart';
@@ -322,6 +323,12 @@ final _categories = [
     title: 'Workflow Designer',
     subtitle: 'A4-b — event-driven workflow editor (obj 020)',
     builder: (_) => const WorkflowDesignerScreen(),
+  ),
+  _Category(
+    icon: Icons.article_outlined,
+    title: 'Template Builder',
+    subtitle: 'A4-c — visual template block builder (obj 021)',
+    builder: (_) => const TemplateBuilderScreen(),
   ),
   _Category(
     icon: Icons.view_sidebar_outlined,

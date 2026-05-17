@@ -9,3 +9,4 @@ export 'eden_template_builder_canvas.dart';
 export 'eden_template_variables_panel.dart';
 export 'eden_template_styles_panel.dart';
 export 'eden_template_layout_panel.dart';
+export 'eden_visual_template_builder.dart';
