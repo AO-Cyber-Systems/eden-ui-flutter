@@ -21,10 +21,97 @@ class MotionScreen extends StatelessWidget {
             title: 'M3 Expressive — FAB Menu',
             child: _FabMenuDemos(),
           ),
-          // TRD 010-05 will append Loading Indicator demos below this section.
+          Section(
+            title: 'M3 Expressive — Loading Indicator',
+            child: _LoadingIndicatorDemos(),
+          ),
         ],
       ),
     );
+  }
+}
+
+class _LoadingIndicatorDemos extends StatelessWidget {
+  const _LoadingIndicatorDemos();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('shapeMorph — 4-dot M3 Expressive loader'),
+        const SizedBox(height: EdenSpacing.space2),
+        Row(children: [
+          const EdenLoadingIndicator.shapeMorph(),
+          const SizedBox(width: 16),
+          Text('default (48pt, primary)', style: theme.textTheme.bodySmall),
+        ]),
+        const SizedBox(height: EdenSpacing.space2),
+        Row(children: [
+          EdenLoadingIndicator.shapeMorph(size: 64, color: theme.colorScheme.tertiary),
+          const SizedBox(width: 16),
+          Text('64pt, tertiary color', style: theme.textTheme.bodySmall),
+        ]),
+        const SizedBox(height: EdenSpacing.space6),
+        const Text('shimmer — text-line skeleton placeholder'),
+        const SizedBox(height: EdenSpacing.space2),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          EdenLoadingIndicator.shimmer(width: 320, height: 14, borderRadius: BorderRadius.circular(4)),
+          const SizedBox(height: 8),
+          EdenLoadingIndicator.shimmer(width: 180, height: 14, borderRadius: BorderRadius.circular(4)),
+          const SizedBox(height: 8),
+          EdenLoadingIndicator.shimmer(width: 240, height: 14, borderRadius: BorderRadius.circular(4)),
+        ]),
+        const SizedBox(height: EdenSpacing.space6),
+        const Text('crossFade — toggle to swap skeleton ↔ content'),
+        const SizedBox(height: EdenSpacing.space2),
+        const _CrossFadeToggleDemo(),
+      ],
+    );
+  }
+}
+
+class _CrossFadeToggleDemo extends StatefulWidget {
+  const _CrossFadeToggleDemo();
+
+  @override
+  State<_CrossFadeToggleDemo> createState() => _CrossFadeToggleDemoState();
+}
+
+class _CrossFadeToggleDemoState extends State<_CrossFadeToggleDemo> {
+  bool _isLoading = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(child: Padding(
+      padding: const EdgeInsets.all(EdenSpacing.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Switch(value: _isLoading, onChanged: (v) => setState(() => _isLoading = v)),
+            const SizedBox(width: 8),
+            const Text('isLoading'),
+          ]),
+          const SizedBox(height: 12),
+          EdenLoadingIndicator.crossFade(
+            isLoading: _isLoading,
+            skeleton: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              EdenLoadingIndicator.shimmer(width: 220, height: 16, borderRadius: BorderRadius.circular(4)),
+              const SizedBox(height: 8),
+              EdenLoadingIndicator.shimmer(width: 280, height: 12, borderRadius: BorderRadius.circular(4)),
+            ]),
+            content: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Loaded title', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text('This is the real body after the load completed.',
+                  style: Theme.of(context).textTheme.bodySmall),
+            ]),
+          ),
+        ],
+      ),
+    ));
   }
 }
 
