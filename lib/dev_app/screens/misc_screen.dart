@@ -323,8 +323,93 @@ class _MiscScreenState extends State<MiscScreen> {
             title: 'Illustration + primary + secondary actions',
             child: _EmptyStateDemos(),
           ),
+          const EdenDivider(label: 'EdenStatusDotOverlay (Obj 010)'),
+          const Section(
+            title: 'Composable status dot / unread count badge',
+            child: _StatusDotOverlayDemos(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _StatusDotOverlayDemos extends StatelessWidget {
+  const _StatusDotOverlayDemos();
+
+  void _snack(BuildContext ctx, String msg) {
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(content: Text(msg), duration: const Duration(seconds: 1)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Avatar with online status'),
+        const SizedBox(height: EdenSpacing.space2),
+        const EdenStatusDotOverlay(
+          kind: EdenStatusDotKind.online,
+          child: EdenAvatar(initials: 'MK', size: EdenAvatarSize.lg),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Button with unread count badge (tap fires snack — confirms pass-through)'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenStatusDotOverlay(
+          kind: EdenStatusDotKind.unread,
+          count: 12,
+          alignment: Alignment.topRight,
+          child: IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => _snack(context, 'notifications'),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Card with sync indicator'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenStatusDotOverlay(
+          kind: EdenStatusDotKind.sync,
+          child: SizedBox(
+            width: 240,
+            height: 80,
+            child: EdenCard.interactive(
+              title: 'Syncing...',
+              subtitle: '5 items pending',
+              onTap: () => _snack(context, 'sync details'),
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Icons with all alignments (topLeft / topRight / bottomLeft / bottomRight)'),
+        const SizedBox(height: EdenSpacing.space2),
+        const Row(children: [
+          EdenStatusDotOverlay(
+            kind: EdenStatusDotKind.offline,
+            alignment: Alignment.topLeft,
+            child: SizedBox(width: 48, height: 48, child: Icon(Icons.email_outlined, size: 32)),
+          ),
+          SizedBox(width: 16),
+          EdenStatusDotOverlay(
+            kind: EdenStatusDotKind.offline,
+            alignment: Alignment.topRight,
+            child: SizedBox(width: 48, height: 48, child: Icon(Icons.email_outlined, size: 32)),
+          ),
+          SizedBox(width: 16),
+          EdenStatusDotOverlay(
+            kind: EdenStatusDotKind.offline,
+            alignment: Alignment.bottomLeft,
+            child: SizedBox(width: 48, height: 48, child: Icon(Icons.email_outlined, size: 32)),
+          ),
+          SizedBox(width: 16),
+          EdenStatusDotOverlay(
+            kind: EdenStatusDotKind.offline,
+            alignment: Alignment.bottomRight,
+            child: SizedBox(width: 48, height: 48, child: Icon(Icons.email_outlined, size: 32)),
+          ),
+        ]),
+      ],
     );
   }
 }
