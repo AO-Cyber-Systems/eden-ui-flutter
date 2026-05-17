@@ -433,3 +433,16 @@ export 'src/widgets/eden_split_tender.dart';
 // (no new export lines required — Wave 3 adds test coverage + additive
 // constructor params + the EdenDonutChart wrapper widget, all inside
 // the already-exported eden_chart.dart).
+
+// ─────────── Objective 013 — B-Medical clinical primitives Wave 1 ───────────
+export 'src/widgets/eden_vitals_row.dart';
+
+// ─────────── Objective 013 — B-Medical clinical primitives Wave 2 ───────────
+// (TRD 013-06 EdenSOAPNote + TRD 013-07 EdenChartTimeline append here.)
+
+// ─────────── Objective 013 — B-Medical clinical primitives Wave 3 ───────────
+// (TRD 013-08 EdenPatientChartScaffold + TRD 013-09 EdenVisitEncounterScaffold append here.)
+
+// ─────────── Objective 014 — B-Retail back-office + cross-vertical polish ───────────
+// Wave 1
+export 'src/widgets/eden_quick_add_product_grid.dart';

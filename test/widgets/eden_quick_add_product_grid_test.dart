@@ -72,8 +72,8 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         wrap(
-          EdenQuickAddProductGrid(
-            products: const <EdenQuickAddProduct>[
+          const EdenQuickAddProductGrid(
+            products: <EdenQuickAddProduct>[
               EdenQuickAddProduct(
                 id: 'no-photo',
                 name: 'No Photo Item',
@@ -91,8 +91,8 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         wrap(
-          EdenQuickAddProductGrid(
-            products: const <EdenQuickAddProduct>[
+          const EdenQuickAddProductGrid(
+            products: <EdenQuickAddProduct>[
               EdenQuickAddProduct(
                 id: 'stocked',
                 name: 'Stocked Item',
@@ -111,8 +111,8 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
         wrap(
-          EdenQuickAddProductGrid(
-            products: const <EdenQuickAddProduct>[
+          const EdenQuickAddProductGrid(
+            products: <EdenQuickAddProduct>[
               EdenQuickAddProduct(
                 id: 'no-stock',
                 name: 'No Stock Item',
@@ -323,6 +323,11 @@ void main() {
     });
 
     testWidgets('1100pt constraint → 8 columns', (tester) async {
+      // Default test surface is 800×600, smaller than the 1100pt tile we
+      // want to mount. Bump the surface so the SizedBox inside wrap() is
+      // not clipped down by an undersized parent viewport.
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(
           EdenQuickAddProductGrid(
@@ -339,6 +344,8 @@ void main() {
     });
 
     testWidgets('explicit crossAxisCount: 5 wins over auto', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(
         wrap(
           EdenQuickAddProductGrid(
