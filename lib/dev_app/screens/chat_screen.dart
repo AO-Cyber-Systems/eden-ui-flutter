@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../eden_ui.dart';
+import '../_sample_data/sample_data.dart';
 import '../widgets/section.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -338,8 +339,431 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
           ),
+
+          // ----------------------------------------------------------------
+          // Objective 008 Wave 4 (TRD 008-08) — cross-vertical AI surface
+          // demos. Fixtures from lib/dev_app/_sample_data/.
+          // ----------------------------------------------------------------
+          const EdenDivider(label: 'Cross-vertical AI surface — Obj 008'),
+          const Section(
+            title: 'EdenInsightCard · Metric layout (3 verticals)',
+            child: _InsightRow(<EdenInsightContent>[
+              TradesScenarios.revenueInsight,
+              GovScenarios.backlogInsight,
+            ]),
+          ),
+          const Section(
+            title: 'EdenInsightCard · Chart layout (Salon bar / Fuel bar / Gov line)',
+            child: _InsightRow(<EdenInsightContent>[
+              SalonScenarios.bookingTrendInsight,
+              FuelScenarios.fuelConsumptionInsight,
+              GovScenarios.approvalRateInsight,
+            ]),
+          ),
+          const Section(
+            title: 'EdenInsightCard · Alert layout',
+            child: _InsightRow(<EdenInsightContent>[
+              TradesScenarios.permitExpiringInsight,
+              SalonScenarios.productLowStockInsight,
+              FuelScenarios.tankLowStockInsight,
+              MedicalScenarios.readmissionRiskInsight,
+              GovScenarios.slaBreachInsight,
+            ]),
+          ),
+          const Section(
+            title: 'EdenInsightCard · Suggestion layout',
+            child: _InsightRow(<EdenInsightContent>[
+              TradesScenarios.lookAheadRoutingInsight,
+              SalonScenarios.rebookSuggestionInsight,
+            ]),
+          ),
+          const Section(
+            title: 'EdenInsightCard · Summary layout',
+            child: _InsightRow(<EdenInsightContent>[
+              MedicalScenarios.labResultsInsight,
+            ]),
+          ),
+
+          const EdenDivider(label: 'EdenAiPanel — per-persona vertical content'),
+          const Section(
+            title: 'Persona-driven insights (live)',
+            child: _PerPersonaAiPanelDemo(),
+          ),
+
+          const EdenDivider(label: 'EdenAiCollapsibleSection'),
+          const Section(
+            title: 'Three collapsible blocks: Insights / Activity / Suggestions',
+            child: _CollapsibleSectionsDemo(),
+          ),
+
+          const EdenDivider(label: 'EdenPersonaSelector — live wire-up'),
+          const Section(
+            title: 'Switch persona; downstream label updates',
+            child: _LivePersonaSelectorDemo(),
+          ),
+
+          const EdenDivider(label: 'EdenAgentChat FAB — per-vertical preset'),
+          const Section(
+            title: 'Pick a vertical → FAB streams a vertical-flavored reply',
+            child: _PerVerticalChatFabDemo(),
+          ),
+
+          const EdenDivider(label: 'EdenAiInsightSlot — enabled toggle'),
+          const Section(
+            title: 'Toggle the slot; panel mounts/unmounts beneath',
+            child: _AiInsightSlotToggleDemo(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+// =============================================================================
+// Objective 008 Wave 4 (TRD 008-08) — cross-vertical AI surface demos.
+// Demo-only; no library widget changes.
+// =============================================================================
+
+class _InsightRow extends StatelessWidget {
+  const _InsightRow(this.insights);
+  final List<EdenInsightContent> insights;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: insights.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) => SizedBox(
+          width: 280,
+          child: EdenInsightCard(content: insights[i]),
+        ),
+      ),
+    );
+  }
+}
+
+class _PerPersonaAiPanelDemo extends StatefulWidget {
+  const _PerPersonaAiPanelDemo();
+  @override
+  State<_PerPersonaAiPanelDemo> createState() => _PerPersonaAiPanelDemoState();
+}
+
+class _PerPersonaAiPanelDemoState extends State<_PerPersonaAiPanelDemo> {
+  EdenAiPersona _persona = EdenAiPersona.operations;
+  bool _expanded = true;
+
+  List<EdenInsightContent> _insightsFor(EdenAiPersona p) {
+    switch (p) {
+      case EdenAiPersona.fieldTech:
+        return const <EdenInsightContent>[
+          TradesScenarios.lookAheadRoutingInsight,
+          TradesScenarios.permitExpiringInsight,
+        ];
+      case EdenAiPersona.finance:
+        return const <EdenInsightContent>[
+          TradesScenarios.revenueInsight,
+          FuelScenarios.fuelConsumptionInsight,
+        ];
+      case EdenAiPersona.operations:
+        return const <EdenInsightContent>[
+          FuelScenarios.tankLowStockInsight,
+          GovScenarios.slaBreachInsight,
+          MedicalScenarios.readmissionRiskInsight,
+        ];
+      case EdenAiPersona.executive:
+        return const <EdenInsightContent>[
+          GovScenarios.backlogInsight,
+          GovScenarios.approvalRateInsight,
+          SalonScenarios.bookingTrendInsight,
+        ];
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final insights = _insightsFor(_persona);
+    return SizedBox(
+      height: 380,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    const Text('Persona: '),
+                    DropdownButton<EdenAiPersona>(
+                      value: _persona,
+                      onChanged: (p) {
+                        if (p != null) setState(() => _persona = p);
+                      },
+                      items: <DropdownMenuItem<EdenAiPersona>>[
+                        for (final p in EdenAiPersona.values)
+                          DropdownMenuItem<EdenAiPersona>(
+                            value: p,
+                            child: Text(p.displayLabel),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Showing ${insights.length} insights tuned to '
+                  '${_persona.displayLabel}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          EdenAiPanel(
+            persona: _persona,
+            insights: insights,
+            isExpanded: _expanded,
+            onToggle: () => setState(() => _expanded = !_expanded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollapsibleSectionsDemo extends StatelessWidget {
+  const _CollapsibleSectionsDemo();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        EdenAiCollapsibleSection(
+          title: 'Insights',
+          child: Column(
+            children: <Widget>[
+              for (final i in <EdenInsightContent>[
+                TradesScenarios.revenueInsight,
+                GovScenarios.slaBreachInsight,
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: EdenInsightCard(content: i),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        EdenAiCollapsibleSection(
+          title: 'Recent activity',
+          child: Column(
+            children: <Widget>[
+              for (final a
+                  in CrossCuttingFixtures.mixedActivityFeed.take(3))
+                EdenActivityFeedItem(item: a),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        EdenAiCollapsibleSection(
+          title: 'Suggestions',
+          child: Column(
+            children: <Widget>[
+              for (final i in <EdenInsightContent>[
+                TradesScenarios.lookAheadRoutingInsight,
+                SalonScenarios.rebookSuggestionInsight,
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: EdenInsightCard(content: i),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LivePersonaSelectorDemo extends StatefulWidget {
+  const _LivePersonaSelectorDemo();
+  @override
+  State<_LivePersonaSelectorDemo> createState() =>
+      _LivePersonaSelectorDemoState();
+}
+
+class _LivePersonaSelectorDemoState extends State<_LivePersonaSelectorDemo> {
+  EdenAiPersona _persona = EdenAiPersona.fieldTech;
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        EdenPersonaSelector(
+          activePersona: _persona,
+          onChanged: (p) => setState(() => _persona = p),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Selected: ${_persona.displayLabel} — ${_persona.description}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    );
+  }
+}
+
+class _PerVerticalChatFabDemo extends StatefulWidget {
+  const _PerVerticalChatFabDemo();
+  @override
+  State<_PerVerticalChatFabDemo> createState() =>
+      _PerVerticalChatFabDemoState();
+}
+
+class _PerVerticalChatFabDemoState extends State<_PerVerticalChatFabDemo> {
+  String _vertical = 'trades';
+  EdenAiPersona _persona = EdenAiPersona.operations;
+
+  String _replyFor(String v) {
+    switch (v) {
+      case 'salon':
+        return 'Marisol has a 11:30 opening for color today. '
+            'Want me to confirm?';
+      case 'fuel':
+        return 'Truck T7 is 18 min out. ETA 9:42am for Northpoint Diesel.';
+      case 'medical':
+        return 'Dr. Patel sees you next Thursday at 2pm. '
+            'Bring your medication list.';
+      case 'gov':
+        return 'Case CCM-2026-0427 is queued for Tier-3 review. '
+            'Avg wait is 4 business days.';
+      case 'trades':
+      default:
+        return 'Job #2871 is scheduled for tomorrow 8am. '
+            'Alice has truck 47.';
+    }
+  }
+
+  Stream<EdenChatStreamChunk> _send(EdenChatRequest req) async* {
+    final reply = _replyFor(_vertical);
+    // Stream the reply in 12-char chunks at 150ms each.
+    var i = 0;
+    while (i < reply.length) {
+      final end = (i + 12 < reply.length) ? i + 12 : reply.length;
+      yield EdenChatStreamChunk(
+        type: EdenChatChunkType.content,
+        content: reply.substring(i, end),
+      );
+      i = end;
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    }
+    yield const EdenChatStreamChunk(type: EdenChatChunkType.done);
+  }
+
+  Future<String> _create({
+    required String personaId,
+    required String title,
+  }) async =>
+      'demo-conv-$_vertical';
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 260,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Text('Vertical: '),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: _vertical,
+                onChanged: (v) {
+                  if (v != null) setState(() => _vertical = v);
+                },
+                items: const <DropdownMenuItem<String>>[
+                  DropdownMenuItem<String>(
+                      value: 'trades', child: Text('Trades')),
+                  DropdownMenuItem<String>(
+                      value: 'salon', child: Text('Salon')),
+                  DropdownMenuItem<String>(
+                      value: 'fuel', child: Text('Fuel')),
+                  DropdownMenuItem<String>(
+                      value: 'medical', child: Text('Medical')),
+                  DropdownMenuItem<String>(
+                      value: 'gov', child: Text('Gov')),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Scaffold(
+              body: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  'Tap the FAB to open EdenAgentChat. Replies are mocked '
+                  'with vertical-specific stream content. Current preview:\n\n'
+                  '"${_replyFor(_vertical)}"',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              floatingActionButton: EdenAgentChatFab(
+                activePersona: _persona,
+                onPersonaChanged: (p) => setState(() => _persona = p),
+                sendMessage: _send,
+                createConversation: _create,
+                pageContext: '$_vertical demo',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiInsightSlotToggleDemo extends StatefulWidget {
+  const _AiInsightSlotToggleDemo();
+  @override
+  State<_AiInsightSlotToggleDemo> createState() =>
+      _AiInsightSlotToggleDemoState();
+}
+
+class _AiInsightSlotToggleDemoState extends State<_AiInsightSlotToggleDemo> {
+  bool _enabled = true;
+  final EdenAiPersona _persona = EdenAiPersona.operations;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Switch(
+              value: _enabled,
+              onChanged: (v) => setState(() => _enabled = v),
+            ),
+            const SizedBox(width: 8),
+            Text(_enabled ? 'AI insights ON' : 'AI insights OFF'),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 300,
+          child: EdenAiInsightSlot(
+            enabled: _enabled,
+            persona: _persona,
+            insights: const <EdenInsightContent>[
+              TradesScenarios.revenueInsight,
+              FuelScenarios.tankLowStockInsight,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
