@@ -53,6 +53,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenPatientChartScaffold — 3-pane chart shell (013-08)',
             child: _PatientChartScaffoldDemo(),
           ),
+          Section(
+            title: 'EdenVisitEncounterScaffold — during-visit workflow (013-09)',
+            child: _VisitEncounterDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -1205,4 +1209,91 @@ EdenPatientChartData _polychronicScaffoldData() {
     blockingAlerts: alerts,
     auditEvents: audit,
   );
+}
+
+// ────────────────────────── 013-09 demo ──────────────────────────
+
+class _VisitEncounterDemo extends StatelessWidget {
+  const _VisitEncounterDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Annual physical — empty (just started)',
+          child: SizedBox(
+            width: 1200,
+            height: 600,
+            child: EdenVisitEncounterScaffold(
+              data: EdenVisitEncounterData(
+                patientId: 'demo-visit-1',
+                encounterId: 'enc-demo-1',
+                encounterDate: DateTime(2026, 5, 17, 10, 30),
+                provider: 'Dr. Chen',
+                encounterType: 'Annual Physical',
+                vitals: [
+                  EdenVitalSign(
+                    patientId: 'demo-visit-1',
+                    kind: EdenVitalKind.bloodPressure,
+                    unit: 'mmHg',
+                    systolic: 124,
+                    diastolic: 78,
+                    referenceMin: 90,
+                    referenceMax: 140,
+                  ),
+                ],
+              ),
+              patientId: 'demo-visit-1',
+            ),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'URI visit — mid-visit with PCN-allergy alert',
+          child: SizedBox(
+            width: 1200,
+            height: 700,
+            child: EdenVisitEncounterScaffold(
+              data: EdenVisitEncounterData(
+                patientId: 'demo-visit-2',
+                encounterId: 'enc-demo-2',
+                encounterDate: DateTime(2026, 5, 17, 14, 0),
+                provider: 'Dr. Chen',
+                encounterType: 'URI Visit',
+                chiefComplaint:
+                    'Cough × 5d, sore throat, low-grade fever to 100.2°F.',
+                vitals: [
+                  EdenVitalSign(
+                    patientId: 'demo-visit-2',
+                    kind: EdenVitalKind.temperature,
+                    unit: '°F',
+                    value: 99.4,
+                    referenceMin: 97.0,
+                    referenceMax: 99.5,
+                  ),
+                ],
+                soapNote: const EdenSoapNoteData(
+                  patientId: 'demo-visit-2',
+                  subjective:
+                      '38yo M, 4-day cough + sore throat. No SOB.',
+                ),
+                blockingAlerts: const [
+                  EdenBlockingAlertData(
+                    task: 'Penicillin allergy',
+                    context: 'Patient PHI',
+                    reason:
+                        'Anaphylaxis to PCN documented — do not prescribe Augmentin',
+                  ),
+                ],
+              ),
+              patientId: 'demo-visit-2',
+              initialStep: EdenVisitStep.soap,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

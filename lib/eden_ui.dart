@@ -447,6 +447,7 @@ export 'src/widgets/eden_chart_timeline.dart';
 
 // ─────────── Objective 013 — B-Medical clinical primitives Wave 3 ───────────
 export 'src/widgets/eden_patient_chart_scaffold.dart';
+export 'src/widgets/eden_visit_encounter_scaffold.dart';
 
 // ─────────── Objective 014 — B-Retail back-office + cross-vertical polish ───────────
 // Wave 1
