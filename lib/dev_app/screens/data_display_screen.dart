@@ -582,9 +582,84 @@ class _DataDisplayScreenState extends State<DataDisplayScreen> {
               EdenMediaRowItem(icon: Icons.star, label: 'favorited'),
             ]),
           ),
+          const Section(
+            title: 'EdenDataTable.dense — Density + sticky + freeze + bulk-select (Obj 010)',
+            child: _DenseDispatchDemo(),
+          ),
         ],
       ),
     );
+  }
+}
+
+class _DenseDispatchDemo extends StatefulWidget {
+  const _DenseDispatchDemo();
+
+  @override
+  State<_DenseDispatchDemo> createState() => _DenseDispatchDemoState();
+}
+
+class _DenseDispatchDemoState extends State<_DenseDispatchDemo> {
+  Set<int> _selected = {};
+  bool _freezeFirst = true;
+
+  // Hand-built fixture — Do NOT regenerate via LLM.
+  // 8 representative trades dispatch rows; the dense demo extends them to 40
+  // via index-based repeats to demonstrate scroll perf without LLM-generated
+  // bulk data.
+  static const List<List<String>> _seedRows = [
+    ['JOB-4291', 'Acme Plumbing', '1247 Oak St',  'Crew A', 'In Progress', '09:00', 'High'],
+    ['JOB-4292', 'Bright Lights', '88 Maple Ave', 'Crew B', 'Scheduled',   '10:30', 'Med'],
+    ['JOB-4293', 'Cleanline LLC', '15 River Rd',  'Crew C', 'En route',    '11:00', 'High'],
+    ['JOB-4294', 'Delta Cooling', '900 Pine St',  'Crew A', 'Complete',    '08:00', 'Low'],
+    ['JOB-4295', 'Echo HVAC',     '300 Elm Pl',   'Crew B', 'Blocked',     '12:00', 'High'],
+    ['JOB-4296', 'Falcon Roofing','55 Birch Ln',  'Crew D', 'Scheduled',   '13:30', 'Med'],
+    ['JOB-4297', 'Granite Group', '21 Cedar Ct',  'Crew A', 'In Progress', '14:00', 'Low'],
+    ['JOB-4298', 'Helix Glass',   '999 Spruce',   'Crew C', 'Scheduled',   '15:00', 'High'],
+  ];
+
+  List<EdenTableRow> _buildRows() {
+    return List.generate(40, (i) {
+      final seed = _seedRows[i % _seedRows.length];
+      return EdenTableRow(cells: seed.map((s) => Text(s, overflow: TextOverflow.ellipsis)).toList());
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(child: Padding(
+      padding: const EdgeInsets.all(EdenSpacing.space4),
+      child: Column(children: [
+        Row(children: [
+          Text('${_selected.length} selected'),
+          const Spacer(),
+          Switch(value: _freezeFirst, onChanged: (v) => setState(() => _freezeFirst = v)),
+          const SizedBox(width: 4),
+          const Text('Freeze first column'),
+        ]),
+        const SizedBox(height: EdenSpacing.space2),
+        SizedBox(
+          height: 400,
+          child: EdenDataTable.dense(
+            columns: const [
+              EdenTableColumn(label: 'Job #'),
+              EdenTableColumn(label: 'Customer', flex: 2),
+              EdenTableColumn(label: 'Address', flex: 2),
+              EdenTableColumn(label: 'Crew'),
+              EdenTableColumn(label: 'Status'),
+              EdenTableColumn(label: 'Scheduled'),
+              EdenTableColumn(label: 'Priority'),
+            ],
+            rows: _buildRows(),
+            freezeFirstColumn: _freezeFirst,
+            bulkSelectable: true,
+            selectedRowIndices: _selected,
+            onSelectionChanged: (s) => setState(() => _selected = s),
+            striped: true,
+          ),
+        ),
+      ]),
+    ));
   }
 }
 
