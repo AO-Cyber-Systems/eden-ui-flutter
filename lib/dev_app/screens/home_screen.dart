@@ -32,6 +32,7 @@ import 'commerce_screen.dart';
 import 'compliance_screen.dart';
 import 'medical_screen.dart';
 import 'retail_screen.dart';
+import 'staff_screen.dart';
 import 'uswds_screen.dart';
 
 /// Root screen showing all component categories.
@@ -390,6 +391,13 @@ final _categories = [
     subtitle:
         'POS register, quick-add grid, receipt preview, inventory row editor, receiving flow, sales analytics',
     builder: (_) => const RetailScreen(),
+  ),
+  // Objective 015 — Staff cluster (commissions, time clock, time card)
+  _Category(
+    icon: Icons.badge_outlined,
+    title: 'Staff — Obj 015',
+    subtitle: 'Commissions editor, time clock, time card',
+    builder: (_) => const StaffScreen(),
   ),
   _Category(
     icon: Icons.shield_outlined,

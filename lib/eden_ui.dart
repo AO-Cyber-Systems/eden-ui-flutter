@@ -463,3 +463,4 @@ export 'src/widgets/eden_pos_register_scaffold.dart';
 // ─────────── Objective 015 — Cross-vertical commerce completer Wave 1 ───────────
 export 'src/widgets/eden_tipping_selector.dart';
 export 'src/widgets/eden_tip_split_editor.dart';
+export 'src/widgets/eden_commissions_editor.dart';
