@@ -140,10 +140,72 @@ class _SalonScreenState extends State<SalonScreen> {
           ),
           // TRD 016-02 will append: Section(title: 'EdenTimeSlotPicker — Customer-facing booking slot grid', child: ...).
           // TRD 016-03 will append: Section(title: 'EdenMembershipManager + EdenPackageRedeem', child: ...).
-          // TRD 016-04 will append: Section(title: 'EdenIntakeFormBuilder — Form template authoring', child: ...).
+          Section(
+            title: 'EdenIntakeFormBuilder — Form template authoring',
+            child: SizedBox(
+              height: 600,
+              child: _IntakeFormBuilderDemo(),
+            ),
+          ),
           // TRD 016-05 will append: Section(title: 'EdenClientSmsThread — Two-way SMS thread', child: ...).
           // TRD 016-06 will append: Section(title: 'EdenStaffSchedule + EdenStaffCapabilityMatrix', child: ...).
         ],
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// TRD 016-04 — EdenIntakeFormBuilder demo
+// -----------------------------------------------------------------------------
+
+class _IntakeFormBuilderDemo extends StatefulWidget {
+  @override
+  State<_IntakeFormBuilderDemo> createState() => _IntakeFormBuilderDemoState();
+}
+
+class _IntakeFormBuilderDemoState extends State<_IntakeFormBuilderDemo> {
+  EdenIntakeFormSchema _schema = const EdenIntakeFormSchema(
+    id: 'salon-intake-v1',
+    name: 'New Client Intake',
+    fields: [
+      EdenIntakeFieldSchema(
+        id: 'f1',
+        type: EdenIntakeFieldType.shortText,
+        label: 'Full name',
+        required: true,
+      ),
+      EdenIntakeFieldSchema(
+        id: 'f2',
+        type: EdenIntakeFieldType.date,
+        label: 'Date of birth',
+        required: true,
+      ),
+      EdenIntakeFieldSchema(
+        id: 'f3',
+        type: EdenIntakeFieldType.longText,
+        label: 'Known allergies or sensitivities',
+      ),
+      EdenIntakeFieldSchema(
+        id: 'f4',
+        type: EdenIntakeFieldType.signature,
+        label: 'Sign here',
+        required: true,
+      ),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenIntakeFormBuilder(
+      schema: _schema,
+      onSchemaChanged: (s) => setState(() => _schema = s),
+      onPublish: () => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Published "${_schema.name}" v${_schema.version} with ${_schema.fields.length} fields',
+          ),
+        ),
       ),
     );
   }
