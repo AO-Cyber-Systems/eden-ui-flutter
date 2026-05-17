@@ -28,6 +28,7 @@ import 'field_screen.dart';
 import 'fuel_screen.dart';
 import 'theme_profiles_screen.dart';
 import 'motion_screen.dart';
+import 'commerce_screen.dart';
 import 'compliance_screen.dart';
 import 'uswds_screen.dart';
 
@@ -378,6 +379,14 @@ final _categories = [
     subtitle:
         'Classification banners, audit log, FOIA card, CAC/PIV, MFA token, case file shell, permission matrix, secret field, file upload',
     builder: (_) => const ComplianceScreen(),
+  ),
+  // Objective 012 — Cross-vertical commerce primitives
+  _Category(
+    icon: Icons.point_of_sale_outlined,
+    title: 'Commerce Primitives',
+    subtitle:
+        'Line-item editor, KPI strip, payment entry, split tender, sparkline, bar chart, donut chart',
+    builder: (_) => const CommerceScreen(),
   ),
   _Category(
     icon: Icons.account_balance_outlined,
