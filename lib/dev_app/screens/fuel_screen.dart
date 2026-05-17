@@ -317,6 +317,37 @@ class _FuelScreenState extends State<FuelScreen> {
           // Objective 019 — Trades polish + Fuel quick wins Wave 1
           // ---------------------------------------------------------------
           Section(
+            title: 'ROUTE OPTIMIZATION RESULT (Obj 019-06)',
+            child: SizedBox(
+              height: 900,
+              child: EdenRouteOptimizationResult(
+                data: _routeOptimizationFixture,
+                onAccept: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Route optimization accepted')),
+                  );
+                },
+                onReject: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Route optimization rejected')),
+                  );
+                },
+                driverNotes: EdenRouteOptimizationDriverNotes(
+                  driverId: 'drv-1',
+                  driverName: 'Smith',
+                  notes: const [
+                    'Stop #14 customer site had locked gate after-hours.',
+                    'Stop #19 customer requested reschedule.',
+                  ],
+                  submittedAt: DateTime(2026, 5, 18, 19, 45),
+                ),
+              ),
+            ),
+          ),
+
+          Section(
             title: 'DISPATCH PAGE — fuel routing variant (Obj 019-03)',
             child: SizedBox(
               height: 720,
@@ -337,6 +368,49 @@ class _FuelScreenState extends State<FuelScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  EdenRouteOptimizationData get _routeOptimizationFixture {
+    return EdenRouteOptimizationData(
+      before: [
+        for (int i = 1; i <= 24; i++)
+          EdenRouteStopData(id: 'before-$i', label: 'Stop $i'),
+      ],
+      after: [
+        for (int i = 1; i <= 22; i++)
+          EdenRouteStopData(id: 'after-$i', label: 'Stop $i'),
+      ],
+      metrics: const EdenRouteOptimizationMetrics(
+        totalStopsBefore: 24,
+        totalStopsAfter: 22,
+        totalMilesBefore: 187,
+        totalMilesAfter: 159,
+        totalTimeBefore: Duration(hours: 6),
+        totalTimeAfter: Duration(hours: 4, minutes: 48),
+        capacityUtilizationAfter: 0.78,
+      ),
+      truckUtilizations: const [
+        EdenRouteOptimizationTruckUtil(
+          truckId: 't1',
+          truckLabel: 'Truck-12',
+          capacityGal: 4000,
+          scheduledGal: 3200,
+        ),
+        EdenRouteOptimizationTruckUtil(
+          truckId: 't2',
+          truckLabel: 'Truck-14',
+          capacityGal: 3000,
+          scheduledGal: 2100,
+        ),
+        EdenRouteOptimizationTruckUtil(
+          truckId: 't3',
+          truckLabel: 'Truck-22',
+          capacityGal: 4000,
+          scheduledGal: 3380,
+        ),
+      ],
+      infeasibleStopIds: const ['after-14', 'after-19'],
     );
   }
 
