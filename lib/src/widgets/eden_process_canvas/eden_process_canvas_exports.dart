@@ -14,3 +14,8 @@ export 'nodes/eden_process_task_group_node.dart';
 export 'nodes/eden_process_task_node.dart';
 export 'nodes/eden_process_decision_node.dart';
 export 'nodes/eden_process_node_renderer.dart';
+
+// Wave 4 — Editor dialogs (TRD 006-10)
+export 'dialogs/eden_process_phase_editor_dialog.dart';
+export 'dialogs/eden_process_task_group_editor_dialog.dart';
+export 'dialogs/eden_process_task_editor_dialog.dart';
