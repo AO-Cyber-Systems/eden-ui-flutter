@@ -23,3 +23,6 @@ export 'dialogs/eden_process_task_editor_dialog.dart';
 // Wave 4 — Context menus (TRD 006-11)
 export 'eden_node_context_menu.dart';
 export 'eden_edge_context_menu.dart';
+
+// Wave 4 — Toolbox (TRD 006-12)
+export 'eden_process_toolbox.dart';
