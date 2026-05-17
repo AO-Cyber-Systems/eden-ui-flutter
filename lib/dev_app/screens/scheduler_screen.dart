@@ -1,13 +1,28 @@
+// lib/dev_app/screens/scheduler_screen.dart
+//
+// Objective 008 Wave 5 (TRD 008-09) — HEADLINE scheduler enrichment.
+//
+// Surfaces:
+//   1. Cross-vertical event picker (trades / salon / medical / fuel / gov)
+//      driving a single live EdenScheduler.
+//   2. Full 7-view-mode driver via the toolbar embedded in EdenScheduler.
+//      Trades preset uses TradesScenarios.monthEvents (54 events) — exercises
+//      the viewport-culling perf path from objective 004 TRD-16.
+//   3. Side-by-side parity rows: trades-react PNG reference (left/top) +
+//      live EdenScheduler in matching view-mode (right/bottom). 5 view
+//      modes covered (week / day / month / mobile / swimlane).
+//
+// Asset references live under lib/dev_app/_assets/trades_react_reference/
+// (registered in pubspec.yaml). Provenance + attribution in that dir's
+// README.md.
+
 import 'package:flutter/material.dart';
 
 import '../../eden_ui.dart';
+import '../_sample_data/sample_data.dart';
 import '../widgets/section.dart';
 
-/// Dev-catalog Scheduler screen — home for all Objective 004 demos. Wave 1
-/// renders a baseline `EdenScheduler` driven by an `EdenSchedulerController`.
-/// Subsequent waves append demo sections for day/week/workWeek/month/list/
-/// mobile/swimlane variants, drag-to-reschedule, conflict highlighting, and
-/// mini-sidebar features.
+/// Dev-catalog Scheduler screen — Objective 004 + 008 demos.
 class SchedulerScreen extends StatefulWidget {
   const SchedulerScreen({super.key});
 
@@ -17,62 +32,14 @@ class SchedulerScreen extends StatefulWidget {
 
 class _SchedulerScreenState extends State<SchedulerScreen> {
   late final EdenSchedulerController _controller;
-
-  late final List<EdenSchedulerEvent> _events = [
-    EdenSchedulerEvent(
-      id: 'demo-1',
-      title: 'Service call — Atlanta',
-      start: DateTime(2026, 3, 9, 9, 0),
-      end: DateTime(2026, 3, 9, 10, 30),
-      color: const Color(0xFF3B82F6),
-      assignee: 'Truck 47',
-      status: 'scheduled',
-      type: 'service',
-    ),
-    EdenSchedulerEvent(
-      id: 'demo-2',
-      title: 'Maintenance — Truck 12',
-      start: DateTime(2026, 3, 10, 13, 0),
-      end: DateTime(2026, 3, 10, 15, 0),
-      color: const Color(0xFFF59E0B),
-      assignee: 'Truck 12',
-      status: 'in_progress',
-      type: 'maintenance',
-    ),
-    EdenSchedulerEvent(
-      id: 'demo-3',
-      title: 'Installation — Buckhead',
-      start: DateTime(2026, 3, 11, 9, 0),
-      end: DateTime(2026, 3, 11, 12, 0),
-      color: const Color(0xFF10B981),
-      assignee: 'Truck 47',
-      status: 'scheduled',
-      type: 'project',
-    ),
-    EdenSchedulerEvent(
-      id: 'demo-conflict-1',
-      title: 'Overlap — first',
-      start: DateTime(2026, 3, 11, 14, 0),
-      end: DateTime(2026, 3, 11, 15, 30),
-      color: const Color(0xFFEF4444),
-      assignee: 'Truck 47',
-    ),
-    EdenSchedulerEvent(
-      id: 'demo-conflict-2',
-      title: 'Overlap — second',
-      start: DateTime(2026, 3, 11, 14, 30),
-      end: DateTime(2026, 3, 11, 16, 0),
-      color: const Color(0xFF8B5CF6),
-      assignee: 'Truck 47',
-    ),
-  ];
+  String _selectedVertical = 'trades';
 
   @override
   void initState() {
     super.initState();
     _controller = EdenSchedulerController(
       initialView: EdenSchedulerView.week,
-      initialDate: DateTime(2026, 3, 9),
+      initialDate: DateTime(2026, 5, 16), // catalog "today"
     );
   }
 
@@ -82,36 +49,114 @@ class _SchedulerScreenState extends State<SchedulerScreen> {
     super.dispose();
   }
 
+  List<EdenSchedulerEvent> get _events {
+    switch (_selectedVertical) {
+      case 'salon':
+        return SalonScenarios.weekAppointments;
+      case 'medical':
+        return MedicalScenarios.weekVisits;
+      case 'fuel':
+        return FuelScenarios.weekDeliveries;
+      case 'gov':
+        return GovScenarios.weekCases;
+      case 'trades':
+      default:
+        return TradesScenarios.monthEvents; // 54 events — perf demo
+    }
+  }
+
+  List<String> get _assignees {
+    switch (_selectedVertical) {
+      case 'salon':
+        return const <String>[
+          'Marisol Reyes',
+          'Devon Park',
+          'Tasha Ali',
+          'Ava Lindgren',
+        ];
+      case 'medical':
+        return const <String>['Dr. Patel', 'NP Khan', 'Rosa Soto, RN'];
+      case 'fuel':
+        return const <String>[
+          'Manny Tovar',
+          "Kris O'Hara",
+          'Tomás Aguilera',
+        ];
+      case 'gov':
+        return const <String>[
+          'Linnea Sørensen',
+          'Avery Kim',
+          'Hiroshi Tanaka',
+        ];
+      case 'trades':
+      default:
+        return const <String>[
+          'Alice Chen',
+          'Bob Kowalski',
+          'Carlos Mendez',
+        ];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final events = _events;
     return Scaffold(
       appBar: AppBar(title: const Text('EdenScheduler — Objective 004')),
       body: ListView(
         padding: const EdgeInsets.all(EdenSpacing.space4),
-        children: [
+        children: <Widget>[
+          // --------------------------------------------------------------
+          // Cross-vertical picker (Obj 008 W5 — TRD 008-09)
+          // --------------------------------------------------------------
           Section(
-            title: 'Wave 1 — Foundation',
+            title: 'Vertical · drives the live scheduler below',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                for (final v in const <String>[
+                  'trades',
+                  'salon',
+                  'medical',
+                  'fuel',
+                  'gov',
+                ])
+                  ChoiceChip(
+                    label: Text(v),
+                    selected: _selectedVertical == v,
+                    onSelected: (_) =>
+                        setState(() => _selectedVertical = v),
+                  ),
+              ],
+            ),
+          ),
+
+          Section(
+            title:
+                'Live EdenScheduler · ${events.length} events · 7-view toolbar',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              children: <Widget>[
                 Text(
                   'EdenSchedulerController (extracted state) + 7-variant '
                   'ViewToggle (month/week/workWeek/day/list/mobile/swimlane) '
                   '+ responsive collapse to icon-only below 1100pt + '
-                  'narrow-mode below 480pt.',
+                  'narrow-mode below 480pt. Vertical picker above swaps the '
+                  'event source from _sample_data.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: EdenSpacing.space3),
                 SizedBox(
-                  height: 600,
+                  height: 720,
                   child: AnimatedBuilder(
                     animation: _controller,
                     builder: (context, _) {
                       return EdenScheduler(
                         controller: _controller,
-                        events: _events,
-                        assignees: const ['Truck 47', 'Truck 12'],
-                        selectedAssignees: const {},
+                        events: events,
+                        assignees: _assignees,
+                        selectedAssignees: const <String>{},
                         onEventTap: (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Tapped: ${e.title}')),
@@ -124,8 +169,215 @@ class _SchedulerScreenState extends State<SchedulerScreen> {
               ],
             ),
           ),
+
+          // --------------------------------------------------------------
+          // Side-by-side trades-react parity rows (closes obj 004
+          // human-verify parity checkpoint inside the catalog).
+          // --------------------------------------------------------------
+          const EdenDivider(label: 'Side-by-side trades-react parity'),
+          _ParityRow(
+            label: 'Week view',
+            referenceAsset:
+                'lib/dev_app/_assets/trades_react_reference/qa-admin-scheduler.png',
+            view: EdenSchedulerView.week,
+            events: events,
+            assignees: _assignees,
+          ),
+          _ParityRow(
+            label: 'Day view',
+            referenceAsset:
+                'lib/dev_app/_assets/trades_react_reference/qa-admin-scheduler.png',
+            view: EdenSchedulerView.day,
+            events: events,
+            assignees: _assignees,
+          ),
+          _ParityRow(
+            label: 'Month view',
+            referenceAsset:
+                'lib/dev_app/_assets/trades_react_reference/qa-admin-forefront.png',
+            view: EdenSchedulerView.month,
+            events: events,
+            assignees: _assignees,
+          ),
+          _ParityRow(
+            label: 'Mobile view (forceMobileView=true)',
+            referenceAsset:
+                'lib/dev_app/_assets/trades_react_reference/mobile-projects.png',
+            view: EdenSchedulerView.mobile,
+            events: events,
+            assignees: _assignees,
+            forceMobile: true,
+          ),
+          _ParityRow(
+            label: 'Swimlane view',
+            referenceAsset:
+                'lib/dev_app/_assets/trades_react_reference/desktop-customer-detail.png',
+            view: EdenSchedulerView.swimlane,
+            events: events,
+            assignees: _assignees,
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Parity comparison row: trades-react reference image + live EdenScheduler
+/// in matching view mode.
+///
+/// Stateful so each row owns its own EdenSchedulerController instance (the
+/// row's view is locked to [view] regardless of the top-level controller's
+/// current view). Disposes cleanly on widget removal.
+class _ParityRow extends StatefulWidget {
+  const _ParityRow({
+    required this.label,
+    required this.referenceAsset,
+    required this.view,
+    required this.events,
+    required this.assignees,
+    this.forceMobile = false,
+  });
+
+  final String label;
+  final String referenceAsset;
+  final EdenSchedulerView view;
+  final List<EdenSchedulerEvent> events;
+  final List<String> assignees;
+  final bool forceMobile;
+
+  @override
+  State<_ParityRow> createState() => _ParityRowState();
+}
+
+class _ParityRowState extends State<_ParityRow> {
+  late final EdenSchedulerController _local;
+
+  @override
+  void initState() {
+    super.initState();
+    _local = EdenSchedulerController(
+      initialView: widget.view,
+      initialDate: DateTime(2026, 5, 16),
+    );
+  }
+
+  @override
+  void dispose() {
+    _local.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final isCompact = c.maxWidth < 900;
+        final referencePane = Container(
+          height: 480,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: Image.asset(
+            widget.referenceAsset,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(8),
+                child: Text(
+                  '(reference image unavailable in this build)',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        );
+        final livePane = SizedBox(
+          height: 480,
+          child: AnimatedBuilder(
+            animation: _local,
+            builder: (_, __) {
+              return EdenScheduler(
+                controller: _local,
+                events: widget.events,
+                assignees: widget.assignees,
+                selectedAssignees: const <String>{},
+                forceMobileView: widget.forceMobile,
+              );
+            },
+          ),
+        );
+
+        final Widget body;
+        if (isCompact) {
+          body = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const Text(
+                'trades-react reference',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              referencePane,
+              const SizedBox(height: 12),
+              const Text(
+                'Live EdenScheduler',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              livePane,
+            ],
+          );
+        } else {
+          body = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    const Text(
+                      'trades-react reference',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    referencePane,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    const Text(
+                      'Live EdenScheduler',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    livePane,
+                  ],
+                ),
+              ),
+            ],
+          );
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: EdenSpacing.space6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                widget.label,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              body,
+            ],
+          ),
+        );
+      },
     );
   }
 }
