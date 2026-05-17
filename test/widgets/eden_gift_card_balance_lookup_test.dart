@@ -155,7 +155,9 @@ void main() {
       final src = File(
         'lib/src/widgets/eden_gift_card_balance_lookup.dart',
       ).readAsStringSync();
-      final pattern = RegExp(r'card_number|cvv|pan', caseSensitive: false);
+      // Word-bounded — 'pan' as a standalone token, not 'Expanded'.
+      final pattern =
+          RegExp(r'\b(card_number|cvv|pan)\b', caseSensitive: false);
       expect(
         pattern.hasMatch(src),
         isFalse,
