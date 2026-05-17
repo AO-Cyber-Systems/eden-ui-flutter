@@ -471,3 +471,6 @@ export 'src/widgets/eden_time_clock.dart';
 export 'src/widgets/eden_time_card.dart';
 export 'src/widgets/eden_promotion_author.dart';
 export 'src/widgets/eden_promotion_apply.dart';
+
+// ─────────── Objective 015 — Cross-vertical commerce completer Wave 3 ───────────
+export 'src/widgets/eden_cash_drawer_close.dart';

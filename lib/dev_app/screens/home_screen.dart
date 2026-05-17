@@ -31,6 +31,7 @@ import 'motion_screen.dart';
 import 'commerce_screen.dart';
 import 'compliance_screen.dart';
 import 'medical_screen.dart';
+import 'eod_screen.dart';
 import 'retail_screen.dart';
 import 'staff_screen.dart';
 import 'uswds_screen.dart';
@@ -398,6 +399,13 @@ final _categories = [
     title: 'Staff — Obj 015',
     subtitle: 'Commissions editor, time clock, time card',
     builder: (_) => const StaffScreen(),
+  ),
+  // Objective 015 — End of Day cluster (cash drawer close, shift close, X/Z)
+  _Category(
+    icon: Icons.point_of_sale,
+    title: 'End of Day — Obj 015',
+    subtitle: 'Cash drawer close, shift close, X/Z report',
+    builder: (_) => const EodScreen(),
   ),
   _Category(
     icon: Icons.shield_outlined,
