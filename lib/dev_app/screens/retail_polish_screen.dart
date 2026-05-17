@@ -30,7 +30,12 @@ class RetailPolishScreen extends StatelessWidget {
                 'EdenStoreCreditLedger — store-credit balance + history + holds',
             child: _StoreCreditLedgerDemoBlock(),
           ),
-          // TRD 018-03 will append:
+          // TRD 018-03 appended above.
+          Section(
+            title:
+                'EdenGiftCardBalanceLookup — gift-card balance + activity',
+            child: _GiftCardBalanceLookupDemoBlock(),
+          ),
           // ─── Wave 2 — Multi-step flows ─────────────────────────────────
           // TRD 018-04 will append:
           // TRD 018-05 will append:
@@ -144,5 +149,67 @@ class _StoreCreditLedgerDemoBlock extends StatelessWidget {
       ],
     );
     return SizedBox(width: 800, child: EdenStoreCreditLedger(data: data));
+  }
+}
+
+/// Hand-built demo lookup function for EdenGiftCardBalanceLookup.
+/// Do NOT regenerate via LLM.
+class _GiftCardBalanceLookupDemoBlock extends StatelessWidget {
+  const _GiftCardBalanceLookupDemoBlock();
+
+  static Future<EdenGiftCardBalanceResult?> _demoLookup(
+      String cardNumber) async {
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    final clean = cardNumber.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.isEmpty) return null;
+    if (clean.endsWith('0000')) return null; // not found
+    if (clean.endsWith('1111')) {
+      return EdenGiftCardBalanceResult(
+        cardNumber: clean,
+        balanceCents: 0,
+        status: EdenGiftCardStatus.deactivated,
+      );
+    }
+    final now = DateTime.now();
+    return EdenGiftCardBalanceResult(
+      cardNumber: clean,
+      balanceCents: 4250,
+      status: EdenGiftCardStatus.active,
+      lastUsedAt: now.subtract(const Duration(days: 5)),
+      expiresAt: DateTime(now.year + 2, now.month, now.day),
+      recentActivity: [
+        EdenGiftCardActivity(
+          id: 'a-1',
+          occurredAt: now.subtract(const Duration(days: 5)),
+          type: EdenGiftCardActivityType.redeemed,
+          amountCents: -1500,
+          reason: 'POS sale',
+          receiptRef: 'R-2103',
+        ),
+        EdenGiftCardActivity(
+          id: 'a-2',
+          occurredAt: now.subtract(const Duration(days: 12)),
+          type: EdenGiftCardActivityType.loaded,
+          amountCents: 5000,
+          reason: 'New card',
+          receiptRef: 'R-2087',
+        ),
+        EdenGiftCardActivity(
+          id: 'a-3',
+          occurredAt: now.subtract(const Duration(days: 18)),
+          type: EdenGiftCardActivityType.adjustment,
+          amountCents: 750,
+          reason: 'Promo bonus',
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 600,
+      child: EdenGiftCardBalanceLookup(onLookup: _demoLookup),
+    );
   }
 }
