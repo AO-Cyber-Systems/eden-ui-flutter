@@ -5,3 +5,4 @@
 
 // Wave 1 — Foundation (TRD 020-01)
 export 'workflow_models.dart';
+export 'workflow_category_registry.dart';
