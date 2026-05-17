@@ -145,16 +145,16 @@ TRDs:
 
 **TRDs:** 9 plans across 5 waves (~2-3 wk Claude execution)
 
-TRDs:
-- [ ] 008-01-TRD.md — Cross-vertical sample-data library `lib/dev_app/_sample_data/` (trades/salon/fuel/medical/gov scenarios + cross-cutting customers/staff/inventory) (Wave 1)
-- [ ] 008-02-TRD.md — `layouts_screen.dart` enrichment — EdenListPageScaffold + EdenDetailPageScaffold cross-vertical realistic list/detail demos (Wave 2)
-- [ ] 008-03-TRD.md — `data_display_screen.dart` enrichment — EdenStatCard 5 vertical KPI grids + EdenDataTable realistic tables + EdenCostSummaryCard / EdenActivityFeedItem / EdenMediaRow / EdenStockLevelIndicator (Wave 2)
-- [ ] 008-04-TRD.md — `inputs_screen.dart` + `misc_screen.dart` — EdenPhoneInput 8-country grid + EdenOtpInput length/state variants + EdenAddressInput 5 verticals + EdenNetworkStatusBar lifecycle + EdenOfflineQueueViewer + EdenAuthenticatedImage (Wave 2)
-- [ ] 008-05-TRD.md — `companion_screen.dart` — 5 vertical-flavor full shells (trades dispatch / salon front-desk / fuel driver / medical home-visit / gov caseworker) + realistic GPS coords + vertical-content gate demos + tier-aware EdenAdaptiveLayout demo (Wave 3)
-- [ ] 008-06-TRD.md — NEW `composers_screen.dart` — EdenConsentFlow / EdenIntakeForm / EdenRoleDashboardShell / EdenAppTourOverlay + EdenContextualTip + EdenStarterTemplateCard cross-vertical (Wave 3)
-- [ ] 008-07-TRD.md — `badges_alerts_screen.dart` — EdenUrgencyBadge / EdenPipelineBadge / EdenApprovalStatusBadge / EdenBlockingAlerts / EdenMembershipTierBadge realistic cross-vertical contexts (Wave 4)
-- [ ] 008-08-TRD.md — `chat_screen.dart` AI surface — EdenInsightCard 6 layouts × cross-vertical + EdenAiPanel persona-keyed insights + EdenAiCollapsibleSection / EdenPersonaSelector / EdenAgentChat per-vertical streaming presets / EdenAiInsightSlot (Wave 4)
-- [ ] 008-09-TRD.md — `scheduler_screen.dart` HEADLINE — side-by-side trades-react PNG embeds (5 view modes) + 50+ event live perf demo + cross-vertical scheduler scenarios (trades/salon/medical/fuel/gov) + pubspec.yaml asset registration (Wave 5)
+TRDs (9/9 GREEN — 2026-05-16):
+- [x] 008-01-TRD.md — Cross-vertical sample-data library `lib/dev_app/_sample_data/` (trades/salon/fuel/medical/gov scenarios + cross-cutting customers/staff/inventory) (Wave 1)
+- [x] 008-02-TRD.md — `layouts_screen.dart` enrichment — EdenListPageScaffold + EdenDetailPageScaffold cross-vertical realistic list/detail demos (Wave 2)
+- [x] 008-03-TRD.md — `data_display_screen.dart` enrichment — EdenStatCard 5 vertical KPI grids + EdenDataTable realistic tables + EdenCostSummaryCard / EdenActivityFeedItem / EdenMediaRow / EdenStockLevelIndicator (Wave 2)
+- [x] 008-04-TRD.md — `inputs_screen.dart` + `misc_screen.dart` — EdenPhoneInput 8-country grid + EdenOtpInput length/state variants + EdenAddressInput 5 verticals + EdenNetworkStatusBar lifecycle + EdenOfflineQueueViewer + EdenAuthenticatedImage (Wave 2)
+- [x] 008-05-TRD.md — `companion_screen.dart` — 5 vertical-flavor full shells (trades dispatch / salon front-desk / fuel driver / medical home-visit / gov caseworker) + realistic GPS coords + vertical-content gate demos + tier-aware EdenAdaptiveLayout demo (Wave 3)
+- [x] 008-06-TRD.md — NEW `composers_screen.dart` — EdenConsentFlow / EdenIntakeForm / EdenRoleDashboardShell / EdenAppTourOverlay + EdenContextualTip + EdenStarterTemplateCard cross-vertical (Wave 3)
+- [x] 008-07-TRD.md — `badges_alerts_screen.dart` — EdenUrgencyBadge / EdenPipelineBadge / EdenApprovalStatusBadge / EdenBlockingAlerts / EdenMembershipTierBadge realistic cross-vertical contexts (Wave 4)
+- [x] 008-08-TRD.md — `chat_screen.dart` AI surface — EdenInsightCard 6 layouts × cross-vertical + EdenAiPanel persona-keyed insights + EdenAiCollapsibleSection / EdenPersonaSelector / EdenAgentChat per-vertical streaming presets / EdenAiInsightSlot (Wave 4)
+- [x] 008-09-TRD.md — `scheduler_screen.dart` HEADLINE — side-by-side trades-react PNG embeds (5 view modes) + 50+ event live perf demo + cross-vertical scheduler scenarios (trades/salon/medical/fuel/gov) + pubspec.yaml asset registration (Wave 5)
 
 ## v2 Future Objectives
 
