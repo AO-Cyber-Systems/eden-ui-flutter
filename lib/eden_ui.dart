@@ -425,3 +425,4 @@ export 'src/widgets/eden_aggregate_kpi_strip.dart';
 
 // ─────────── Objective 012 — Cross-vertical commerce primitives Wave 2 ───────────
 export 'src/widgets/eden_payment_entry.dart';
+export 'src/widgets/eden_split_tender.dart';
