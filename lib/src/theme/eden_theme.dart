@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
+import 'eden_status_palette.dart';
+import 'eden_theme_profile.dart';
 
 /// Configures Material [ThemeData] to match the Eden UI design system.
 ///
@@ -22,7 +24,10 @@ class EdenTheme {
   // Light theme
   // ---------------------------------------------------------------------------
 
-  static ThemeData light({MaterialColor? brand}) {
+  static ThemeData light({
+    EdenThemeProfile profile = EdenThemeProfile.commercialWarm,
+    MaterialColor? brand,
+  }) {
     final primary = brand ?? brandColor;
     final colorScheme = ColorScheme.light(
       primary: primary,
@@ -51,14 +56,20 @@ class EdenTheme {
       onError: Colors.white,
     );
 
-    return _buildTheme(colorScheme, Brightness.light);
+    final base = _buildTheme(colorScheme, Brightness.light);
+    return base.copyWith(
+      extensions: _withStatusPalette(base, profile),
+    );
   }
 
   // ---------------------------------------------------------------------------
   // Dark theme
   // ---------------------------------------------------------------------------
 
-  static ThemeData dark({MaterialColor? brand}) {
+  static ThemeData dark({
+    EdenThemeProfile profile = EdenThemeProfile.commercialWarm,
+    MaterialColor? brand,
+  }) {
     final primary = brand ?? brandColor;
     final colorScheme = ColorScheme.dark(
       primary: primary[400]!,
@@ -87,7 +98,10 @@ class EdenTheme {
       onError: Colors.white,
     );
 
-    return _buildTheme(colorScheme, Brightness.dark);
+    final base = _buildTheme(colorScheme, Brightness.dark);
+    return base.copyWith(
+      extensions: _withStatusPalette(base, profile),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -201,5 +215,24 @@ class EdenTheme {
         shape: RoundedRectangleBorder(borderRadius: EdenRadii.borderRadiusXl),
       ),
     );
+  }
+
+  /// Returns the base theme's existing extensions plus the per-profile
+  /// [EdenStatusPalette].
+  ///
+  /// Implementation note: `ThemeData.extensions` is keyed by `Object` (the
+  /// extension's runtime type), so we work at the Map level to preserve all
+  /// existing entries plus replace/add our palette under its runtimeType key.
+  /// We then pass `.values` (an `Iterable<ThemeExtension<dynamic>>`) to
+  /// `copyWith(extensions:)`. Building via Map avoids a Dart inference quirk
+  /// where typed-list/set spreads of nested generic types fail to bind.
+  static Iterable<ThemeExtension<dynamic>> _withStatusPalette(
+    ThemeData base,
+    EdenThemeProfile profile,
+  ) {
+    final palette = EdenStatusPalette.forProfile(profile);
+    final merged = Map<Object, ThemeExtension<dynamic>>.from(base.extensions);
+    merged[palette.runtimeType] = palette;
+    return merged.values;
   }
 }
