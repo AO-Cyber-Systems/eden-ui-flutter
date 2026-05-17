@@ -663,6 +663,12 @@ class _CommerceScreenState extends State<CommerceScreen> {
                 'EdenPromotionAuthor + EdenPromotionApply — promotion authoring + apply',
             child: _Obj015PromotionsDemo(),
           ),
+          // TRD 015-02 appends here ↓ Objective 015 — Chair-side checkout composite
+          const Section(
+            title:
+                'EdenCheckoutSheet — salon-flavored checkout composite',
+            child: _Obj015CheckoutSheetDemo(),
+          ),
         ],
       ),
     );
@@ -994,6 +1000,88 @@ class _Obj015PromotionsDemoState extends State<_Obj015PromotionsDemo> {
               duration: const Duration(milliseconds: 800),
             ));
           },
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TRD 015-02 — EdenCheckoutSheet demo (opens modal bottom sheet)
+// ─────────────────────────────────────────────────────────────────────────
+
+class _Obj015CheckoutSheetDemo extends StatelessWidget {
+  const _Obj015CheckoutSheetDemo();
+  Future<void> _openSheet(BuildContext context) async {
+    const initial = EdenCheckoutDraft(
+      lineItems: [
+        EdenLineItem<dynamic>(
+          id: 'li-1',
+          payload: null,
+          description: 'Haircut',
+          quantity: 1,
+          unitPrice: 65.0,
+        ),
+        EdenLineItem<dynamic>(
+          id: 'li-2',
+          payload: null,
+          description: 'Color',
+          quantity: 1,
+          unitPrice: 95.0,
+        ),
+      ],
+      tip: EdenTipDraft(mode: EdenTipMode.none, tipAmount: 0),
+      payments: <EdenPaymentDraft>[],
+      taxRate: 0.0825,
+      currentStep: EdenCheckoutStep.lineItems,
+    );
+    await showModalBottomSheet<EdenCheckoutDraft>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return SingleChildScrollView(
+              controller: controller,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: EdenCheckoutSheet(
+                  initialDraft: initial,
+                  onDraftChanged: (_) {},
+                  onComplete: (draft) {
+                    Navigator.pop(context, draft);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                          'Checkout complete. Total: \$${draft.total.toStringAsFixed(2)}'),
+                      duration: const Duration(milliseconds: 1500),
+                    ));
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Tap the button to open the chair-side checkout bottom sheet',
+          style: TextStyle(fontStyle: FontStyle.italic),
+        ),
+        const SizedBox(height: 8),
+        EdenButton(
+          label: 'Open chair-side checkout',
+          onPressed: () => _openSheet(context),
         ),
       ],
     );
