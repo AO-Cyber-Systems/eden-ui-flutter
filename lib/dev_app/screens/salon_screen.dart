@@ -160,7 +160,27 @@ class _SalonScreenState extends State<SalonScreen> {
               child: _SmsThreadDemo(),
             ),
           ),
-          // TRD 016-06 will append: Section(title: 'EdenStaffSchedule + EdenStaffCapabilityMatrix', child: ...).
+          Section(
+            title: 'EdenStaffSchedule + EdenStaffCapabilityMatrix',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Staff schedule (Aisha)',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: EdenSpacing.space2),
+                SizedBox(height: 500, child: _StaffScheduleDemo()),
+                const SizedBox(height: EdenSpacing.space4),
+                Text(
+                  'Staff capability matrix',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: EdenSpacing.space2),
+                _StaffCapabilityMatrixDemo(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -286,6 +306,183 @@ class _IntakeFormBuilderDemoState extends State<_IntakeFormBuilderDemo> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// TRD 016-06 — EdenStaffSchedule + EdenStaffCapabilityMatrix demos
+// -----------------------------------------------------------------------------
+
+class _StaffScheduleDemo extends StatefulWidget {
+  @override
+  State<_StaffScheduleDemo> createState() => _StaffScheduleDemoState();
+}
+
+class _StaffScheduleDemoState extends State<_StaffScheduleDemo> {
+  late List<EdenStaffWeeklyShift> _shifts = const [
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.monday,
+      startTime: TimeOfDay(hour: 9, minute: 0),
+      endTime: TimeOfDay(hour: 18, minute: 0),
+      breaks: [
+        EdenStaffBreak(
+          startTime: TimeOfDay(hour: 12, minute: 0),
+          endTime: TimeOfDay(hour: 13, minute: 0),
+          label: 'Lunch',
+        ),
+      ],
+    ),
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.tuesday,
+      startTime: TimeOfDay(hour: 9, minute: 0),
+      endTime: TimeOfDay(hour: 18, minute: 0),
+    ),
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.wednesday,
+      working: false,
+    ),
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.thursday,
+      startTime: TimeOfDay(hour: 9, minute: 0),
+      endTime: TimeOfDay(hour: 18, minute: 0),
+    ),
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.friday,
+      startTime: TimeOfDay(hour: 9, minute: 0),
+      endTime: TimeOfDay(hour: 18, minute: 0),
+    ),
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.saturday,
+      startTime: TimeOfDay(hour: 10, minute: 0),
+      endTime: TimeOfDay(hour: 16, minute: 0),
+    ),
+    EdenStaffWeeklyShift(
+      staffId: 'st-aisha',
+      weekday: EdenWeekday.sunday,
+      working: false,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenStaffSchedule(
+      shifts: _shifts,
+      onShiftChanged: (updated) {
+        setState(() {
+          _shifts = _shifts
+              .map((s) => s.weekday == updated.weekday ? updated : s)
+              .toList();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saved ${updated.weekday.name} shift')),
+        );
+      },
+    );
+  }
+}
+
+class _StaffCapabilityMatrixDemo extends StatefulWidget {
+  @override
+  State<_StaffCapabilityMatrixDemo> createState() =>
+      _StaffCapabilityMatrixDemoState();
+}
+
+class _StaffCapabilityMatrixDemoState
+    extends State<_StaffCapabilityMatrixDemo> {
+  static const _staff = <EdenStaffCapabilityRow>[
+    EdenStaffCapabilityRow(
+        id: 'st-aisha', displayName: 'Aisha A.', initials: 'AA'),
+    EdenStaffCapabilityRow(
+        id: 'st-brendan', displayName: 'Brendan B.', initials: 'BB'),
+    EdenStaffCapabilityRow(
+        id: 'st-carla', displayName: 'Carla C.', initials: 'CC'),
+    EdenStaffCapabilityRow(
+        id: 'st-david', displayName: 'David D.', initials: 'DD'),
+    EdenStaffCapabilityRow(
+        id: 'st-elena', displayName: 'Elena E.', initials: 'EE'),
+  ];
+
+  static const _services = <EdenServiceCatalogEntry>[
+    EdenServiceCatalogEntry(
+        id: 'srv-haircut',
+        name: 'Haircut',
+        durationMinutes: 45,
+        priceCents: 8500),
+    EdenServiceCatalogEntry(
+        id: 'srv-color',
+        name: 'Color',
+        durationMinutes: 150,
+        priceCents: 18500),
+    EdenServiceCatalogEntry(
+        id: 'srv-balayage',
+        name: 'Balayage',
+        durationMinutes: 195,
+        priceCents: 28500),
+    EdenServiceCatalogEntry(
+        id: 'srv-facial',
+        name: 'Facial',
+        durationMinutes: 30,
+        priceCents: 5500),
+  ];
+
+  List<EdenStaffCapability> _caps = const [
+    EdenStaffCapability(
+        staffId: 'st-aisha', serviceId: 'srv-haircut', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-aisha', serviceId: 'srv-color', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-aisha', serviceId: 'srv-balayage', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-brendan', serviceId: 'srv-haircut', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-carla', serviceId: 'srv-haircut', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-carla', serviceId: 'srv-color', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-carla', serviceId: 'srv-facial', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-david', serviceId: 'srv-facial', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-elena', serviceId: 'srv-haircut', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-elena', serviceId: 'srv-color', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-elena', serviceId: 'srv-balayage', canPerform: true),
+    EdenStaffCapability(
+        staffId: 'st-elena', serviceId: 'srv-facial', canPerform: true),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenStaffCapabilityMatrix(
+      staff: _staff,
+      services: _services,
+      capabilities: _caps,
+      onCapabilityToggled: (staffId, serviceId, canPerform) {
+        setState(() {
+          _caps = _caps
+              .where((c) =>
+                  !(c.staffId == staffId && c.serviceId == serviceId))
+              .toList();
+          if (canPerform) {
+            _caps = [
+              ..._caps,
+              EdenStaffCapability(
+                staffId: staffId,
+                serviceId: serviceId,
+                canPerform: true,
+              ),
+            ];
+          }
+        });
+      },
     );
   }
 }
