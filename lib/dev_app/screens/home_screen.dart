@@ -15,6 +15,7 @@ import 'settings_screen.dart';
 import 'chat_screen.dart';
 import 'compound_screen.dart';
 import 'diagram_screen.dart';
+import 'process_builder_screen.dart';
 import 'layouts_screen.dart';
 import 'devflow_infra_screen.dart';
 import 'devflow_project_screen.dart';
@@ -297,6 +298,12 @@ final _categories = [
     title: 'Diagram / Flow',
     subtitle: 'Interactive flowcharts, JSON-backed, AI-generatable',
     builder: (_) => const DiagramScreen(),
+  ),
+  _Category(
+    icon: Icons.schema_outlined,
+    title: 'Process Builder',
+    subtitle: 'Visual process canvas — phases, groups, tasks, decisions',
+    builder: (_) => const ProcessBuilderScreen(),
   ),
   _Category(
     icon: Icons.view_sidebar_outlined,

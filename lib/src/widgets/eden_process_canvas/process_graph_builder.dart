@@ -156,12 +156,17 @@ class EdenProcessGraphBuilder {
         for (final group in sortedGroups) {
           final groupNodeId = 'group-${group.id}';
           final gpos = positionFor(groupNodeId);
+          // Pre-compute task-count-aware group height so non-swimlane
+          // layouts (free-form / grid / linear) still allocate enough
+          // vertical room for the inline task list inside
+          // EdenProcessTaskGroupNode. Swimlane overrides this anyway.
+          final groupHeight = 80.0 + group.tasks.length * 32.0;
           nodes.add(EdenDiagramNode(
             id: groupNodeId,
             x: gpos.dx,
             y: gpos.dy,
             width: 260,
-            height: 80,
+            height: groupHeight,
             label: group.displayName,
             data: {
               'nodeType': 'taskGroup',
