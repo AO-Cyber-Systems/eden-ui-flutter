@@ -187,6 +187,27 @@ TRDs:
 - [ ] 010-09-TRD.md — EdenEmptyState enhancement — illustration slot + secondary action with responsive primary/secondary layout (Wave 3; polish)
 - [ ] 010-10-TRD.md — EdenStatusDotOverlay — composable status dot + count badge overlay (online/offline/away/busy/sync/unread+count); sibling of EdenAvatar.status (Wave 3; polish)
 
+### Objective 011: Compliance Overlay Primitives — Wave C Government + USWDS Conformance + Civilian Re-use
+
+**Goal:** Ship the Wave C compliance overlay set — 14 primitives (6 net-new + 4 enhancements to existing widgets + 4 USWDS conformance) — that gate DHHS/DOD vertical opt-in AND carry civilian re-use across HIPAA / SOC 2 / PCI / attorney-privilege use cases. Per locked decision C in `COMPANION_UX_PATTERNS_2026-05-15.md` §0: build gov-first NOW, expose to commercial as opt-in. Every Wave C primitive exposes a generic-enough API for commercial verticals (e.g., `EdenClassificationBanner` works as `EdenSensitivityBanner` for commercial CRM with custom labels; `EdenAuditLogViewer` works as activity log for any vertical). Enhancements (`EdenSecretField`, `EdenFileUpload`, `EdenPermissionMatrix`) are strictly additive — every existing call site works unchanged. Library remains transport-agnostic + no new pubspec deps; platform-channel work (CAC/PIV smartcard, hardware token) is interface-only in library with consumer apps providing platform impl. Per `VERTICAL_UX_RESEARCH_2026-05-16.md` §3.3 + §4 + parent `VERTICAL_COVERAGE_ASSESSMENT_2026-05-15.md` §3 Wave C. Obj 009 (theme system) dependency is advisory only — TRDs plan against local `_govFederalColors` stub that obj 009 follow-up patches replace with `EdenThemeProfile.govFederal` reads. See `objectives/011-compliance-overlay-primitives/OBJECTIVE.md`.
+
+**TRDs:** 14 plans across 5 waves (~3-4 wk Claude execution)
+
+TRDs:
+- [ ] 011-01-TRD.md — EdenClassificationBanner + EdenClassificationBannerScaffold + EdenSensitivityBanner typedef (Wave 1; foundation — bootstraps compliance_screen.dart + home_screen tile; civilian re-use via custom level)
+- [ ] 011-11-TRD.md — EdenUSWDSBanner with en/es language toggle + custom govLabel (Wave 1; bootstraps uswds_screen.dart + home_screen tile; USWDS v3.13 spec)
+- [ ] 011-12-TRD.md — EdenAgencyIdentifier + EdenAgencyIdentity + EdenAgencyContactLink (Wave 1; header + footer layouts; depends 011-11 for uswds_screen APPEND order)
+- [ ] 011-02-TRD.md — EdenCacPivButton + EdenCacPivController + 5-state machine (idle/reading/promptPin/authenticating/error) (Wave 2; smartcard auth affordance, interface-only — consumer wires platform channel; composes EdenSecretField for PIN entry)
+- [ ] 011-10-TRD.md — EdenMfaHardwareToken (YubiKey / RSA SecurID / CAC backup) (Wave 2; depends 011-02 for compliance_screen APPEND order; composes EdenOtpInput from obj 001-05)
+- [ ] 011-08-TRD.md — Enhance EdenSecretField with classified clipboardMode + paste-from-outside warning (Wave 3; additive constructor params; backwards-compat baseline gated)
+- [ ] 011-09-TRD.md — Enhance EdenFileUpload with 4 new EdenUploadStatus values (virusScanning / virusScanFailed / cuiMarked / quarantined) + additive EdenUploadFile fields (Wave 3; depends 011-08 for compliance_screen APPEND order)
+- [ ] 011-13-TRD.md — EdenMemorableDate USWDS-conformant M/D/Y 3-field input + per-field validation + composite validation + responsive layout (Wave 3; depends 011-12 for uswds_screen APPEND order)
+- [ ] 011-14-TRD.md — EdenLanguageSelector + EdenLanguageOption + EdenLanguageOptions.usFederalDefault (en/es/zh/vi/ko/ru/ar per EO 13166 + Census Bureau) (Wave 3; depends 011-13 for uswds_screen APPEND order)
+- [ ] 011-03-TRD.md — EdenSection508Audit dev-tools overlay + EdenSection508Issue + EdenSection508AuditController + filter chips (Wave 4; UI surface only — consumer populates issues; depends 011-10 for compliance_screen APPEND order)
+- [ ] 011-04-TRD.md — EdenAuditLogViewer + EdenAuditLogEntry + hash-chain + failed-action indicators + filters (Wave 4; depends 011-03 for compliance_screen APPEND order; consumed by 011-06 Wave 5)
+- [ ] 011-07-TRD.md — Enhance EdenPermissionMatrix with EdenFederalRoles (Privileged User / ISSO / ISSM) + break-glass mode + justification dialog (Wave 4; additive; depends 011-04 for compliance_screen APPEND order)
+- [ ] 011-05-TRD.md — EdenFoiaRequestCard + EdenFoiaRequest + due-date pill (4 urgency tiers) + redaction status + FOIA exemption codes (Wave 5; depends 011-07 for compliance_screen APPEND order; composes 011-01 ClassificationBannerScaffold)
+- [ ] 011-06-TRD.md — EdenCaseFileShell — 6-tab regulated dossier (Overview/Activity/Documents/Contacts/Notes/Audit) + privileged note inline banner + classification overlay (Wave 5; CAPSTONE; composes 011-01 + 011-04; depends 011-05 for compliance_screen APPEND order)
 
 ## v2 Future Objectives
 
