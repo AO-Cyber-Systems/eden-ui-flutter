@@ -26,6 +26,7 @@ import 'composers_screen.dart';
 import 'scheduler_screen.dart';
 import 'field_screen.dart';
 import 'fuel_screen.dart';
+import 'motion_screen.dart';
 import 'compliance_screen.dart';
 import 'uswds_screen.dart';
 
@@ -383,5 +384,11 @@ final _categories = [
     subtitle:
         'USWDS gov banner, agency identifier, memorable date, language selector',
     builder: (_) => const UswdsScreen(),
+  ),
+  _Category(
+    icon: Icons.animation,
+    title: 'Motion (Obj 010)',
+    subtitle: 'FAB menu, loading indicators, spring-physics motion tokens',
+    builder: (_) => const MotionScreen(),
   ),
 ];
