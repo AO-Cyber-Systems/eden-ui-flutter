@@ -6,6 +6,7 @@ import 'eden_process_end_node.dart';
 import 'eden_process_orphan_node.dart';
 import 'eden_process_phase_node.dart';
 import 'eden_process_start_node.dart';
+import 'eden_process_task_group_node.dart';
 
 /// Per-node callbacks aggregated for [EdenProcessNodeRenderer.dispatch].
 ///
@@ -23,6 +24,16 @@ class EdenProcessNodeRendererConfig {
     this.onOpenPhaseEditor,
     this.phasesById = const {},
     this.expandedPhaseIds = const {},
+    // Task-group node (TRD 006-06)
+    this.groupsById = const {},
+    this.onUpdateTaskGroup,
+    this.onDeleteTaskGroup,
+    this.onOpenTaskGroupEditor,
+    this.onOpenTaskEditor,
+    this.onAddTaskInGroup,
+    this.onUpdateTask,
+    this.onDeleteTask,
+    this.onSplitTaskToNewGroup,
   });
 
   /// Fires with the orphan node's id when its delete affordance is invoked.
@@ -51,6 +62,46 @@ class EdenProcessNodeRendererConfig {
   /// Set of phase ids currently expanded. Drives the chevron + body state
   /// of `EdenProcessPhaseNode`.
   final Set<int> expandedPhaseIds;
+
+  /// Lookup of full task-group objects by id (TRD 006-06).
+  final Map<int, EdenProcessTaskGroup> groupsById;
+
+  /// Fires when a task-group node's inline rename or other group field
+  /// update is committed.
+  final void Function(int groupId, Map<String, dynamic> updates)?
+      onUpdateTaskGroup;
+
+  /// Fires when the hover-show trash button on a task-group node is tapped.
+  final void Function(int groupId)? onDeleteTaskGroup;
+
+  /// Fires when the hover-show pencil-edit button on a task-group node is
+  /// tapped. Consumer opens TaskGroupEditorDialog (TRD 006-10).
+  final void Function(int groupId)? onOpenTaskGroupEditor;
+
+  /// Fires when the per-task Settings icon is tapped. Consumer opens the
+  /// TaskEditorDialog (TRD 006-10).
+  final void Function(int taskId)? onOpenTaskEditor;
+
+  /// Fires when the Add-task affordance inside an expanded task group is
+  /// tapped. Optional `config` carries runtime defaults (e.g.
+  /// `{'runtimeComponent': 'checklist'}`).
+  final void Function(int groupId, Map<String, dynamic>? config)?
+      onAddTaskInGroup;
+
+  /// Fires when a task field changes (inline rename, toggle, reorder).
+  /// **Reorder semantics:** chevron-up/down dispatches TWO sequential
+  /// calls — one for the moved task, one for the swapped task. Consumers
+  /// MUST handle the batched-mutation contract.
+  final void Function(int taskId, Map<String, dynamic> updates)? onUpdateTask;
+
+  /// Fires when the per-task trash button is tapped.
+  final void Function(int taskId)? onDeleteTask;
+
+  /// Fires when a task is dragged from another group onto a task row inside
+  /// this group's expanded list. Args: dragged task id, current group's
+  /// `processPhaseId`. Consumer creates a new group inside that phase and
+  /// moves the task.
+  final void Function(int taskId, int newPhaseId)? onSplitTaskToNewGroup;
 }
 
 /// Central dispatcher used by `EdenDiagram.customNodeRenderer` to route a
@@ -79,6 +130,9 @@ class EdenProcessNodeRenderer {
         );
       case 'phase':
         return EdenProcessPhaseNode(context: ctx, config: effectiveConfig);
+      case 'taskGroup':
+        return EdenProcessTaskGroupNode(
+            context: ctx, config: effectiveConfig);
       default:
         return _UnknownNodeFallback(label: ctx.node.label);
     }
