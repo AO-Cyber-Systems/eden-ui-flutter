@@ -209,6 +209,23 @@ TRDs:
 - [ ] 011-05-TRD.md — EdenFoiaRequestCard + EdenFoiaRequest + due-date pill (4 urgency tiers) + redaction status + FOIA exemption codes (Wave 5; depends 011-07 for compliance_screen APPEND order; composes 011-01 ClassificationBannerScaffold)
 - [ ] 011-06-TRD.md — EdenCaseFileShell — 6-tab regulated dossier (Overview/Activity/Documents/Contacts/Notes/Audit) + privileged note inline banner + classification overlay (Wave 5; CAPSTONE; composes 011-01 + 011-04; depends 011-05 for compliance_screen APPEND order)
 
+### Objective 013: B-Medical Clinical Primitives
+
+**Goal:** Ship the 9 medical-vertical-specific primitives that unblock all 5 medical screens (per `VERTICAL_WIREFRAMES_VALIDATION_2026-05-17.md` §3.1 medical section: 4/5 BLOCKED, 1 PARTIAL today). After this objective ships, downstream `eden-biz-flutter` medical apps compose a Patient Chart + Visit Encounter surface from library widgets without re-implementing clinical density, HIPAA overlay wiring, FHIR-shape value mapping, or three-pane chart layout. Wave 1 atomic primitives (vitals row, medication list, lab result table, problem list, allergy list) run parallel; Wave 2 composers (SOAP note, chart timeline) parallel; Wave 3 page-shell capstones (patient chart scaffold, visit encounter scaffold) sequential. Per locked decision C in `COMPANION_UX_PATTERNS_2026-05-15.md` §0: PHI handling reuses obj 011 compliance overlay (`EdenAuditLogViewer` composes into chart side-rail). Per locked decision F: AI surface stays callback-driven (`aiInsightSlot` slots throughout). Depends on **obj 012 cross-vertical commerce primitives** (`EdenLineItemEditor` for claim/visit, `EdenSparkline` for lab trends, `EdenAggregateKpiStrip` for KPI rows) — obj 013 plans against obj 012 API shape; executor wires when obj 012 lands, else graceful fallback. Also depends on **obj 009** (`EdenThemeProfile.medicalInstitutional` + `EdenStatusPalette` already shipped) and **obj 011** (`EdenAuditLogViewer`). Library remains transport-agnostic; no Epic/Cerner/athenahealth API binding; no new pubspec deps. See `objectives/013-b-medical-clinical-primitives/OBJECTIVE.md`.
+
+**TRDs:** 9 plans across 3 waves (~2-3 wk Claude execution)
+
+TRDs:
+- [ ] 013-01-TRD.md — EdenVitalsRow — BP/HR/Temp/SpO2/RR/Weight/BMI strip with trend arrows + reference-range coloring; HIPAA isolation assertion (Wave 1; FOUNDATION — bootstraps medical_screen.dart + home_screen tile + eden_ui.dart Wave 1 export section)
+- [ ] 013-02-TRD.md — EdenMedicationList — FHIR-shape MedicationStatement display with drug/dose/route/frequency/prescriber + interaction-flag badge + refill state + discontinue toggle (Wave 1; depends 013-01 for medical_screen file-create)
+- [ ] 013-03-TRD.md — EdenLabResultTable — flag column (H/L/HH/LL) + inline trend sparkline (composes obj 012-07 EdenSparkline; graceful fallback to numeric delta) + panel grouping (CBC/CMP/Lipid) + sortable columns (Wave 1; depends 013-01)
+- [ ] 013-04-TRD.md — EdenProblemList — FHIR-shape Condition (ICD-10) with onset/status pill (active/recurrence/resolved/inactive) + verification status (provisional/refuted) + showResolved toggle (Wave 1; depends 013-01)
+- [ ] 013-05-TRD.md — EdenAllergyList — FHIR-shape AllergyIntolerance with severity pill + type icon prefix + NON-DISMISSIBLE criticality banner (HIPAA cannot-miss UX) + NKDA empty state (Wave 1; depends 013-01)
+- [ ] 013-06-TRD.md — EdenSOAPNote — 4-section composer (Subjective/Objective/Assessment/Plan) per locked decision F template-slot API; consumer plugs in templates + voice + AI panel + signature pad via slot params; view mode shows signed state (Wave 2; depends 013-01)
+- [ ] 013-07-TRD.md — EdenChartTimeline — vertical clinical timeline composing EdenActivityFeedItem (obj 003-06) with severity tinting + category filter chips + multi-year quarterly compression + aiInsightSlot (locked decision F) (Wave 2; depends 013-01)
+- [ ] 013-08-TRD.md — EdenPatientChartScaffold — CAPSTONE three-pane shell (left rail problems/meds/allergies · center tabbed chart · right rail alerts/audit/AI) composing all of Wave 1 + Wave 2 + EdenAuditLogViewer (obj 011) + EdenDetailHeader (obj 001); tier-responsive (Expanded/Medium/Compact); per-collection HIPAA bleed-isolation assertions (Wave 3; depends 013-01..013-07)
+- [ ] 013-09-TRD.md — EdenVisitEncounterScaffold — during-appointment workflow composing EdenWorkflowStepper (5 steps: Chief Complaint/Vitals/SOAP/Orders+Rx/Sign-off) + EdenSOAPNote (013-06) + EdenLineItemEditor (obj 012-01; graceful fallback to EdenForm) + EdenConsentFlow (obj 001-09) + EdenBlockingAlerts persistent right rail (Wave 3; depends 013-06 + 013-08)
+
 ## v2 Future Objectives
 
 Tracked but not in current scope:
