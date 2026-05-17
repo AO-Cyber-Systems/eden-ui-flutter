@@ -112,6 +112,41 @@ void main() {
         isEmpty,
       );
     });
+
+    test('decision nodes emit 4 custom ports (top/left targets, yes/no sources)',
+        () {
+      final def = processDefinitionFixture(
+        phases: const [],
+        config: EdenProcessConfig(
+          flowNodes: const {'start': true, 'end': true},
+          decisions: [decisionFixture(id: 1)],
+        ),
+      );
+      final (nodes, _) = EdenProcessGraphBuilder.build(def);
+      final decisionNode =
+          nodes.firstWhere((n) => n.data['nodeType'] == 'decision');
+      expect(decisionNode.ports?.length, 4);
+      final portIds = decisionNode.ports!.map((p) => p.id).toSet();
+      expect(portIds, {'top', 'left', 'yes', 'no'});
+
+      final yesPort = decisionNode.ports!.firstWhere((p) => p.id == 'yes');
+      expect(yesPort.kind, EdenDiagramPortKind.source);
+      expect(yesPort.color, '#10B981');
+      expect(yesPort.side, EdenPortSide.right);
+
+      final noPort = decisionNode.ports!.firstWhere((p) => p.id == 'no');
+      expect(noPort.kind, EdenDiagramPortKind.source);
+      expect(noPort.color, '#EF4444');
+      expect(noPort.side, EdenPortSide.bottom);
+
+      final topPort = decisionNode.ports!.firstWhere((p) => p.id == 'top');
+      expect(topPort.kind, EdenDiagramPortKind.target);
+      expect(topPort.side, EdenPortSide.top);
+
+      final leftPort = decisionNode.ports!.firstWhere((p) => p.id == 'left');
+      expect(leftPort.kind, EdenDiagramPortKind.target);
+      expect(leftPort.side, EdenPortSide.left);
+    });
   });
 
   group('EdenProcessGraphBuilder.build — controller-aware positions', () {

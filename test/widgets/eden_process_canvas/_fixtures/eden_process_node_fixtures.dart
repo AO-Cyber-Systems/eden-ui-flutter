@@ -364,6 +364,120 @@ EdenProcessTaskGroup groupWithHooksFixture({int id = 10, int phaseId = 1}) =>
       onItemCantDoWorkflowId: 3,
     );
 
+// ─────────── Task-node + Decision-node fixtures (TRD 006-07) ───────────
+
+EdenDiagramNode taskDiagramNodeFixture({
+  int taskId = 100,
+  String displayName = 'Verify access',
+}) =>
+    EdenDiagramNode(
+      id: 'task-$taskId',
+      shape: EdenNodeShape.roundedRect,
+      x: 100,
+      y: 100,
+      width: 180,
+      height: 100,
+      label: displayName,
+      data: {'nodeType': 'task', 'taskId': taskId},
+    );
+
+EdenDiagramNode decisionDiagramNodeFixture({
+  int decisionId = 1,
+  String name = 'Approval Required?',
+}) =>
+    EdenDiagramNode(
+      id: 'decision-$decisionId',
+      shape: EdenNodeShape.diamond,
+      x: 100,
+      y: 100,
+      width: 140,
+      height: 140,
+      label: name,
+      data: {'nodeType': 'decision', 'decisionId': decisionId},
+    );
+
+EdenProcessNodeRendererConfig taskRendererConfigFixture({
+  Map<int, EdenProcessTaskTemplate>? tasksById,
+  void Function(int, Map<String, dynamic>)? onUpdateTask,
+  void Function(int)? onDeleteTask,
+  void Function(int)? onOpenTaskEditor,
+  void Function(int)? onOpenTaskFormFieldsEditor,
+}) =>
+    EdenProcessNodeRendererConfig(
+      tasksById: tasksById ?? const {},
+      onUpdateTask: onUpdateTask,
+      onDeleteTask: onDeleteTask,
+      onOpenTaskEditor: onOpenTaskEditor,
+      onOpenTaskFormFieldsEditor: onOpenTaskFormFieldsEditor,
+    );
+
+EdenProcessNodeRendererConfig decisionRendererConfigFixture({
+  Map<int, EdenProcessDecisionConfig>? decisionsById,
+  void Function(int, Map<String, dynamic>)? onUpdateDecision,
+  void Function(int)? onDeleteDecision,
+}) =>
+    EdenProcessNodeRendererConfig(
+      decisionsById: decisionsById ?? const {},
+      onUpdateDecision: onUpdateDecision,
+      onDeleteDecision: onDeleteDecision,
+    );
+
+EdenProcessTaskTemplate taskWithFormFixture({
+  int id = 100,
+  int groupId = 10,
+  int fieldCount = 3,
+  String displayName = 'Customer info',
+  String? description,
+}) =>
+    EdenProcessTaskTemplate(
+      id: id,
+      taskGroupId: groupId,
+      name: 'form_task',
+      displayName: displayName,
+      description: description,
+      sortOrder: 0,
+      runtimeComponent: 'form',
+      runtimeComponentConfig: {
+        'fields': List.generate(
+          fieldCount,
+          (i) => {'id': i, 'label': 'Field ${i + 1}'},
+        ),
+      },
+      isRequired: true,
+      photoRequired: false,
+      signatureRequired: false,
+      approvalRequired: false,
+      descriptionRequired: false,
+      attachmentRequired: false,
+      allowsNa: true,
+      allowsBlocked: false,
+      allowsCantDo: false,
+      blockingBehavior: 'none',
+    );
+
+EdenProcessDefinition processFixtureWithDecision({int decisionId = 7}) =>
+    EdenProcessDefinition(
+      id: 1,
+      processTypeId: 10,
+      name: 'with_decision',
+      displayName: 'With decision',
+      version: 1,
+      isDefault: true,
+      isActive: true,
+      isPublished: false,
+      hasUnpublishedChanges: false,
+      config: EdenProcessConfig(
+        decisions: [
+          EdenProcessDecisionConfig(
+            id: decisionId,
+            name: 'Approval Required?',
+            condition: 'cost > 5000',
+          ),
+        ],
+      ),
+      phases: const [],
+    );
+
 EdenProcessNodeRendererConfig taskGroupRendererConfigFixture({
   Map<int, EdenProcessTaskGroup>? groupsById,
   void Function(int, Map<String, dynamic>)? onUpdateTaskGroup,
