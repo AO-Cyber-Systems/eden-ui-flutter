@@ -103,5 +103,116 @@ void main() {
 
       expect(find.widgetWithText(ElevatedButton, 'Add'), findsNothing);
     });
+
+    // -----------------------------------------------------------------------
+    // Obj 010 — illustration slot + secondary action
+    // -----------------------------------------------------------------------
+
+    testWidgets('illustration replaces icon when supplied', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenEmptyState(
+          title: 'X',
+          icon: Icons.inbox,
+          illustration: Container(
+            key: const ValueKey('illust'),
+            width: 80,
+            height: 80,
+            color: const Color(0xFFEE0000),
+          ),
+        ),
+      ));
+      expect(find.byKey(const ValueKey('illust')), findsOneWidget);
+      expect(find.byIcon(Icons.inbox), findsNothing);
+    });
+
+    testWidgets('illustration without icon renders illustration', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenEmptyState(
+          title: 'X',
+          illustration: Container(
+            key: const ValueKey('illust2'),
+            width: 80,
+            height: 80,
+          ),
+        ),
+      ));
+      expect(find.byKey(const ValueKey('illust2')), findsOneWidget);
+    });
+
+    testWidgets('icon without illustration: existing behavior', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenEmptyState(title: 'X', icon: Icons.inbox),
+      ));
+      expect(find.byIcon(Icons.inbox), findsOneWidget);
+    });
+
+    testWidgets('neither illustration nor icon: no leading visual', (tester) async {
+      await tester.pumpWidget(wrap(const EdenEmptyState(title: 'X')));
+      expect(find.byIcon(Icons.inbox), findsNothing);
+    });
+
+    testWidgets('secondary action renders when label + callback both supplied', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenEmptyState(
+          title: 'X',
+          actionLabel: 'Primary',
+          onAction: () {},
+          secondaryActionLabel: 'Secondary',
+          onSecondaryAction: () {},
+        ),
+      ));
+      expect(find.text('Primary'), findsOneWidget);
+      expect(find.text('Secondary'), findsOneWidget);
+    });
+
+    testWidgets('secondary action does NOT render when callback missing', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenEmptyState(
+          title: 'X',
+          secondaryActionLabel: 'Secondary',
+          // onSecondaryAction is null
+        ),
+      ));
+      expect(find.text('Secondary'), findsNothing);
+    });
+
+    testWidgets('WRONG-ACTION ISOLATION: primary fires only onAction; secondary fires only onSecondaryAction',
+        (tester) async {
+      final fired = <String>[];
+      await tester.pumpWidget(wrap(
+        EdenEmptyState(
+          title: 'X',
+          actionLabel: 'Try again',
+          onAction: () => fired.add('primary'),
+          secondaryActionLabel: 'Learn more',
+          onSecondaryAction: () => fired.add('secondary'),
+        ),
+      ));
+      await tester.tap(find.text('Try again'));
+      await tester.pump();
+      expect(fired, equals(['primary']));
+      fired.clear();
+      await tester.tap(find.text('Learn more'));
+      await tester.pump();
+      expect(fired, equals(['secondary']));
+    });
+
+    testWidgets('iPhone-narrow 390pt: long labels do not overflow', (tester) async {
+      tester.view.physicalSize = const Size(390 * 3, 700 * 3);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(wrap(
+        EdenEmptyState(
+          title: 'X',
+          actionLabel: 'Try again with verbose explanation',
+          onAction: () {},
+          secondaryActionLabel: 'Learn more about this empty state',
+          onSecondaryAction: () {},
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+    });
   });
 }
