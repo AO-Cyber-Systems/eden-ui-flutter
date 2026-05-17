@@ -29,6 +29,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenMedicationList — FHIR-shape medication list (013-02)',
             child: _MedicationListDemo(),
           ),
+          Section(
+            title: 'EdenLabResultTable — Compact clinical lab table (013-03)',
+            child: _LabResultTableDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -490,5 +494,162 @@ final _refillNeeded = <EdenMedicationStatement>[
     startDate: DateTime(2024, 1, 8),
     needsRefill: true,
     refillsRemaining: 0,
+  ),
+];
+
+// ────────────────────────── 013-03 demo ──────────────────────────
+
+class _LabResultTableDemo extends StatelessWidget {
+  const _LabResultTableDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Recent CBC + CMP (panel grouped)',
+          child: EdenLabResultTable(
+            results: _recentBasicLabs,
+            groupByPanel: true,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Abnormal lipid panel (flagged)',
+          child: EdenLabResultTable(
+            results: _abnormalLipid,
+            groupByPanel: true,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        _Subsection(
+          label: 'Critical-flagged glucose + potassium',
+          child: EdenLabResultTable(
+            results: _criticalFlagged,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+final _recentBasicLabs = <EdenLabResult>[
+  EdenLabResult(
+    id: 'demo-lab-1',
+    patientId: 'demo-labs',
+    testName: 'White Blood Cells',
+    testCode: 'WBC',
+    value: 7.5,
+    unit: 'k/uL',
+    referenceMin: 4.5,
+    referenceMax: 11.0,
+    panelName: 'CBC',
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+  EdenLabResult(
+    id: 'demo-lab-2',
+    patientId: 'demo-labs',
+    testName: 'Hemoglobin',
+    testCode: 'HGB',
+    value: 14.2,
+    unit: 'g/dL',
+    referenceMin: 12.0,
+    referenceMax: 16.0,
+    panelName: 'CBC',
+    trendValues: [13.8, 14.0, 14.1, 14.0],
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+  EdenLabResult(
+    id: 'demo-lab-3',
+    patientId: 'demo-labs',
+    testName: 'Glucose',
+    testCode: 'GLU',
+    value: 92,
+    unit: 'mg/dL',
+    referenceMin: 70,
+    referenceMax: 99,
+    panelName: 'CMP',
+    trendValues: [88, 90, 91, 89],
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+  EdenLabResult(
+    id: 'demo-lab-4',
+    patientId: 'demo-labs',
+    testName: 'Creatinine',
+    testCode: 'CR',
+    value: 0.9,
+    unit: 'mg/dL',
+    referenceMin: 0.6,
+    referenceMax: 1.3,
+    panelName: 'CMP',
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+];
+
+final _abnormalLipid = <EdenLabResult>[
+  EdenLabResult(
+    id: 'demo-lipid-1',
+    patientId: 'demo-lipid',
+    testName: 'Total Cholesterol',
+    testCode: 'TC',
+    value: 245,
+    unit: 'mg/dL',
+    referenceMax: 200,
+    flag: EdenLabFlag.high,
+    panelName: 'Lipid Panel',
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+  EdenLabResult(
+    id: 'demo-lipid-2',
+    patientId: 'demo-lipid',
+    testName: 'LDL Cholesterol',
+    testCode: 'LDL',
+    value: 168,
+    unit: 'mg/dL',
+    referenceMax: 100,
+    flag: EdenLabFlag.high,
+    panelName: 'Lipid Panel',
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+  EdenLabResult(
+    id: 'demo-lipid-3',
+    patientId: 'demo-lipid',
+    testName: 'HDL Cholesterol',
+    testCode: 'HDL',
+    value: 52,
+    unit: 'mg/dL',
+    referenceMin: 40,
+    panelName: 'Lipid Panel',
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+];
+
+final _criticalFlagged = <EdenLabResult>[
+  EdenLabResult(
+    id: 'demo-crit-1',
+    patientId: 'demo-crit',
+    testName: 'Glucose',
+    testCode: 'GLU',
+    value: 420,
+    unit: 'mg/dL',
+    referenceMin: 70,
+    referenceMax: 99,
+    criticalMax: 400,
+    flag: EdenLabFlag.criticalHigh,
+    collectedAt: DateTime(2026, 5, 17),
+  ),
+  EdenLabResult(
+    id: 'demo-crit-2',
+    patientId: 'demo-crit',
+    testName: 'Potassium',
+    testCode: 'K',
+    value: 6.8,
+    unit: 'mEq/L',
+    referenceMin: 3.5,
+    referenceMax: 5.0,
+    criticalMax: 6.0,
+    flag: EdenLabFlag.criticalHigh,
+    collectedAt: DateTime(2026, 5, 17),
   ),
 ];
