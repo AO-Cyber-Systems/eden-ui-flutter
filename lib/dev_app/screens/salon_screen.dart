@@ -138,7 +138,13 @@ class _SalonScreenState extends State<SalonScreen> {
               ],
             ),
           ),
-          // TRD 016-02 will append: Section(title: 'EdenTimeSlotPicker — Customer-facing booking slot grid', child: ...).
+          Section(
+            title: 'EdenTimeSlotPicker — Customer-facing booking slot grid',
+            child: SizedBox(
+              height: 600,
+              child: _TimeSlotPickerDemo(),
+            ),
+          ),
           // TRD 016-03 will append: Section(title: 'EdenMembershipManager + EdenPackageRedeem', child: ...).
           Section(
             title: 'EdenIntakeFormBuilder — Form template authoring',
@@ -157,6 +163,73 @@ class _SalonScreenState extends State<SalonScreen> {
           // TRD 016-06 will append: Section(title: 'EdenStaffSchedule + EdenStaffCapabilityMatrix', child: ...).
         ],
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// TRD 016-02 — EdenTimeSlotPicker demo
+// -----------------------------------------------------------------------------
+
+class _TimeSlotPickerDemo extends StatefulWidget {
+  @override
+  State<_TimeSlotPickerDemo> createState() => _TimeSlotPickerDemoState();
+}
+
+class _TimeSlotPickerDemoState extends State<_TimeSlotPickerDemo> {
+  DateTime _day = DateTime(2026, 5, 21);
+  String? _selectedSlotId;
+
+  static const _staff = <EdenTimeSlotStaff>[
+    EdenTimeSlotStaff(
+        id: 'st-aisha', displayName: 'Aisha', initials: 'AA'),
+    EdenTimeSlotStaff(
+        id: 'st-brendan', displayName: 'Brendan', initials: 'BB'),
+    EdenTimeSlotStaff(
+        id: 'st-carla', displayName: 'Carla', initials: 'CC'),
+  ];
+
+  List<EdenTimeSlot> _slotsFor(DateTime day) {
+    final out = <EdenTimeSlot>[];
+    for (final s in _staff) {
+      for (var h = 9; h < 18; h++) {
+        for (var m = 0; m < 60; m += 15) {
+          final blocked = (s.id == 'st-brendan' && h == 12) ||
+              (s.id == 'st-carla' && h == 15 && m == 30);
+          out.add(EdenTimeSlot(
+            id: '${s.id}-${day.day}-${h.toString().padLeft(2, '0')}-${m.toString().padLeft(2, '0')}',
+            staffId: s.id,
+            startTime: DateTime(day.year, day.month, day.day, h, m),
+            available: !blocked,
+            blockedReason: blocked ? 'Booked' : null,
+          ));
+        }
+      }
+    }
+    return out;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return EdenTimeSlotPicker(
+      currentDay: _day,
+      allStaff: _staff,
+      slots: _slotsFor(_day),
+      selectedSlotId: _selectedSlotId,
+      onSlotSelected: (slot) {
+        setState(() => _selectedSlotId = slot.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Booked: ${slot.staffId} at ${slot.startTime.hour}:${slot.startTime.minute.toString().padLeft(2, '0')}',
+            ),
+          ),
+        );
+      },
+      onDayChanged: (newDay) => setState(() {
+        _day = newDay;
+        _selectedSlotId = null;
+      }),
     );
   }
 }
