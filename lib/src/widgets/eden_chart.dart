@@ -39,6 +39,11 @@ const List<Color> _kDefaultPalette = [
   Color(0xFF06B6D4), // cyan
 ];
 
+/// Where to render the legend relative to the donut/pie chart canvas
+/// (obj 012-07). `bottom` is the default; `right` is used for wide
+/// layouts where vertical space is tight.
+enum EdenChartLegendPosition { bottom, right }
+
 Color _seriesColor(int index, Color? override) =>
     override ?? _kDefaultPalette[index % _kDefaultPalette.length];
 
@@ -612,6 +617,12 @@ class _BarChartPainter extends CustomPainter {
 // ---------------------------------------------------------------------------
 
 /// A pie/donut chart with legend and tap-to-highlight.
+///
+/// **Obj 012-07 — additive [centerLabelSlot]:** a Widget alternative to
+/// the String-only [centerLabel]. When non-null, the painter's center
+/// String is suppressed and the consumer-supplied widget is rendered as
+/// a `Positioned.fill(Center(...))` Stack overlay on the donut canvas.
+/// Useful for rich center content like `Icon + amount + label` composites.
 class EdenPieChart extends StatefulWidget {
   const EdenPieChart({
     super.key,
@@ -620,6 +631,7 @@ class EdenPieChart extends StatefulWidget {
     this.donut = false,
     this.donutWidth = 40,
     this.centerLabel,
+    this.centerLabelSlot,
     this.showLabels = true,
     this.showLegend = true,
     this.colors,
@@ -630,6 +642,7 @@ class EdenPieChart extends StatefulWidget {
   final bool donut;
   final double donutWidth;
   final String? centerLabel;
+  final Widget? centerLabelSlot;
   final bool showLabels;
   final bool showLegend;
   final List<Color>? colors;
@@ -646,27 +659,36 @@ class _EdenPieChartState extends State<EdenPieChart> {
     final theme = Theme.of(context);
     final palette = widget.colors ?? _kDefaultPalette;
 
+    final canvas = CustomPaint(
+      painter: _PieChartPainter(
+        data: widget.data,
+        donut: widget.donut,
+        donutWidth: widget.donutWidth,
+        // When centerLabelSlot is supplied, suppress the painter-drawn
+        // string label so the Widget overlay isn't painted on top of text.
+        centerLabel:
+            widget.centerLabelSlot != null ? null : widget.centerLabel,
+        showLabels: widget.showLabels,
+        colors: palette,
+        highlighted: _highlighted,
+        labelColor: theme.colorScheme.onSurface,
+      ),
+    );
+    final donutCanvas = widget.centerLabelSlot != null
+        ? Stack(
+            children: [
+              SizedBox(width: widget.size, height: widget.size, child: canvas),
+              Positioned.fill(child: Center(child: widget.centerLabelSlot!)),
+            ],
+          )
+        : SizedBox(width: widget.size, height: widget.size, child: canvas);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
           onTapDown: (details) => _hitTest(details.localPosition, palette),
-          child: SizedBox(
-            width: widget.size,
-            height: widget.size,
-            child: CustomPaint(
-              painter: _PieChartPainter(
-                data: widget.data,
-                donut: widget.donut,
-                donutWidth: widget.donutWidth,
-                centerLabel: widget.centerLabel,
-                showLabels: widget.showLabels,
-                colors: palette,
-                highlighted: _highlighted,
-                labelColor: theme.colorScheme.onSurface,
-              ),
-            ),
-          ),
+          child: donutCanvas,
         ),
         if (widget.showLegend) ...[
           const SizedBox(width: EdenSpacing.space4),
@@ -823,6 +845,113 @@ class _PieChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PieChartPainter old) =>
       old.highlighted != highlighted || old.data != data;
+}
+
+// ---------------------------------------------------------------------------
+// EdenDonutChart (obj 012-07)
+// ---------------------------------------------------------------------------
+
+/// Named donut-chart widget — wraps [EdenPieChart] with `donut: true` and
+/// adds [legendPosition] control (`bottom` default, `right` alternate).
+///
+/// Two ways to surface a center label:
+/// 1. `centerLabel: String` — painter-drawn 13pt bold text at the center
+///    (mirrors the EdenPieChart behavior).
+/// 2. `centerLabelSlot: Widget` — consumer-supplied widget rendered as a
+///    Stack overlay at the canvas center. Useful for `Icon + amount +
+///    label` composites.
+///
+/// `centerLabelSlot` takes precedence when both are non-null.
+///
+/// **Composes** [EdenPieChart] — does NOT replace it. Existing
+/// `EdenPieChart(donut: true)` call sites continue to work unchanged.
+class EdenDonutChart extends StatelessWidget {
+  const EdenDonutChart({
+    super.key,
+    required this.data,
+    this.size = 200,
+    this.donutWidth = 40,
+    this.centerLabel,
+    this.centerLabelSlot,
+    this.showLegend = true,
+    this.legendPosition = EdenChartLegendPosition.bottom,
+    this.colors,
+  });
+
+  final List<EdenChartDataPoint> data;
+  final double size;
+  final double donutWidth;
+  final String? centerLabel;
+  final Widget? centerLabelSlot;
+  final bool showLegend;
+  final EdenChartLegendPosition legendPosition;
+  final List<Color>? colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final chart = EdenPieChart(
+      data: data,
+      size: size,
+      donut: true,
+      donutWidth: donutWidth,
+      centerLabel: centerLabelSlot == null ? centerLabel : null,
+      centerLabelSlot: centerLabelSlot,
+      showLabels: false,
+      // We render our own legend at the EdenDonutChart level so we can
+      // control the position (bottom / right). Inner EdenPieChart's legend
+      // is suppressed.
+      showLegend: false,
+      colors: colors,
+    );
+
+    if (!showLegend || data.isEmpty) return chart;
+
+    final palette = colors ?? _kDefaultPalette;
+    final legend = Wrap(
+      spacing: 12,
+      runSpacing: 4,
+      children: [
+        for (int i = 0; i < data.length; i++)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: palette[i % palette.length],
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(data[i].label, style: theme.textTheme.bodySmall),
+            ],
+          ),
+      ],
+    );
+
+    return switch (legendPosition) {
+      EdenChartLegendPosition.bottom => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            chart,
+            const SizedBox(height: 8),
+            legend,
+          ],
+        ),
+      EdenChartLegendPosition.right => Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            chart,
+            const SizedBox(width: 16),
+            Flexible(child: legend),
+          ],
+        ),
+    };
+  }
 }
 
 // ---------------------------------------------------------------------------
