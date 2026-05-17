@@ -61,6 +61,10 @@ class MedicalScreen extends StatelessWidget {
             title: 'EdenAVSGenerator — patient-facing After Visit Summary (017-01)',
             child: _AvsGeneratorDemo(),
           ),
+          Section(
+            title: 'EdenInsuranceCard — front/back capture + extracted data (017-02)',
+            child: _InsuranceCardDemo(),
+          ),
           // ── 013-02 anchor (EdenMedicationList) ──
           // ── 013-03 anchor (EdenLabResultTable) ──
           // ── 013-04 anchor (EdenProblemList) ──
@@ -1486,4 +1490,138 @@ final _avsConciergeAnnualPhysical = EdenAvsDocument(
   followUpInstructions:
       'Continue current medications. Annual physical scheduled in 12 months.',
   nextAppointmentAt: DateTime(2027, 5, 17, 8, 0),
+);
+
+// ────────────────────────── 017-02 demo ──────────────────────────
+
+class _InsuranceCardDemo extends StatelessWidget {
+  const _InsuranceCardDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Subsection(
+          label: 'Primary Aetna PPO + Secondary BCBS HDHP '
+              '(priorityRank visual discrimination)',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EdenInsuranceCard(
+                policy: _demoPrimaryAetnaPpo,
+                onEditRequested: (p) =>
+                    debugPrint('Insurance: Edit tapped for ${p.id}'),
+                onReplaceImageRequested: (p) =>
+                    debugPrint('Insurance: Replace image for ${p.id}'),
+              ),
+              const SizedBox(height: EdenSpacing.space4),
+              EdenInsuranceCard(
+                policy: _demoSecondaryBcbsHdhp,
+                onReplaceImageRequested: (p) =>
+                    debugPrint('Insurance: Replace image for ${p.id}'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Medicare Traditional '
+              '(single-sided card — empty back placeholder visible)',
+          child: EdenInsuranceCard(
+            policy: _demoMedicareTraditional,
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Expired HDHP (planTerminationDate=2020 → expired banner)',
+          child: EdenInsuranceCard(
+            policy: _demoExpiredHdhp,
+            now: DateTime(2026, 5, 17),
+          ),
+        ),
+        const SizedBox(height: EdenSpacing.space6),
+        _Subsection(
+          label: 'Cross-vertical reuse: trades CDL driver license '
+              '(planType=other + customPlanTypeLabel override)',
+          child: EdenInsuranceCard(
+            policy: _demoCrossVerticalCdl,
+            now: DateTime(2026, 5, 17),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Inline demo policies for catalog use (NOT shared with test fixtures).
+const _demoPrimaryAetnaPpo = EdenInsurancePolicy(
+  id: 'demo-policy-aetna-001',
+  patientId: 'demo-policy-alpha',
+  planName: 'Aetna Choice POS II',
+  planType: EdenInsurancePlanType.ppo,
+  payerId: '60054',
+  memberId: 'W123456789',
+  groupNumber: '12345-ABC',
+  priorityRank: EdenInsurancePriority.primary,
+  subscriberName: 'Alex Alpha',
+  subscriberRelation: EdenSubscriberRelation.self,
+  frontImageUrl: 'https://placehold.co/640x400/0066cc/ffffff/png?text=Aetna+Front',
+  backImageUrl: 'https://placehold.co/640x400/0066cc/ffffff/png?text=Aetna+Back',
+);
+
+const _demoSecondaryBcbsHdhp = EdenInsurancePolicy(
+  id: 'demo-policy-bcbs-001',
+  patientId: 'demo-policy-alpha',
+  planName: 'BCBS HDHP Silver',
+  planType: EdenInsurancePlanType.hdhp,
+  payerId: '00510',
+  memberId: 'ZBC987654',
+  priorityRank: EdenInsurancePriority.secondary,
+  subscriberName: 'Beta Spouse',
+  subscriberRelation: EdenSubscriberRelation.spouse,
+);
+
+const _demoMedicareTraditional = EdenInsurancePolicy(
+  id: 'demo-policy-medicare-001',
+  patientId: 'demo-policy-bravo',
+  planName: 'Medicare Part B',
+  planType: EdenInsurancePlanType.medicare,
+  payerId: 'MEDICARE',
+  memberId: '1AB2-CD3-EF45',
+  priorityRank: EdenInsurancePriority.primary,
+  subscriberName: 'Brett Bravo',
+  subscriberRelation: EdenSubscriberRelation.self,
+  frontImageUrl: 'https://placehold.co/640x400/1976d2/ffffff/png?text=Medicare+Front',
+);
+
+final _demoExpiredHdhp = EdenInsurancePolicy(
+  id: 'demo-policy-expired-001',
+  patientId: 'demo-policy-charlie',
+  planName: 'Anthem HDHP Bronze',
+  planType: EdenInsurancePlanType.hdhp,
+  payerId: '11111',
+  memberId: 'XYZ112233',
+  planEffectiveDate: DateTime(2019, 1, 1),
+  planTerminationDate: DateTime(2020, 1, 1),
+  priorityRank: EdenInsurancePriority.primary,
+  subscriberName: 'Casey Charlie',
+  subscriberRelation: EdenSubscriberRelation.self,
+);
+
+final _demoCrossVerticalCdl = EdenInsurancePolicy(
+  id: 'demo-policy-trades-cdl-001',
+  patientId: 'demo-policy-delta',
+  planName: 'State of Texas DPS',
+  planType: EdenInsurancePlanType.other,
+  customPlanTypeLabel: 'Driver License — CDL Class A',
+  payerId: 'TX-DPS',
+  memberId: '12345678',
+  planEffectiveDate: DateTime(2024, 6, 1),
+  planTerminationDate: DateTime(2028, 6, 1),
+  priorityRank: EdenInsurancePriority.primary,
+  subscriberName: 'Drew Delta',
+  subscriberRelation: EdenSubscriberRelation.self,
+  frontImageUrl: 'https://placehold.co/640x400/2e7d32/ffffff/png?text=CDL+Class+A',
+  verifiedAt: DateTime(2024, 7, 1),
 );
