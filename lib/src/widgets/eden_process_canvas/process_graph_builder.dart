@@ -198,6 +198,34 @@ class EdenProcessGraphBuilder {
           'decisionId': decision.id,
           'condition': decision.condition,
         },
+        // TRD 006-07 N-6 parity: emit 4 custom ports so the canvas engine
+        // routes yes/no/top/left edges to the right anchor with the right
+        // color, and saved-layout edges round-trip via sourceHandle/
+        // targetHandle ids.
+        ports: const [
+          EdenDiagramPort(
+            id: 'top',
+            side: EdenPortSide.top,
+            kind: EdenDiagramPortKind.target,
+          ),
+          EdenDiagramPort(
+            id: 'left',
+            side: EdenPortSide.left,
+            kind: EdenDiagramPortKind.target,
+          ),
+          EdenDiagramPort(
+            id: 'yes',
+            side: EdenPortSide.right,
+            kind: EdenDiagramPortKind.source,
+            color: '#10B981',
+          ),
+          EdenDiagramPort(
+            id: 'no',
+            side: EdenPortSide.bottom,
+            kind: EdenDiagramPortKind.source,
+            color: '#EF4444',
+          ),
+        ],
       ));
     }
 

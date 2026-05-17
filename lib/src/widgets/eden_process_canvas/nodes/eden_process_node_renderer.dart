@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../eden_diagram/eden_diagram_exports.dart';
 import '../process_models.dart';
+import 'eden_process_decision_node.dart';
 import 'eden_process_end_node.dart';
 import 'eden_process_orphan_node.dart';
 import 'eden_process_phase_node.dart';
 import 'eden_process_start_node.dart';
 import 'eden_process_task_group_node.dart';
+import 'eden_process_task_node.dart';
 
 /// Per-node callbacks aggregated for [EdenProcessNodeRenderer.dispatch].
 ///
@@ -34,6 +36,12 @@ class EdenProcessNodeRendererConfig {
     this.onUpdateTask,
     this.onDeleteTask,
     this.onSplitTaskToNewGroup,
+    // Task + Decision nodes (TRD 006-07)
+    this.tasksById = const {},
+    this.decisionsById = const {},
+    this.onOpenTaskFormFieldsEditor,
+    this.onUpdateDecision,
+    this.onDeleteDecision,
   });
 
   /// Fires with the orphan node's id when its delete affordance is invoked.
@@ -102,6 +110,28 @@ class EdenProcessNodeRendererConfig {
   /// `processPhaseId`. Consumer creates a new group inside that phase and
   /// moves the task.
   final void Function(int taskId, int newPhaseId)? onSplitTaskToNewGroup;
+
+  /// Lookup of task templates by id — used by standalone `EdenProcessTaskNode`
+  /// (TRD 006-07). In objective 006 v1 the graph builder does not emit
+  /// standalone task nodes; this is for future workflows + dispatch
+  /// completeness.
+  final Map<int, EdenProcessTaskTemplate> tasksById;
+
+  /// Lookup of decision configs by id — used by `EdenProcessDecisionNode`
+  /// (TRD 006-07).
+  final Map<int, EdenProcessDecisionConfig> decisionsById;
+
+  /// Fires when the Configure Fields button on a form-type task is tapped.
+  /// Consumer opens the TaskFormFieldsEditorDialog (TRD 006-10).
+  final void Function(int taskId)? onOpenTaskFormFieldsEditor;
+
+  /// Fires when the Save action of the decision-node inline edit dialog
+  /// is confirmed with a non-empty name.
+  final void Function(int decisionId, Map<String, dynamic> updates)?
+      onUpdateDecision;
+
+  /// Fires when the hover-show trash button on a decision node is tapped.
+  final void Function(int decisionId)? onDeleteDecision;
 }
 
 /// Central dispatcher used by `EdenDiagram.customNodeRenderer` to route a
@@ -132,6 +162,11 @@ class EdenProcessNodeRenderer {
         return EdenProcessPhaseNode(context: ctx, config: effectiveConfig);
       case 'taskGroup':
         return EdenProcessTaskGroupNode(
+            context: ctx, config: effectiveConfig);
+      case 'task':
+        return EdenProcessTaskNode(context: ctx, config: effectiveConfig);
+      case 'decision':
+        return EdenProcessDecisionNode(
             context: ctx, config: effectiveConfig);
       default:
         return _UnknownNodeFallback(label: ctx.node.label);
