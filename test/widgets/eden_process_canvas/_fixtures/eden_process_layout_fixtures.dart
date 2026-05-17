@@ -188,6 +188,88 @@ EdenDiagramEdge _fanEdge(String src, String tgt) => EdenDiagramEdge(
   );
 }
 
+// ─────────── Free-form / grid / linear layout fixtures (TRD 006-09) ───────────
+
+EdenDiagramNode _generic(String id) => EdenDiagramNode(
+      id: id,
+      shape: EdenNodeShape.roundedRect,
+      x: 0,
+      y: 0,
+      width: 160,
+      height: 80,
+      label: id,
+      data: const {},
+    );
+
+(List<EdenDiagramNode>, List<EdenDiagramEdge>) chainGraph() {
+  return (
+    [_startNode(), _phaseNode(1), _phaseNode(2), _endNode()],
+    [
+      EdenDiagramEdge(id: 'e1', sourceId: 'start', targetId: 'phase-1'),
+      EdenDiagramEdge(id: 'e2', sourceId: 'phase-1', targetId: 'phase-2'),
+      EdenDiagramEdge(id: 'e3', sourceId: 'phase-2', targetId: 'end'),
+    ],
+  );
+}
+
+(List<EdenDiagramNode>, List<EdenDiagramEdge>) branchingGraph() {
+  return (
+    [_startNode(), _phaseNode(1), _phaseNode(2), _endNode()],
+    [
+      EdenDiagramEdge(id: 'e1', sourceId: 'start', targetId: 'phase-1'),
+      EdenDiagramEdge(id: 'e2', sourceId: 'start', targetId: 'phase-2'),
+      EdenDiagramEdge(id: 'e3', sourceId: 'phase-1', targetId: 'end'),
+      EdenDiagramEdge(id: 'e4', sourceId: 'phase-2', targetId: 'end'),
+    ],
+  );
+}
+
+(List<EdenDiagramNode>, List<EdenDiagramEdge>) diamondGraph() {
+  return (
+    [_startNode(), _generic('a'), _generic('b'), _generic('c'), _endNode()],
+    [
+      EdenDiagramEdge(id: 'e1', sourceId: 'start', targetId: 'a'),
+      EdenDiagramEdge(id: 'e2', sourceId: 'a', targetId: 'c'),
+      EdenDiagramEdge(id: 'e3', sourceId: 'c', targetId: 'end'),
+      EdenDiagramEdge(id: 'e4', sourceId: 'start', targetId: 'b'),
+      EdenDiagramEdge(id: 'e5', sourceId: 'b', targetId: 'end'),
+    ],
+  );
+}
+
+(List<EdenDiagramNode>, List<EdenDiagramEdge>) cycleGraph() {
+  return (
+    [_generic('a'), _generic('b'), _generic('c')],
+    [
+      EdenDiagramEdge(id: 'e1', sourceId: 'a', targetId: 'b'),
+      EdenDiagramEdge(id: 'e2', sourceId: 'b', targetId: 'c'),
+      EdenDiagramEdge(id: 'e3', sourceId: 'c', targetId: 'a'),
+    ],
+  );
+}
+
+(List<EdenDiagramNode>, List<EdenDiagramEdge>)
+    chainWithDisconnectedOrphanGraph() {
+  return (
+    [
+      _startNode(),
+      _phaseNode(1),
+      _endNode(),
+      _generic('orphan-1'),
+    ],
+    [
+      EdenDiagramEdge(id: 'e1', sourceId: 'start', targetId: 'phase-1'),
+      EdenDiagramEdge(id: 'e2', sourceId: 'phase-1', targetId: 'end'),
+    ],
+  );
+}
+
+List<EdenDiagramNode> sixNodesForGrid() =>
+    [for (int i = 1; i <= 6; i++) _generic('n$i')];
+
+List<EdenDiagramNode> fourNodesForLinear() =>
+    [for (int i = 1; i <= 4; i++) _generic('n$i')];
+
 (List<EdenDiagramNode>, List<EdenDiagramEdge>) graphWithDependencyEdgeMixed() {
   // Group-10 has an autoFan edge (counted) AND a dependency edge (skipped).
   return (
