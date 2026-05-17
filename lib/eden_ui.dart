@@ -456,3 +456,5 @@ export 'src/widgets/eden_inventory_row_editor.dart';
 // Wave 2
 export 'src/widgets/eden_receiving_flow.dart';
 export 'src/widgets/eden_sales_analytics_scaffold.dart';
+// Wave 3
+export 'src/widgets/eden_pos_register_scaffold.dart';
