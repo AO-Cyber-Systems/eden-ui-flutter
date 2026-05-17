@@ -135,8 +135,70 @@ class _ButtonsScreenState extends State<ButtonsScreen> {
             title: 'Full Width',
             child: EdenButton(label: 'Full Width Button', fullWidth: true, onPressed: () {}),
           ),
+          const Section(
+            title: 'M3 Expressive — Button Group (Obj 010)',
+            child: _ButtonGroupDemos(),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _ButtonGroupDemos extends StatefulWidget {
+  const _ButtonGroupDemos();
+
+  @override
+  State<_ButtonGroupDemos> createState() => _ButtonGroupDemosState();
+}
+
+class _ButtonGroupDemosState extends State<_ButtonGroupDemos> {
+  int _viewMode = 0;
+  int _filter = 0;
+  int _saveMode = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Icon-only — view mode toggles'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenButtonGroup(
+          selectedIndex: _viewMode,
+          onSelected: (i) => setState(() => _viewMode = i),
+          items: const [
+            EdenButtonGroupItem(icon: Icons.view_day_outlined, semanticsLabel: 'Day'),
+            EdenButtonGroupItem(icon: Icons.view_week_outlined, semanticsLabel: 'Week'),
+            EdenButtonGroupItem(icon: Icons.calendar_month_outlined, semanticsLabel: 'Month'),
+            EdenButtonGroupItem(icon: Icons.list_alt_outlined, semanticsLabel: 'List'),
+          ],
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Label-only — filter pills'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenButtonGroup(
+          selectedIndex: _filter,
+          onSelected: (i) => setState(() => _filter = i),
+          items: const [
+            EdenButtonGroupItem(label: 'All'),
+            EdenButtonGroupItem(label: 'Open'),
+            EdenButtonGroupItem(label: 'Closed'),
+          ],
+        ),
+        const SizedBox(height: EdenSpacing.space4),
+        const Text('Icon + label — save modes'),
+        const SizedBox(height: EdenSpacing.space2),
+        EdenButtonGroup(
+          selectedIndex: _saveMode,
+          onSelected: (i) => setState(() => _saveMode = i),
+          items: const [
+            EdenButtonGroupItem(icon: Icons.save_outlined, label: 'Save'),
+            EdenButtonGroupItem(icon: Icons.add_circle_outline, label: 'Save & New'),
+            EdenButtonGroupItem(icon: Icons.close, label: 'Save & Close'),
+          ],
+        ),
+      ],
     );
   }
 }
