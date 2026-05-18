@@ -1,5 +1,6 @@
 import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -107,6 +108,53 @@ void main() {
       ));
       final textField = tester.widget<TextField>(find.byType(TextField));
       expect(textField.obscureText, true);
+    });
+
+    testWidgets('readOnly param passes through to inner TextField',
+        (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(readOnly: true),
+      ));
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.readOnly, true);
+    });
+
+    testWidgets('readOnly defaults to false', (tester) async {
+      await tester.pumpWidget(wrap(
+        const EdenInput(),
+      ));
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.readOnly, false);
+    });
+
+    testWidgets('focusNode passes through to inner TextField', (tester) async {
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await tester.pumpWidget(wrap(
+        EdenInput(focusNode: node),
+      ));
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.focusNode, same(node));
+    });
+
+    testWidgets('inputFormatters pass through to inner TextField',
+        (tester) async {
+      final formatter = FilteringTextInputFormatter.digitsOnly;
+      await tester.pumpWidget(wrap(
+        EdenInput(inputFormatters: [formatter]),
+      ));
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.inputFormatters, contains(formatter));
+    });
+
+    testWidgets('onTap fires when readOnly field tapped', (tester) async {
+      var tapped = 0;
+      await tester.pumpWidget(wrap(
+        EdenInput(readOnly: true, onTap: () => tapped++),
+      ));
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      expect(tapped, 1);
     });
   });
 }
