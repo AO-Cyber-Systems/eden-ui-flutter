@@ -292,7 +292,7 @@ class _ParityRowState extends State<_ParityRow> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final isCompact = c.maxWidth < 900;
+        final isCompact = c.maxWidth < 1100;
         final referencePane = Container(
           height: 480,
           decoration: BoxDecoration(

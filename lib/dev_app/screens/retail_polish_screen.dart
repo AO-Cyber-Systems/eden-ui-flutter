@@ -102,8 +102,8 @@ class _LoyaltyMemberDetailDemoBlock extends StatelessWidget {
         ),
       ],
     );
-    return SizedBox(
-      width: 600,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 600),
       child: EdenLoyaltyMemberDetail(member: member),
     );
   }
@@ -163,7 +163,10 @@ class _StoreCreditLedgerDemoBlock extends StatelessWidget {
         ),
       ],
     );
-    return SizedBox(width: 800, child: EdenStoreCreditLedger(data: data));
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 800),
+      child: EdenStoreCreditLedger(data: data),
+    );
   }
 }
 
@@ -222,9 +225,9 @@ class _GiftCardBalanceLookupDemoBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 600,
-      child: EdenGiftCardBalanceLookup(onLookup: _demoLookup),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 600),
+      child: const EdenGiftCardBalanceLookup(onLookup: _demoLookup),
     );
   }
 }
