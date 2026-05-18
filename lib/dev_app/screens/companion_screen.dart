@@ -105,35 +105,38 @@ class _CompanionScreenState extends State<CompanionScreen> {
                     children: <Widget>[
                       const Text('Vertical: '),
                       const SizedBox(width: 8),
-                      DropdownButton<String>(
-                        value: _shellVertical,
-                        items: const <DropdownMenuItem<String>>[
-                          DropdownMenuItem<String>(
-                            value: 'trades',
-                            child: Text('Trades — Dispatch'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'salon',
-                            child: Text('Salon — Front-desk'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'fuel',
-                            child: Text('Fuel — Driver'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'medical',
-                            child: Text('Medical — Home visit'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'gov',
-                            child: Text('Gov — Caseworker'),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) {
-                            setState(() => _shellVertical = v);
-                          }
-                        },
+                      Expanded(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _shellVertical,
+                          items: const <DropdownMenuItem<String>>[
+                            DropdownMenuItem<String>(
+                              value: 'trades',
+                              child: Text('Trades — Dispatch'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'salon',
+                              child: Text('Salon — Front-desk'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'fuel',
+                              child: Text('Fuel — Driver'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'medical',
+                              child: Text('Medical — Home visit'),
+                            ),
+                            DropdownMenuItem<String>(
+                              value: 'gov',
+                              child: Text('Gov — Caseworker'),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) {
+                              setState(() => _shellVertical = v);
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -476,39 +479,45 @@ class _GpsStatusDemo extends StatelessWidget {
           children: <Widget>[
             const Text('Vertical: '),
             const SizedBox(width: 8),
-            DropdownButton<String>(
-              value: vertical,
-              onChanged: (v) {
-                if (v != null) onVerticalChanged(v);
-              },
-              items: const <DropdownMenuItem<String>>[
-                DropdownMenuItem<String>(
-                    value: 'trades', child: Text('Trades (Marietta)')),
-                DropdownMenuItem<String>(
-                    value: 'salon', child: Text('Salon (NYC)')),
-                DropdownMenuItem<String>(
-                    value: 'fuel', child: Text('Fuel (Chicago)')),
-                DropdownMenuItem<String>(
-                    value: 'medical', child: Text('Medical (Atlanta)')),
-                DropdownMenuItem<String>(
-                    value: 'gov', child: Text('Gov (Cobb)')),
-              ],
+            Expanded(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: vertical,
+                onChanged: (v) {
+                  if (v != null) onVerticalChanged(v);
+                },
+                items: const <DropdownMenuItem<String>>[
+                  DropdownMenuItem<String>(
+                      value: 'trades', child: Text('Trades (Marietta)')),
+                  DropdownMenuItem<String>(
+                      value: 'salon', child: Text('Salon (NYC)')),
+                  DropdownMenuItem<String>(
+                      value: 'fuel', child: Text('Fuel (Chicago)')),
+                  DropdownMenuItem<String>(
+                      value: 'medical', child: Text('Medical (Atlanta)')),
+                  DropdownMenuItem<String>(
+                      value: 'gov', child: Text('Gov (Cobb)')),
+                ],
+              ),
             ),
           ],
         ),
         Row(
           children: <Widget>[
             const Text('Status: '),
-            DropdownButton<EdenGpsStatus>(
-              value: status,
-              onChanged: (v) {
-                if (v != null) onStatusChanged(v);
-              },
-              items: <DropdownMenuItem<EdenGpsStatus>>[
-                for (final s in EdenGpsStatus.values)
-                  DropdownMenuItem<EdenGpsStatus>(
-                      value: s, child: Text(s.name)),
-              ],
+            Expanded(
+              child: DropdownButton<EdenGpsStatus>(
+                isExpanded: true,
+                value: status,
+                onChanged: (v) {
+                  if (v != null) onStatusChanged(v);
+                },
+                items: <DropdownMenuItem<EdenGpsStatus>>[
+                  for (final s in EdenGpsStatus.values)
+                    DropdownMenuItem<EdenGpsStatus>(
+                        value: s, child: Text(s.name)),
+                ],
+              ),
             ),
           ],
         ),
