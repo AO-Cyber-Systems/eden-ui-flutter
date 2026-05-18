@@ -180,8 +180,10 @@ class _EdenDispatchPageState extends State<EdenDispatchPage> {
     return LayoutBuilder(builder: (ctx, constraints) {
       final width = constraints.maxWidth;
       if (width >= 1280) {
+        // breakpoint: 1280 — dispatch full-desktop tier
         return _ThreeZoneLayout(parent: widget);
       } else if (width >= 1024) {
+        // breakpoint: 1024 — dispatch tablet-landscape tier
         return _TwoZoneLayout(parent: widget);
       } else {
         return _TabbedLayout(parent: widget);
@@ -209,12 +211,10 @@ class _ThreeZoneLayout extends StatelessWidget {
           flex: 4,
           child: Column(
             children: [
-              if (parent.showMapZone)
-                Expanded(child: _MapZone(parent: parent)),
+              if (parent.showMapZone) Expanded(child: _MapZone(parent: parent)),
               if (parent.showMapZone && parent.showAiZone)
                 const Divider(height: 1),
-              if (parent.showAiZone)
-                Expanded(child: _AiZone(parent: parent)),
+              if (parent.showAiZone) Expanded(child: _AiZone(parent: parent)),
             ],
           ),
         ),
@@ -414,8 +414,8 @@ class _CrewColumn extends StatelessWidget {
                   padding: const EdgeInsets.all(EdenSpacing.space2),
                   decoration: BoxDecoration(
                     color: crew.color ?? EdenColors.neutral[100],
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(7)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(7)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,8 +477,7 @@ class _ScheduledEventChip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(event.title,
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(event.title, style: Theme.of(context).textTheme.bodySmall),
           Text(
             '${event.start.hour}:${event.start.minute.toString().padLeft(2, '0')}',
             style: Theme.of(context).textTheme.labelSmall,
@@ -507,12 +506,10 @@ class _QueueZone extends StatelessWidget {
           padding: const EdgeInsets.all(EdenSpacing.space3),
           child: Row(
             children: [
-              Text('Open Work',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text('Open Work', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: Theme.of(context)
                       .colorScheme
@@ -555,8 +552,7 @@ class _QueueZone extends StatelessWidget {
                           child: _WorkItemCard(item: item, onTap: () {}),
                         ),
                       ),
-                      childWhenDragging:
-                          Opacity(opacity: 0.3, child: card),
+                      childWhenDragging: Opacity(opacity: 0.3, child: card),
                       child: card,
                     );
                   },
@@ -640,8 +636,7 @@ class _WorkItemCard extends StatelessWidget {
                 children: [
                   Icon(Icons.schedule,
                       size: 12,
-                      color:
-                          Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
                     _formatDuration(item.estimatedDuration),

@@ -90,8 +90,9 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
     if (widget.onUpdateProfile == null) return;
     setState(() => _profileSaving = true);
     try {
-      final phone =
-          _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim();
+      final phone = _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim();
       await widget.onUpdateProfile!(
         _nameController.text.trim(),
         _emailController.text.trim(),
@@ -145,6 +146,7 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
       padding: const EdgeInsets.all(EdenSpacing.space6),
       child: Center(
         child: ConstrainedBox(
+          // width: 600 — profile content clamp
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -180,44 +182,44 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
           child: GestureDetector(
             onTap: widget.onAvatarTap,
             child: Stack(
-            children: [
-              EdenAvatar(
-                size: EdenAvatarSize.xl,
-                image: widget.avatarUrl != null
-                    ? NetworkImage(widget.avatarUrl!)
-                    : null,
-                initials: widget.avatarInitials,
-              ),
-              if (widget.onAvatarTap != null)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.colorScheme.surface,
-                        width: 2,
+              children: [
+                EdenAvatar(
+                  size: EdenAvatarSize.xl,
+                  image: widget.avatarUrl != null
+                      ? NetworkImage(widget.avatarUrl!)
+                      : null,
+                  initials: widget.avatarInitials,
+                ),
+                if (widget.onAvatarTap != null)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: theme.colorScheme.surface,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        size: 14,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
-                    child: Icon(
-                      Icons.camera_alt_rounded,
-                      size: 14,
-                      color: theme.colorScheme.onPrimary,
-                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
         const SizedBox(height: EdenSpacing.space3),
         Text(
           widget.name,
-          style: theme.textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style:
+              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: EdenSpacing.space1),
         Text(

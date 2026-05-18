@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
 
 /// Mirrors the eden_page_header Rails component.
 ///
@@ -33,7 +34,8 @@ class EdenPageHeader extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final hasActions = actions != null && actions!.isNotEmpty;
-          final stackVertically = hasActions && constraints.maxWidth < 480;
+          final stackVertically =
+              hasActions && constraints.maxWidth < kEdenAppModeNarrowMax;
 
           final titleBlock = Row(
             crossAxisAlignment: CrossAxisAlignment.start,

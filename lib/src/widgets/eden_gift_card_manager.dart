@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_banner.dart';
 import 'eden_button.dart';
 import 'eden_card.dart';
@@ -212,8 +213,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
       setState(() {
         _lookedUpRecord = null;
         _lookupNotFound = false;
-        _redeemAmountController.text =
-            _redeemPrefill().toStringAsFixed(2);
+        _redeemAmountController.text = _redeemPrefill().toStringAsFixed(2);
       });
     }
   }
@@ -314,8 +314,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
       children: [
         TextFormField(
           controller: _issueAmountController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -391,9 +390,8 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
             const Text('Preview: ',
                 style: TextStyle(fontWeight: FontWeight.w600)),
             EdenCurrencyDisplay(
-              cents:
-                  ((double.tryParse(_issueAmountController.text) ?? 0) * 100)
-                      .round(),
+              cents: ((double.tryParse(_issueAmountController.text) ?? 0) * 100)
+                  .round(),
               currencyCode: widget.currencyCode,
             ),
           ],
@@ -419,12 +417,12 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Semantics(
-          label: 'Card ending in ${r.code.substring(math.max(0, r.code.length - 4))}',
+          label:
+              'Card ending in ${r.code.substring(math.max(0, r.code.length - 4))}',
           container: true,
           excludeSemantics: true,
           child: Text(masked,
-              style: const TextStyle(
-                  fontFamily: 'monospace', fontSize: 16)),
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
         ),
         const SizedBox(height: EdenSpacing.space2),
         Semantics(
@@ -446,8 +444,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
         const SizedBox(height: EdenSpacing.space3),
         TextFormField(
           controller: _redeemAmountController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -578,8 +575,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
           container: true,
           excludeSemantics: true,
           child: Text(masked,
-              style: const TextStyle(
-                  fontFamily: 'monospace', fontSize: 16)),
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
         ),
         const SizedBox(height: EdenSpacing.space2),
         Semantics(
@@ -629,7 +625,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
         else
           LayoutBuilder(
             builder: (context, constraints) {
-              final narrow = constraints.maxWidth < 600;
+              final narrow = constraints.maxWidth < kEdenAppModeCompactMax;
               if (narrow) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,8 +645,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
                                     ' — ${e.action.name}',
                                     style: const TextStyle(
                                         fontWeight: FontWeight.w600)),
-                                Text(
-                                    'Amount: \$${e.amount.toStringAsFixed(2)} '
+                                Text('Amount: \$${e.amount.toStringAsFixed(2)} '
                                     '• Balance after: \$${e.balanceAfter.toStringAsFixed(2)}'),
                                 if (e.memo != null) Text('Memo: ${e.memo}'),
                               ],

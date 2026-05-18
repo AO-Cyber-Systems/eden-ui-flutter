@@ -118,8 +118,7 @@ class EdenIntakeFieldSchema {
       label: label ?? this.label,
       required: required ?? this.required,
       options: options ?? this.options,
-      visibleWhen:
-          clearVisibleWhen ? null : (visibleWhen ?? this.visibleWhen),
+      visibleWhen: clearVisibleWhen ? null : (visibleWhen ?? this.visibleWhen),
     );
   }
 }
@@ -237,9 +236,8 @@ class EdenIntakeFormBuilderState extends State<EdenIntakeFormBuilder> {
   /// Apply a mutator to one field's schema in place.
   void updateField(
       String id, EdenIntakeFieldSchema Function(EdenIntakeFieldSchema) mutate) {
-    final list = widget.schema.fields
-        .map((f) => f.id == id ? mutate(f) : f)
-        .toList();
+    final list =
+        widget.schema.fields.map((f) => f.id == id ? mutate(f) : f).toList();
     widget.onSchemaChanged(widget.schema.copyWith(fields: list));
   }
 
@@ -259,7 +257,10 @@ class EdenIntakeFormBuilderState extends State<EdenIntakeFormBuilder> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (ctx, c) {
-        if (c.maxWidth >= 900) return _buildThreePane();
+        if (c.maxWidth >= 900) {
+          // breakpoint: 900 — intake three-pane floor
+          return _buildThreePane();
+        }
         return _buildTabbed();
       },
     );
@@ -315,8 +316,7 @@ class _PalettePane extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(EdenSpacing.space2),
       children: [
-        Text('Add field',
-            style: Theme.of(context).textTheme.labelMedium),
+        Text('Add field', style: Theme.of(context).textTheme.labelMedium),
         const SizedBox(height: EdenSpacing.space2),
         for (final type in EdenIntakeFieldType.values)
           Padding(
@@ -527,8 +527,7 @@ class _ConfigFormState extends State<_ConfigForm> {
   void initState() {
     super.initState();
     _labelCtrl = TextEditingController(text: widget.field.label);
-    _optionsCtrl =
-        TextEditingController(text: widget.field.options.join(', '));
+    _optionsCtrl = TextEditingController(text: widget.field.options.join(', '));
   }
 
   @override

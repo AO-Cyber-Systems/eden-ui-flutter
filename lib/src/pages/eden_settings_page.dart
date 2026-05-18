@@ -51,6 +51,7 @@ class EdenSettingsPage extends StatelessWidget {
       padding: const EdgeInsets.all(EdenSpacing.space6),
       child: Center(
         child: ConstrainedBox(
+          // width: 600 — settings content clamp
           constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,23 +62,19 @@ class EdenSettingsPage extends StatelessWidget {
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: EdenSpacing.space6),
-
               if (showAppearance) ...[
                 _buildAppearanceSection(),
                 const SizedBox(height: EdenSpacing.space6),
               ],
-
               if (showNotifications) ...[
                 _buildNotificationsSection(),
                 const SizedBox(height: EdenSpacing.space6),
               ],
-
               if (additionalSections != null)
                 for (final section in additionalSections!) ...[
                   section,
                   const SizedBox(height: EdenSpacing.space6),
                 ],
-
               if (showAccount) ...[
                 _buildAccountSection(theme),
                 const SizedBox(height: EdenSpacing.space8),
@@ -202,9 +199,10 @@ class _ToggleRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              )),
+              Text(label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  )),
               const SizedBox(height: 2),
               Text(
                 description,

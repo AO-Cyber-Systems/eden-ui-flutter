@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
+
 /// Palette presets for role badges in [EdenRoleDashboardShell].
 ///
 /// Each vertical historically maps its primary brand color into the role
@@ -85,8 +87,9 @@ class EdenRoleDashboardShell extends StatelessWidget {
     this.notificationButton,
     required this.sections,
     this.rightRail,
-    this.narrowBreakpoint = 480,
-    this.tabletBreakpoint = 768,
+    this.narrowBreakpoint = kEdenAppModeNarrowMax,
+    this.tabletBreakpoint =
+        768, // breakpoint: 768 — legacy tablet floor; intentional one-off, not a canonical tier
   });
 
   /// Greeting line shown at top-left (e.g. "Good morning, Sarah").
@@ -167,8 +170,8 @@ class EdenRoleDashboardShell extends StatelessWidget {
                 const SizedBox(height: 4),
                 Container(
                   key: const ValueKey<String>('role_badge'),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: bg,
                     borderRadius: BorderRadius.circular(12),
@@ -207,9 +210,8 @@ class EdenRoleDashboardShell extends StatelessWidget {
       final rows = <Widget>[];
       for (int i = 0; i < sortedSections.length; i += 2) {
         final left = sortedSections[i];
-        final right = i + 1 < sortedSections.length
-            ? sortedSections[i + 1]
-            : null;
+        final right =
+            i + 1 < sortedSections.length ? sortedSections[i + 1] : null;
         rows.add(Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Row(
@@ -315,8 +317,7 @@ class EdenRoleDashboardShell extends StatelessWidget {
           if (s.priority == EdenDashboardSectionPriority.high)
             Container(
               key: ValueKey<String>('priority_strip_${s.id}'),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               color: Theme.of(context).colorScheme.errorContainer,
               child: Text(
                 'Action needed',
@@ -350,7 +351,8 @@ class EdenRoleDashboardShell extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.secondaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(s.badge!,

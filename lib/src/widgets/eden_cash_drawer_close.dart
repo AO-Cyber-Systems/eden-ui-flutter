@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_banner.dart';
 import 'eden_button.dart';
 import 'eden_card.dart';
@@ -18,9 +19,7 @@ class EdenDenomination {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is EdenDenomination &&
-          other.value == value &&
-          other.label == label;
+      other is EdenDenomination && other.value == value && other.label == label;
 
   @override
   int get hashCode => Object.hash(value, label);
@@ -124,8 +123,7 @@ class EdenDrawerSession {
     return c.fold<double>(0, (acc, e) => acc + e.lineTotal);
   }
 
-  double get computedVariance =>
-      countedClosingBalance - expectedClosingBalance;
+  double get computedVariance => countedClosingBalance - expectedClosingBalance;
 
   EdenDrawerSession copyWith({
     String? drawerId,
@@ -313,8 +311,7 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
       reason: reason,
       occurredAt: DateTime.now(),
     );
-    final list = List<EdenCashTransaction>.from(_session.transactions)
-      ..add(tx);
+    final list = List<EdenCashTransaction>.from(_session.transactions)..add(tx);
     _emitSession(_session.copyWith(transactions: list));
     _txAmountController.clear();
     _txReasonController.clear();
@@ -326,8 +323,7 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
   EdenBankDepositDraft _buildDepositDraft() {
     return EdenBankDepositDraft(
       cashAmount: double.tryParse(_depositCashController.text) ?? 0,
-      checkAmount:
-          double.tryParse(_depositCheckAmountController.text) ?? 0,
+      checkAmount: double.tryParse(_depositCheckAmountController.text) ?? 0,
       checkCount: int.tryParse(_depositCheckCountController.text) ?? 0,
       memo: _depositMemoController.text.isEmpty
           ? null
@@ -417,7 +413,7 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final narrow = constraints.maxWidth < 600;
+      final narrow = constraints.maxWidth < kEdenAppModeCompactMax;
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,7 +499,10 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
           ),
         ),
       );
-      rows.add(narrow ? EdenCard(child: Padding(padding: const EdgeInsets.all(8), child: row)) : row);
+      rows.add(narrow
+          ? EdenCard(
+              child: Padding(padding: const EdgeInsets.all(8), child: row))
+          : row);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -690,8 +689,7 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
                   label: 'Cancel',
                   variant: EdenButtonVariant.secondary,
                   outline: true,
-                  onPressed: () =>
-                      setState(() => _showAddTxForm = false),
+                  onPressed: () => setState(() => _showAddTxForm = false),
                 ),
               ],
             ),
@@ -707,8 +705,7 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
       children: [
         TextFormField(
           controller: _depositCashController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -728,8 +725,7 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d+\.?\d{0,2}')),
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
                 decoration: const InputDecoration(
                   labelText: 'Check amount',

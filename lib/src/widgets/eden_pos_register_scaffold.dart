@@ -223,7 +223,8 @@ class _EdenPOSRegisterScaffoldState extends State<EdenPOSRegisterScaffold> {
     if (widget.forceExpanded == true) return true;
     final tier = EdenAdaptiveTierScope.maybeOf(context);
     if (tier == EdenAdaptiveTier.compact) return false;
-    return maxWidth >= 1024;
+    return maxWidth >=
+        1024; // breakpoint: 1024 — POS register requires landscape tablet
   }
 
   void _emit(EdenPosSessionEvent ev) {
@@ -358,8 +359,7 @@ class _EdenPOSRegisterScaffoldState extends State<EdenPOSRegisterScaffold> {
       products: widget.products,
       categories: widget.categories,
       selectedCategoryId: _selectedCategoryId,
-      onCategorySelected: (id) =>
-          setState(() => _selectedCategoryId = id),
+      onCategorySelected: (id) => setState(() => _selectedCategoryId = id),
       onScanRequest: widget.onBarcodeScanRequest,
       onProductTap: (p) => _emit(EdenPosProductAdded(p)),
     );
@@ -378,8 +378,7 @@ class _EdenPOSRegisterScaffoldState extends State<EdenPOSRegisterScaffold> {
       session: widget.session,
       onShowReceipt: () => setState(() => _receiptOpen = true),
       onTenderUpdated: (t) => _emit(EdenPosTenderUpdated(t)),
-      onPaymentSubmitted: () =>
-          _emit(EdenPosPaymentSubmitted(widget.session)),
+      onPaymentSubmitted: () => _emit(EdenPosPaymentSubmitted(widget.session)),
     );
   }
 }

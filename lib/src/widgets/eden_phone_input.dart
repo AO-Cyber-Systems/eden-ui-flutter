@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
 
 /// Country descriptor: ISO-3166 alpha-2 code, dial code, flag emoji, name.
 @immutable
@@ -49,7 +50,7 @@ class EdenPhoneInput extends StatefulWidget {
     this.verifyButtonLabel = 'Verify',
     this.onVerifyPressed,
     this.enabled = true,
-    this.narrowBreakpoint = 480.0,
+    this.narrowBreakpoint = kEdenAppModeNarrowMax,
   });
 
   final String initialCountryIso2;
@@ -69,14 +70,22 @@ class EdenPhoneInput extends StatefulWidget {
 
 class _EdenPhoneInputState extends State<EdenPhoneInput> {
   static const List<EdenPhoneCountry> _countries = <EdenPhoneCountry>[
-    EdenPhoneCountry(iso2: 'US', dialCode: '+1', flagEmoji: '🇺🇸', name: 'United States'),
-    EdenPhoneCountry(iso2: 'CA', dialCode: '+1', flagEmoji: '🇨🇦', name: 'Canada'),
-    EdenPhoneCountry(iso2: 'GB', dialCode: '+44', flagEmoji: '🇬🇧', name: 'United Kingdom'),
-    EdenPhoneCountry(iso2: 'AU', dialCode: '+61', flagEmoji: '🇦🇺', name: 'Australia'),
-    EdenPhoneCountry(iso2: 'DE', dialCode: '+49', flagEmoji: '🇩🇪', name: 'Germany'),
-    EdenPhoneCountry(iso2: 'FR', dialCode: '+33', flagEmoji: '🇫🇷', name: 'France'),
-    EdenPhoneCountry(iso2: 'JP', dialCode: '+81', flagEmoji: '🇯🇵', name: 'Japan'),
-    EdenPhoneCountry(iso2: 'IN', dialCode: '+91', flagEmoji: '🇮🇳', name: 'India'),
+    EdenPhoneCountry(
+        iso2: 'US', dialCode: '+1', flagEmoji: '🇺🇸', name: 'United States'),
+    EdenPhoneCountry(
+        iso2: 'CA', dialCode: '+1', flagEmoji: '🇨🇦', name: 'Canada'),
+    EdenPhoneCountry(
+        iso2: 'GB', dialCode: '+44', flagEmoji: '🇬🇧', name: 'United Kingdom'),
+    EdenPhoneCountry(
+        iso2: 'AU', dialCode: '+61', flagEmoji: '🇦🇺', name: 'Australia'),
+    EdenPhoneCountry(
+        iso2: 'DE', dialCode: '+49', flagEmoji: '🇩🇪', name: 'Germany'),
+    EdenPhoneCountry(
+        iso2: 'FR', dialCode: '+33', flagEmoji: '🇫🇷', name: 'France'),
+    EdenPhoneCountry(
+        iso2: 'JP', dialCode: '+81', flagEmoji: '🇯🇵', name: 'Japan'),
+    EdenPhoneCountry(
+        iso2: 'IN', dialCode: '+91', flagEmoji: '🇮🇳', name: 'India'),
   ];
 
   /// Per-ISO national-number format template. Countries without an entry
@@ -134,8 +143,9 @@ class _EdenPhoneInputState extends State<EdenPhoneInput> {
     final format = _formats[_country.iso2];
     final maxDigits = format?.digits ?? 15;
     final rawDigits = value.replaceAll(RegExp(r'\D'), '');
-    final limitedDigits =
-        rawDigits.length > maxDigits ? rawDigits.substring(0, maxDigits) : rawDigits;
+    final limitedDigits = rawDigits.length > maxDigits
+        ? rawDigits.substring(0, maxDigits)
+        : rawDigits;
     final masked = _applyMask(limitedDigits, format);
 
     if (masked != _controller.text) {
@@ -159,7 +169,8 @@ class _EdenPhoneInputState extends State<EdenPhoneInput> {
             shrinkWrap: true,
             children: _countries.map((c) {
               return ListTile(
-                leading: Text(c.flagEmoji, style: const TextStyle(fontSize: 20)),
+                leading:
+                    Text(c.flagEmoji, style: const TextStyle(fontSize: 20)),
                 title: Text(c.name),
                 trailing: Text(c.dialCode),
                 onTap: () => Navigator.of(sheetCtx).pop(c),
@@ -238,8 +249,8 @@ class _EdenPhoneInputState extends State<EdenPhoneInput> {
                   FilteringTextInputFormatter.allow(RegExp(r'[\d\s\-\(\)]')),
                 ],
                 decoration: InputDecoration(
-                  hintText: _formats[_country.iso2]?.template ??
-                      _country.dialCode,
+                  hintText:
+                      _formats[_country.iso2]?.template ?? _country.dialCode,
                   border: OutlineInputBorder(
                     borderRadius: EdenRadii.borderRadiusMd,
                   ),

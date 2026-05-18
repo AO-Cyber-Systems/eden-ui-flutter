@@ -141,7 +141,8 @@ class EdenSalesAnalyticsScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 1024;
+        final isWide = constraints.maxWidth >=
+            1024; // breakpoint: 1024 — analytics tablet-landscape floor
         final chartType = trendChartType ?? EdenAnalyticsChartType.bar;
         final left = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,9 +490,7 @@ class _TopCategoriesSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: LinearProgressIndicator(
-                    value: maxVal == 0
-                        ? 0
-                        : (c.value / maxVal).clamp(0.0, 1.0),
+                    value: maxVal == 0 ? 0 : (c.value / maxVal).clamp(0.0, 1.0),
                     color: c.color ?? theme.colorScheme.primary,
                   ),
                 ),

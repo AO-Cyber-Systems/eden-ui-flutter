@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeExpandedMin;
 
 /// Edit vs read-only mode for [EdenSOAPNote].
 enum EdenSoapMode { compose, view }
@@ -115,9 +116,12 @@ class _EdenSOAPNoteState extends State<EdenSOAPNote> {
   @override
   void didUpdateWidget(covariant EdenSOAPNote oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.data.subjective != _sCtrl.text) _sCtrl.text = widget.data.subjective;
-    if (widget.data.objective != _oCtrl.text) _oCtrl.text = widget.data.objective;
-    if (widget.data.assessment != _aCtrl.text) _aCtrl.text = widget.data.assessment;
+    if (widget.data.subjective != _sCtrl.text)
+      _sCtrl.text = widget.data.subjective;
+    if (widget.data.objective != _oCtrl.text)
+      _oCtrl.text = widget.data.objective;
+    if (widget.data.assessment != _aCtrl.text)
+      _aCtrl.text = widget.data.assessment;
     if (widget.data.plan != _pCtrl.text) _pCtrl.text = widget.data.plan;
   }
 
@@ -147,7 +151,7 @@ class _EdenSOAPNoteState extends State<EdenSOAPNote> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      final isExpanded = constraints.maxWidth >= 840;
+      final isExpanded = constraints.maxWidth >= kEdenAppModeExpandedMin;
       final mainColumn = _buildMainColumn(context);
       Widget body;
       if (widget.aiSuggestionSlot == null) {
