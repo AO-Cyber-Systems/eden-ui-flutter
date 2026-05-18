@@ -46,19 +46,21 @@ class EdenSchedulerMonthViewFixtures {
     );
   }
 
-  /// Wraps the widget in an unconstrained-height parent to exercise
-  /// the c.maxHeight.isFinite==false fallback. Width is bounded so the
-  /// month-cell width-based dot threshold stays width-aware.
-  static Widget wrapUnboundedHeight(Widget child, {double width = 1200}) {
+  /// Wraps in a generously-tall bounded parent to exercise the
+  /// "plenty of vertical room" branch of the height-aware chip cap.
+  ///
+  /// NOTE: A truly unbounded vertical parent is incompatible with
+  /// `EdenSchedulerMonthView`'s outer Column+Expanded grid (Flutter requires
+  /// bounded constraints for Expanded). The defensive `c.maxHeight.isFinite`
+  /// guard inside `_MonthDayCell` is therefore not directly reachable from a
+  /// widget-test fixture without bypassing the public widget structure. A
+  /// large finite height exercises the same OBSERVABLE contract: no
+  /// overflow, chip count clamped at `maxEventsPerCell` (not exceeded).
+  static Widget wrapTallHeight(Widget child,
+      {double width = 1200, double height = 4000}) {
     return MaterialApp(
       home: Scaffold(
-        body: SizedBox(
-          width: width,
-          child: UnconstrainedBox(
-            constrainedAxis: Axis.horizontal,
-            child: child,
-          ),
-        ),
+        body: SizedBox(width: width, height: height, child: child),
       ),
     );
   }

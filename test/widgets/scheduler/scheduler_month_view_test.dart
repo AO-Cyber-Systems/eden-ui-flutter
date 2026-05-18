@@ -165,9 +165,14 @@ void main() {
     });
 
     testWidgets(
-        'unbounded height falls back to maxEventsPerCell cap without exception',
+        'very tall bounded height respects maxEventsPerCell cap (no overflow)',
         (tester) async {
-      await tester.pumpWidget(EdenSchedulerMonthViewFixtures.wrapUnboundedHeight(
+      // 4000pt-tall harness gives each cell ample vertical room (~660pt per
+      // cell over 6 rows). The height-aware cap should clamp at
+      // maxEventsPerCell (=3 here), not exceed it. Stands in for the
+      // defensive `c.maxHeight.isFinite` guard, which is structurally
+      // unreachable through the public widget API (see fixture NOTE).
+      await tester.pumpWidget(EdenSchedulerMonthViewFixtures.wrapTallHeight(
         EdenSchedulerMonthView(
           focusedDate: EdenSchedulerMonthViewFixtures.may1,
           today: EdenSchedulerMonthViewFixtures.today,
@@ -182,8 +187,8 @@ void main() {
         tester.takeException(),
         isNull,
         reason:
-            'When c.maxHeight is not finite the cell must fall back to '
-            'width-only behavior using maxEventsPerCell without throwing.',
+            'At very tall bounded heights the cell must not throw and must '
+            'clamp visible chips at maxEventsPerCell.',
       );
     });
   });
