@@ -12,7 +12,6 @@ import 'scheduler/scheduler_swimlane_view.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
 import 'scheduler/scheduler_week_view.dart';
-import 'scheduler/scheduler_week_day_views.dart';
 
 // Re-export the new data models / controller so consumers continue to import
 // `package:eden_ui_flutter/eden_ui.dart` and see `EdenSchedulerEvent`,
