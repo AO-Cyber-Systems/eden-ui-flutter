@@ -543,6 +543,98 @@ void main() {
     expect(denominationButton(r'$100'), findsNothing);
   });
   });
+
+  // ─────────────────────────────────────────────────────────────────────
+  // quickTenderMode: replace semantics + Exact button
+  // ─────────────────────────────────────────────────────────────────────
+
+  group('EdenPaymentEntry — quickTenderMode replace', () {
+    // 1. Default (no quickTenderMode passed) still accumulates — backward compat.
+    testWidgets('default mode (omitted) accumulates on tap', (tester) async {
+      EdenPaymentDraft? captured;
+      await tester.pumpWidget(wrap(EdenPaymentEntry(
+        allowedMethods: const [EdenPaymentMethod.cash],
+        onDraftChanged: (d) => captured = d,
+        quickTenderDenominations: const [2000, 5000],
+      )));
+      await tester.tap(denominationButton(r'$20'));
+      await tester.pump();
+      await tester.tap(denominationButton(r'$50'));
+      await tester.pump();
+      // accumulate: 20 + 50 = 70
+      expect(captured!.amount, closeTo(70.0, 0.001));
+    });
+
+    // 2. replace mode: tap denomination sets tendered to that exact amount.
+    testWidgets('replace mode: tap denomination sets tendered (not adds)', (tester) async {
+      EdenPaymentDraft? captured;
+      await tester.pumpWidget(wrap(EdenPaymentEntry(
+        allowedMethods: const [EdenPaymentMethod.cash],
+        onDraftChanged: (d) => captured = d,
+        quickTenderDenominations: const [2000, 5000],
+        quickTenderMode: EdenQuickTenderMode.replace,
+      )));
+      await tester.tap(denominationButton(r'$20'));
+      await tester.pump();
+      expect(captured!.amount, closeTo(20.0, 0.001));
+    });
+
+    // 3. replace mode: second tap replaces (does not accumulate).
+    testWidgets('replace mode: second tap replaces first, not accumulates', (tester) async {
+      EdenPaymentDraft? captured;
+      await tester.pumpWidget(wrap(EdenPaymentEntry(
+        allowedMethods: const [EdenPaymentMethod.cash],
+        onDraftChanged: (d) => captured = d,
+        quickTenderDenominations: const [2000, 5000],
+        quickTenderMode: EdenQuickTenderMode.replace,
+      )));
+      await tester.tap(denominationButton(r'$20'));
+      await tester.pump();
+      await tester.tap(denominationButton(r'$50'));
+      await tester.pump();
+      // replace: last tap wins — tendered = $50, NOT $70
+      expect(captured!.amount, closeTo(50.0, 0.001));
+    });
+
+    // 4. replace mode + expectedAmount: Exact button is visible.
+    testWidgets('replace mode with expectedAmount renders Exact button', (tester) async {
+      await tester.pumpWidget(wrap(EdenPaymentEntry(
+        allowedMethods: const [EdenPaymentMethod.cash],
+        onDraftChanged: (_) {},
+        quickTenderDenominations: const [2000, 5000],
+        quickTenderMode: EdenQuickTenderMode.replace,
+        expectedAmount: 37.50,
+      )));
+      expect(find.widgetWithText(OutlinedButton, 'Exact'), findsOneWidget);
+    });
+
+    // 5. replace mode + Exact button tap sets tendered = expectedAmount.
+    testWidgets('replace mode: tap Exact sets tendered = expectedAmount', (tester) async {
+      EdenPaymentDraft? captured;
+      await tester.pumpWidget(wrap(EdenPaymentEntry(
+        allowedMethods: const [EdenPaymentMethod.cash],
+        onDraftChanged: (d) => captured = d,
+        quickTenderDenominations: const [2000, 5000],
+        quickTenderMode: EdenQuickTenderMode.replace,
+        expectedAmount: 37.50,
+      )));
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Exact'));
+      await tester.pump();
+      expect(captured!.amount, closeTo(37.50, 0.001));
+    });
+
+    // 6. accumulate mode with expectedAmount: Exact button is NOT rendered.
+    testWidgets('accumulate mode: Exact button is absent even with expectedAmount', (tester) async {
+      await tester.pumpWidget(wrap(EdenPaymentEntry(
+        allowedMethods: const [EdenPaymentMethod.cash],
+        onDraftChanged: (_) {},
+        quickTenderDenominations: const [2000, 5000],
+        quickTenderMode: EdenQuickTenderMode.accumulate,
+        expectedAmount: 37.50,
+      )));
+      expect(find.widgetWithText(OutlinedButton, 'Exact'), findsNothing);
+    });
+  });
 }
 
 void _noop(EdenPaymentDraft _) {}

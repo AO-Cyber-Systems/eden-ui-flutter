@@ -5,6 +5,17 @@ import '../tokens/spacing.dart';
 import 'eden_banner.dart';
 import 'eden_chip.dart';
 
+/// Controls how quick-tender denomination buttons update the tendered amount.
+///
+/// - [accumulate] (default): each tap **adds** the denomination to the current
+///   tendered value. Matches physical cash-counting UX (cashier counts bills).
+/// - [replace]: each tap **sets** the tendered value to exactly that
+///   denomination, discarding any previous value. Matches eden-biz's
+///   `cash_payment_dialog` UX where the operator selects a bill size.
+///
+/// See [EdenPaymentEntry.quickTenderMode].
+enum EdenQuickTenderMode { accumulate, replace }
+
 /// Allowed payment methods used by [EdenPaymentEntry] + [EdenSplitTender].
 ///
 /// `displayLabel` powers the chip label. `iconData` provides a default
@@ -124,6 +135,7 @@ class EdenPaymentEntry extends StatefulWidget {
     this.requireReference = false,
     this.quickTenderDenominations,
     this.showChangeDue = false,
+    this.quickTenderMode = EdenQuickTenderMode.accumulate,
   });
 
   /// The methods the consumer permits for this flow. Order is preserved
@@ -176,6 +188,23 @@ class EdenPaymentEntry extends StatefulWidget {
   ///
   /// Defaults to `false` — existing consumers are unaffected.
   final bool showChangeDue;
+
+  /// Tap semantics for the quick-tender denomination buttons.
+  ///
+  /// - [EdenQuickTenderMode.accumulate] (default): each tap adds the
+  ///   denomination to the current tendered value. Existing PR #18 behavior —
+  ///   all consumers without this param are unaffected.
+  /// - [EdenQuickTenderMode.replace]: each tap sets tendered to exactly that
+  ///   denomination, discarding any previous value. Use this mode to match
+  ///   eden-biz's `cash_payment_dialog` replace semantics.
+  ///
+  /// When [quickTenderMode] is [EdenQuickTenderMode.replace] and
+  /// [expectedAmount] is non-null, an additional "Exact" button is appended
+  /// to the denomination row. Tapping it sets tendered to [expectedAmount]
+  /// (the cart total), mirroring the eden-biz exact-change affordance.
+  ///
+  /// Has no effect when [quickTenderDenominations] is null.
+  final EdenQuickTenderMode quickTenderMode;
 
   @override
   State<EdenPaymentEntry> createState() => _EdenPaymentEntryState();
@@ -306,19 +335,43 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
 
   /// Handles a quick-tender denomination tap.
   ///
-  /// Reads the current tendered value, adds [cents] / 100, writes the result
-  /// back to [_amountController], and emits. Accumulates on successive taps.
+  /// In [EdenQuickTenderMode.accumulate] mode (the default), adds [cents] / 100
+  /// to the current tendered value (existing PR #18 behavior).
+  ///
+  /// In [EdenQuickTenderMode.replace] mode, sets tendered to exactly
+  /// [cents] / 100, discarding any previous value (eden-biz cash_payment_dialog
+  /// semantics).
   void _applyDenomination(int cents) {
-    final current = double.tryParse(_amountController.text) ?? 0.0;
-    final added = current + (cents / 100.0);
+    final newAmount = widget.quickTenderMode == EdenQuickTenderMode.replace
+        ? cents / 100.0
+        : (double.tryParse(_amountController.text) ?? 0.0) + (cents / 100.0);
     // Format to avoid floating-point noise: round to 2 decimal places.
-    final rounded = (added * 100).round() / 100.0;
+    final rounded = (newAmount * 100).round() / 100.0;
     final formatted = rounded == rounded.truncateToDouble()
         ? rounded.truncate().toString()
         : rounded.toStringAsFixed(2);
     setState(() {
       _amountController.text = formatted;
       // Move cursor to end.
+      _amountController.selection = TextSelection.fromPosition(
+        TextPosition(offset: formatted.length),
+      );
+    });
+    _emit();
+  }
+
+  /// Handles the "Exact" button tap in [EdenQuickTenderMode.replace] mode.
+  ///
+  /// Sets tendered to [EdenPaymentEntry.expectedAmount] (the cart total).
+  /// Only callable when [expectedAmount] is non-null.
+  void _applyExact() {
+    final exact = widget.expectedAmount!;
+    final rounded = (exact * 100).round() / 100.0;
+    final formatted = rounded == rounded.truncateToDouble()
+        ? rounded.truncate().toString()
+        : rounded.toStringAsFixed(2);
+    setState(() {
+      _amountController.text = formatted;
       _amountController.selection = TextSelection.fromPosition(
         TextPosition(offset: formatted.length),
       );
@@ -402,7 +455,14 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
   ///
   /// Only rendered when [EdenPaymentEntry.quickTenderDenominations] is
   /// non-null.
+  ///
+  /// In [EdenQuickTenderMode.replace] mode with a non-null [expectedAmount],
+  /// appends an "Exact" button at the end of the row that sets tendered to
+  /// the cart total.
   Widget _quickTenderRow(List<int> denominations) {
+    final showExact = widget.quickTenderMode == EdenQuickTenderMode.replace &&
+        widget.expectedAmount != null;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: EdenSpacing.space3),
       child: Wrap(
@@ -420,6 +480,18 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(_formatDenomination(cents)),
+            ),
+          if (showExact)
+            OutlinedButton(
+              onPressed: _applyExact,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: EdenSpacing.space3,
+                  vertical: EdenSpacing.space2,
+                ),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Exact'),
             ),
         ],
       ),
