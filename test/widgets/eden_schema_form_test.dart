@@ -251,10 +251,12 @@ void main() {
       ),
     ));
 
-    // Two TextFormFields: locked slug + editable title.
-    final fields = tester.widgetList<TextFormField>(find.byType(TextFormField));
-    final slugField = fields.first; // slug is first in schema
-    expect(slugField.readOnly, isTrue);
+    // TextFormField doesn't expose .readOnly directly — drill into its underlying TextField.
+    final firstFormField = find.byType(TextFormField).first;
+    final innerTextField = tester.widget<TextField>(
+      find.descendant(of: firstFormField, matching: find.byType(TextField)),
+    );
+    expect(innerTextField.readOnly, isTrue);
   });
 
   // ---------------------------------------------------------------------------
