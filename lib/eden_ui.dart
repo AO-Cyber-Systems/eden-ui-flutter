@@ -533,3 +533,6 @@ export 'src/widgets/eden_template_builder/eden_template_builder_exports.dart';
 // Generic presigned-URL upload modal used by CMS, mobile ID capture, receipt capture.
 // The caller injects uploadFn + pickFileFn as callbacks; no Riverpod/ConnectRPC here.
 export 'src/widgets/eden_media_picker_view.dart';
+
+// ─────────── Upstream — Schema-driven form primitive ───────────
+export 'src/widgets/eden_schema_form.dart';
