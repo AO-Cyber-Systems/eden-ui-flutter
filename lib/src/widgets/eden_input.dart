@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../tokens/colors.dart';
 
 /// Input size presets.
@@ -24,6 +25,10 @@ class EdenInput extends StatelessWidget {
     this.maxLines = 1,
     this.autofocus = false,
     this.autofillHints,
+    this.readOnly = false,
+    this.focusNode,
+    this.inputFormatters,
+    this.onTap,
   });
 
   final TextEditingController? controller;
@@ -42,6 +47,10 @@ class EdenInput extends StatelessWidget {
   final int maxLines;
   final bool autofocus;
   final Iterable<String>? autofillHints;
+  final bool readOnly;
+  final FocusNode? focusNode;
+  final List<TextInputFormatter>? inputFormatters;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +80,10 @@ class EdenInput extends StatelessWidget {
           maxLines: maxLines,
           autofocus: autofocus,
           autofillHints: autofillHints,
+          readOnly: readOnly,
+          focusNode: focusNode,
+          inputFormatters: inputFormatters,
+          onTap: onTap,
           style: TextStyle(fontSize: sizing.fontSize),
           decoration: InputDecoration(
             hintText: hint,

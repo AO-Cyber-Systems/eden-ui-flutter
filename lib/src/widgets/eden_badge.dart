@@ -45,12 +45,15 @@ class EdenBadge extends StatelessWidget {
             Icon(icon, size: sizing.iconSize, color: colors.foreground),
             SizedBox(width: sizing.gap),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: sizing.fontSize,
-              fontWeight: FontWeight.w600,
-              color: colors.foreground,
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: sizing.fontSize,
+                fontWeight: FontWeight.w600,
+                color: colors.foreground,
+              ),
             ),
           ),
           if (onDismiss != null) ...[

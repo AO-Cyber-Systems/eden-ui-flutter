@@ -66,5 +66,37 @@ void main() {
       ));
       expect(find.bySemanticsLabel('Remove Filter'), findsOneWidget);
     });
+
+    testWidgets('does not overflow with long label in constrained width',
+        (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 80,
+              child: const EdenBadge(
+                label: 'Very long badge label that exceeds container',
+                size: EdenBadgeSize.sm,
+              ),
+            ),
+          ),
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('does not overflow at each size variant', (tester) async {
+      for (final size in EdenBadgeSize.values) {
+        await tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: EdenBadge(label: 'Status', size: size),
+            ),
+          ),
+        ));
+        expect(tester.takeException(), isNull,
+            reason: 'overflow on size ${size.name}');
+      }
+    });
   });
 }
