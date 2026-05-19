@@ -153,4 +153,54 @@ class EdenReceiptFixtures {
           ),
         ],
       );
+
+  /// Salon ticket with tip — $130 service + $10.40 tax + $26.00 tip (20%).
+  /// Card tender for full $166.40. Used for tip-row ordering tests.
+  static EdenReceiptData salonTicketWithTip() => const EdenReceiptData(
+        storeHeader: EdenReceiptStoreHeader(
+          storeName: 'Aurora Salon',
+          address: '88 Bloom Ave',
+        ),
+        lineItems: <EdenReceiptLineItem>[
+          EdenReceiptLineItem(name: 'Womens Haircut', qty: 1, unitPriceCents: 4500),
+          EdenReceiptLineItem(name: 'Full Color', qty: 1, unitPriceCents: 8500),
+        ],
+        subtotalCents: 13000,
+        taxCents: 1040,
+        tipCents: 2600,
+        totalCents: 16640,
+        tenderSummary: <EdenReceiptTender>[
+          EdenReceiptTender(
+            method: EdenReceiptTenderMethod.card,
+            amountCents: 16640,
+            last4: '7777',
+          ),
+        ],
+        footer: EdenReceiptFooter(
+          thankYouMessage: 'See you next time!',
+        ),
+      );
+
+  /// EUR café — single espresso for use with custom EU-locale formatter tests.
+  /// currency='EUR', no tip, card tender.
+  static EdenReceiptData euroCafe() => const EdenReceiptData(
+        storeHeader: EdenReceiptStoreHeader(
+          storeName: 'Café Renard',
+          address: '14 Rue de Rivoli, Paris',
+        ),
+        lineItems: <EdenReceiptLineItem>[
+          EdenReceiptLineItem(name: 'Espresso double', qty: 1, unitPriceCents: 250),
+          EdenReceiptLineItem(name: 'Pain au chocolat', qty: 2, unitPriceCents: 180),
+        ],
+        subtotalCents: 610,
+        taxCents: 48,
+        totalCents: 658,
+        currency: 'EUR',
+        tenderSummary: <EdenReceiptTender>[
+          EdenReceiptTender(
+            method: EdenReceiptTenderMethod.card,
+            amountCents: 658,
+          ),
+        ],
+      );
 }
