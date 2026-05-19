@@ -96,6 +96,23 @@ class EdenPaymentDraft {
 ///
 /// **No submit button.** This widget is fully real-time-controlled by
 /// the consumer; downstream code renders the submit UI.
+///
+/// ## POS quick-tender (PCF-12 audit drift fix)
+///
+/// Pass [quickTenderDenominations] as a list of cent amounts (e.g.
+/// `[500, 1000, 2000, 5000, 10000]` for $5/$10/$20/$50/$100) to render a
+/// row of denomination buttons above the amount field. Each button **adds**
+/// its amount to the current tendered value (accumulates, does not replace),
+/// matching the physical cash-counting UX where a cashier taps bills as they
+/// count them out.
+///
+/// Set [showChangeDue] to `true` to render a live change-due indicator below
+/// the amount field. When [expectedAmount] is provided, change = tendered −
+/// expected. When tendered < total, the row shows "Owed: $X.XX" in the error
+/// color. Null [expectedAmount] with [showChangeDue] = true is a no-op (no
+/// row rendered — no total to diff against).
+///
+/// Both props default to their off values; existing consumers are unaffected.
 class EdenPaymentEntry extends StatefulWidget {
   const EdenPaymentEntry({
     super.key,
@@ -105,6 +122,8 @@ class EdenPaymentEntry extends StatefulWidget {
     this.expectedAmount,
     this.currencyCode = 'USD',
     this.requireReference = false,
+    this.quickTenderDenominations,
+    this.showChangeDue = false,
   });
 
   /// The methods the consumer permits for this flow. Order is preserved
@@ -121,6 +140,9 @@ class EdenPaymentEntry extends StatefulWidget {
   /// `EdenBanner(variant: warning)` if the entered amount differs from
   /// expected by more than \$0.01. The consumer decides whether to gate
   /// submission on the mismatch.
+  ///
+  /// Also used by [showChangeDue] as the total-due baseline for computing
+  /// change / owed amounts.
   final double? expectedAmount;
 
   /// ISO-4217 currency code (USD / EUR / GBP / CAD / AUD supported by
@@ -133,6 +155,27 @@ class EdenPaymentEntry extends StatefulWidget {
   /// always need a reference (card/ach/check/portal/giftCard) are
   /// unaffected by this flag.
   final bool requireReference;
+
+  /// Optional POS quick-tender denomination list, expressed in **cents**
+  /// (e.g. `[500, 1000, 2000, 5000, 10000]` for $5 / $10 / $20 / $50 / $100).
+  ///
+  /// When non-null, a `Wrap` of `OutlinedButton` denomination buttons is
+  /// rendered between the method chips and the amount field. Tapping a button
+  /// **adds** that denomination to the current tendered amount (accumulates).
+  ///
+  /// Null (default) hides the quick-tender row entirely — no change to
+  /// existing consumers.
+  final List<int>? quickTenderDenominations;
+
+  /// When `true` and [expectedAmount] is non-null, renders a live change-due
+  /// row below the amount field:
+  ///
+  /// - Tendered > total → "Change: \$X.XX" (secondary color)
+  /// - Tendered < total → "Owed: \$X.XX" (error color)
+  /// - Tendered == total → "Change: \$0.00" (secondary color)
+  ///
+  /// Defaults to `false` — existing consumers are unaffected.
+  final bool showChangeDue;
 
   @override
   State<EdenPaymentEntry> createState() => _EdenPaymentEntryState();
@@ -199,6 +242,19 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
     return cents < 0 ? '-$formatted' : formatted;
   }
 
+  /// Formats a whole-dollar denomination (cents input) for button labels.
+  /// e.g. 500 → "$5", 10000 → "$100".  Sub-dollar amounts use 2 decimals
+  /// e.g. 25 → "$0.25".
+  String _formatDenomination(int cents) {
+    final symbol = _currencySymbol();
+    if (cents % 100 == 0) {
+      return '$symbol${cents ~/ 100}';
+    }
+    final whole = cents ~/ 100;
+    final fraction = cents % 100;
+    return '$symbol$whole.${fraction.toString().padLeft(2, '0')}';
+  }
+
   static String _formatThousands(int value) {
     final raw = value.toString();
     if (raw.length <= 3) return raw;
@@ -248,6 +304,28 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
     ));
   }
 
+  /// Handles a quick-tender denomination tap.
+  ///
+  /// Reads the current tendered value, adds [cents] / 100, writes the result
+  /// back to [_amountController], and emits. Accumulates on successive taps.
+  void _applyDenomination(int cents) {
+    final current = double.tryParse(_amountController.text) ?? 0.0;
+    final added = current + (cents / 100.0);
+    // Format to avoid floating-point noise: round to 2 decimal places.
+    final rounded = (added * 100).round() / 100.0;
+    final formatted = rounded == rounded.truncateToDouble()
+        ? rounded.truncate().toString()
+        : rounded.toStringAsFixed(2);
+    setState(() {
+      _amountController.text = formatted;
+      // Move cursor to end.
+      _amountController.selection = TextSelection.fromPosition(
+        TextPosition(offset: formatted.length),
+      );
+    });
+    _emit();
+  }
+
   Widget? _amountMismatchBanner() {
     if (widget.expectedAmount == null) return null;
     if (_amountController.text.isEmpty) return null;
@@ -268,9 +346,92 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
     );
   }
 
+  /// Builds the live change-due row.
+  ///
+  /// Only rendered when [EdenPaymentEntry.showChangeDue] is true,
+  /// [EdenPaymentEntry.expectedAmount] is non-null, and the tendered field
+  /// is non-empty.
+  Widget? _changeDueRow() {
+    if (!widget.showChangeDue) return null;
+    if (widget.expectedAmount == null) return null;
+    if (_amountController.text.isEmpty) return null;
+
+    final tendered = double.tryParse(_amountController.text) ?? 0.0;
+    final total = widget.expectedAmount!;
+    final changeCents = ((tendered - total) * 100).round();
+    final isOwed = changeCents < 0;
+
+    final label = isOwed
+        ? 'Owed: ${_formatCurrency(-changeCents / 100.0)}'
+        : 'Change: ${_formatCurrency(changeCents / 100.0)}';
+
+    return Padding(
+      padding: const EdgeInsets.only(top: EdenSpacing.space2),
+      child: Builder(
+        builder: (context) {
+          final colorScheme = Theme.of(context).colorScheme;
+          final bgColor = isOwed
+              ? colorScheme.errorContainer
+              : colorScheme.secondaryContainer;
+          final fgColor = isOwed
+              ? colorScheme.onErrorContainer
+              : colorScheme.onSecondaryContainer;
+          return Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: EdenSpacing.space3,
+              vertical: EdenSpacing.space2,
+            ),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: fgColor,
+                  ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Builds the quick-tender denomination row.
+  ///
+  /// Only rendered when [EdenPaymentEntry.quickTenderDenominations] is
+  /// non-null.
+  Widget _quickTenderRow(List<int> denominations) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: EdenSpacing.space3),
+      child: Wrap(
+        spacing: EdenSpacing.space2,
+        runSpacing: EdenSpacing.space2,
+        children: [
+          for (final cents in denominations)
+            OutlinedButton(
+              onPressed: () => _applyDenomination(cents),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: EdenSpacing.space3,
+                  vertical: EdenSpacing.space2,
+                ),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(_formatDenomination(cents)),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final showReference = _showReference();
+    final denominations = widget.quickTenderDenominations;
+    final changeDueRow = _changeDueRow();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -299,6 +460,7 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
           ],
         ),
         const SizedBox(height: EdenSpacing.space3),
+        if (denominations != null) _quickTenderRow(denominations),
         TextFormField(
           controller: _amountController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -312,13 +474,14 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
             isDense: true,
           ),
           onChanged: (_) {
-            // setState so the mismatch banner re-evaluates against the new
-            // amount entry.
+            // setState so the mismatch banner and change-due row re-evaluate
+            // against the new amount entry.
             setState(() {});
             _emit();
           },
         ),
         if (_amountMismatchBanner() != null) _amountMismatchBanner()!,
+        if (changeDueRow != null) changeDueRow,
         if (showReference) ...[
           const SizedBox(height: EdenSpacing.space3),
           TextField(
