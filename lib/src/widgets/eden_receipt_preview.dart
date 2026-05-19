@@ -23,6 +23,7 @@ class EdenReceiptData {
     required this.tenderSummary,
     this.discountCents,
     this.promo,
+    this.tipCents,
     this.footer,
     this.currency = 'USD',
     this.receiptNumber,
@@ -38,6 +39,11 @@ class EdenReceiptData {
 
   final EdenReceiptPromo? promo;
   final int taxCents;
+
+  /// Tip in cents. When non-null and > 0, a 'Tip' row is rendered between
+  /// Tax and Total in the breakdown section. Null and 0 both suppress the row.
+  final int? tipCents;
+
   final int totalCents;
   final List<EdenReceiptTender> tenderSummary;
   final EdenReceiptFooter? footer;
@@ -140,6 +146,28 @@ enum EdenReceiptPrintWidth { mm80, mm58 }
 // EdenReceiptPreview
 // ───────────────────────────────────────────────────────────────────────────
 
+/// Signature for a consumer-supplied currency formatter used by
+/// [EdenReceiptPreview]. When provided, every money value in the receipt
+/// (line items, breakdown, tender summary) is routed through this function
+/// instead of [EdenCurrencyDisplay].
+///
+/// Parameters:
+/// - `cents` — amount in cents (may be negative for discounts/promos).
+/// - `currencyCode` — ISO-4217 code from [EdenReceiptData.currency].
+///
+/// Example — EU locale formatting:
+/// ```dart
+/// String euroFmt(int cents, String code) {
+///   final whole = cents ~/ 100;
+///   final frac = (cents % 100).toString().padLeft(2, '0');
+///   return '$whole,$frac €';
+/// }
+/// ```
+typedef EdenReceiptCurrencyFormatter = String Function(
+  int cents,
+  String currencyCode,
+);
+
 /// Configurable receipt rendering widget with 4 output modes (web / print /
 /// email / sms) for retail POS, trades invoice preview, salon ticket preview,
 /// fuel delivery receipt, restaurant check, and any structured-transaction
@@ -149,8 +177,8 @@ enum EdenReceiptPrintWidth { mm80, mm58 }
 /// 1. **Header** — store name + optional address / phone / logo.
 /// 2. **Line items** — qty × name × subtotal rows.
 /// 3. **Breakdown** — subtotal / optional discount / optional promo / tax /
-///    total. Discount + promo render with a `-` sign (stored as positive
-///    magnitude in [EdenReceiptData]).
+///    optional tip / total. Discount + promo render with a `-` sign (stored as
+///    positive magnitude in [EdenReceiptData]).
 /// 4. **Tender summary** — one row per [EdenReceiptTender] with method label
 ///    + amount. Cash tenders with `cashGivenCents > amountCents` emit an
 ///    additional 'Change due' row.
@@ -170,6 +198,10 @@ enum EdenReceiptPrintWidth { mm80, mm58 }
 /// The widget knows nothing about retail. Consumer maps any domain to
 /// [EdenReceiptData].
 ///
+/// **Currency formatting.** Supply [currencyFormatter] to override the default
+/// [EdenCurrencyDisplay] rendering — useful for non-USD locales or custom
+/// symbol placement. When null, the default formatter is used.
+///
 /// **Obj-012 dependency strategy.** The line-items section composes a
 /// private `_ReadOnlyLineItemTable` shim. When [EdenLineItemEditor]'s
 /// generic readOnly mode is widely adopted across the codebase, swap the
@@ -182,18 +214,25 @@ class EdenReceiptPreview extends StatelessWidget {
     required this.data,
     this.mode = EdenReceiptPreviewMode.web,
     this.printWidth = EdenReceiptPrintWidth.mm80,
+    this.currencyFormatter,
   });
 
   final EdenReceiptData data;
   final EdenReceiptPreviewMode mode;
   final EdenReceiptPrintWidth printWidth;
 
+  /// Optional consumer-controlled currency formatter. When null, every money
+  /// value renders via [EdenCurrencyDisplay] using the built-in USD/EUR/GBP/CAD/AUD
+  /// symbol map. Supply this to handle non-standard locales (e.g. comma-decimal
+  /// EUR formatting) or to inject test-controlled output.
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
+
   @override
   Widget build(BuildContext context) {
     if (mode == EdenReceiptPreviewMode.sms) {
-      return _SmsBody(data: data);
+      return _SmsBody(data: data, currencyFormatter: currencyFormatter);
     }
-    final body = _ReceiptBody(data: data);
+    final body = _ReceiptBody(data: data, currencyFormatter: currencyFormatter);
     if (mode == EdenReceiptPreviewMode.print) {
       final mm = printWidth == EdenReceiptPrintWidth.mm80 ? 302.0 : 219.0;
       return Center(
@@ -209,8 +248,12 @@ class EdenReceiptPreview extends StatelessWidget {
 }
 
 class _ReceiptBody extends StatelessWidget {
-  const _ReceiptBody({required this.data});
+  const _ReceiptBody({
+    required this.data,
+    this.currencyFormatter,
+  });
   final EdenReceiptData data;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   @override
   Widget build(BuildContext context) {
@@ -220,13 +263,18 @@ class _ReceiptBody extends StatelessWidget {
       children: [
         _Header(header: data.storeHeader),
         const SizedBox(height: EdenSpacing.space2),
-        _LineItemsSection(items: data.lineItems, currency: data.currency),
+        _LineItemsSection(
+          items: data.lineItems,
+          currency: data.currency,
+          currencyFormatter: currencyFormatter,
+        ),
         const Divider(),
-        _BreakdownSection(data: data),
+        _BreakdownSection(data: data, currencyFormatter: currencyFormatter),
         const Divider(),
         _TenderSection(
           tenders: data.tenderSummary,
           currency: data.currency,
+          currencyFormatter: currencyFormatter,
         ),
         if (data.footer != null) ...[
           const Divider(),
@@ -281,9 +329,14 @@ class _Header extends StatelessWidget {
 }
 
 class _LineItemsSection extends StatelessWidget {
-  const _LineItemsSection({required this.items, required this.currency});
+  const _LineItemsSection({
+    required this.items,
+    required this.currency,
+    this.currencyFormatter,
+  });
   final List<EdenReceiptLineItem> items;
   final String currency;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +344,11 @@ class _LineItemsSection extends StatelessWidget {
     // readOnly mode is the established compose path, replace this shim with
     //   EdenLineItemEditor<EdenReceiptLineItem>(items: items, readOnly: true,
     //     columns: const [qty, name, unitPrice, subtotal]);
-    return _ReadOnlyLineItemTable(items: items, currency: currency);
+    return _ReadOnlyLineItemTable(
+      items: items,
+      currency: currency,
+      currencyFormatter: currencyFormatter,
+    );
   }
 }
 
@@ -299,10 +356,12 @@ class _ReadOnlyLineItemTable extends StatelessWidget {
   const _ReadOnlyLineItemTable({
     required this.items,
     required this.currency,
+    this.currencyFormatter,
   });
 
   final List<EdenReceiptLineItem> items;
   final String currency;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   @override
   Widget build(BuildContext context) {
@@ -331,10 +390,16 @@ class _ReadOnlyLineItemTable extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                EdenCurrencyDisplay(
-                  cents: li.subtotalCents,
-                  currencyCode: currency,
-                ),
+                if (currencyFormatter != null)
+                  Text(
+                    currencyFormatter!(li.subtotalCents, currency),
+                    style: theme.textTheme.bodyMedium,
+                  )
+                else
+                  EdenCurrencyDisplay(
+                    cents: li.subtotalCents,
+                    currencyCode: currency,
+                  ),
               ],
             ),
           ),
@@ -344,8 +409,12 @@ class _ReadOnlyLineItemTable extends StatelessWidget {
 }
 
 class _BreakdownSection extends StatelessWidget {
-  const _BreakdownSection({required this.data});
+  const _BreakdownSection({
+    required this.data,
+    this.currencyFormatter,
+  });
   final EdenReceiptData data;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   @override
   Widget build(BuildContext context) {
@@ -357,6 +426,7 @@ class _BreakdownSection extends StatelessWidget {
           label: 'Subtotal',
           cents: data.subtotalCents,
           currency: data.currency,
+          currencyFormatter: currencyFormatter,
         ),
         if (data.discountCents != null && data.discountCents! > 0)
           _BreakdownRow(
@@ -364,6 +434,7 @@ class _BreakdownSection extends StatelessWidget {
             cents: -data.discountCents!,
             currency: data.currency,
             color: theme.colorScheme.error,
+            currencyFormatter: currencyFormatter,
           ),
         if (data.promo != null)
           _BreakdownRow(
@@ -371,17 +442,27 @@ class _BreakdownSection extends StatelessWidget {
             cents: -data.promo!.amountCents,
             currency: data.currency,
             color: theme.colorScheme.primary,
+            currencyFormatter: currencyFormatter,
           ),
         _BreakdownRow(
           label: 'Tax',
           cents: data.taxCents,
           currency: data.currency,
+          currencyFormatter: currencyFormatter,
         ),
+        if (data.tipCents != null && data.tipCents! > 0)
+          _BreakdownRow(
+            label: 'Tip',
+            cents: data.tipCents!,
+            currency: data.currency,
+            currencyFormatter: currencyFormatter,
+          ),
         _BreakdownRow(
           label: 'Total',
           cents: data.totalCents,
           currency: data.currency,
           bold: true,
+          currencyFormatter: currencyFormatter,
         ),
       ],
     );
@@ -395,6 +476,7 @@ class _BreakdownRow extends StatelessWidget {
     required this.currency,
     this.color,
     this.bold = false,
+    this.currencyFormatter,
   });
 
   final String label;
@@ -402,6 +484,7 @@ class _BreakdownRow extends StatelessWidget {
   final String currency;
   final Color? color;
   final bool bold;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   @override
   Widget build(BuildContext context) {
@@ -409,6 +492,10 @@ class _BreakdownRow extends StatelessWidget {
     final baseStyle = bold
         ? theme.textTheme.titleMedium
         : theme.textTheme.bodyMedium;
+    final effectiveStyle = baseStyle?.copyWith(
+      color: color,
+      fontWeight: bold ? FontWeight.bold : null,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -422,17 +509,23 @@ class _BreakdownRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          DefaultTextStyle.merge(
-            style: TextStyle(
-              color: color,
-              fontWeight: bold ? FontWeight.bold : null,
+          if (currencyFormatter != null)
+            Text(
+              currencyFormatter!(cents, currency),
+              style: effectiveStyle,
+            )
+          else
+            DefaultTextStyle.merge(
+              style: TextStyle(
+                color: color,
+                fontWeight: bold ? FontWeight.bold : null,
+              ),
+              child: EdenCurrencyDisplay(
+                cents: cents,
+                currencyCode: currency,
+                style: baseStyle,
+              ),
             ),
-            child: EdenCurrencyDisplay(
-              cents: cents,
-              currencyCode: currency,
-              style: baseStyle,
-            ),
-          ),
         ],
       ),
     );
@@ -440,9 +533,14 @@ class _BreakdownRow extends StatelessWidget {
 }
 
 class _TenderSection extends StatelessWidget {
-  const _TenderSection({required this.tenders, required this.currency});
+  const _TenderSection({
+    required this.tenders,
+    required this.currency,
+    this.currencyFormatter,
+  });
   final List<EdenReceiptTender> tenders;
   final String currency;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   String _methodLabel(EdenReceiptTender t) {
     switch (t.method) {
@@ -471,6 +569,7 @@ class _TenderSection extends StatelessWidget {
             label: _methodLabel(t),
             cents: t.amountCents,
             currency: currency,
+            currencyFormatter: currencyFormatter,
           ),
           if (t.method == EdenReceiptTenderMethod.cash &&
               t.cashGivenCents != null &&
@@ -479,6 +578,7 @@ class _TenderSection extends StatelessWidget {
               label: 'Change due',
               cents: t.cashGivenCents! - t.amountCents,
               currency: currency,
+              currencyFormatter: currencyFormatter,
             ),
         ],
       ],
@@ -524,10 +624,17 @@ class _Footer extends StatelessWidget {
 }
 
 class _SmsBody extends StatelessWidget {
-  const _SmsBody({required this.data});
+  const _SmsBody({
+    required this.data,
+    this.currencyFormatter,
+  });
   final EdenReceiptData data;
+  final EdenReceiptCurrencyFormatter? currencyFormatter;
 
   String _fmt(int cents, String currency) {
+    if (currencyFormatter != null) {
+      return currencyFormatter!(cents, currency);
+    }
     final sign = cents < 0 ? '-' : '';
     final abs = cents.abs();
     final dollars = abs ~/ 100;
@@ -558,6 +665,9 @@ class _SmsBody extends StatelessWidget {
       );
     }
     buf.writeln('Tax: ${_fmt(data.taxCents, data.currency)}');
+    if (data.tipCents != null && data.tipCents! > 0) {
+      buf.writeln('Tip: ${_fmt(data.tipCents!, data.currency)}');
+    }
     buf.writeln('Total: ${_fmt(data.totalCents, data.currency)}');
     for (final t in data.tenderSummary) {
       final label = switch (t.method) {
