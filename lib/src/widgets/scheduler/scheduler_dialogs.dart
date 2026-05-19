@@ -76,6 +76,7 @@ class _EdenSchedulerDialogScaffold extends StatelessWidget {
 
     return Dialog(
       child: ConstrainedBox(
+        // width: 480 — dialog narrow clamp
         constraints: const BoxConstraints(maxWidth: 480),
         child: Column(
           mainAxisSize: MainAxisSize.min,

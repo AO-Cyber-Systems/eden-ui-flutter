@@ -130,19 +130,19 @@ class EdenClientSmsThreadFixtures {
     return [
       EdenSmsMessage(
         id: 'm1',
-        body: 'Three days ago',
+        body: 'Oldest',
         direction: EdenSmsDirection.inbound,
         sentAt: threeDaysAgo,
       ),
       EdenSmsMessage(
         id: 'm2',
-        body: 'Yesterday',
+        body: 'Middle',
         direction: EdenSmsDirection.inbound,
         sentAt: yesterday,
       ),
       EdenSmsMessage(
         id: 'm3',
-        body: 'Today',
+        body: 'Latest',
         direction: EdenSmsDirection.inbound,
         sentAt: today,
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
 import 'eden_button.dart';
 import 'eden_search_input.dart';
 
@@ -45,7 +46,7 @@ class EdenListPageScaffold extends StatelessWidget {
     this.alerts,
     required this.body,
     this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-    this.narrowBreakpoint = 480,
+    this.narrowBreakpoint = kEdenAppModeNarrowMax,
   });
 
   /// Page title displayed in the header row.

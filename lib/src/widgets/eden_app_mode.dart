@@ -34,6 +34,33 @@ const double kEdenAppModeCompactMax = 600.0;
 /// lock E.
 const double kEdenAppModeExpandedMin = 840.0;
 
+/// Strict narrow-phone tier upper bound (exclusive). Below this logical-pt
+/// width, ultra-narrow phone layouts (iPhone SE-class) MUST stack actions
+/// vertically and collapse multi-pane scaffolds to single-column. Used by
+/// EdenPageHeader, EdenEmptyState, EdenDetailHeader/Scaffold defaults, and
+/// scheduler narrow mode.
+///
+/// This is the strict subset of [kEdenAppModeCompactMax] (600pt) — sites
+/// that need only the strict narrow guard use this; sites that need the
+/// full Compact tier use [kEdenAppModeCompactMax].
+const double kEdenAppModeNarrowMax = 480.0;
+
+/// Dense-desktop tier lower bound (inclusive). At or above this logical-pt
+/// width, desktop chrome can show expanded toolbars without icon-only
+/// collapse. Below this, toolbars collapse to icon-only mode to preserve
+/// canvas width. Used by EdenScheduler toolbar + EdenWorkflowDesigner
+/// toolbar.
+///
+/// This sits between [kEdenAppModeExpandedMin] (840pt — tablet-landscape
+/// floor) and [kEdenAppModeFullDesktopMin] (1200pt — full-desktop floor).
+const double kEdenAppModeDenseDesktopMin = 1100.0;
+
+/// Full-desktop tier lower bound (inclusive). At or above this logical-pt
+/// width, complex multi-pane layouts (template builders, visit encounter
+/// scaffolds, three-pane intake forms) can fully expand. Below this, they
+/// fall back to compact / stacked modes.
+const double kEdenAppModeFullDesktopMin = 1200.0;
+
 /// Pure resolver — input → output, no I/O, no state.
 ///
 /// Resolution order (highest precedence first; per COMPANION_B2_SPEC §1
@@ -71,7 +98,8 @@ EdenAppMode resolveAppMode({
   }
 
   // 4. Viewport-driven default (Material 3 tiers per lock E).
-  if (viewport.width < kEdenAppModeCompactMax) return EdenAppMode.fieldCompanion;
+  if (viewport.width < kEdenAppModeCompactMax)
+    return EdenAppMode.fieldCompanion;
   if (viewport.width >= kEdenAppModeExpandedMin) return EdenAppMode.admin;
 
   // 5. Ambiguous Medium tier.

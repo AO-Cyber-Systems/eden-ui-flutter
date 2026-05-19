@@ -92,8 +92,12 @@ void main() {
       )));
       await tester.tap(find.byIcon(Icons.lock_open_outlined).first);
       await tester.pumpAndSettle();
+      final dialogField = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
       expect(find.text('Break-glass override'), findsOneWidget);
-      expect(find.byType(TextField), findsOneWidget);
+      expect(dialogField, findsOneWidget);
     });
 
     testWidgets('confirm disabled until justification >= 20 chars',
@@ -106,13 +110,17 @@ void main() {
       )));
       await tester.tap(find.byIcon(Icons.lock_open_outlined).first);
       await tester.pumpAndSettle();
+      final dialogField = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
       // Confirm button initially disabled.
       final confirm = tester.widget<ElevatedButton>(
         find.widgetWithText(ElevatedButton, 'Confirm'),
       );
       expect(confirm.onPressed, isNull);
       // Type a too-short justification.
-      await tester.enterText(find.byType(TextField),
+      await tester.enterText(dialogField,
           EdenPermissionMatrixFixtures.breakGlassJustificationTooShort);
       await tester.pump();
       final confirmShort = tester.widget<ElevatedButton>(
@@ -121,7 +129,7 @@ void main() {
       expect(confirmShort.onPressed, isNull);
       // Type a valid justification.
       await tester.enterText(
-        find.byType(TextField),
+        dialogField,
         EdenPermissionMatrixFixtures.breakGlassJustificationOk,
       );
       await tester.pump();
@@ -149,8 +157,12 @@ void main() {
       )));
       await tester.tap(find.byIcon(Icons.lock_open_outlined).first);
       await tester.pumpAndSettle();
+      final dialogField = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      );
       await tester.enterText(
-        find.byType(TextField),
+        dialogField,
         EdenPermissionMatrixFixtures.breakGlassJustificationOk,
       );
       await tester.pump();

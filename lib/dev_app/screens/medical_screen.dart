@@ -1057,12 +1057,15 @@ class _PatientChartScaffoldDemo extends StatelessWidget {
       children: [
         _Subsection(
           label: 'Expanded tier (1200×800) — three-pane layout',
-          child: SizedBox(
-            width: 1200,
-            height: 800,
-            child: EdenPatientChartScaffold(
-              data: data,
-              patientId: data.patientId,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: 1200,
+              height: 800,
+              child: EdenPatientChartScaffold(
+                data: data,
+                patientId: data.patientId,
+              ),
             ),
           ),
         ),
@@ -1243,10 +1246,12 @@ class _VisitEncounterDemo extends StatelessWidget {
       children: [
         _Subsection(
           label: 'Annual physical — empty (just started)',
-          child: SizedBox(
-            width: 1200,
-            height: 600,
-            child: EdenVisitEncounterScaffold(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: 1200,
+              height: 600,
+              child: EdenVisitEncounterScaffold(
               data: EdenVisitEncounterData(
                 patientId: 'demo-visit-1',
                 encounterId: 'enc-demo-1',
@@ -1267,15 +1272,18 @@ class _VisitEncounterDemo extends StatelessWidget {
               ),
               patientId: 'demo-visit-1',
             ),
+            ),
           ),
         ),
         const SizedBox(height: EdenSpacing.space4),
         _Subsection(
           label: 'URI visit — mid-visit with PCN-allergy alert',
-          child: SizedBox(
-            width: 1200,
-            height: 700,
-            child: EdenVisitEncounterScaffold(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: 1200,
+              height: 700,
+              child: EdenVisitEncounterScaffold(
               data: EdenVisitEncounterData(
                 patientId: 'demo-visit-2',
                 encounterId: 'enc-demo-2',
@@ -1310,6 +1318,7 @@ class _VisitEncounterDemo extends StatelessWidget {
               ),
               patientId: 'demo-visit-2',
               initialStep: EdenVisitStep.soap,
+            ),
             ),
           ),
         ),

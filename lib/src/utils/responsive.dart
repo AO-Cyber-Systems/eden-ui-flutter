@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+// ignore_for_file: deprecated_member_use_from_same_package
 
 /// Layout modes for responsive design.
+@Deprecated('Use kEdenAppMode* tokens from lib/src/widgets/eden_app_mode.dart. '
+    'See lib/src/utils/BREAKPOINTS.md for the canonical 5-tier vocabulary.')
 enum EdenLayoutMode { mobile, tablet, desktop, wide }
 
 /// Breakpoint layout utilities.
+@Deprecated('Use kEdenAppMode* tokens from lib/src/widgets/eden_app_mode.dart. '
+    'See lib/src/utils/BREAKPOINTS.md for the canonical 5-tier vocabulary.')
 class EdenResponsive {
   EdenResponsive._();
 
@@ -41,6 +46,8 @@ class EdenResponsive {
 }
 
 /// Responsive builder widget that rebuilds based on layout mode.
+@Deprecated('Use LayoutBuilder + kEdenAppMode* tokens directly. '
+    'See lib/src/utils/BREAKPOINTS.md.')
 class EdenResponsiveBuilder extends StatelessWidget {
   const EdenResponsiveBuilder({super.key, required this.builder});
 

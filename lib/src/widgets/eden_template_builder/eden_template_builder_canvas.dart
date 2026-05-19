@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../eden_app_mode.dart' show kEdenAppModeFullDesktopMin;
 import '../eden_diagram/diagram_data.dart';
 import '../eden_diagram/eden_diagram.dart';
 import 'eden_template_block_placeholder.dart';
@@ -96,7 +97,7 @@ class _EdenTemplateBuilderCanvasState extends State<EdenTemplateBuilderCanvas> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (ctx, constraints) {
-        if (constraints.maxWidth < 1200) {
+        if (constraints.maxWidth < kEdenAppModeFullDesktopMin) {
           return widget.narrowFallback ?? const _DefaultNarrowFallback();
         }
         return Column(
@@ -197,17 +198,15 @@ class _EdenTemplateBuilderCanvasState extends State<EdenTemplateBuilderCanvas> {
   }
 
   Widget _renderBlock(EdenTemplateBlock block) {
-    final descriptor =
-        EdenTemplateBlockRegistry.instance.lookup(block.type) ??
-            _fallbackDescriptor(block.type);
+    final descriptor = EdenTemplateBlockRegistry.instance.lookup(block.type) ??
+        _fallbackDescriptor(block.type);
     if (descriptor.placeholderBuilder != null) {
       return descriptor.placeholderBuilder!(context, block);
     }
     return EdenTemplateBlockPlaceholder(
       block: block,
       descriptor: descriptor,
-      onEdit: () =>
-          widget.onUpdateBlock?.call(block.id, block.content),
+      onEdit: () => widget.onUpdateBlock?.call(block.id, block.content),
       onDelete: widget.onDeleteBlock == null
           ? null
           : () => widget.onDeleteBlock!(block.id),
@@ -228,8 +227,7 @@ class _EdenTemplateBuilderCanvasState extends State<EdenTemplateBuilderCanvas> {
     final nodes = blocks.asMap().entries.map((entry) {
       final idx = entry.key;
       final block = entry.value;
-      final descriptor =
-          EdenTemplateBlockRegistry.instance.lookup(block.type);
+      final descriptor = EdenTemplateBlockRegistry.instance.lookup(block.type);
       final x = (block.content['x'] as num?)?.toDouble() ?? (50.0 + idx * 20);
       final y = (block.content['y'] as num?)?.toDouble() ?? (50.0 + idx * 20);
       return EdenDiagramNode(

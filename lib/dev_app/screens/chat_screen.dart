@@ -236,16 +236,19 @@ class _ChatScreenState extends State<ChatScreen> {
                       onPressed: () =>
                           setState(() => _aiPanelEmpty = !_aiPanelEmpty),
                     ),
-                    DropdownButton<EdenAiPersona>(
-                      value: _aiPanelPersona,
-                      onChanged: (p) =>
-                          setState(() => _aiPanelPersona = p!),
-                      items: EdenAiPersona.values
-                          .map((p) => DropdownMenuItem(
-                                value: p,
-                                child: Text(p.displayLabel),
-                              ))
-                          .toList(),
+                    Expanded(
+                      child: DropdownButton<EdenAiPersona>(
+                        isExpanded: true,
+                        value: _aiPanelPersona,
+                        onChanged: (p) =>
+                            setState(() => _aiPanelPersona = p!),
+                        items: EdenAiPersona.values
+                            .map((p) => DropdownMenuItem(
+                                  value: p,
+                                  child: Text(p.displayLabel),
+                                ))
+                            .toList(),
+                      ),
                     ),
                   ],
                 ),
@@ -497,18 +500,21 @@ class _PerPersonaAiPanelDemoState extends State<_PerPersonaAiPanelDemo> {
                 Row(
                   children: <Widget>[
                     const Text('Persona: '),
-                    DropdownButton<EdenAiPersona>(
-                      value: _persona,
-                      onChanged: (p) {
-                        if (p != null) setState(() => _persona = p);
-                      },
-                      items: <DropdownMenuItem<EdenAiPersona>>[
-                        for (final p in EdenAiPersona.values)
-                          DropdownMenuItem<EdenAiPersona>(
-                            value: p,
-                            child: Text(p.displayLabel),
-                          ),
-                      ],
+                    Expanded(
+                      child: DropdownButton<EdenAiPersona>(
+                        isExpanded: true,
+                        value: _persona,
+                        onChanged: (p) {
+                          if (p != null) setState(() => _persona = p);
+                        },
+                        items: <DropdownMenuItem<EdenAiPersona>>[
+                          for (final p in EdenAiPersona.values)
+                            DropdownMenuItem<EdenAiPersona>(
+                              value: p,
+                              child: Text(p.displayLabel),
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -678,23 +684,26 @@ class _PerVerticalChatFabDemoState extends State<_PerVerticalChatFabDemo> {
             children: <Widget>[
               const Text('Vertical: '),
               const SizedBox(width: 8),
-              DropdownButton<String>(
-                value: _vertical,
-                onChanged: (v) {
-                  if (v != null) setState(() => _vertical = v);
-                },
-                items: const <DropdownMenuItem<String>>[
-                  DropdownMenuItem<String>(
-                      value: 'trades', child: Text('Trades')),
-                  DropdownMenuItem<String>(
-                      value: 'salon', child: Text('Salon')),
-                  DropdownMenuItem<String>(
-                      value: 'fuel', child: Text('Fuel')),
-                  DropdownMenuItem<String>(
-                      value: 'medical', child: Text('Medical')),
-                  DropdownMenuItem<String>(
-                      value: 'gov', child: Text('Gov')),
-                ],
+              Expanded(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _vertical,
+                  onChanged: (v) {
+                    if (v != null) setState(() => _vertical = v);
+                  },
+                  items: const <DropdownMenuItem<String>>[
+                    DropdownMenuItem<String>(
+                        value: 'trades', child: Text('Trades')),
+                    DropdownMenuItem<String>(
+                        value: 'salon', child: Text('Salon')),
+                    DropdownMenuItem<String>(
+                        value: 'fuel', child: Text('Fuel')),
+                    DropdownMenuItem<String>(
+                        value: 'medical', child: Text('Medical')),
+                    DropdownMenuItem<String>(
+                        value: 'gov', child: Text('Gov')),
+                  ],
+                ),
               ),
             ],
           ),

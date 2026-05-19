@@ -12,6 +12,11 @@ Widget wrap(Widget child, {double width = 1200, double height = 800}) =>
       ),
     );
 
+Future<void> _setLargeSurface(WidgetTester tester) async {
+  await tester.binding.setSurfaceSize(const Size(1200, 800));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+}
+
 void main() {
   group('EdenIntakeFieldSchema.copyWith', () {
     test('preserves all other fields when only label changes', () {
@@ -64,6 +69,7 @@ void main() {
 
   group('EdenIntakeFormBuilder 3-pane layout (≥900pt)', () {
     testWidgets('renders 9 Draggable palette entries', (tester) async {
+      await _setLargeSurface(tester);
       EdenIntakeFormSchema schema =
           EdenIntakeFormBuilderFixtures.salonStarter();
       await tester.pumpWidget(wrap(EdenIntakeFormBuilder(
@@ -79,6 +85,7 @@ void main() {
 
     testWidgets('renders 4 canvas rows for 4-field starter schema',
         (tester) async {
+      await _setLargeSurface(tester);
       EdenIntakeFormSchema schema =
           EdenIntakeFormBuilderFixtures.salonStarter();
       await tester.pumpWidget(wrap(EdenIntakeFormBuilder(
@@ -92,6 +99,7 @@ void main() {
     });
 
     testWidgets('required fields show a "Required" chip', (tester) async {
+      await _setLargeSurface(tester);
       EdenIntakeFormSchema schema =
           EdenIntakeFormBuilderFixtures.salonStarter();
       await tester.pumpWidget(wrap(EdenIntakeFormBuilder(
@@ -104,6 +112,7 @@ void main() {
 
     testWidgets('Config pane shows empty hint when no field selected',
         (tester) async {
+      await _setLargeSurface(tester);
       EdenIntakeFormSchema schema =
           EdenIntakeFormBuilderFixtures.salonStarter();
       await tester.pumpWidget(wrap(EdenIntakeFormBuilder(
@@ -114,6 +123,7 @@ void main() {
     });
 
     testWidgets('renders Publish button', (tester) async {
+      await _setLargeSurface(tester);
       EdenIntakeFormSchema schema =
           EdenIntakeFormBuilderFixtures.salonStarter();
       await tester.pumpWidget(wrap(EdenIntakeFormBuilder(

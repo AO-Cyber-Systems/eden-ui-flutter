@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/eden_status_palette.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_card.dart';
 import 'eden_data_table.dart';
 import 'eden_empty_state.dart';
@@ -198,8 +199,9 @@ class EdenPriceBookTier {
       EdenPriceBookTier(
         id: id ?? this.id,
         name: name ?? this.name,
-        defaultMarkupPct:
-            clearDefaultMarkupPct ? null : (defaultMarkupPct ?? this.defaultMarkupPct),
+        defaultMarkupPct: clearDefaultMarkupPct
+            ? null
+            : (defaultMarkupPct ?? this.defaultMarkupPct),
         description: description ?? this.description,
       );
 }
@@ -297,8 +299,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
     _categories = List.from(widget.initialData.categories);
     _tiers = List.from(widget.initialData.tiers);
     _taxMatrix = widget.initialData.taxMatrix;
-    _selectedCategoryId =
-        _categories.isNotEmpty ? _categories.first.id : null;
+    _selectedCategoryId = _categories.isNotEmpty ? _categories.first.id : null;
     _mutationCount = 0;
     _savedMutationCount = 0;
   }
@@ -430,8 +431,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
 
   void _updateTier(EdenPriceBookTier updated) {
     setState(() {
-      _tiers =
-          _tiers.map((t) => t.id == updated.id ? updated : t).toList();
+      _tiers = _tiers.map((t) => t.id == updated.id ? updated : t).toList();
     });
     _markDirty();
   }
@@ -456,7 +456,8 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<EdenStatusPalette>();
     return LayoutBuilder(builder: (ctx, constraints) {
-      final isNarrow = constraints.maxWidth < 900;
+      final isNarrow = constraints.maxWidth <
+          900; // breakpoint: 900 — price-book two-pane fold
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -541,7 +542,8 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
     if (_categories.isEmpty) {
       return EdenEmptyState(
         title: 'No categories yet',
-        description: 'Create your first category to start organizing your pricebook.',
+        description:
+            'Create your first category to start organizing your pricebook.',
         action: widget.readOnly
             ? null
             : ElevatedButton(
@@ -598,10 +600,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
         ),
         decoration: BoxDecoration(
           color: selected
-              ? Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.08)
+              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
               : null,
           border: Border(
             bottom: BorderSide(
@@ -695,8 +694,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
         title: 'Select a category to view items',
       );
     }
-    final category =
-        _categories.firstWhere((c) => c.id == _selectedCategoryId);
+    final category = _categories.firstWhere((c) => c.id == _selectedCategoryId);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -705,8 +703,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
           widget.itemPickerSlot!,
           const SizedBox(height: EdenSpacing.space3),
         ],
-        Text(category.name,
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(category.name, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: EdenSpacing.space2),
         if (category.items.isEmpty)
           const Padding(
@@ -738,8 +735,8 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
       ),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant),
+          bottom:
+              BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
       ),
       child: Row(
@@ -750,8 +747,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(item.name,
-                    style: Theme.of(context).textTheme.bodyMedium),
+                Text(item.name, style: Theme.of(context).textTheme.bodyMedium),
                 Text(
                   item.description,
                   style: Theme.of(context).textTheme.labelSmall,
@@ -780,16 +776,15 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
             ),
           if (item.skuCode != null) ...[
             const SizedBox(width: 4),
-            Text(item.skuCode!,
-                style: Theme.of(context).textTheme.labelSmall),
+            Text(item.skuCode!, style: Theme.of(context).textTheme.labelSmall),
           ],
           const SizedBox(width: 8),
           if (overrides > 0)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: (palette?.infoBg ?? EdenColors.info.withValues(alpha: 0.1)),
+                color:
+                    (palette?.infoBg ?? EdenColors.info.withValues(alpha: 0.1)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -809,8 +804,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
             ),
           if (item.gbb != null && widget.readOnly)
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: palette?.successBg ??
                     EdenColors.success.withValues(alpha: 0.1),
@@ -854,9 +848,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
           children: [
             Text(tier, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
-            EdenInput(
-                controller: label,
-                label: 'Label'),
+            EdenInput(controller: label, label: 'Label'),
             const SizedBox(height: 6),
             EdenInput(
                 controller: price,
@@ -870,7 +862,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
       title: 'Edit Good / Better / Best — ${item.name}',
       size: EdenModalSize.lg,
       child: LayoutBuilder(builder: (ctx, c) {
-        final wide = c.maxWidth >= 600;
+        final wide = c.maxWidth >= kEdenAppModeCompactMax;
         if (wide) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,8 +896,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
             final updatedGbb = EdenPriceBookGoodBetterBest(
               goodPrice: double.tryParse(goodCtrl.text) ?? gbb.goodPrice,
               goodLabel: goodLabelCtrl.text,
-              betterPrice:
-                  double.tryParse(betterCtrl.text) ?? gbb.betterPrice,
+              betterPrice: double.tryParse(betterCtrl.text) ?? gbb.betterPrice,
               betterLabel: betterLabelCtrl.text,
               bestPrice: double.tryParse(bestCtrl.text) ?? gbb.bestPrice,
               bestLabel: bestLabelCtrl.text,
@@ -973,8 +964,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(t.name,
-                        style: Theme.of(context).textTheme.bodyLarge),
+                    Text(t.name, style: Theme.of(context).textTheme.bodyLarge),
                     if (t.description != null)
                       Text(t.description!,
                           style: Theme.of(context).textTheme.labelSmall),
@@ -1052,8 +1042,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(j,
-                          style: Theme.of(context).textTheme.titleMedium),
+                      Text(j, style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 8),
                       for (final t in _taxMatrix.itemTypes)
                         Padding(
@@ -1097,8 +1086,7 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
               ),
               for (final t in _taxMatrix.itemTypes)
                 _TaxRateCell(
-                  controller:
-                      _taxControllerFor(j, t, _taxMatrix.rateFor(j, t)),
+                  controller: _taxControllerFor(j, t, _taxMatrix.rateFor(j, t)),
                   readOnly: widget.readOnly,
                   onChanged: (v) => _updateTaxRate(j, t, v),
                 ),

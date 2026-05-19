@@ -505,17 +505,20 @@ class _DashboardShellDemoState extends State<_DashboardShellDemo> {
           children: <Widget>[
             const Text('Role preset: '),
             const SizedBox(width: 12),
-            DropdownButton<String>(
-              value: _selected,
-              items: _options
-                  .map((o) => DropdownMenuItem<String>(
-                        value: o,
-                        child: Text(o),
-                      ))
-                  .toList(),
-              onChanged: (v) {
-                if (v != null) setState(() => _selected = v);
-              },
+            Expanded(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _selected,
+                items: _options
+                    .map((o) => DropdownMenuItem<String>(
+                          value: o,
+                          child: Text(o),
+                        ))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) setState(() => _selected = v);
+                },
+              ),
             ),
           ],
         ),

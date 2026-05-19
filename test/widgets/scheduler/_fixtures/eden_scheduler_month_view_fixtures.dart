@@ -33,4 +33,35 @@ class EdenSchedulerMonthViewFixtures {
       ),
     );
   }
+
+  /// Narrow-height wrap to surface RenderFlex overflow in month cells.
+  /// height=400 over 6 calendar rows ≈ 66pt per cell; insufficient for
+  /// the default chip stack and triggers the overflow bug pre-fix.
+  static Widget wrapNarrow(Widget child,
+      {double width = 1200, double height = 400}) {
+    return MaterialApp(
+      home: Scaffold(
+        body: SizedBox(width: width, height: height, child: child),
+      ),
+    );
+  }
+
+  /// Wraps in a generously-tall bounded parent to exercise the
+  /// "plenty of vertical room" branch of the height-aware chip cap.
+  ///
+  /// NOTE: A truly unbounded vertical parent is incompatible with
+  /// `EdenSchedulerMonthView`'s outer Column+Expanded grid (Flutter requires
+  /// bounded constraints for Expanded). The defensive `c.maxHeight.isFinite`
+  /// guard inside `_MonthDayCell` is therefore not directly reachable from a
+  /// widget-test fixture without bypassing the public widget structure. A
+  /// large finite height exercises the same OBSERVABLE contract: no
+  /// overflow, chip count clamped at `maxEventsPerCell` (not exceeded).
+  static Widget wrapTallHeight(Widget child,
+      {double width = 1200, double height = 4000}) {
+    return MaterialApp(
+      home: Scaffold(
+        body: SizedBox(width: width, height: height, child: child),
+      ),
+    );
+  }
 }

@@ -202,7 +202,8 @@ class _EdenTankFleetMapState extends State<EdenTankFleetMap> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (ctx, constraints) {
-      final isTabbed = constraints.maxWidth < 1024;
+      final isTabbed = constraints.maxWidth <
+          1024; // breakpoint: 1024 — tank-fleet tabbed-fallback floor
       if (isTabbed) {
         return _buildTabbed(context);
       }
@@ -401,13 +402,13 @@ class _SidebarZone extends StatelessWidget {
         ),
         if (parent._selectedIds.isNotEmpty)
           Container(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+            color:
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
             padding: const EdgeInsets.symmetric(
                 horizontal: EdenSpacing.space3, vertical: EdenSpacing.space2),
             child: Row(
               children: [
-                Expanded(
-                    child: Text('${parent._selectedIds.length} selected')),
+                Expanded(child: Text('${parent._selectedIds.length} selected')),
                 TextButton(
                   onPressed: parent._clearSelection,
                   child: const Text('Clear'),
@@ -477,8 +478,8 @@ class _SidebarRow extends StatelessWidget {
               ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
               : null,
           border: Border(
-            bottom: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant),
+            bottom:
+                BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
           ),
         ),
         child: Row(
@@ -501,7 +502,8 @@ class _SidebarRow extends StatelessWidget {
                 ],
               ),
             ),
-            EdenStatusBadge(status: EdenTankFleetMap.severityLabel(marker.severity)),
+            EdenStatusBadge(
+                status: EdenTankFleetMap.severityLabel(marker.severity)),
           ],
         ),
       ),

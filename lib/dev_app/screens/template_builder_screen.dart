@@ -134,29 +134,33 @@ class _TemplateBuilderScreenState extends State<TemplateBuilderScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _engine is EdenTemplateFreeformLayout
-                    ? 'freeform'
-                    : 'vertical',
-                items: const [
-                  DropdownMenuItem(
-                    value: 'vertical',
-                    child: Text('Vertical Stack'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'freeform',
-                    child: Text('Freeform'),
-                  ),
-                ],
-                onChanged: (v) {
-                  if (v == null) return;
-                  setState(() {
-                    _engine = v == 'freeform'
-                        ? const EdenTemplateFreeformLayout()
-                        : const EdenTemplateVerticalStackLayout();
-                  });
-                },
+            child: SizedBox(
+              width: 180,
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _engine is EdenTemplateFreeformLayout
+                      ? 'freeform'
+                      : 'vertical',
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'vertical',
+                      child: Text('Vertical Stack'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'freeform',
+                      child: Text('Freeform'),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() {
+                      _engine = v == 'freeform'
+                          ? const EdenTemplateFreeformLayout()
+                          : const EdenTemplateVerticalStackLayout();
+                    });
+                  },
+                ),
               ),
             ),
           ),

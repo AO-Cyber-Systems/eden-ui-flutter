@@ -99,28 +99,32 @@ class _ProcessBuilderScreenState extends State<ProcessBuilderScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: DropdownButton<String>(
-              value: _layout.id,
-              dropdownColor: Theme.of(context).colorScheme.surface,
-              underline: const SizedBox.shrink(),
-              items: const [
-                DropdownMenuItem(value: 'swimlane', child: Text('Swimlane')),
-                DropdownMenuItem(value: 'free_form', child: Text('Free-form')),
-                DropdownMenuItem(value: 'grid', child: Text('Grid')),
-                DropdownMenuItem(value: 'linear', child: Text('Linear')),
-              ],
-              onChanged: (v) {
-                switch (v) {
-                  case 'swimlane':
-                    _setLayout(const EdenSwimlaneLayout());
-                  case 'free_form':
-                    _setLayout(const EdenFreeFormLayout());
-                  case 'grid':
-                    _setLayout(const EdenGridLayout());
-                  case 'linear':
-                    _setLayout(const EdenLinearLayout());
-                }
-              },
+            child: SizedBox(
+              width: 180,
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _layout.id,
+                dropdownColor: Theme.of(context).colorScheme.surface,
+                underline: const SizedBox.shrink(),
+                items: const [
+                  DropdownMenuItem(value: 'swimlane', child: Text('Swimlane')),
+                  DropdownMenuItem(value: 'free_form', child: Text('Free-form')),
+                  DropdownMenuItem(value: 'grid', child: Text('Grid')),
+                  DropdownMenuItem(value: 'linear', child: Text('Linear')),
+                ],
+                onChanged: (v) {
+                  switch (v) {
+                    case 'swimlane':
+                      _setLayout(const EdenSwimlaneLayout());
+                    case 'free_form':
+                      _setLayout(const EdenFreeFormLayout());
+                    case 'grid':
+                      _setLayout(const EdenGridLayout());
+                    case 'linear':
+                      _setLayout(const EdenLinearLayout());
+                  }
+                },
+              ),
             ),
           ),
           IconButton(

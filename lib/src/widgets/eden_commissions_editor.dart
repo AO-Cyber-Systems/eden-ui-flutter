@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_banner.dart';
 import 'eden_button.dart';
 import 'eden_card.dart';
@@ -278,8 +279,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
   }
 
   void _rebuildSplitControllers() {
-    final splits =
-        _rule.splits ?? const <EdenCommissionSplitParticipant>[];
+    final splits = _rule.splits ?? const <EdenCommissionSplitParticipant>[];
     _splitShareControllers = [
       for (final s in splits)
         TextEditingController(text: (s.sharePercent * 100).toStringAsFixed(0)),
@@ -343,9 +343,8 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
     }
     setState(() {
       _rule = next;
-      _percentController.text = next.percent != null
-          ? (next.percent! * 100).toStringAsFixed(0)
-          : '';
+      _percentController.text =
+          next.percent != null ? (next.percent! * 100).toStringAsFixed(0) : '';
       _fixedController.text = next.fixedAmount?.toStringAsFixed(2) ?? '';
       _rebuildTierControllers();
       _rebuildSplitControllers();
@@ -372,7 +371,8 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
     if (index >= tiers.length) return;
     final parsed = double.tryParse(raw) ?? 0.0;
     tiers[index] = tiers[index].copyWith(thresholdAmount: parsed);
-    _emit(_rule.withRaw(mode: EdenCommissionMode.tiered, tiers: _sortedTiers(tiers)));
+    _emit(_rule.withRaw(
+        mode: EdenCommissionMode.tiered, tiers: _sortedTiers(tiers)));
   }
 
   void _onTierRateChanged(int index, String raw) {
@@ -381,7 +381,8 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
     final parsed = double.tryParse(raw) ?? 0.0;
     final asFraction = (parsed / 100.0).clamp(0.0, 1.0);
     tiers[index] = tiers[index].copyWith(rate: asFraction);
-    _emit(_rule.withRaw(mode: EdenCommissionMode.tiered, tiers: _sortedTiers(tiers)));
+    _emit(_rule.withRaw(
+        mode: EdenCommissionMode.tiered, tiers: _sortedTiers(tiers)));
   }
 
   List<EdenCommissionTier> _sortedTiers(List<EdenCommissionTier> tiers) {
@@ -441,7 +442,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < 420;
-        final narrowTier = constraints.maxWidth < 600;
+        final narrowTier = constraints.maxWidth < kEdenAppModeCompactMax;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -524,8 +525,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
       children: [
         TextFormField(
           controller: _percentController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}\.?\d{0,2}')),
           ],
@@ -557,8 +557,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
       children: [
         TextFormField(
           controller: _fixedController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -645,8 +644,8 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
               ),
               Expanded(
                 flex: 5,
-                child: Text('Rate',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child:
+                    Text('Rate', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
               SizedBox(width: 48),
             ],
@@ -728,8 +727,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
     );
   }
 
-  Widget _tierCardCompact(
-      int index, EdenCommissionTier tier, bool canRemove) {
+  Widget _tierCardCompact(int index, EdenCommissionTier tier, bool canRemove) {
     return EdenCard(
       child: Padding(
         padding: const EdgeInsets.all(EdenSpacing.space2),
@@ -739,8 +737,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
   }
 
   Widget _buildSplitForm() {
-    final splits =
-        _rule.splits ?? const <EdenCommissionSplitParticipant>[];
+    final splits = _rule.splits ?? const <EdenCommissionSplitParticipant>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -760,7 +757,8 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
           ),
         if (splits.isNotEmpty && !_splitBalanced) ...[
           Builder(builder: (context) {
-            final sum = splits.fold<double>(0, (acc, s) => acc + s.sharePercent);
+            final sum =
+                splits.fold<double>(0, (acc, s) => acc + s.sharePercent);
             final msg =
                 'Splits must total 100% (currently ${(sum * 100).toStringAsFixed(0)}%)';
             return Semantics(
@@ -791,8 +789,7 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
     final initial = participant.displayName.isNotEmpty
         ? participant.displayName.substring(0, 1).toUpperCase()
         : '?';
-    final shareLabel =
-        (participant.sharePercent * 100).toStringAsFixed(0);
+    final shareLabel = (participant.sharePercent * 100).toStringAsFixed(0);
     return Semantics(
       label: 'Split participant ${participant.displayName}, $shareLabel%',
       explicitChildNodes: true,

@@ -1,4 +1,3 @@
-import 'package:eden_ui_flutter/src/widgets/eden_equipment_record_card.dart';
 import 'package:eden_ui_flutter/src/widgets/eden_warranty_claim.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

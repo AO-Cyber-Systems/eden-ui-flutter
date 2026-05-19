@@ -190,8 +190,9 @@ void main() {
       )));
       // Find the input field — EdenMessageInput wraps a TextField.
       await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
       // Submit via send icon
-      final sendIcon = find.byIcon(Icons.send);
+      final sendIcon = find.byIcon(Icons.send_rounded);
       expect(sendIcon, findsOneWidget);
       await tester.tap(sendIcon);
       await tester.pump();

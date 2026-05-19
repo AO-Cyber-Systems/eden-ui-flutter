@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
+import '../eden_app_mode.dart'
+    show kEdenAppModeDenseDesktopMin, kEdenAppModeNarrowMax;
 import '../eden_scheduler.dart';
 import 'scheduler_controller.dart';
 
@@ -154,10 +156,12 @@ class SchedulerToolbar extends StatelessWidget {
         // to icon-only when the toolbar's available width drops below 1100pt
         // so 800pt / 600pt / 390pt phone viewports stay overflow-free. (TRD
         // 004-02 may revisit this threshold with finer responsive breakpoints.)
-        final iconOnly = c.maxWidth.isFinite && c.maxWidth < 1100;
+        final iconOnly =
+            c.maxWidth.isFinite && c.maxWidth < kEdenAppModeDenseDesktopMin;
         // At iPhone-narrow widths, also collapse the title (let the toggle +
         // nav fill the row) so 7-icon toggle + Prev/Next/Today still fit.
-        final isNarrow = c.maxWidth.isFinite && c.maxWidth < 480;
+        final isNarrow =
+            c.maxWidth.isFinite && c.maxWidth < kEdenAppModeNarrowMax;
         return Container(
           padding: EdgeInsets.symmetric(
             horizontal: isNarrow ? EdenSpacing.space2 : EdenSpacing.space4,
@@ -446,7 +450,8 @@ class AssigneeFilterRow extends StatelessWidget {
                     onChanged(next);
                   },
                   labelStyle: const TextStyle(fontSize: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: EdenSpacing.space1),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: EdenSpacing.space1),
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),

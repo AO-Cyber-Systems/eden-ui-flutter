@@ -250,6 +250,8 @@ class _MonthField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Month',
+      container: true,
+      explicitChildNodes: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -316,6 +318,8 @@ class _DayField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Day',
+      container: true,
+      explicitChildNodes: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -358,6 +362,8 @@ class _YearField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Year',
+      container: true,
+      explicitChildNodes: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
 
 /// Mirrors the eden_empty_state Rails component.
 ///
@@ -79,7 +80,7 @@ class EdenEmptyState extends StatelessWidget {
   Widget _buildActions(BuildContext context) {
     if (_hasPrimary && _hasSecondary) {
       return LayoutBuilder(builder: (context, constraints) {
-        final stacked = constraints.maxWidth < 480;
+        final stacked = constraints.maxWidth < kEdenAppModeNarrowMax;
         if (stacked) {
           return Column(mainAxisSize: MainAxisSize.min, children: [
             _buildPrimary(),

@@ -135,7 +135,8 @@ class EdenRouteOptimizationResult extends StatelessWidget {
       );
     }
     return LayoutBuilder(builder: (ctx, constraints) {
-      final isNarrow = constraints.maxWidth < 900;
+      final isNarrow = constraints.maxWidth <
+          900; // breakpoint: 900 — route-optimization two-pane fold
       final isTight = constraints.maxWidth < 500;
       return ListView(
         children: [
@@ -281,8 +282,7 @@ class _StackedKpiTiles extends StatelessWidget {
                       ?.copyWith(fontWeight: FontWeight.w600)),
               if (secondary.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                Text(secondary,
-                    style: Theme.of(context).textTheme.labelSmall),
+                Text(secondary, style: Theme.of(context).textTheme.labelSmall),
               ],
             ],
           ),
@@ -307,8 +307,7 @@ class _BeforePanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Before',
-                style: Theme.of(context).textTheme.titleSmall),
+            Text('Before', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: EdenSpacing.space2),
             Flexible(
               child: EdenRouteStopList(
@@ -342,8 +341,7 @@ class _AfterPanel extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text('After',
-                    style: Theme.of(context).textTheme.titleSmall),
+                Text('After', style: Theme.of(context).textTheme.titleSmall),
                 if (infeasibleSet.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   Tooltip(
@@ -406,9 +404,8 @@ class _TruckUtilStrip extends StatelessWidget {
                                   '${(t.utilizationPct * 100).toStringAsFixed(0)}%',
                               sublabel:
                                   '${t.scheduledGal.toStringAsFixed(0)} / ${t.capacityGal.toStringAsFixed(0)} gal',
-                              color: t.isOverCapacity
-                                  ? EdenColors.warning
-                                  : null,
+                              color:
+                                  t.isOverCapacity ? EdenColors.warning : null,
                             ),
                             if (t.isOverCapacity)
                               const Positioned(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
 
 /// Tab descriptor for [EdenDetailPageScaffold].
 ///
@@ -51,7 +52,7 @@ class EdenDetailPageScaffold extends StatelessWidget {
     required this.body,
     this.padding = const EdgeInsets.symmetric(horizontal: 24),
     this.sideRailWidth = 320,
-    this.narrowBreakpoint = 480,
+    this.narrowBreakpoint = kEdenAppModeNarrowMax,
   });
 
   /// Header widget — typically an [EdenDetailHeader].

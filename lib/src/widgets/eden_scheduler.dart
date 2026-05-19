@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'scheduler/scheduler_controller.dart';
 import 'scheduler/scheduler_day_view.dart';
 import 'scheduler/scheduler_list_view.dart';
@@ -11,7 +12,6 @@ import 'scheduler/scheduler_swimlane_view.dart';
 import 'scheduler/scheduler_toolbar.dart';
 import 'scheduler/scheduler_month_view.dart';
 import 'scheduler/scheduler_week_view.dart';
-import 'scheduler/scheduler_week_day_views.dart';
 
 // Re-export the new data models / controller so consumers continue to import
 // `package:eden_ui_flutter/eden_ui.dart` and see `EdenSchedulerEvent`,
@@ -207,7 +207,8 @@ class _EdenSchedulerState extends State<EdenScheduler> {
   List<EdenSchedulerEvent> get _filteredEvents {
     if (_activeAssignees.isEmpty) return widget.events;
     return widget.events
-        .where((e) => e.assignee != null && _activeAssignees.contains(e.assignee))
+        .where(
+            (e) => e.assignee != null && _activeAssignees.contains(e.assignee))
         .toList();
   }
 
@@ -219,7 +220,8 @@ class _EdenSchedulerState extends State<EdenScheduler> {
         ((now.hour - config.startHour) + now.minute / 60.0) * config.slotHeight;
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(
-        math.min(offset - config.slotHeight, _scrollController.position.maxScrollExtent),
+        math.min(offset - config.slotHeight,
+            _scrollController.position.maxScrollExtent),
       );
     }
   }
@@ -295,8 +297,9 @@ class _EdenSchedulerState extends State<EdenScheduler> {
   Widget _buildBody(ThemeData theme, bool isDark) {
     // Locked decision E rule 3: at narrow widths or when explicitly forced,
     // route to the mobile composite regardless of the controller view.
-    final width = MediaQuery.maybeOf(context)?.size.width ?? 1280;
-    final useMobile = widget.forceMobileView || width < 600;
+    final width = MediaQuery.maybeOf(context)?.size.width ??
+        1280; // breakpoint: 1280 — default fallback for null MediaQuery (test contexts)
+    final useMobile = widget.forceMobileView || width < kEdenAppModeCompactMax;
     if (useMobile && _view != EdenSchedulerView.month) {
       return EdenSchedulerMobileView(
         controller: _controller,

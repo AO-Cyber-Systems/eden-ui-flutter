@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_button.dart';
 import 'eden_card.dart';
 import 'eden_status_badge.dart';
@@ -138,8 +139,7 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
 
   Duration _displayedWorked(EdenTimeCardEntry e) {
     if (e.isOpen) {
-      return DateTime.now().difference(e.clockedInAt) -
-          e.breaksAccumulated;
+      return DateTime.now().difference(e.clockedInAt) - e.breaksAccumulated;
     }
     return e.workedDuration;
   }
@@ -165,7 +165,7 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 600;
+        final narrow = constraints.maxWidth < kEdenAppModeCompactMax;
         if (narrow) return _stacked(context);
         return _table(context);
       },
@@ -194,8 +194,7 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
     final worked = _displayedWorked(e);
     final workedLabel = _formatDuration(worked);
     return Semantics(
-      label:
-          'Time card for ${e.staffName}, ${_formatDateTime(e.clockedInAt)}, '
+      label: 'Time card for ${e.staffName}, ${_formatDateTime(e.clockedInAt)}, '
           'worked $workedLabel, ${e.isOpen ? "open shift" : "completed"}',
       explicitChildNodes: true,
       child: EdenCard(
@@ -235,8 +234,7 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
                       ?.copyWith(fontWeight: FontWeight.w600)),
               if (e.note != null && e.note!.isNotEmpty) ...[
                 const SizedBox(height: EdenSpacing.space1),
-                Text('Note: ${e.note}',
-                    style: theme.textTheme.bodySmall),
+                Text('Note: ${e.note}', style: theme.textTheme.bodySmall),
               ],
               if (widget.showApprovalControls && !e.isOpen) ...[
                 const SizedBox(height: EdenSpacing.space2),
@@ -248,30 +246,33 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
                       label: 'Approve',
                       variant: EdenButtonVariant.success,
                       size: EdenButtonSize.sm,
-                      onPressed: () => widget.onAction(EdenTimeCardApprovalEvent(
-                            entryId: e.id,
-                            action: EdenTimeCardApprovalAction.approve,
-                          )),
+                      onPressed: () =>
+                          widget.onAction(EdenTimeCardApprovalEvent(
+                        entryId: e.id,
+                        action: EdenTimeCardApprovalAction.approve,
+                      )),
                     ),
                     EdenButton(
                       label: 'Reject',
                       variant: EdenButtonVariant.danger,
                       outline: true,
                       size: EdenButtonSize.sm,
-                      onPressed: () => widget.onAction(EdenTimeCardApprovalEvent(
-                            entryId: e.id,
-                            action: EdenTimeCardApprovalAction.reject,
-                          )),
+                      onPressed: () =>
+                          widget.onAction(EdenTimeCardApprovalEvent(
+                        entryId: e.id,
+                        action: EdenTimeCardApprovalAction.reject,
+                      )),
                     ),
                     EdenButton(
                       label: 'Request edit',
                       variant: EdenButtonVariant.secondary,
                       outline: true,
                       size: EdenButtonSize.sm,
-                      onPressed: () => widget.onAction(EdenTimeCardApprovalEvent(
-                            entryId: e.id,
-                            action: EdenTimeCardApprovalAction.requestEdit,
-                          )),
+                      onPressed: () =>
+                          widget.onAction(EdenTimeCardApprovalEvent(
+                        entryId: e.id,
+                        action: EdenTimeCardApprovalAction.requestEdit,
+                      )),
                     ),
                   ],
                 ),
@@ -311,9 +312,7 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
     final tint = _rowTint(context, e);
     final status = _statusFor(e);
     return DataRow(
-      color: tint != null
-          ? WidgetStatePropertyAll<Color>(tint)
-          : null,
+      color: tint != null ? WidgetStatePropertyAll<Color>(tint) : null,
       cells: [
         DataCell(Text(e.staffName)),
         DataCell(Text(
@@ -341,9 +340,9 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
           variant: EdenButtonVariant.success,
           size: EdenButtonSize.sm,
           onPressed: () => widget.onAction(EdenTimeCardApprovalEvent(
-                entryId: e.id,
-                action: EdenTimeCardApprovalAction.approve,
-              )),
+            entryId: e.id,
+            action: EdenTimeCardApprovalAction.approve,
+          )),
         ),
         const SizedBox(width: 8),
         EdenButton(
@@ -352,9 +351,9 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
           outline: true,
           size: EdenButtonSize.sm,
           onPressed: () => widget.onAction(EdenTimeCardApprovalEvent(
-                entryId: e.id,
-                action: EdenTimeCardApprovalAction.reject,
-              )),
+            entryId: e.id,
+            action: EdenTimeCardApprovalAction.reject,
+          )),
         ),
         const SizedBox(width: 8),
         EdenButton(
@@ -363,9 +362,9 @@ class _EdenTimeCardState extends State<EdenTimeCard> {
           outline: true,
           size: EdenButtonSize.sm,
           onPressed: () => widget.onAction(EdenTimeCardApprovalEvent(
-                entryId: e.id,
-                action: EdenTimeCardApprovalAction.requestEdit,
-              )),
+            entryId: e.id,
+            action: EdenTimeCardApprovalAction.requestEdit,
+          )),
         ),
       ],
     );

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
+
 /// Language for the USWDS banner strings.
 ///
 /// `en` (default) ships English text per USWDS v3.13 spec; `es` ships the
@@ -175,7 +177,7 @@ class _ExpandedPanel extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 600;
+          final isWide = constraints.maxWidth >= kEdenAppModeCompactMax;
           final tile1 = _Tile(
             icon: Icons.account_balance_outlined,
             heading: strings['gov_heading']!,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_authenticated_image.dart';
 import 'eden_card.dart';
 import 'eden_currency_display.dart';
@@ -121,8 +122,11 @@ class EdenQuickAddProductGrid extends StatelessWidget {
   final String emptyLabel;
 
   int _autoCols(double width) {
-    if (width < 600) return 4;
-    if (width < 1024) return 6;
+    if (width < kEdenAppModeCompactMax) return 4;
+    if (width < 1024) {
+      // breakpoint: 1024 — product-grid medium-tier column count
+      return 6;
+    }
     return 8;
   }
 
@@ -191,8 +195,7 @@ class EdenQuickAddProductGrid extends StatelessWidget {
                   selected: selectedCategoryId == c.id,
                   onSelected: onCategorySelected == null
                       ? null
-                      : (sel) =>
-                          onCategorySelected!(sel ? c.id : null),
+                      : (sel) => onCategorySelected!(sel ? c.id : null),
                 ),
             ],
           ),

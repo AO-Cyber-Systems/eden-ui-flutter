@@ -183,38 +183,61 @@ class _SchedulerScreenState extends State<SchedulerScreen> {
             events: events,
             assignees: _assignees,
           ),
-          _ParityRow(
-            label: 'Day view',
-            referenceAsset:
-                'lib/dev_app/_assets/trades_react_reference/qa-admin-scheduler.png',
-            view: EdenSchedulerView.day,
-            events: events,
-            assignees: _assignees,
+          // --------------------------------------------------------------
+          // Live view-mode preview (no parity reference). Only the Week
+          // view has a real trades-react reference screenshot
+          // (qa-admin-scheduler.png); the previous Day/Month/Mobile/Swimlane
+          // rows pointed at unrelated screenshots (Forefront UI, Projects,
+          // Customer Detail) and were misleading parity claims. Replaced
+          // with live-only previews until real reference assets exist.
+          // --------------------------------------------------------------
+          const EdenDivider(
+            label: 'Live view-mode preview · no parity reference',
           ),
-          _ParityRow(
-            label: 'Month view',
-            referenceAsset:
-                'lib/dev_app/_assets/trades_react_reference/qa-admin-forefront.png',
-            view: EdenSchedulerView.month,
-            events: events,
-            assignees: _assignees,
-          ),
-          _ParityRow(
-            label: 'Mobile view (forceMobileView=true)',
-            referenceAsset:
-                'lib/dev_app/_assets/trades_react_reference/mobile-projects.png',
-            view: EdenSchedulerView.mobile,
-            events: events,
-            assignees: _assignees,
-            forceMobile: true,
-          ),
-          _ParityRow(
-            label: 'Swimlane view',
-            referenceAsset:
-                'lib/dev_app/_assets/trades_react_reference/desktop-customer-detail.png',
-            view: EdenSchedulerView.swimlane,
-            events: events,
-            assignees: _assignees,
+          Section(
+            title: 'Day · Month · Mobile · Swimlane',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Only the Week view has a trades-react reference '
+                  'screenshot (qa-admin-scheduler.png). The four views below '
+                  'are live EdenScheduler instances locked to their '
+                  'view-mode — no side-by-side comparison until additional '
+                  'reference assets are captured.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: EdenSpacing.space3),
+                _LiveViewModePreview(
+                  label: 'Day view',
+                  view: EdenSchedulerView.day,
+                  events: events,
+                  assignees: _assignees,
+                ),
+                const SizedBox(height: EdenSpacing.space4),
+                _LiveViewModePreview(
+                  label: 'Month view',
+                  view: EdenSchedulerView.month,
+                  events: events,
+                  assignees: _assignees,
+                ),
+                const SizedBox(height: EdenSpacing.space4),
+                _LiveViewModePreview(
+                  label: 'Mobile view (forceMobileView=true)',
+                  view: EdenSchedulerView.mobile,
+                  events: events,
+                  assignees: _assignees,
+                  forceMobile: true,
+                ),
+                const SizedBox(height: EdenSpacing.space4),
+                _LiveViewModePreview(
+                  label: 'Swimlane view',
+                  view: EdenSchedulerView.swimlane,
+                  events: events,
+                  assignees: _assignees,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -235,7 +258,6 @@ class _ParityRow extends StatefulWidget {
     required this.view,
     required this.events,
     required this.assignees,
-    this.forceMobile = false,
   });
 
   final String label;
@@ -243,7 +265,6 @@ class _ParityRow extends StatefulWidget {
   final EdenSchedulerView view;
   final List<EdenSchedulerEvent> events;
   final List<String> assignees;
-  final bool forceMobile;
 
   @override
   State<_ParityRow> createState() => _ParityRowState();
@@ -271,7 +292,7 @@ class _ParityRowState extends State<_ParityRow> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, c) {
-        final isCompact = c.maxWidth < 900;
+        final isCompact = c.maxWidth < 1100;
         final referencePane = Container(
           height: 480,
           decoration: BoxDecoration(
@@ -303,7 +324,6 @@ class _ParityRowState extends State<_ParityRow> {
                 events: widget.events,
                 assignees: widget.assignees,
                 selectedAssignees: const <String>{},
-                forceMobileView: widget.forceMobile,
               );
             },
           ),
@@ -378,6 +398,77 @@ class _ParityRowState extends State<_ParityRow> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Live-only view-mode preview — one labeled bounded `EdenScheduler` locked
+/// to [view]. Models on [_ParityRow]'s right pane but without the reference
+/// image. Owns its own [EdenSchedulerController] and disposes it on widget
+/// removal (avoids hot-reload controller leaks).
+class _LiveViewModePreview extends StatefulWidget {
+  const _LiveViewModePreview({
+    required this.label,
+    required this.view,
+    required this.events,
+    required this.assignees,
+    this.forceMobile = false,
+  });
+
+  final String label;
+  final EdenSchedulerView view;
+  final List<EdenSchedulerEvent> events;
+  final List<String> assignees;
+  final bool forceMobile;
+
+  @override
+  State<_LiveViewModePreview> createState() => _LiveViewModePreviewState();
+}
+
+class _LiveViewModePreviewState extends State<_LiveViewModePreview> {
+  late final EdenSchedulerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = EdenSchedulerController(
+      initialView: widget.view,
+      initialDate: DateTime(2026, 5, 16),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          widget.label,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 540,
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (_, __) {
+              return EdenScheduler(
+                controller: _controller,
+                events: widget.events,
+                assignees: widget.assignees,
+                selectedAssignees: const <String>{},
+                forceMobileView: widget.forceMobile,
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

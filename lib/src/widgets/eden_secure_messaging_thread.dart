@@ -280,6 +280,7 @@ class EdenSecureMessagingThread extends StatelessWidget {
     Widget aligned = Align(
       alignment: isLeft ? Alignment.centerLeft : Alignment.centerRight,
       child: ConstrainedBox(
+        // width: 480 — message-bubble narrow clamp
         constraints: const BoxConstraints(maxWidth: 480),
         child: bubble,
       ),

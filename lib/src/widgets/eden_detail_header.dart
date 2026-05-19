@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
 
 /// Single action descriptor used by [EdenDetailHeader].
 ///
@@ -46,7 +47,7 @@ class EdenDetailHeader extends StatelessWidget {
     this.actions,
     this.statusBadge,
     this.actionsOverflowAtCount = 4,
-    this.narrowBreakpoint = 480,
+    this.narrowBreakpoint = kEdenAppModeNarrowMax,
   });
 
   /// Primary entity name displayed prominently.

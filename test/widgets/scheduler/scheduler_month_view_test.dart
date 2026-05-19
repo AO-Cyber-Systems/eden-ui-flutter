@@ -95,6 +95,102 @@ void main() {
       // Bottom sheet title should now be visible.
       expect(find.textContaining('Events on 5/15/2026'), findsOneWidget);
     });
+
+    // -----------------------------------------------------------------
+    // Height-aware overflow guard (DEFECT 1 — RED tests).
+    // Pre-fix the cell Column only constrains chips by width via
+    // c.maxWidth, ignoring c.maxHeight. At narrow row heights the
+    // day-number + chips Column overflows the LayoutBuilder constraints
+    // and RenderFlex emits a bottom-overflow exception.
+    // -----------------------------------------------------------------
+    testWidgets(
+        'narrow height does not overflow with 4 events and maxEventsPerCell=4',
+        (tester) async {
+      await tester.pumpWidget(EdenSchedulerMonthViewFixtures.wrapNarrow(
+        EdenSchedulerMonthView(
+          focusedDate: EdenSchedulerMonthViewFixtures.may1,
+          today: EdenSchedulerMonthViewFixtures.today,
+          events: EdenSchedulerMonthViewFixtures.eventsOnMay15(4),
+          isDark: false,
+          theme: ThemeData.light(),
+          onDateSelected: (_) {},
+          maxEventsPerCell: 4,
+        ),
+        height: 400,
+      ));
+      // Capture any layout exception. tester.takeException() returns the
+      // last error AND clears it, so grab it once and assert.
+      final ex = tester.takeException();
+      expect(
+        ex,
+        isNull,
+        reason:
+            'Month cell column should bound chip count by c.maxHeight to '
+            'avoid RenderFlex bottom-overflow at narrow row heights. '
+            'Captured exception: $ex',
+      );
+    });
+
+    testWidgets('very narrow height (300pt) falls through to dot mode',
+        (tester) async {
+      await tester.pumpWidget(EdenSchedulerMonthViewFixtures.wrapNarrow(
+        EdenSchedulerMonthView(
+          focusedDate: EdenSchedulerMonthViewFixtures.may1,
+          today: EdenSchedulerMonthViewFixtures.today,
+          events: EdenSchedulerMonthViewFixtures.eventsOnMay15(3),
+          isDark: false,
+          theme: ThemeData.light(),
+          onDateSelected: (_) {},
+          maxEventsPerCell: 3,
+        ),
+        height: 300,
+      ));
+      // First: no exception at extreme narrow height.
+      expect(tester.takeException(), isNull);
+      // Chip-style rendering uses Padding(EdgeInsets.only(bottom: 2)).
+      // When heightCap forces 0 chips we expect dot-mode (Wrap), so the
+      // chip Padding should NOT appear for May 15 events.
+      final chipPadding = find.byWidgetPredicate((w) {
+        if (w is! Padding) return false;
+        final p = w.padding;
+        return p is EdgeInsets && p == const EdgeInsets.only(bottom: 2);
+      });
+      expect(
+        chipPadding,
+        findsNothing,
+        reason:
+            'When height cap forces 0 chips the cell should fall through '
+            'to dot mode (Wrap), not render chip-style Padding.',
+      );
+    });
+
+    testWidgets(
+        'very tall bounded height respects maxEventsPerCell cap (no overflow)',
+        (tester) async {
+      // 4000pt-tall harness gives each cell ample vertical room (~660pt per
+      // cell over 6 rows). The height-aware cap should clamp at
+      // maxEventsPerCell (=3 here), not exceed it. Stands in for the
+      // defensive `c.maxHeight.isFinite` guard, which is structurally
+      // unreachable through the public widget API (see fixture NOTE).
+      await tester.pumpWidget(EdenSchedulerMonthViewFixtures.wrapTallHeight(
+        EdenSchedulerMonthView(
+          focusedDate: EdenSchedulerMonthViewFixtures.may1,
+          today: EdenSchedulerMonthViewFixtures.today,
+          events: EdenSchedulerMonthViewFixtures.eventsOnMay15(3),
+          isDark: false,
+          theme: ThemeData.light(),
+          onDateSelected: (_) {},
+          maxEventsPerCell: 3,
+        ),
+      ));
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'At very tall bounded heights the cell must not throw and must '
+            'clamp visible chips at maxEventsPerCell.',
+      );
+    });
   });
 
   group('EdenSchedulerMonthView — date tap', () {

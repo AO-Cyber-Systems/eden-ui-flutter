@@ -260,9 +260,50 @@ class _MonthDayCell extends StatelessWidget {
         final cellWidth = c.maxWidth;
         final useDots = cellWidth < 80;
         final useShortCount = cellWidth < 60;
+
+        // Height-aware chip cap. The cell column stacks:
+        //   - day-number area: Container(height:24) + SizedBox(height:2) = 26pt
+        //   - outer padding: EdgeInsets.all(EdenSpacing.space1) = 4pt top + 4pt bottom = 8pt
+        //   - each chip: Container(height:16) + Padding.bottom(2) = 18pt
+        //   - "+N more" overflow chip: Text + 2pt top padding ≈ 18pt
+        // We compute how many 18pt chips fit in the remaining height, with an
+        // overflow-chip reservation when not all events fit. The result is
+        // clamped to [0, maxEventsPerCell] so the consumer-specified upper
+        // bound is still respected. When c.maxHeight is not finite
+        // (defensive — `EdenSchedulerMonthView`'s own outer Column+Expanded
+        // bounds height in practice, but a synthetic unbounded parent could
+        // surface this branch), we fall back to the width-only behavior.
+        const double dayNumberAreaHeight = 26;
+        const double verticalPadding = 8;
+        const double perChipHeight = 18;
+        const double overflowChipHeight = 18;
+
+        int heightCap;
+        if (!c.maxHeight.isFinite) {
+          heightCap = maxEventsPerCell;
+        } else {
+          final available =
+              c.maxHeight - dayNumberAreaHeight - verticalPadding;
+          // If the available room can hold every event without an overflow
+          // chip, no reservation is needed. Otherwise reserve room for the
+          // "+N more" chip so chip + overflow indicator don't both exceed
+          // the cell.
+          final fitsAll = events.length * perChipHeight <= available;
+          final availableForChips =
+              fitsAll ? available : available - overflowChipHeight;
+          heightCap = (availableForChips ~/ perChipHeight)
+              .clamp(0, maxEventsPerCell);
+        }
+
+        // Width-based dot mode still wins for narrow cells (existing
+        // behavior). ALSO: when the height cap collapses chip space to 0
+        // while events exist, fall through to dot mode so the cell surfaces
+        // event presence without overflowing the column.
+        final effectiveUseDots =
+            useDots || (heightCap == 0 && events.isNotEmpty);
         // Limit the number of titled chips at narrow widths to keep cells
         // legible; switch to colored dots when really narrow.
-        final cap = useDots ? 6 : maxEventsPerCell;
+        final cap = effectiveUseDots ? 6 : heightCap;
         final visible = events.take(cap).toList();
         final overflow = events.length - visible.length;
 
@@ -316,7 +357,7 @@ class _MonthDayCell extends StatelessWidget {
                   const SizedBox(height: 2),
                   // Event indicators.
                   if (visible.isNotEmpty)
-                    useDots
+                    effectiveUseDots
                         ? Wrap(
                             spacing: 3,
                             runSpacing: 3,

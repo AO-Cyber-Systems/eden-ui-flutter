@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_service_catalog_tile.dart';
 
 /// Staff column for [EdenTimeSlotPicker]. Distinct from [EdenServiceStaff]
@@ -179,7 +180,8 @@ class _EdenTimeSlotPickerState extends State<EdenTimeSlotPicker> {
 
     return LayoutBuilder(
       builder: (ctx, c) {
-        final useTabStrip = c.maxWidth < 600 || visible.length > 4;
+        final useTabStrip =
+            c.maxWidth < kEdenAppModeCompactMax || visible.length > 4;
         return Column(
           children: [
             _DayHeader(
@@ -355,13 +357,13 @@ class _StaffGrid extends StatelessWidget {
                           key: ValueKey(
                               'slot-${s.id}-${row.hour.toString().padLeft(2, '0')}-${row.minute.toString().padLeft(2, '0')}'),
                           slot: slotByKey['${s.id}|${row.hour}:${row.minute}'],
-                          selected: slotByKey[
-                                      '${s.id}|${row.hour}:${row.minute}']
-                                  ?.id ==
-                              selectedSlotId,
+                          selected:
+                              slotByKey['${s.id}|${row.hour}:${row.minute}']
+                                      ?.id ==
+                                  selectedSlotId,
                           onTap: () {
-                            final slot = slotByKey[
-                                '${s.id}|${row.hour}:${row.minute}'];
+                            final slot =
+                                slotByKey['${s.id}|${row.hour}:${row.minute}'];
                             if (slot != null && slot.available) {
                               onSlotSelected(slot);
                             }
@@ -476,8 +478,9 @@ class _SlotCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(4),
-        border:
-            selected ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2) : null,
+        border: selected
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+            : null,
       ),
       child: InkWell(
         onTap: slot != null && slot!.available ? onTap : null,
@@ -494,9 +497,7 @@ class _SlotCell extends StatelessWidget {
 }
 
 String _formatTimeOfDay(TimeOfDay t) {
-  final h = t.hour > 12
-      ? t.hour - 12
-      : (t.hour == 0 ? 12 : t.hour);
+  final h = t.hour > 12 ? t.hour - 12 : (t.hour == 0 ? 12 : t.hour);
   final m = t.minute.toString().padLeft(2, '0');
   final ampm = t.hour >= 12 ? 'PM' : 'AM';
   return '$h:$m $ampm';
