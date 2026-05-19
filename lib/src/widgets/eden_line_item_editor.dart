@@ -36,6 +36,7 @@ class EdenLineItem<T> {
     this.discountAmount,
     this.taxRate,
     this.note,
+    this.modifiers = const [],
   });
 
   /// Stable identity for TextField controller keying and reorder semantics.
@@ -60,6 +61,11 @@ class EdenLineItem<T> {
   /// [EdenLineItemColumn.custom] when consumers wire a custom column).
   final String? note;
 
+  /// Optional list of modifier strings rendered below the description
+  /// (e.g. "Oat milk", "Extra shot" for a POS beverage line item).
+  /// Displayed in both table mode and stacked-card mode. Defaults to [].
+  final List<String> modifiers;
+
   /// Subtotal — quantity × unitPrice. Allocates one double; safe per render.
   double get subtotal => quantity * unitPrice;
 
@@ -82,6 +88,7 @@ class EdenLineItem<T> {
     double? discountAmount,
     double? taxRate,
     String? note,
+    List<String>? modifiers,
   }) =>
       EdenLineItem<T>(
         id: id ?? this.id,
@@ -92,6 +99,7 @@ class EdenLineItem<T> {
         discountAmount: discountAmount ?? this.discountAmount,
         taxRate: taxRate ?? this.taxRate,
         note: note ?? this.note,
+        modifiers: modifiers ?? this.modifiers,
       );
 }
 
@@ -190,6 +198,22 @@ extension _EdenLineItemColumnLabel on EdenLineItemColumn {
 /// (vertical-specific add affordance — product grid, CPT-code picker,
 /// fuel-grade chips, etc.).
 ///
+/// ## New props added in PCF-12 / obj 012-01 enhancement
+///
+/// * [showQtyStepperInTableMode] — when `true`, the Qty column in table mode
+///   renders +/− stepper buttons instead of a plain TextField. Defaults to
+///   `false` for backward compatibility.
+/// * [onTotalsComputed] — optional callback fired every build with a
+///   `Map<String, double>` keyed `'subtotal'` and `'total'` (sum of all
+///   `item.lineTotal`). Useful for parent widgets that want to mirror totals
+///   without composing [EdenLineItemEditorTotalsBar] themselves.
+///
+/// ## [EdenLineItem.modifiers] rendering
+///
+/// When any `item.modifiers` is non-empty, modifier strings are rendered
+/// below the description text in a smaller secondary style (both table and
+/// stacked-card modes).
+///
 /// ## Responsive behavior
 ///
 /// * `constraints.maxWidth >= narrowBreakpointPt` (default 600) →
@@ -223,6 +247,8 @@ class EdenLineItemEditor<T> extends StatefulWidget {
     this.footerSlot,
     this.currencyCode = 'USD',
     this.narrowBreakpointPt = 600,
+    this.showQtyStepperInTableMode = false,
+    this.onTotalsComputed,
   });
 
   final List<EdenLineItem<T>> items;
@@ -235,6 +261,22 @@ class EdenLineItemEditor<T> extends StatefulWidget {
   final Widget? footerSlot;
   final String currencyCode;
   final double narrowBreakpointPt;
+
+  /// When `true`, the Qty column in table mode renders +/− stepper buttons
+  /// alongside the quantity display instead of a plain editable [TextField].
+  /// Defaults to `false` — existing consumers are unaffected.
+  final bool showQtyStepperInTableMode;
+
+  /// Optional callback fired every time the widget builds, providing computed
+  /// totals over all items:
+  ///
+  /// * `'subtotal'` — sum of `item.subtotal` (before discount/tax).
+  /// * `'totalDiscount'` — sum of `item.discountAmount ?? 0`.
+  /// * `'total'` — sum of `item.lineTotal` (after discount + tax).
+  ///
+  /// Consumers can use this to mirror totals without composing
+  /// [EdenLineItemEditorTotalsBar] directly.
+  final void Function(Map<String, double>)? onTotalsComputed;
 
   @override
   State<EdenLineItemEditor<T>> createState() => _EdenLineItemEditorState<T>();
@@ -350,6 +392,9 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       // Announce newly-negative line totals via Semantics announcements.
       _maybeAnnounceNegatives();
 
+      // Fire onTotalsComputed on each build with fresh aggregate values.
+      _maybeFireTotalsCallback();
+
       final children = <Widget>[];
       if (widget.itemPickerSlot != null) {
         children.add(widget.itemPickerSlot!);
@@ -366,6 +411,29 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
       );
+    });
+  }
+
+  void _maybeFireTotalsCallback() {
+    final cb = widget.onTotalsComputed;
+    if (cb == null) return;
+    double subtotal = 0;
+    double totalDiscount = 0;
+    double total = 0;
+    for (final item in widget.items) {
+      subtotal += item.subtotal;
+      totalDiscount += item.discountAmount ?? 0;
+      total += item.lineTotal;
+    }
+    // Schedule post-frame so we don't call setState-like callbacks during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        cb({
+          'subtotal': subtotal,
+          'totalDiscount': totalDiscount,
+          'total': total,
+        });
+      }
     });
   }
 
@@ -491,11 +559,32 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
     EdenLineItem<T> item,
     int rowIndex,
   ) {
+    final theme = Theme.of(context);
+    final modifierStyle = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurface.withOpacity(0.6),
+    );
+
+    Widget modifiersWidget = const SizedBox.shrink();
+    if (item.modifiers.isNotEmpty) {
+      modifiersWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: item.modifiers
+            .map((m) => Text(m, style: modifierStyle, overflow: TextOverflow.ellipsis))
+            .toList(),
+      );
+    }
+
     if (widget.readOnly) {
       return _semanticsWrap(
         EdenLineItemColumn.description,
         item,
-        Text(item.description, overflow: TextOverflow.ellipsis),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(item.description, overflow: TextOverflow.ellipsis),
+            modifiersWidget,
+          ],
+        ),
       );
     }
     final controller = _controllerFor(
@@ -506,18 +595,24 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
     return _semanticsWrap(
       EdenLineItemColumn.description,
       item,
-      TextField(
-        controller: controller,
-        decoration: const InputDecoration(
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
-        style: Theme.of(context).textTheme.bodySmall,
-        onChanged: (value) => _emitChange(
-          rowIndex,
-          item.copyWith(description: value),
-        ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              isDense: true,
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+            style: theme.textTheme.bodySmall,
+            onChanged: (value) => _emitChange(
+              rowIndex,
+              item.copyWith(description: value),
+            ),
+          ),
+          modifiersWidget,
+        ],
       ),
     );
   }
@@ -533,6 +628,11 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
         item,
         Text(_formatDoubleForField(item.quantity)),
       );
+    }
+    // When showQtyStepperInTableMode is true, render the same +/- stepper
+    // that stacked-card mode uses. This gives POS-style table UX.
+    if (widget.showQtyStepperInTableMode) {
+      return _buildQtyStepper(context, item, rowIndex);
     }
     final controller = _controllerFor(
       item.id,
@@ -896,6 +996,147 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
               final key = '${item.id}-${EdenLineItemColumn.quantity.name}';
               _controllers[key]?.text = _formatDoubleForField(next);
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EdenLineItemEditorTotalsBar
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Computed totals display for use below an [EdenLineItemEditor].
+///
+/// Renders a Subtotal row, a conditional Discounts row (only shown when any
+/// item has a non-zero [EdenLineItem.discountAmount]), and a bold Total row.
+/// Intended to be passed as [EdenLineItemEditor.footerSlot] or rendered
+/// independently by consumer layouts.
+///
+/// **Fully presentational** — pass the same `items` list you give to
+/// [EdenLineItemEditor]. No state is owned; re-renders on every `items` change.
+///
+/// ```dart
+/// EdenLineItemEditor<CartItem>(
+///   items: edenItems,
+///   onItemsChanged: ...,
+///   footerSlot: EdenLineItemEditorTotalsBar<CartItem>(
+///     items: edenItems,
+///     currencyCode: 'USD',
+///   ),
+/// )
+/// ```
+class EdenLineItemEditorTotalsBar<T> extends StatelessWidget {
+  const EdenLineItemEditorTotalsBar({
+    super.key,
+    required this.items,
+    this.currencyCode = 'USD',
+    this.padding = const EdgeInsets.symmetric(
+      horizontal: EdenSpacing.space4,
+      vertical: EdenSpacing.space3,
+    ),
+  });
+
+  final List<EdenLineItem<T>> items;
+
+  /// ISO 4217 currency code passed through to [EdenCurrencyDisplay].
+  final String currencyCode;
+
+  /// Padding around the totals column. Defaults to horizontal 16pt / vertical
+  /// 12pt to match the POS cart panel spacing.
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    double subtotal = 0;
+    double totalDiscount = 0;
+    double total = 0;
+    for (final item in items) {
+      subtotal += item.subtotal;
+      totalDiscount += item.discountAmount ?? 0;
+      total += item.lineTotal;
+    }
+
+    final subtotalCents = (subtotal * 100).round();
+    final discountCents = (totalDiscount * 100).round();
+    final totalCents = (total * 100).round();
+
+    final hasDiscount = discountCents > 0;
+
+    return Padding(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _TotalsRow(
+            label: 'Subtotal',
+            cents: subtotalCents,
+            currencyCode: currencyCode,
+            style: textTheme.bodyMedium,
+          ),
+          if (hasDiscount)
+            _TotalsRow(
+              label: 'Discounts',
+              cents: discountCents,
+              currencyCode: currencyCode,
+              style: textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
+              prefix: '- ',
+            ),
+          const SizedBox(height: EdenSpacing.space1),
+          _TotalsRow(
+            label: 'Total',
+            cents: totalCents,
+            currencyCode: currencyCode,
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalsRow extends StatelessWidget {
+  const _TotalsRow({
+    required this.label,
+    required this.cents,
+    required this.currencyCode,
+    this.style,
+    this.prefix = '',
+  });
+
+  final String label;
+  final int cents;
+  final String currencyCode;
+  final TextStyle? style;
+
+  /// Optional string prefix prepended before the formatted currency value
+  /// (e.g. `'- '` for the discounts row).
+  final String prefix;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: style),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (prefix.isNotEmpty)
+                Text(prefix, style: style),
+              EdenCurrencyDisplay(
+                cents: cents,
+                currencyCode: currencyCode,
+                style: style,
+              ),
+            ],
           ),
         ],
       ),
