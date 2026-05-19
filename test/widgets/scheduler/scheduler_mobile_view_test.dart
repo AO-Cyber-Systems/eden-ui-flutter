@@ -119,12 +119,11 @@ void main() {
       // present in the tree and that the gesture detector callbacks are
       // wired (we don't simulate full pinch since that requires raw pointer
       // injection beyond standard widget-test conventions).
-      var startCalled = false;
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: EdenSchedulerPinchZoom(
             zoom: 1.0,
-            onScaleStart: () => startCalled = true,
+            onScaleStart: () {},
             child: const Text('child'),
           ),
         ),

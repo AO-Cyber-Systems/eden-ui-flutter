@@ -139,11 +139,11 @@ void main() {
       ));
       expect(tester.takeException(), isNull);
       // No red indicator dot in the time-grid stack.
-      final redDot = find.byWidgetPredicate((w) =>
+      // Avatars/other circles may exist; verify test does not crash (no assertion needed).
+      find.byWidgetPredicate((w) =>
           w is Container &&
           w.decoration is BoxDecoration &&
           (w.decoration as BoxDecoration).shape == BoxShape.circle);
-      // Avatars/other circles may exist; just verify the test does not crash.
     });
 
     testWidgets('hidden when focusedDate != today', (tester) async {

@@ -2,8 +2,6 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '_fixtures/eden_process_models_fixtures.dart';
-
 void main() {
   group('EdenProcessController — selection', () {
     test('select updates selectedNodeId and notifies', () {
