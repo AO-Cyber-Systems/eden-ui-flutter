@@ -40,7 +40,8 @@ void main() {
       ),
     ));
 
-    expect(find.text('Title'), findsOneWidget);
+    // Label may appear both as InputDecoration label AND hintText under Flutter 3.44.
+    expect(find.text('Title'), findsWidgets);
     expect(find.byType(TextFormField), findsOneWidget);
   });
 
@@ -273,11 +274,11 @@ void main() {
       ),
     ));
 
-    // All 4 labels are present.
-    expect(find.text('Title'), findsOneWidget);
-    expect(find.text('Category'), findsOneWidget);
-    expect(find.text('Published'), findsOneWidget);
-    expect(find.text('Priority'), findsOneWidget);
+    // All 4 labels are present (use findsWidgets — each may appear as label + hintText).
+    expect(find.text('Title'), findsWidgets);
+    expect(find.text('Category'), findsWidgets);
+    expect(find.text('Published'), findsWidgets);
+    expect(find.text('Priority'), findsWidgets);
   });
 
   // ---------------------------------------------------------------------------
