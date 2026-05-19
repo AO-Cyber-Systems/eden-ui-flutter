@@ -41,8 +41,9 @@ pubspec.lock
 /windows/
 /web/
 
-# Test screenshots
+# Test screenshots (but not committed golden files)
 *.png
+!test/**/goldens/*.png
 .playwright-mcp/
 
 # DevFlow local runtime state
