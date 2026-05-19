@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../eden_diagram/eden_diagram_exports.dart';
-import '../process_models.dart';
 import 'eden_process_node_renderer.dart';
 
 /// Process-flow Decision node — parity row N-6.
@@ -38,8 +37,6 @@ class _EdenProcessDecisionNodeState extends State<EdenProcessDecisionNode> {
   bool _hovered = false;
 
   int get _decisionId => widget.context.node.data['decisionId'] as int;
-  EdenProcessDecisionConfig? get _decision =>
-      widget.config.decisionsById[_decisionId];
 
   Future<void> _openEditDialog() async {
     final decision = widget.config.decisionsById[_decisionId];
