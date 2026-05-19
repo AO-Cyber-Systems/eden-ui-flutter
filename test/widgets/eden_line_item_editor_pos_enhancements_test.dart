@@ -161,14 +161,15 @@ void main() {
     testWidgets('renders subtotal for 2 items (no discount)', (tester) async {
       // retail-1: qty 2 × $4.50 = $9.00
       // retail-2: qty 1 × $6.25 = $6.25
-      // subtotal = $15.25
+      // subtotal = $15.25; no discount → total also $15.25
+      // EdenCurrencyDisplay renders $15.25 twice (subtotal row + total row).
       final items = EdenLineItemEditorFixtures.retailCart().sublist(0, 2);
       await tester.pumpWidget(wrap(EdenLineItemEditorTotalsBar<String>(
         items: items,
         currencyCode: 'USD',
       )));
       expect(find.text('Subtotal'), findsOneWidget);
-      expect(find.text(r'$15.25'), findsOneWidget);
+      expect(find.text(r'$15.25'), findsNWidgets(2));
     });
 
     testWidgets('renders total = subtotal when no discounts', (tester) async {
