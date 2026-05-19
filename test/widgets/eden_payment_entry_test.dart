@@ -419,6 +419,133 @@ void main() {
       expect(entry.allowedMethods.length, 1);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Quick-tender denomination buttons (PCF-12 audit drift fix)
+  // ─────────────────────────────────────────────────────────────────────
+
+  group('EdenPaymentEntry — quick-tender denominations', () {
+  // 1. No quick-tender row in legacy mode (quickTenderDenominations = null).
+  testWidgets('no quick-tender row when quickTenderDenominations is null (legacy mode)', (tester) async {
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (_) {},
+    )));
+    // No denomination buttons should be present.
+    expect(find.text(r'$5'), findsNothing);
+    expect(find.text(r'$10'), findsNothing);
+    expect(find.text(r'$20'), findsNothing);
+    expect(find.text(r'$50'), findsNothing);
+    expect(find.text(r'$100'), findsNothing);
+  });
+
+  // 2. Quick-tender row renders $5/$10/$20/$50/$100 buttons.
+  testWidgets('renders denomination buttons when quickTenderDenominations provided', (tester) async {
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (_) {},
+      quickTenderDenominations: const [500, 1000, 2000, 5000, 10000],
+    )));
+    expect(denominationButton(r'$5'), findsOneWidget);
+    expect(denominationButton(r'$10'), findsOneWidget);
+    expect(denominationButton(r'$20'), findsOneWidget);
+    expect(denominationButton(r'$50'), findsOneWidget);
+    expect(denominationButton(r'$100'), findsOneWidget);
+  });
+
+  // 3. Tap a denomination → tendered amount field increments by that amount.
+  testWidgets('tapping a denomination button adds its amount to the tendered field', (tester) async {
+    EdenPaymentDraft? captured;
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (d) => captured = d,
+      quickTenderDenominations: const [500, 1000, 2000, 5000, 10000],
+    )));
+    await tester.tap(denominationButton(r'$20'));
+    await tester.pump();
+    // $20 = 2000 cents = 20.00
+    expect(captured, isNotNull);
+    expect(captured!.amount, closeTo(20.0, 0.001));
+  });
+
+  // 4. Tap multiple denominations → accumulated (additive, not replace).
+  testWidgets('tapping multiple denominations accumulates the total', (tester) async {
+    EdenPaymentDraft? captured;
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (d) => captured = d,
+      quickTenderDenominations: const [500, 1000, 2000, 5000, 10000],
+    )));
+    await tester.tap(denominationButton(r'$20'));
+    await tester.pump();
+    await tester.tap(denominationButton(r'$10'));
+    await tester.pump();
+    // $20 + $10 = $30
+    expect(captured!.amount, closeTo(30.0, 0.001));
+  });
+
+  // 5. showChangeDue=false → no change-due row rendered.
+  testWidgets('showChangeDue=false hides the change-due row', (tester) async {
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (_) {},
+      quickTenderDenominations: const [500, 1000, 2000, 5000, 10000],
+      // showChangeDue defaults to false
+    )));
+    expect(find.text('Change due'), findsNothing);
+    expect(find.text('Owed'), findsNothing);
+    expect(find.textContaining('Change:'), findsNothing);
+    expect(find.textContaining('Owed:'), findsNothing);
+  });
+
+  // 6. showChangeDue=true + tendered > total → displays "Change: $X.XX".
+  testWidgets('showChangeDue=true with tendered > total shows change due', (tester) async {
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (_) {},
+      expectedAmount: 15.0,
+      showChangeDue: true,
+      quickTenderDenominations: const [500, 1000, 2000, 5000, 10000],
+    )));
+    // Tap $20 → tendered=20, total=15, change=5
+    await tester.tap(denominationButton(r'$20'));
+    await tester.pump();
+    expect(find.textContaining('Change:'), findsOneWidget);
+  });
+
+  // 7. showChangeDue=true + tendered < total → "Owed: $X.XX" in danger styling.
+  testWidgets('showChangeDue=true with tendered < total shows owed amount', (tester) async {
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (_) {},
+      expectedAmount: 50.0,
+      showChangeDue: true,
+      quickTenderDenominations: const [500, 1000, 2000, 5000, 10000],
+    )));
+    // Tap $20 → tendered=20, total=50, owed=30
+    await tester.tap(denominationButton(r'$20'));
+    await tester.pump();
+    expect(find.textContaining('Owed:'), findsOneWidget);
+  });
+
+  // 8. Custom denominations list renders correctly.
+  testWidgets('custom denominations list renders the specified buttons only', (tester) async {
+    await tester.pumpWidget(wrap(EdenPaymentEntry(
+      allowedMethods: const [EdenPaymentMethod.cash],
+      onDraftChanged: (_) {},
+      quickTenderDenominations: const [200, 500], // $2, $5 only
+    )));
+    expect(denominationButton(r'$2'), findsOneWidget);
+    expect(denominationButton(r'$5'), findsOneWidget);
+    // Standard denominations not in this list should be absent.
+    expect(denominationButton(r'$10'), findsNothing);
+    expect(denominationButton(r'$20'), findsNothing);
+    expect(denominationButton(r'$100'), findsNothing);
+  });
+  });
 }
 
 void _noop(EdenPaymentDraft _) {}
+
+/// Helper: finds denomination buttons by their display text using OutlinedButton.
+Finder denominationButton(String label) => find.widgetWithText(OutlinedButton, label);
