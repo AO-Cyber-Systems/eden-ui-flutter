@@ -5,6 +5,7 @@
 // updates the preview, and the search field filters the sidebar. Stories are
 // registered/cleared per-test so the StoryRegistry singleton doesn't bleed.
 
+import 'package:eden_ui_flutter/dev_app/dev_app.dart';
 import 'package:eden_ui_flutter/dev_app/explorer/canvas.dart';
 import 'package:eden_ui_flutter/dev_app/explorer/story_shell.dart';
 import 'package:eden_ui_flutter/dev_app/registry/eden_story.dart';
@@ -42,8 +43,10 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    // Route through generateExplorerRoute so the sidebar's deep-link
+    // pushReplacementNamed (38-03) resolves; '/' is the landing shell.
     await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: StoryShell())),
+      MaterialApp(onGenerateRoute: generateExplorerRoute),
     );
     await tester.pump(const Duration(milliseconds: 200));
     await tester.pump(const Duration(milliseconds: 200));
@@ -57,16 +60,17 @@ void main() {
 
   testWidgets('selecting a sidebar story renders it on the canvas', (tester) async {
     await pumpShell(tester);
-    // 'demo/toggle' selects to its preview text 'OFF'.
+    // 'demo/toggle' selects to its preview text 'OFF'. Settling lets the
+    // sidebar's deep-link route transition complete.
     await tester.tap(find.text('toggle'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('OFF'), findsOneWidget);
   });
 
   testWidgets('a knob change updates the preview', (tester) async {
     await pumpShell(tester);
     await tester.tap(find.text('toggle'));
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('OFF'), findsOneWidget);
 
     // Disambiguate the knob's Switch from the toolbar's 'Dark' Switch.
@@ -76,7 +80,7 @@ void main() {
     );
     expect(knobSwitch, findsOneWidget);
     await tester.tap(knobSwitch);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.text('ON'), findsOneWidget);
   });
 

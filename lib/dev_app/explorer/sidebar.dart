@@ -98,7 +98,16 @@ class _ExplorerSidebarState extends State<ExplorerSidebar> {
           selected: s.id == widget.selectedStoryId,
           leading: s.icon == null ? null : Icon(s.icon, size: 18),
           title: Text(s.name),
-          onTap: () => widget.onSelect(s.id),
+          onTap: () {
+            widget.onSelect(s.id);
+            // Deep-link: update the URL hash to /#/story/<id> (shareable).
+            // Replace (not push) so repeated selections don't grow the stack;
+            // guard against re-navigating to the already-active route.
+            final current = ModalRoute.of(context)?.settings.name;
+            if (current != s.routeName) {
+              Navigator.of(context).pushReplacementNamed(s.routeName);
+            }
+          },
         ),
       );
     }
