@@ -46,14 +46,18 @@ import 'package:flutter_test/flutter_test.dart';
 /// emitted manifest. The eden-docs portal reads it as --flutter-manifest.
 const String defaultEmitOut = 'build/web/flutter-stories.json';
 
-/// Registers all stories (on a clean registry) and builds the sorted list of
-/// flutter ManifestEntry-shaped maps.
+/// Registers all stories and builds the sorted list of flutter
+/// ManifestEntry-shaped maps.
+///
+/// Must be called on a CLEAN registry: the emit driver runs in a fresh process
+/// (registry starts empty), and the unit test clears in `setUp`. Calling it twice
+/// without clearing would trip the registry's duplicate-id assertion — that is by
+/// design, so this function does not reach into the test-only `clear()`.
 ///
 /// Each entry omits `status` (live entries carry no status marker) and uses the
 /// hash route form `/flutter/#/story/<id>` from 38-03. The returned list is in
 /// StoryRegistry.all() order — sorted by (component, name).
 List<Map<String, Object>> buildFlutterManifestEntries() {
-  StoryRegistry.instance.clear();
   registerAllStories();
   return StoryRegistry.instance
       .all()
