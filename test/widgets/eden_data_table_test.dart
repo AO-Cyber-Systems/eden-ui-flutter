@@ -64,5 +64,70 @@ void main() {
       expect(find.text('Name'), findsOneWidget);
       expect(find.text('Alice'), findsNothing);
     });
+
+    testWidgets('optional per-row key resolves via find.byKey', (tester) async {
+      await tester.pumpWidget(wrap(
+        EdenDataTable(
+          columns: columns,
+          rows: const [
+            EdenTableRow(
+              key: Key('posts_list.row.abc-123'),
+              cells: [Text('Alice'), Text('alice@test.com'), Text('Admin')],
+            ),
+            EdenTableRow(
+              cells: [Text('Bob'), Text('bob@test.com'), Text('User')],
+            ),
+          ],
+        ),
+      ));
+      // Keyed row is findable; the unkeyed row still renders (additive).
+      expect(find.byKey(const Key('posts_list.row.abc-123')), findsOneWidget);
+      expect(find.text('Bob'), findsOneWidget);
+      // The key sits on the OUTERMOST row widget, so the row's cells are its
+      // descendants — this is what makes a row-scoped finder work.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('posts_list.row.abc-123')),
+          matching: find.text('Alice'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('keyed row is tappable through the key', (tester) async {
+      int? tappedIndex;
+      await tester.pumpWidget(wrap(
+        EdenDataTable(
+          columns: columns,
+          rows: const [
+            EdenTableRow(
+              key: Key('posts_list.row.abc-123'),
+              cells: [Text('Alice'), Text('alice@test.com'), Text('Admin')],
+            ),
+          ],
+          onRowTap: (i) => tappedIndex = i,
+        ),
+      ));
+      await tester.tap(find.byKey(const Key('posts_list.row.abc-123')));
+      expect(tappedIndex, 0);
+    });
+
+    testWidgets('dense variant applies the per-row key', (tester) async {
+      await tester.pumpWidget(wrap(
+        SizedBox(
+          height: 300,
+          child: EdenDataTable.dense(
+            columns: columns,
+            rows: const [
+              EdenTableRow(
+                key: Key('posts_list.row.dense-1'),
+                cells: [Text('Alice'), Text('alice@test.com'), Text('Admin')],
+              ),
+            ],
+          ),
+        ),
+      ));
+      expect(find.byKey(const Key('posts_list.row.dense-1')), findsOneWidget);
+    });
   });
 }
