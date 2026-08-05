@@ -113,7 +113,16 @@ class EdenButton extends StatelessWidget {
   _ButtonColors _resolveColors(ThemeData theme, bool isDark) {
     switch (variant) {
       case EdenButtonVariant.primary:
-        return _ButtonColors(theme.colorScheme.primary, Colors.white);
+        // Read the `onPrimary` token instead of hardcoding white. The token was
+        // already authored on both schemes and simply ignored here, which is why
+        // dark-theme primary buttons failed WCAG AA: white on the dark scheme's
+        // gold-400 fill (#E59A3C) measures 2.33:1. Dark now resolves to
+        // gold-950 (#3D2A14) on gold-400 — 5.86:1, a pass. Light is byte-identical
+        // because `ColorScheme.light` binds `onPrimary: Colors.white` already.
+        // A consumer overriding `EdenTheme.brandColor` gets that swatch's own
+        // [950] tone by construction. Only `primary` reads the token: danger /
+        // success / warning keep white on their own (non-gold) fills.
+        return _ButtonColors(theme.colorScheme.primary, theme.colorScheme.onPrimary);
       case EdenButtonVariant.secondary:
         return _ButtonColors(
           isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!,

@@ -57,43 +57,64 @@ class EdenInput extends StatelessWidget {
     final sizing = _resolveSizing();
     final hasError = errorText != null;
 
+    Widget field = TextField(
+      controller: controller,
+      obscureText: obscureText,
+      enabled: enabled,
+      onChanged: onChanged,
+      onSubmitted: onSubmitted,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      autofocus: autofocus,
+      autofillHints: autofillHints,
+      readOnly: readOnly,
+      focusNode: focusNode,
+      inputFormatters: inputFormatters,
+      onTap: onTap,
+      style: TextStyle(fontSize: sizing.fontSize),
+      decoration: InputDecoration(
+        hintText: hint,
+        contentPadding: sizing.padding,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: sizing.iconSize) : null,
+        suffixIcon: suffixIcon != null ? Icon(suffixIcon, size: sizing.iconSize) : null,
+        errorText: errorText,
+        errorStyle: const TextStyle(fontSize: 12),
+      ),
+    );
+
+    // Attach the label to the FIELD as its accessible name. Only when there is a
+    // label to attach — wrapping unconditionally would give unlabelled inputs an
+    // empty name, which is worse than none.
+    final labelText = label;
+    if (labelText != null) {
+      field = Semantics(
+        label: labelText,
+        textField: true,
+        child: field,
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         if (label != null) ...[
-          Text(
-            label!,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: hasError ? EdenColors.error : null,
+          // The label is a sibling `Text`, not an `InputDecoration.labelText`, so
+          // nothing associated it with the field: screen readers announced the
+          // inputs as bare "text" / "password" with no name. Fix without moving a
+          // pixel — the visual label renders exactly as before but is dropped from
+          // the semantics tree, and the name is attached to the field itself below.
+          ExcludeSemantics(
+            child: Text(
+              label!,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: hasError ? EdenColors.error : null,
+              ),
             ),
           ),
           const SizedBox(height: 6),
         ],
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          enabled: enabled,
-          onChanged: onChanged,
-          onSubmitted: onSubmitted,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          autofocus: autofocus,
-          autofillHints: autofillHints,
-          readOnly: readOnly,
-          focusNode: focusNode,
-          inputFormatters: inputFormatters,
-          onTap: onTap,
-          style: TextStyle(fontSize: sizing.fontSize),
-          decoration: InputDecoration(
-            hintText: hint,
-            contentPadding: sizing.padding,
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: sizing.iconSize) : null,
-            suffixIcon: suffixIcon != null ? Icon(suffixIcon, size: sizing.iconSize) : null,
-            errorText: errorText,
-            errorStyle: const TextStyle(fontSize: 12),
-          ),
-        ),
+        field,
         if (helperText != null && !hasError) ...[
           const SizedBox(height: 4),
           Text(
