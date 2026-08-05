@@ -82,15 +82,35 @@ class EdenInput extends StatelessWidget {
       ),
     );
 
-    // Attach the label to the FIELD as its accessible name. Only when there is a
-    // label to attach — wrapping unconditionally would give unlabelled inputs an
-    // empty name, which is worse than none.
+    // The label is a sibling `Text`, not an `InputDecoration.labelText`, so
+    // nothing associated it with the field: screen readers announced these
+    // inputs as bare "text" / "password" with no name at all.
+    //
+    // MERGE, do not annotate. `Semantics(label:, textField: true, child: field)`
+    // looks like the obvious fix and is WRONG: it declares a SECOND text-field
+    // node above the TextField's own, and Flutter web then emits two `<input>`
+    // elements per field — measured live as 4 inputs for 2 fields, doubling the
+    // tab stops and giving a screen reader two "Email" boxes. `MergeSemantics`
+    // instead folds the label and the field into ONE node, so the field is named
+    // and stays a single control. Not a pixel moves: the same Text, the same
+    // SizedBox, the same order.
     final labelText = label;
     if (labelText != null) {
-      field = Semantics(
-        label: labelText,
-        textField: true,
-        child: field,
+      field = MergeSemantics(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              labelText,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: hasError ? EdenColors.error : null,
+              ),
+            ),
+            const SizedBox(height: 6),
+            field,
+          ],
+        ),
       );
     }
 
@@ -98,22 +118,6 @@ class EdenInput extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (label != null) ...[
-          // The label is a sibling `Text`, not an `InputDecoration.labelText`, so
-          // nothing associated it with the field: screen readers announced the
-          // inputs as bare "text" / "password" with no name. Fix without moving a
-          // pixel — the visual label renders exactly as before but is dropped from
-          // the semantics tree, and the name is attached to the field itself below.
-          ExcludeSemantics(
-            child: Text(
-              label!,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: hasError ? EdenColors.error : null,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-        ],
         field,
         if (helperText != null && !hasError) ...[
           const SizedBox(height: 4),
