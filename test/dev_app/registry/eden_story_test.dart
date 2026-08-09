@@ -4,7 +4,6 @@
 // Written FIRST, before any implementation exists.
 
 import 'package:eden_ui_flutter/dev_app/registry/eden_story.dart';
-import 'package:eden_ui_flutter/dev_app/registry/knob_values.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

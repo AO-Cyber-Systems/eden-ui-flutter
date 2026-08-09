@@ -7,7 +7,7 @@ import 'package:eden_ui_flutter/dev_app/registry/knob_values.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Private test enum — only used in tests
-enum _TestVariant { a, b, c }
+enum _TestVariant { b, c }
 
 void main() {
   group('KnobValues', () {
