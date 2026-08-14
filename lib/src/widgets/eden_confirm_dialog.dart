@@ -92,8 +92,21 @@ class _EdenConfirmDialogContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: EdenSpacing.space6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              // OverflowBar, not Row. A fixed Row here has no way to give
+              // ground: with long action labels the two buttons exceeded the
+              // 420px dialog, and the primary (confirm) action was pushed
+              // outside it — off the view entirely on a narrow surface — where
+              // it could not be tapped at all. Shortening labels to "OK" is not
+              // an option for safety-critical confirmations, so the layout
+              // yields instead: OverflowBar lays the actions out horizontally
+              // when they fit and stacks them when they do not, preserving
+              // child order (cancel first, then the destructive action).
+              // Do not put the Row back. See eden-biz TRD 209-05.
+              OverflowBar(
+                alignment: MainAxisAlignment.end,
+                overflowAlignment: OverflowBarAlignment.end,
+                spacing: EdenSpacing.space2,
+                overflowSpacing: EdenSpacing.space3,
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
@@ -111,7 +124,6 @@ class _EdenConfirmDialogContent extends StatelessWidget {
                     ),
                     child: Text(cancelLabel),
                   ),
-                  const SizedBox(width: EdenSpacing.space2),
                   ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(true),
                     style: ElevatedButton.styleFrom(
