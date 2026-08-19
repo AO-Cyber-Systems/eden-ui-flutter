@@ -15,7 +15,9 @@ enum EdenDiagramTool { select, pan, connect }
 /// A full interactive diagramming canvas backed by [EdenDiagramData].
 ///
 /// Supports:
-/// - Pan and zoom (scroll wheel / pinch)
+/// - Zoom: scroll wheel / trackpad, and pinch on touch (both gated on
+///   [interactiveZoom])
+/// - Pan: single-finger drag in view mode ([readOnly]); the Pan tool in edit mode
 /// - Drag nodes to reposition
 /// - Click to select nodes
 /// - Draw edges between port dots
@@ -47,9 +49,11 @@ class EdenDiagram extends StatefulWidget {
   final bool showMinimap;
   final bool gridEnabled;
 
-  /// Whether scroll-wheel events should zoom the diagram.
+  /// Whether zoom gestures may change the zoom level. Gates BOTH scroll-wheel /
+  /// trackpad zoom and two-finger pinch zoom on touch.
   /// Set to false when the diagram is embedded inside a scrollable container
-  /// (e.g. a chat message list) so scroll events pass through to the parent.
+  /// (e.g. a chat message list) so scroll events pass through to the parent and
+  /// a pinch leaves the zoom level alone. Panning is unaffected by this flag.
   final bool interactiveZoom;
 
   final double? width;
@@ -107,6 +111,17 @@ class EdenDiagramState extends State<EdenDiagram> {
   Offset _panOffset = Offset.zero;
   double _scale = 1.0;
   Offset? _lastPanPosition;
+
+  // Scale-gesture state (view-mode drag-to-pan and two-finger pinch zoom).
+  double _gestureStartScale = 1.0;
+  Offset? _gestureFocal;
+
+  /// Current pan offset, in screen pixels. Exposed for tests and for consumers
+  /// that mirror the viewport (minimaps, "reset view" affordances).
+  Offset get panOffset => _panOffset;
+
+  /// Current zoom scale, clamped to [0.25, 3.0].
+  double get scale => _scale;
 
   final FocusNode _focusNode = FocusNode();
   int _idCounter = 0;
@@ -404,6 +419,46 @@ class EdenDiagramState extends State<EdenDiagram> {
     }
   }
 
+  /// Single-finger drag pans ONLY in view mode. In edit mode the existing
+  /// `_tool == pan` path on the raw [Listener] owns panning, so gating on
+  /// [EdenDiagram.readOnly] here is what keeps edit mode from panning at double
+  /// speed (raw Listener events fire even when a gesture recognizer also wins).
+  bool get _viewPanEnabled => widget.readOnly;
+
+  void _onScaleStart(ScaleStartDetails details) {
+    _gestureStartScale = _scale;
+    _gestureFocal = details.localFocalPoint;
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails details) {
+    final last = _gestureFocal;
+    if (last == null) return;
+    final focal = details.localFocalPoint;
+
+    if (details.pointerCount >= 2) {
+      if (!widget.interactiveZoom) return; // pinch honours the flag
+      final newScale = (_gestureStartScale * details.scale).clamp(0.25, 3.0);
+      // Anchor the zoom at the focal point - same math as `_onPointerSignal`.
+      final before = (focal - _panOffset) / _scale;
+      setState(() {
+        _scale = newScale;
+        final after = (focal - _panOffset) / _scale;
+        _panOffset += (after - before) * _scale;
+        _panOffset += focal - last; // two-finger drag
+        _gestureFocal = focal;
+      });
+      return;
+    }
+
+    if (!_viewPanEnabled) return; // edit mode: the Listener owns pan
+    setState(() {
+      _panOffset += focal - last;
+      _gestureFocal = focal;
+    });
+  }
+
+  void _onScaleEnd(ScaleEndDetails details) => _gestureFocal = null;
+
   /// Build positioned consumer widgets on top of the CustomPaint when
   /// `customNodeRenderer` is set (objective 006).
   List<Widget> _buildNodeOverlay() {
@@ -470,28 +525,34 @@ class EdenDiagramState extends State<EdenDiagram> {
               onPointerMove: _onPointerMove,
               onPointerUp: _onPointerUp,
               onPointerSignal: _onPointerSignal,
-              child: MouseRegion(
-                cursor: _tool == EdenDiagramTool.pan
-                    ? SystemMouseCursors.grab
-                    : _draggingNodeId != null
-                        ? SystemMouseCursors.grabbing
-                        : _hoveredNodeId != null
-                            ? SystemMouseCursors.click
-                            : SystemMouseCursors.basic,
-                child: CustomPaint(
-                  size: Size.infinite,
-                  painter: _TransformPainter(
-                    data: widget.data,
-                    theme: theme,
-                    selectedNodeId: _selectedNodeId,
-                    hoveredNodeId: _hoveredNodeId,
-                    dropTargetNodeId: widget.dropTargetNodeId,
-                    dragEdgeStart: _dragEdgeStart,
-                    dragEdgeEnd: _dragEdgeEnd,
-                    panOffset: _panOffset,
-                    scale: _scale,
-                    gridEnabled: widget.gridEnabled,
-                    drawNodes: widget.customNodeRenderer == null,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onScaleStart: _onScaleStart,
+                onScaleUpdate: _onScaleUpdate,
+                onScaleEnd: _onScaleEnd,
+                child: MouseRegion(
+                  cursor: _tool == EdenDiagramTool.pan
+                      ? SystemMouseCursors.grab
+                      : _draggingNodeId != null
+                          ? SystemMouseCursors.grabbing
+                          : _hoveredNodeId != null
+                              ? SystemMouseCursors.click
+                              : SystemMouseCursors.basic,
+                  child: CustomPaint(
+                    size: Size.infinite,
+                    painter: _TransformPainter(
+                      data: widget.data,
+                      theme: theme,
+                      selectedNodeId: _selectedNodeId,
+                      hoveredNodeId: _hoveredNodeId,
+                      dropTargetNodeId: widget.dropTargetNodeId,
+                      dragEdgeStart: _dragEdgeStart,
+                      dragEdgeEnd: _dragEdgeEnd,
+                      panOffset: _panOffset,
+                      scale: _scale,
+                      gridEnabled: widget.gridEnabled,
+                      drawNodes: widget.customNodeRenderer == null,
+                    ),
                   ),
                 ),
               ),
@@ -501,11 +562,12 @@ class EdenDiagramState extends State<EdenDiagram> {
             if (widget.customNodeRenderer != null) ..._buildNodeOverlay(),
 
             // Toolbar
-            if (widget.showToolbar && !widget.readOnly)
+            if (widget.showToolbar)
               Positioned(
                 top: EdenSpacing.space2,
                 left: EdenSpacing.space2,
                 child: _Toolbar(
+                  readOnly: widget.readOnly,
                   tool: _tool,
                   onToolChanged: (t) => setState(() => _tool = t),
                   onAddNode: _addNode,
@@ -596,6 +658,7 @@ class _TransformPainter extends CustomPainter {
 /// Floating toolbar for diagram interaction.
 class _Toolbar extends StatelessWidget {
   const _Toolbar({
+    required this.readOnly,
     required this.tool,
     required this.onToolChanged,
     required this.onAddNode,
@@ -604,6 +667,11 @@ class _Toolbar extends StatelessWidget {
     required this.onZoomReset,
     required this.scale,
   });
+
+  /// View-only toolbar: zoom in / out / reset only. No tool selection and no
+  /// add-node affordances, which is what guarantees `_tool` can never leave
+  /// `select` while [EdenDiagram.readOnly] is true.
+  final bool readOnly;
 
   final EdenDiagramTool tool;
   final ValueChanged<EdenDiagramTool> onToolChanged;
@@ -632,7 +700,19 @@ class _Toolbar extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
+        children: readOnly ? _zoomButtons() : _editButtons(theme),
+      ),
+    );
+  }
+
+  List<Widget> _zoomButtons() => [
+        _ToolButton(icon: Icons.zoom_in, tooltip: 'Zoom In', onTap: onZoomIn),
+        _ToolButton(icon: Icons.zoom_out, tooltip: 'Zoom Out', onTap: onZoomOut),
+        _ToolButton(
+            icon: Icons.fit_screen, tooltip: 'Reset Zoom', onTap: onZoomReset),
+      ];
+
+  List<Widget> _editButtons(ThemeData theme) => [
           _ToolButton(
             icon: Icons.near_me,
             tooltip: 'Select (V)',
@@ -671,10 +751,7 @@ class _Toolbar extends StatelessWidget {
           _ToolButton(icon: Icons.zoom_in, tooltip: 'Zoom In', onTap: onZoomIn),
           _ToolButton(icon: Icons.zoom_out, tooltip: 'Zoom Out', onTap: onZoomOut),
           _ToolButton(icon: Icons.fit_screen, tooltip: 'Reset Zoom', onTap: onZoomReset),
-        ],
-      ),
-    );
-  }
+      ];
 
   Widget _divider(ThemeData theme) => Container(
     width: 1,
