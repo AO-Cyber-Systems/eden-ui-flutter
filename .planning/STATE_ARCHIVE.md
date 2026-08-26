@@ -12,3 +12,5 @@ STATE.md stays lean; this file grows over time.
 | Objective | Duration | Tasks | Files |
 |-----------|----------|-------|-------|
 | Objective 022-runtime-brand-tokens P01 | 25min | 2 tasks | 2 files |
+| Objective 022-runtime-brand-tokens P022-02 | 25m | 2 tasks | 4 files |
+
