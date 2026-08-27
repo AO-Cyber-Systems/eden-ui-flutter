@@ -274,21 +274,30 @@ void main() {
         (tester) async {
       final captured = <String>[];
       final original = debugPrint;
-      debugPrint = (String? message, {int? wrapWidth}) {
-        if (message != null) captured.add(message);
-      };
-      addTearDown(() => debugPrint = original);
+      // Restored synchronously before this test body returns -- NOT via
+      // addTearDown. Flutter's TestWidgetsFlutterBinding verifies its debug
+      // foundation vars (debugPrint included) immediately after the
+      // `testWidgets` closure returns and BEFORE package:test's own
+      // addTearDown callbacks run, so an addTearDown-based restore trips
+      // "The value of a foundation debug variable was changed by the test."
+      try {
+        debugPrint = (String? message, {int? wrapWidth}) {
+          if (message != null) captured.add(message);
+        };
 
-      EdenProfileFonts.resetMissingFamilyLog();
-      for (var i = 0; i < 3; i++) {
-        EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
+        EdenProfileFonts.resetMissingFamilyLog();
+        for (var i = 0; i < 3; i++) {
+          EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
+        }
+        expect(
+          captured.where((m) => m.contains('Nope Nope 9000')).length,
+          1,
+          reason: 'EdenAdaptiveTheme.build() re-resolves fonts every frame; an '
+              'undeduped log would spam a partner console once per frame.',
+        );
+      } finally {
+        debugPrint = original;
       }
-      expect(
-        captured.where((m) => m.contains('Nope Nope 9000')).length,
-        1,
-        reason: 'EdenAdaptiveTheme.build() re-resolves fonts every frame; an '
-            'undeduped log would spam a partner console once per frame.',
-      );
     });
 
     // Test list 20: resetMissingFamilyLog() actually resets, and two
@@ -298,35 +307,40 @@ void main() {
         (tester) async {
       final captured = <String>[];
       final original = debugPrint;
-      debugPrint = (String? message, {int? wrapWidth}) {
-        if (message != null) captured.add(message);
-      };
-      addTearDown(() => debugPrint = original);
+      // Restored synchronously before this test body returns -- see the
+      // comment on the previous test for why addTearDown is unsafe here.
+      try {
+        debugPrint = (String? message, {int? wrapWidth}) {
+          if (message != null) captured.add(message);
+        };
 
-      EdenProfileFonts.resetMissingFamilyLog();
-      EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
-      EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
-      expect(
-        captured.where((m) => m.contains('Nope Nope 9000')).length,
-        1,
-      );
+        EdenProfileFonts.resetMissingFamilyLog();
+        EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
+        EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
+        expect(
+          captured.where((m) => m.contains('Nope Nope 9000')).length,
+          1,
+        );
 
-      EdenProfileFonts.resetMissingFamilyLog();
-      EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
-      expect(
-        captured.where((m) => m.contains('Nope Nope 9000')).length,
-        2,
-        reason: 'resetMissingFamilyLog() must clear the dedupe set so a '
-            'second distinct fallback event logs again.',
-      );
+        EdenProfileFonts.resetMissingFamilyLog();
+        EdenProfileFonts.bodyTextStyleForFamily('Nope Nope 9000');
+        expect(
+          captured.where((m) => m.contains('Nope Nope 9000')).length,
+          2,
+          reason: 'resetMissingFamilyLog() must clear the dedupe set so a '
+              'second distinct fallback event logs again.',
+        );
 
-      // A second, distinct family must log on its own -- proving the
-      // dedupe is keyed per family name, not a single global latch.
-      EdenProfileFonts.bodyTextStyleForFamily('Intr');
-      expect(
-        captured.where((m) => m.contains('Intr')).length,
-        1,
-      );
+        // A second, distinct family must log on its own -- proving the
+        // dedupe is keyed per family name, not a single global latch.
+        EdenProfileFonts.bodyTextStyleForFamily('Intr');
+        expect(
+          captured.where((m) => m.contains('Intr')).length,
+          1,
+        );
+      } finally {
+        debugPrint = original;
+      }
     });
   });
 }
