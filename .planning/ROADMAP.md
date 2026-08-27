@@ -358,6 +358,53 @@ TRDs:
 - [ ] 019-04-TRD.md — EdenFuelCardPaymentEntry — fuel-card-specific payment entry with declarative network-prompt-spec (FleetCor / Wex / Voyager / EFS / generic); composes obj-012-03 EdenPaymentEntry + obj-011-08 EdenSecretField.classified for PCI-scoped PAN entry; 4-step EdenFormWizard; only last-4 retained in draft (Wave 2; fuel commercial-segment gate)
 - [ ] 019-05-TRD.md — EdenTankFleetMap — dealer-portal clustered map view (Otodata Nee-Vo / Tank Utility table stakes) with severity-tinted markers (full / warning / critical / stale-telemetry / unknown) + zoom-aware clustering + sidebar list synced to viewport + long-press multi-select + 'Build route' CTA; composes obj-001-15 EdenMapPreview + obj-001-03 EdenMapProvider (NoOpMapProvider degrades to placeholder grid) (Wave 2; fuel dealer-portal table-stakes)
 
+### Objective 022: Runtime brand resolution — arbitrary hex, runtime profile data, runtime fonts
+
+**Goal:** Let a downstream app construct an Eden theme from values it only learns at
+RUNTIME — an arbitrary partner brand hex, a profile assembled from config rather than
+one of the five `const` instances, and a font family named by a string. Today every
+entry point requires compile-time constants, which is what blocks white-labelling.
+
+**Why it exists:** Wave 0a of the AO white-label programme (`~/dev/whitelabel-state.md`).
+AODex and aocore-admin both need to render a partner's brand from `window.APP_CONFIG`
+injected at container start. `EdenTheme.light(brand:)` takes a `MaterialColor`;
+`EdenBrandPresetRegistry` is a CLOSED set of 15; `EdenThemeProfileData` has a `const`
+constructor but only five static instances. None of that can be built from a hex string
+read out of JSON at boot.
+
+**Scope — three capabilities, nothing more:**
+1. A `MaterialColor` swatch generator from a single arbitrary hex (the registry's 15
+   presets stay; this is the escape hatch for a partner colour that is not one of them).
+2. `EdenThemeProfileData` constructible at runtime from plain values, so a downstream app
+   can assemble one from config instead of picking a `const` instance.
+3. Font family resolved from a runtime string through the existing `GoogleFonts.getFont`
+   path in `EdenProfileFonts` — no new font delivery mechanism.
+
+**Explicitly NOT in scope — this is Objective 0b, a separate and much larger piece:**
+Making `surfaceTonalSeed`, `radiusMultiplier`, `minimumTouchTargetPx` and
+`preferBorderOverShadow` actually REACH widgets. Those four are declared on
+`EdenThemeProfileData` and **read by no production code** — only by tests asserting the
+declared constants. `EdenTheme.light()` uses `profile` for exactly one thing
+(`_withProfileTextTheme` / status palette); its `ColorScheme` is hardcoded
+`EdenColors.neutral[...]` with only `primary` from `brand`. And the tokens have no route
+to widgets anyway: **165 of 314 files** in `lib/src/widgets/` reference `EdenRadii.*` as
+static constants and **184 files** in `lib/src` reference `EdenColors` directly. Wiring
+that up needs a ThemeExtension plus a call-site migration and a design spike first. Do
+not start it here.
+
+**Back-compat is the acceptance spine:** `EdenTheme.light()` / `.dark()` with no brand
+argument, and all five existing profiles, must produce byte-identical `ThemeData` to
+today. Objective 009's back-compat tests must stay green untouched.
+
+**TRDs:** 5 plans across 3 waves
+
+TRDs:
+- [ ] 022-01-TRD.md — Freeze today's EdenTheme output as a recorded byte-identity baseline (wave 1, protects everything after)
+- [ ] 022-02-TRD.md — EdenBrandSwatch: arbitrary hex to an 11-shade MaterialColor, malformed input returns null (wave 2)
+- [ ] 022-03-TRD.md — EdenThemeProfileData.copyWith + runtime() factory from plain values (wave 2)
+- [ ] 022-04-TRD.md — Runtime font family through EdenProfileFonts with guarded fallback (wave 2)
+- [ ] 022-05-TRD.md — EdenAdaptiveTheme data-taking core + lightFromConfig/darkFromConfig (wave 3)
+
 ## v2 Future Objectives
 
 Tracked but not in current scope:

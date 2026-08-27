@@ -382,6 +382,7 @@ export 'src/theme/eden_theme_profile.dart';
 export 'src/theme/eden_theme_profile_scope.dart';
 export 'src/theme/eden_status_palette.dart';
 export 'src/theme/eden_brand_preset.dart';
+export 'src/theme/eden_brand_swatch.dart';
 export 'src/theme/eden_profile_fonts.dart';
 export 'src/theme/eden_adaptive_theme.dart';
 

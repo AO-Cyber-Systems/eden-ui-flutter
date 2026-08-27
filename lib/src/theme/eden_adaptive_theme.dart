@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'eden_brand_preset.dart';
+import 'eden_brand_swatch.dart';
 import 'eden_profile_fonts.dart';
 import 'eden_theme.dart';
 import 'eden_theme_profile.dart';
@@ -71,11 +72,8 @@ class EdenAdaptiveTheme extends StatelessWidget {
   static ThemeData light(
     EdenThemeProfile profile, {
     EdenBrandPreset? brand,
-  }) {
-    final resolvedBrand = brand?.color ?? profile.data.primaryColor;
-    final base = EdenTheme.light(profile: profile, brand: resolvedBrand);
-    return _withProfileTextTheme(base, profile);
-  }
+  }) =>
+      lightFromData(profile.data, brand: brand?.color);
 
   /// Static factory for dark mode. Analogous to [light].
   /// v1 reuses the same per-profile palette in dark mode (no per-profile
@@ -83,15 +81,104 @@ class EdenAdaptiveTheme extends StatelessWidget {
   static ThemeData dark(
     EdenThemeProfile profile, {
     EdenBrandPreset? brand,
+  }) =>
+      darkFromData(profile.data, brand: brand?.color);
+
+  /// Data-taking core for [light]. Accepts a runtime-constructed
+  /// [EdenThemeProfileData] (e.g. from [EdenThemeProfileData.runtime])
+  /// instead of a fixed [EdenThemeProfile] enum member — this is the seam
+  /// [lightFromConfig] and the enum-taking [light] both delegate through.
+  ///
+  /// **Primary-color resolution order:** explicit `brand` → `data`'s
+  /// canonical `primaryColor`.
+  static ThemeData lightFromData(
+    EdenThemeProfileData data, {
+    MaterialColor? brand,
   }) {
-    final resolvedBrand = brand?.color ?? profile.data.primaryColor;
-    final base = EdenTheme.dark(profile: profile, brand: resolvedBrand);
-    return _withProfileTextTheme(base, profile);
+    final resolvedBrand = brand ?? data.primaryColor;
+    final base = EdenTheme.light(profile: data.profile, brand: resolvedBrand);
+    return _withDataTextTheme(base, data);
   }
+
+  /// Data-taking core for [dark]. Analogous to [lightFromData].
+  static ThemeData darkFromData(
+    EdenThemeProfileData data, {
+    MaterialColor? brand,
+  }) {
+    final resolvedBrand = brand ?? data.primaryColor;
+    final base = EdenTheme.dark(profile: data.profile, brand: resolvedBrand);
+    return _withDataTextTheme(base, data);
+  }
+
+  /// Static factory for the runtime `window.APP_CONFIG` boot path.
+  ///
+  /// Accepts plain strings matching the shape a downstream Flutter web app
+  /// reads off `window.APP_CONFIG` at startup: [brandHex] (e.g. `'#0F62FE'`),
+  /// [bodyFontFamily], [displayFontFamily]. [base] selects the starting
+  /// [EdenThemeProfile] (defaults to [EdenThemeProfile.commercialWarm]) whose
+  /// other tokens (radius, density, status palette, etc.) are preserved.
+  ///
+  /// Malformed input never throws: an unparsable [brandHex] falls back to
+  /// `base`'s profile `primaryColor`; an unrecognized font family falls back
+  /// to the Eden per-role default (see [EdenProfileFonts]).
+  ///
+  /// Deliberately has NO `monoFontFamily` parameter — see
+  /// [EdenThemeProfileData.runtime] doc comment. Mono has no Material
+  /// [TextTheme] role to theme; it stays reachable via
+  /// [EdenThemeProfileData.runtime]'s `monoFontFamily` field plus
+  /// [EdenProfileFonts.monoTextStyleForFamily] called directly by a consumer.
+  static ThemeData lightFromConfig({
+    EdenThemeProfile base = EdenThemeProfile.commercialWarm,
+    String? brandHex,
+    String? bodyFontFamily,
+    String? displayFontFamily,
+  }) =>
+      lightFromData(
+        _configData(
+          base: base,
+          brandHex: brandHex,
+          bodyFontFamily: bodyFontFamily,
+          displayFontFamily: displayFontFamily,
+        ),
+      );
+
+  /// Static factory for the runtime `window.APP_CONFIG` boot path, dark mode.
+  /// Analogous to [lightFromConfig].
+  static ThemeData darkFromConfig({
+    EdenThemeProfile base = EdenThemeProfile.commercialWarm,
+    String? brandHex,
+    String? bodyFontFamily,
+    String? displayFontFamily,
+  }) =>
+      darkFromData(
+        _configData(
+          base: base,
+          brandHex: brandHex,
+          bodyFontFamily: bodyFontFamily,
+          displayFontFamily: displayFontFamily,
+        ),
+      );
+
+  /// Builds the [EdenThemeProfileData] shared by [lightFromConfig] and
+  /// [darkFromConfig]. [EdenBrandSwatch.tryParse] returns `null` on
+  /// malformed hex — never force-unwrapped — so [EdenThemeProfileData.runtime]
+  /// falls back to `base`'s canonical `primaryColor` automatically.
+  static EdenThemeProfileData _configData({
+    required EdenThemeProfile base,
+    String? brandHex,
+    String? bodyFontFamily,
+    String? displayFontFamily,
+  }) =>
+      EdenThemeProfileData.runtime(
+        base: base,
+        primaryColor: EdenBrandSwatch.tryParse(brandHex),
+        bodyFontFamily: bodyFontFamily,
+        displayFontFamily: displayFontFamily,
+      );
 
   /// Overlay the base TextTheme with profile-aware font families.
   ///
-  /// Short-circuits when the profile uses defaults for both body + display
+  /// Short-circuits when `data` uses defaults for both body + display
   /// (back-compat preservation: zero allocation, zero change for default
   /// profile / retailVibrant / legalProfessional-body / etc.).
   ///
@@ -101,18 +188,19 @@ class EdenAdaptiveTheme extends StatelessWidget {
   /// when non-null in `other`. Since the overlay TextStyle is constructed from
   /// `GoogleFonts.getFont(family)` (which sets only fontFamily, leaving size/
   /// weight null), the BASE's sizing tokens are preserved verbatim.
-  static ThemeData _withProfileTextTheme(
+  static ThemeData _withDataTextTheme(
     ThemeData base,
-    EdenThemeProfile profile,
+    EdenThemeProfileData data,
   ) {
-    final data = profile.data;
     if (data.bodyFontFamily == null && data.displayFontFamily == null) {
       return base;
     }
 
     final body = base.textTheme;
-    final displayOverlay = EdenProfileFonts.displayTextStyle(profile);
-    final bodyOverlay = EdenProfileFonts.bodyTextStyle(profile);
+    final displayOverlay =
+        EdenProfileFonts.displayTextStyleForFamily(data.displayFontFamily);
+    final bodyOverlay =
+        EdenProfileFonts.bodyTextStyleForFamily(data.bodyFontFamily);
     final overridden = body.copyWith(
       // Display + headline roles use the display font.
       displayLarge: body.displayLarge?.merge(displayOverlay),

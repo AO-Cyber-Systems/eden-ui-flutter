@@ -71,6 +71,74 @@ class EdenThemeProfileData {
   final String? monoFontFamily;
   final bool preferBorderOverShadow;
 
+  /// Returns a copy of this profile data with the given fields replaced.
+  ///
+  /// Exposes `density` because it is a genuine v1 knob (see
+  /// [EdenThemeProfileDensity]) even though v1 does not yet wire it to
+  /// spacing tokens. Does NOT expose `surfaceTonalSeed`, `radiusMultiplier`,
+  /// `minimumTouchTargetPx`, or `preferBorderOverShadow` as parameters —
+  /// those four tokens are declared but read by no production widget today
+  /// (022-CONTEXT.md finding 6). Adding a knob that reaches no widget would
+  /// look finished when it is not; wiring them up is a separate objective's
+  /// job, not this one's. This method still carries all four through
+  /// unchanged, so a caller who only wants to change e.g. [primaryColor]
+  /// never silently resets them.
+  EdenThemeProfileData copyWith({
+    EdenThemeProfile? profile,
+    MaterialColor? primaryColor,
+    EdenThemeProfileDensity? density,
+    String? bodyFontFamily,
+    String? displayFontFamily,
+    String? monoFontFamily,
+  }) {
+    return EdenThemeProfileData(
+      profile: profile ?? this.profile,
+      primaryColor: primaryColor ?? this.primaryColor,
+      surfaceTonalSeed: surfaceTonalSeed,
+      radiusMultiplier: radiusMultiplier,
+      density: density ?? this.density,
+      minimumTouchTargetPx: minimumTouchTargetPx,
+      bodyFontFamily: bodyFontFamily ?? this.bodyFontFamily,
+      displayFontFamily: displayFontFamily ?? this.displayFontFamily,
+      monoFontFamily: monoFontFamily ?? this.monoFontFamily,
+      preferBorderOverShadow: preferBorderOverShadow,
+    );
+  }
+
+  /// Builds profile data from values learned at runtime (for example,
+  /// `window.APP_CONFIG` in a downstream app), without adding a sixth
+  /// [EdenThemeProfile].
+  ///
+  /// [base] selects which of the five canonical profiles to start from —
+  /// defaults to [EdenThemeProfile.commercialWarm], today's default. The
+  /// returned data still carries `base`'s real enum value, so
+  /// `EdenStatusPalette.forProfile` and other exhaustive switches over
+  /// [EdenThemeProfile] keep resolving correctly.
+  ///
+  /// Unlike [copyWith], `density` is deliberately NOT a parameter here:
+  /// [copyWith] is a Dart-literal API for code that already holds an
+  /// [EdenThemeProfileData], while [runtime] is the config surface that
+  /// runtime app config reaches — and density has no wired effect in v1
+  /// (see [EdenThemeProfileDensity]), so it is not offered as a runtime
+  /// knob. The same "preserve, never expose" rule as [copyWith] applies to
+  /// `surfaceTonalSeed`, `radiusMultiplier`, `minimumTouchTargetPx`, and
+  /// `preferBorderOverShadow`: none of the four appears here as a
+  /// parameter either.
+  static EdenThemeProfileData runtime({
+    EdenThemeProfile base = EdenThemeProfile.commercialWarm,
+    MaterialColor? primaryColor,
+    String? bodyFontFamily,
+    String? displayFontFamily,
+    String? monoFontFamily,
+  }) {
+    return base.data.copyWith(
+      primaryColor: primaryColor,
+      bodyFontFamily: bodyFontFamily,
+      displayFontFamily: displayFontFamily,
+      monoFontFamily: monoFontFamily,
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Canonical per-profile static instances.
   //
