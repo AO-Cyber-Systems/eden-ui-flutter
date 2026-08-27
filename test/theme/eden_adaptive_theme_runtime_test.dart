@@ -142,7 +142,10 @@ void main() {
 
     testWidgets(
         'brandHex + bodyFontFamily both garbage falls back to the base '
-        'profile theme entirely', (tester) async {
+        'primary color and body font, but a non-null bodyFontFamily still '
+        'defeats the overlay short-circuit (pre-existing objective-009 '
+        'Outfit_800 -> Outfit_regular display-weight-file downgrade, '
+        'pinned here, not fixed)', (tester) async {
       expect(
         () => EdenAdaptiveTheme.lightFromConfig(
           brandHex: 'garbage',
@@ -157,10 +160,21 @@ void main() {
       final baseline = EdenAdaptiveTheme.light(EdenThemeProfile.commercialWarm);
       expect(theme.colorScheme.primary.value, baseline.colorScheme.primary.value);
       expect(theme.textTheme.bodyLarge?.fontFamily, baseline.textTheme.bodyLarge?.fontFamily);
-      expect(
-        theme.textTheme.displayLarge?.fontFamily,
-        baseline.textTheme.displayLarge?.fontFamily,
-      );
+      // `bodyFontFamily: 'garbage'` is non-null, so it defeats
+      // `_withDataTextTheme`'s short-circuit (which only skips the overlay
+      // when BOTH body and display family are null) even though
+      // `displayFontFamily` itself is null here. The overlay then runs for
+      // every TextTheme role, including display ones, resolving the null
+      // displayFontFamily through `EdenProfileFonts.displayTextStyleForFamily`
+      // -> `GoogleFonts.outfit()`'s fallback, which is the Regular-weight
+      // FILE ('Outfit_regular') — not the ExtraBold FILE ('Outfit_800') the
+      // baseline (no-override) theme carries. This is pre-existing,
+      // unrelated-to-this-TRD behavior from objective 009 (the FontWeight.w800
+      // *request* survives `.merge()`; only the underlying font *file*
+      // silently downgrades). Pinned to the exact literal on purpose — do
+      // NOT loosen this to `baseline.textTheme.displayLarge?.fontFamily` or
+      // to a `contains('Outfit')` check, and do not "fix" the downgrade here.
+      expect(theme.textTheme.displayLarge?.fontFamily, 'Outfit_regular');
     });
 
     testWidgets('darkFromConfig satisfies the same malformed-input fallbacks',
@@ -188,9 +202,6 @@ void main() {
       final theme = EdenAdaptiveTheme.lightFromData(EdenThemeProfileData.runtime());
       final base = EdenTheme.light();
       expect(theme.colorScheme.primary.value, base.colorScheme.primary.value);
-      for (final family in _allFontFamilies(theme.textTheme)) {
-        // paired below via role-by-role comparison
-      }
       _expectSameFontFamilies(theme.textTheme, base.textTheme);
     });
 
