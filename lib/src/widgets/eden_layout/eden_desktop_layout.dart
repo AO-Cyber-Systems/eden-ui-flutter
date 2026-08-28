@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
@@ -71,10 +72,22 @@ class EdenDesktopLayout extends StatefulWidget {
 class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   late bool _collapsed;
 
+  /// Ids of expandable groups currently disclosed. Owned here, exactly as
+  /// [_collapsed] is: seeded in [initState] from the widget, re-synced in
+  /// [didUpdateWidget] when the parent forces a change. Expansion is a view
+  /// gesture, not a consumer-held selection, so there is no callback out.
+  late Set<String> _expandedGroupIds;
+
+  static Set<String> _seedExpanded(List<EdenNavItem> items) => {
+        for (final item in items)
+          if (item.expandable && item.initiallyExpanded) item.id,
+      };
+
   @override
   void initState() {
     super.initState();
     _collapsed = widget.initiallyCollapsed;
+    _expandedGroupIds = _seedExpanded(widget.navItems);
   }
 
   @override
@@ -83,6 +96,12 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
     // Sync collapse state when the parent forces a change (e.g. responsive resize).
     if (widget.initiallyCollapsed != oldWidget.initiallyCollapsed) {
       _collapsed = widget.initiallyCollapsed;
+    }
+    // Same contract for expansion: a parent forces a change by rebuilding with
+    // different `initiallyExpanded` values.
+    final seeded = _seedExpanded(widget.navItems);
+    if (!setEquals(seeded, _seedExpanded(oldWidget.navItems))) {
+      _expandedGroupIds = seeded;
     }
   }
 
@@ -130,46 +149,75 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                     children: [
                       for (final item in widget.navItems) ...[
                         if (item.children.isNotEmpty) ...[
-                          if (!_collapsed)
-                            Padding(
+                          if (!_collapsed && item.expandable) ...[
+                            _ExpandableNavHeader(
                               key: item.widgetKey,
-                              padding: const EdgeInsets.only(
-                                left: 12, top: 16, bottom: 4,
-                              ),
-                              child: Text(
-                                item.label.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                              item: item,
+                              expanded: _expandedGroupIds.contains(item.id),
+                              isSelected: item.id == widget.selectedId,
+                              onTap: () {
+                                setState(() {
+                                  if (!_expandedGroupIds.remove(item.id)) {
+                                    _expandedGroupIds.add(item.id);
+                                  }
+                                });
+                                // Report the GROUP's own id — never
+                                // children.first.id as the collapsed branch
+                                // below does. A consumer must be able to scope
+                                // on the same tap that discloses (aodex's
+                                // PROJECTS header), and it cannot do that if it
+                                // can't tell a group tap from a child tap.
+                                widget.onNavChanged(item.id);
+                              },
+                            ),
+                            if (_expandedGroupIds.contains(item.id))
+                              for (final child in item.children)
+                                _NavTile(
+                                  item: child,
+                                  isSelected: child.id == widget.selectedId,
+                                  collapsed: _collapsed,
+                                  onTap: () => widget.onNavChanged(child.id),
+                                ),
+                          ] else ...[
+                            if (!_collapsed)
+                              Padding(
+                                key: item.widgetKey,
+                                padding: _kNavSectionLabelPadding,
+                                child: Text(
+                                  item.label.toUpperCase(),
+                                  style: _navSectionLabelStyle(theme),
                                 ),
                               ),
-                            ),
-                          if (!_collapsed)
-                            for (final child in item.children)
+                            if (!_collapsed)
+                              for (final child in item.children)
+                                _NavTile(
+                                  item: child,
+                                  isSelected: child.id == widget.selectedId,
+                                  collapsed: _collapsed,
+                                  onTap: () => widget.onNavChanged(child.id),
+                                )
+                            else
+                              // Collapsed: render parent icon but use first child's
+                              // ID for navigation and selection matching.
                               _NavTile(
-                                item: child,
-                                isSelected: child.id == widget.selectedId,
+                                item: EdenNavItem(
+                                  id: item.children.first.id,
+                                  label: item.label,
+                                  icon: item.icon,
+                                  activeIcon: item.activeIcon ?? item.children.first.activeIcon,
+                                  badge: item.children.first.badge,
+                                ),
+                                isSelected: item.children.any((c) => c.id == widget.selectedId),
                                 collapsed: _collapsed,
-                                onTap: () => widget.onNavChanged(child.id),
-                              )
-                          else
-                            // Collapsed: render parent icon but use first child's
-                            // ID for navigation and selection matching.
-                            _NavTile(
-                              item: EdenNavItem(
-                                id: item.children.first.id,
-                                label: item.label,
-                                icon: item.icon,
-                                activeIcon: item.activeIcon ?? item.children.first.activeIcon,
-                                badge: item.children.first.badge,
+                                onTap: () => widget.onNavChanged(item.children.first.id),
                               ),
-                              isSelected: item.children.any((c) => c.id == widget.selectedId),
-                              collapsed: _collapsed,
-                              onTap: () => widget.onNavChanged(item.children.first.id),
-                            ),
+                          ],
                         ] else
+                          // Leaf, INCLUDING an `expandable` group whose children
+                          // list is empty: no children means no disclosure, so
+                          // the chevron is ABSENT rather than inert and the item
+                          // renders exactly as it does today. aodex's PROJECTS
+                          // on a fresh account lands here (BCP-R8).
                           _NavTile(
                             item: item,
                             isSelected: item.id == widget.selectedId,
@@ -274,6 +322,105 @@ class _SidebarHeader extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Section label (shared by the static group header and EdenNavItem.caption)
+// ---------------------------------------------------------------------------
+
+const EdgeInsets _kNavSectionLabelPadding =
+    EdgeInsets.only(left: 12, top: 16, bottom: 4);
+
+TextStyle _navSectionLabelStyle(ThemeData theme) => TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.8,
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
+// ---------------------------------------------------------------------------
+// Expandable group header
+// ---------------------------------------------------------------------------
+
+/// Disclosure header for a group with `expandable: true`.
+///
+/// Sentence case, not the shouted uppercase of the static band: a row the user
+/// can act on should not look like a passive heading.
+class _ExpandableNavHeader extends StatelessWidget {
+  const _ExpandableNavHeader({
+    super.key,
+    required this.item,
+    required this.expanded,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final EdenNavItem item;
+  final bool expanded;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fg = isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
+
+    // One semantics node for the whole header: `expanded` is the property the
+    // screen reader and the E2E tooling key on, and a competing label from the
+    // child Text would split it into two nodes. The chevron, icon and badge are
+    // decorative here — the count is folded into the label instead.
+    return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
+      button: true,
+      expanded: expanded,
+      selected: isSelected,
+      label: item.badge == null ? item.label : '${item.label}, ${item.badge}',
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            height: 40,
+            margin: const EdgeInsets.only(bottom: 2),
+            padding: const EdgeInsets.only(left: 4, right: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+              borderRadius: EdenRadii.borderRadiusMd,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  isSelected ? (item.activeIcon ?? item.icon) : item.icon,
+                  size: 20,
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: fg,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // A count belongs to the header, not to a phantom child row.
+                if (item.badge != null) _Badge(text: item.badge!),
+              ],
+            ),
+          ),
         ),
       ),
     );
