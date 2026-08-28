@@ -148,7 +148,26 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                     ),
                     children: [
                       for (final item in widget.navItems) ...[
-                        if (item.children.isNotEmpty) ...[
+                        // Non-interactive items first. Both are skipped in the
+                        // 72px rail: a rule or a 10px shouted word in an icon
+                        // column is noise (D5 — the collapsed rail is icons).
+                        if (item.isDivider) ...[
+                          if (!_collapsed)
+                            Padding(
+                              key: item.widgetKey,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: EdenSpacing.space2,
+                              ),
+                              child: Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                            ),
+                        ] else if (item.isCaption) ...[
+                          if (!_collapsed)
+                            _NavSectionLabel(key: item.widgetKey, label: item.label),
+                        ] else if (item.children.isNotEmpty) ...[
                           if (!_collapsed && item.expandable) ...[
                             _ExpandableNavHeader(
                               key: item.widgetKey,
@@ -341,6 +360,26 @@ TextStyle _navSectionLabelStyle(ThemeData theme) => TextStyle(
       letterSpacing: 0.8,
       color: theme.colorScheme.onSurfaceVariant,
     );
+
+/// A passive band. No tap target, no icon, no `button: true` — a screen reader
+/// must not offer it as an action. Shares its style with the static group
+/// header above so a consumer's caption sits pixel-consistent beside it.
+class _NavSectionLabel extends StatelessWidget {
+  const _NavSectionLabel({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: _kNavSectionLabelPadding,
+      child: Text(
+        label.toUpperCase(),
+        style: _navSectionLabelStyle(Theme.of(context)),
+      ),
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Expandable group header
