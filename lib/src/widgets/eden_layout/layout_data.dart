@@ -10,6 +10,7 @@ class EdenNavItem {
     this.badge,
     this.children = const [],
     this.isDivider = false,
+    this.isCaption = false,
     this.expandable = false,
     this.initiallyExpanded = false,
     this.widgetKey,
@@ -25,6 +26,22 @@ class EdenNavItem {
         badge = null,
         children = const [],
         isDivider = true,
+        isCaption = false,
+        expandable = false,
+        initiallyExpanded = false,
+        widgetKey = null,
+        semanticsIdentifier = null;
+
+  /// A non-interactive section label. Renders as an uppercase caption and
+  /// nothing else — no icon, no tap target, no accessibility button role.
+  const EdenNavItem.caption(this.label)
+      : id = '__caption__',
+        icon = Icons.label_outline,
+        activeIcon = null,
+        badge = null,
+        children = const [],
+        isDivider = false,
+        isCaption = true,
         expandable = false,
         initiallyExpanded = false,
         widgetKey = null,
@@ -37,6 +54,10 @@ class EdenNavItem {
   final String? badge; // e.g. "3" or "new"
   final List<EdenNavItem> children; // sub-items for grouped nav
   final bool isDivider; // true = renders as a horizontal divider
+
+  /// True = renders as a passive uppercase section label. See
+  /// [EdenNavItem.caption].
+  final bool isCaption;
 
   /// Opt-in: render this group's [children] behind a tappable disclosure
   /// control instead of the always-open static band.
