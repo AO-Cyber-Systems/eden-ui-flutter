@@ -42,6 +42,11 @@ const EdenNavItem _workspace = EdenNavItem(
   ],
 );
 
+const EdenNavItem _leafHome =
+    EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined);
+const EdenNavItem _leafSettings =
+    EdenNavItem(id: 'settings', label: 'Settings', icon: Icons.settings_outlined);
+
 Future<void> _pump(
   WidgetTester tester, {
   required List<EdenNavItem> navItems,
@@ -204,6 +209,170 @@ void main() {
       expect(find.byIcon(Icons.keyboard_arrow_right), findsNothing);
       expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
       expect(find.byIcon(Icons.chat_bubble_outline), findsNothing);
+    });
+
+
+    // --- 13-17: caption and divider -----------------------------------------
+
+    testWidgets('13. EdenNavItem.caption renders as an uppercase section label',
+        (tester) async {
+      await _pump(tester, navItems: const [EdenNavItem.caption('Projects')]);
+
+      expect(find.text('PROJECTS'), findsOneWidget);
+      final style = tester.widget<Text>(find.text('PROJECTS')).style;
+      expect(style?.fontSize, 10);
+      expect(style?.fontWeight, FontWeight.w700);
+      expect(style?.letterSpacing, 0.8);
+    });
+
+    testWidgets(
+        '13b. a caption is styled identically to the existing static group band',
+        (tester) async {
+      await _pump(
+        tester,
+        navItems: const [EdenNavItem.caption('Projects'), _workspace],
+      );
+
+      final caption = tester.widget<Text>(find.text('PROJECTS')).style;
+      final band = tester.widget<Text>(find.text('WORKSPACE')).style;
+      expect(caption, band,
+          reason: 'one extracted style, not two copies of the literals');
+    });
+
+    testWidgets('14. a caption has no tap target and never fires onNavChanged',
+        (tester) async {
+      final fired = <String>[];
+      await _pump(
+        tester,
+        navItems: const [EdenNavItem.caption('Projects')],
+        onNavChanged: fired.add,
+      );
+
+      expect(
+        find.ancestor(
+            of: find.text('PROJECTS'), matching: find.byType(GestureDetector)),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(of: find.text('PROJECTS'), matching: find.byType(InkWell)),
+        findsNothing,
+      );
+
+      await tester.tap(find.text('PROJECTS'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(fired, isEmpty);
+    });
+
+    testWidgets('15. a caption is not offered as a button to a screen reader',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(tester, navItems: const [EdenNavItem.caption('Projects')]);
+
+      expect(tester.getSemantics(find.text('PROJECTS')).flagsCollection.isButton,
+          isFalse);
+      handle.dispose();
+    });
+
+    testWidgets('16. EdenNavItem.divider renders a Divider, not a blank tappable row',
+        (tester) async {
+      // Baseline: the sidebar already draws one Divider under its header.
+      await _pump(tester, navItems: const [_leafHome]);
+      expect(find.byType(Divider), findsOneWidget);
+
+      await _pump(
+        tester,
+        navItems: const [_leafHome, EdenNavItem.divider(), _leafSettings],
+      );
+
+      expect(find.byType(Divider), findsNWidgets(2));
+      // The defect being corrected: a _NavTile with an empty label and a
+      // horizontal_rule icon.
+      expect(find.byIcon(Icons.horizontal_rule), findsNothing);
+      expect(find.text(''), findsNothing);
+    });
+
+    testWidgets('17. neither a caption nor a divider renders in the 72px rail',
+        (tester) async {
+      await _pump(
+        tester,
+        navItems: const [
+          EdenNavItem.caption('Projects'),
+          _leafHome,
+          EdenNavItem.divider(),
+        ],
+        initiallyCollapsed: true,
+      );
+
+      expect(find.text('PROJECTS'), findsNothing);
+      expect(find.text('Projects'), findsNothing);
+      expect(find.byIcon(Icons.horizontal_rule), findsNothing);
+      // Only the sidebar's own structural Divider remains.
+      expect(find.byType(Divider), findsOneWidget);
+      expect(find.byIcon(Icons.home_outlined), findsOneWidget);
+    });
+
+    // --- 6/7/8: header count, no id substitution, empty children ------------
+
+    testWidgets('6. a count rides on the header and adds no phantom child row',
+        (tester) async {
+      await _pump(tester, navItems: [_aurora(initiallyExpanded: true)]);
+      expect(find.byIcon(Icons.chat_bubble_outline), findsNWidgets(2));
+
+      await _pump(
+        tester,
+        navItems: [_aurora(initiallyExpanded: true, badge: '2')],
+      );
+
+      expect(find.text('2'), findsOneWidget);
+      expect(find.byIcon(Icons.chat_bubble_outline), findsNWidgets(2),
+          reason: 'the badge must not become a third child row');
+      expect(find.text('Kickoff notes'), findsOneWidget);
+      expect(find.text('Retro'), findsOneWidget);
+    });
+
+    testWidgets('7. tapping the header reports the GROUP id, never a child id',
+        (tester) async {
+      final fired = <String>[];
+      await _pump(tester, navItems: [_aurora()], onNavChanged: fired.add);
+
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+
+      expect(fired, ['proj-aurora']);
+      expect(fired, isNot(contains('conv-kickoff')));
+
+      // And a child still reports itself once disclosed.
+      await tester.tap(find.text('Retro'));
+      await tester.pumpAndSettle();
+      expect(fired, ['proj-aurora', 'conv-retro']);
+    });
+
+    testWidgets('8. an expandable group with no children is harmless',
+        (tester) async {
+      final fired = <String>[];
+      await _pump(
+        tester,
+        navItems: const [
+          EdenNavItem(
+            id: 'projects',
+            label: 'Projects',
+            icon: Icons.folder_outlined,
+            expandable: true,
+          ),
+        ],
+        onNavChanged: fired.add,
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Projects'), findsOneWidget);
+      // DECISION: the chevron is ABSENT, not inert. No children means no
+      // disclosure, so the item renders exactly as a leaf does today — which is
+      // also what aodex needs for PROJECTS on a fresh account (BCP-R8).
+      expect(find.byIcon(Icons.keyboard_arrow_right), findsNothing);
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+
+      await tester.tap(find.text('Projects'));
+      expect(fired, ['projects']);
     });
 
     testWidgets('20b. collapsed rail still reports the first child id, unchanged by expandable',
