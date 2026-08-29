@@ -418,6 +418,13 @@ class _ExpandableNavHeader extends StatelessWidget {
       expanded: expanded,
       selected: isSelected,
       label: item.badge == null ? item.label : '${item.label}, ${item.badge}',
+      // The action has to live HERE, not on the GestureDetector: the
+      // ExcludeSemantics below deliberately drops the child subtree (so the
+      // chevron, icon, label and badge do not split into competing nodes), and
+      // it drops the GestureDetector's SemanticsAction.tap with them. Without
+      // this the node announces `button: true`, a reader double-taps, and
+      // nothing happens — the children become permanently unreachable.
+      onTap: onTap,
       child: ExcludeSemantics(
         child: GestureDetector(
           onTap: onTap,
