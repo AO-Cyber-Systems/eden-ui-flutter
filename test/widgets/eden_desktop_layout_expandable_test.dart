@@ -1,5 +1,6 @@
 import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Tests for the OPT-IN disclosure added to EdenNavItem / EdenDesktopLayout.
@@ -144,6 +145,41 @@ void main() {
       final node = tester.getSemantics(find.text('Aurora'));
       expect(node.flagsCollection.isButton, isTrue);
       expect(node.label, 'Aurora');
+      // A control a reader can FIND but not ACTIVATE is worse than one it
+      // cannot find: `button: true` is a promise that a double-tap does
+      // something. Without SemanticsAction.tap on the node the promise is a lie
+      // and the children are permanently unreachable.
+      expect(
+        node.getSemanticsData().hasAction(SemanticsAction.tap),
+        isTrue,
+        reason: 'the header announces button:true, so it must accept a tap',
+      );
+      handle.dispose();
+    });
+
+    testWidgets(
+        '5c. the disclosure header carries the same tap action a plain nav tile does',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(tester, navItems: [_aurora(), _leafHome]);
+
+      // Differential control: the leaf tile is the same Semantics(button:true)
+      // shape WITHOUT ExcludeSemantics, and it has always been actionable.
+      final leaf = tester.getSemantics(find.text('Home'));
+      expect(leaf.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+
+      final header = tester.getSemantics(find.text('Aurora'));
+      expect(
+        header.getSemanticsData().hasAction(SemanticsAction.tap),
+        leaf.getSemanticsData().hasAction(SemanticsAction.tap),
+        reason: 'header and leaf must be equally activatable by a screen reader',
+      );
+
+      // And the announced action must actually disclose the children.
+      tester.binding.pipelineOwner.semanticsOwner!
+          .performAction(header.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+      expect(find.text('Kickoff notes'), findsOneWidget);
       handle.dispose();
     });
 
