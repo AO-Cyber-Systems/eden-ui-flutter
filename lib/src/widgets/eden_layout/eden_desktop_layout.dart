@@ -173,7 +173,18 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                               key: item.widgetKey,
                               item: item,
                               expanded: _expandedGroupIds.contains(item.id),
-                              isSelected: item.id == widget.selectedId,
+                              // A CLOSED group stands in for the selected child
+                              // it is hiding — otherwise a selection inside a
+                              // closed group leaves the whole sidebar with no
+                              // selection anywhere. Same substitution the 72px
+                              // rail already makes below, and for the same
+                              // reason: the child row is not on screen. Once
+                              // OPEN the child paints its own highlight, so the
+                              // header stops borrowing it.
+                              isSelected: item.id == widget.selectedId ||
+                                  (!_expandedGroupIds.contains(item.id) &&
+                                      item.children.any(
+                                          (c) => c.id == widget.selectedId)),
                               onTap: () {
                                 setState(() {
                                   if (!_expandedGroupIds.remove(item.id)) {
