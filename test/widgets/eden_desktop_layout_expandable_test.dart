@@ -183,6 +183,74 @@ void main() {
       handle.dispose();
     });
 
+    // --- 9-12: the cases the numbering skipped -------------------------------
+    // 5b jumps to 18 and 17 back to 6, so 9-12 were planned and never written.
+    // They are exactly the ground review findings 2 and 3 landed on: selection
+    // hidden inside a closed group (9, 9b) and seed re-sync clobbering the
+    // user's own disclosure gestures (10, 11, 12).
+
+    testWidgets(
+        '9. a CLOSED group reads as selected when it owns the selected child',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+
+      // Control: nothing in this sidebar is selected.
+      await _pump(tester, navItems: [_aurora()], selectedId: 'none');
+      expect(tester.widget<Text>(find.text('Aurora')).style?.fontWeight,
+          FontWeight.w500);
+      expect(tester.getSemantics(find.text('Aurora')).flagsCollection.isSelected.toBoolOrNull(),
+          isFalse);
+
+      // The defect: 'conv-retro' IS the selected route, but it lives inside a
+      // closed group, so the sidebar showed selection NOWHERE.
+      await _pump(tester, navItems: [_aurora()], selectedId: 'conv-retro');
+      expect(find.text('Retro'), findsNothing, reason: 'group is still closed');
+
+      final node = tester.getSemantics(find.text('Aurora'));
+      expect(node.flagsCollection.isSelected.toBoolOrNull(), isTrue,
+          reason: 'a closed group stands in for the selected child it hides — '
+              'the same substitution the 72px rail already makes');
+      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue,
+          reason: 'and it must still be activatable');
+      expect(tester.widget<Text>(find.text('Aurora')).style?.fontWeight,
+          FontWeight.w600);
+      handle.dispose();
+    });
+
+    testWidgets(
+        '9b. an OPEN group leaves the selection on the child, not on both rows',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await _pump(
+        tester,
+        navItems: [_aurora(initiallyExpanded: true)],
+        selectedId: 'conv-retro',
+      );
+
+      // The child is visible and owns the highlight.
+      expect(tester.widget<Text>(find.text('Retro')).style?.fontWeight,
+          FontWeight.w600);
+      expect(tester.getSemantics(find.text('Retro')).flagsCollection.isSelected.toBoolOrNull(),
+          isTrue);
+
+      // The header does not duplicate it: substitution exists only while the
+      // child is HIDDEN.
+      expect(tester.widget<Text>(find.text('Aurora')).style?.fontWeight,
+          FontWeight.w500);
+      expect(tester.getSemantics(find.text('Aurora')).flagsCollection.isSelected.toBoolOrNull(),
+          isFalse);
+
+      // A header that is itself the selected id still reads selected, open or not.
+      await _pump(
+        tester,
+        navItems: [_aurora(initiallyExpanded: true)],
+        selectedId: 'proj-aurora',
+      );
+      expect(tester.widget<Text>(find.text('Aurora')).style?.fontWeight,
+          FontWeight.w600);
+      handle.dispose();
+    });
+
     // --- 18/19/20: the additivity net ---------------------------------------
 
     testWidgets(
