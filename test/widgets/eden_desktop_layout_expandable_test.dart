@@ -562,6 +562,52 @@ void main() {
       expect(fired, ['projects']);
     });
 
+    // --- 21: closing is a tidy-up, not a navigation --------------------------
+
+    testWidgets(
+        '21. only the EXPAND half of the toggle reports; closing keeps the user put',
+        (tester) async {
+      final fired = <String>[];
+      await _pump(tester, navItems: [_aurora()], onNavChanged: fired.add);
+
+      // Open: the documented requirement — a consumer scopes on the same tap
+      // that discloses (aodex's PROJECTS header).
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+      expect(fired, ['proj-aurora']);
+
+      // Close: the user is tidying the sidebar, not asking to go anywhere.
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kickoff notes'), findsNothing, reason: 'it did close');
+      expect(fired, ['proj-aurora'],
+          reason: 'closing a group must not navigate away from wherever the '
+              'user currently is');
+
+      // Re-open reports again — the expand half is not one-shot.
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+      expect(fired, ['proj-aurora', 'proj-aurora']);
+    });
+
+    testWidgets(
+        '21b. a group that starts open reports nothing on the tap that closes it',
+        (tester) async {
+      final fired = <String>[];
+      await _pump(
+        tester,
+        navItems: [_aurora(initiallyExpanded: true)],
+        onNavChanged: fired.add,
+      );
+
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kickoff notes'), findsNothing);
+      expect(fired, isEmpty,
+          reason: 'the very first gesture on a seeded-open group is a close');
+    });
+
     testWidgets('20b. collapsed rail still reports the first child id, unchanged by expandable',
         (tester) async {
       String? tapped;
