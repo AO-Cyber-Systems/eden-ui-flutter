@@ -43,10 +43,18 @@ class EdenMobileLayout extends StatelessWidget {
   final Widget? floatingAction;
   final int maxBottomItems;
 
-  /// Flatten grouped nav items for display.
+  /// Flatten grouped nav items into the list of real DESTINATIONS.
+  ///
+  /// Captions and dividers are decorations of the desktop rail, not routes:
+  /// their ids (`__caption__`, `__divider__`) match nothing a consumer can
+  /// navigate to. Rendering them as tabs fired onNavChanged with a dead id AND
+  /// consumed [maxBottomItems] slots, pushing real destinations into overflow.
+  /// Consumers share one navItems list across both layouts, so the bar has to
+  /// understand everything the rail does.
   List<EdenNavItem> get _flatItems {
     final flat = <EdenNavItem>[];
     for (final item in navItems) {
+      if (item.isDivider || item.isCaption) continue;
       if (item.children.isNotEmpty) {
         flat.addAll(item.children);
       } else {
@@ -130,6 +138,22 @@ class EdenMobileLayout extends StatelessWidget {
     );
   }
 
+  /// The drawer's uppercase section band. One definition, shared by a group
+  /// header and by an [EdenNavItem.caption] — two copies of the literals would
+  /// drift.
+  static Widget _drawerSectionLabel(ThemeData theme, String label) => Padding(
+        padding: const EdgeInsets.only(left: 16, top: 16, bottom: 4),
+        child: Text(
+          label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      );
+
   Widget _buildDrawer(BuildContext context, ThemeData theme, List<EdenNavItem> flat) {
     return Drawer(
       child: SafeArea(
@@ -181,19 +205,25 @@ class EdenMobileLayout extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: EdenSpacing.space2, horizontal: EdenSpacing.space2),
                 children: [
                   for (final group in navItems)
-                    if (group.children.isNotEmpty) ...[
+                    // Decorations keep their meaning in the drawer, where there
+                    // is room for them — a rule stays a rule and a caption
+                    // stays the same uppercase band a group header already
+                    // draws. Neither becomes a tappable row.
+                    if (group.isDivider)
                       Padding(
-                        padding: const EdgeInsets.only(left: 16, top: 16, bottom: 4),
-                        child: Text(
-                          group.label.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: EdenSpacing.space2,
                         ),
-                      ),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                      )
+                    else if (group.isCaption)
+                      _drawerSectionLabel(theme, group.label)
+                    else if (group.children.isNotEmpty) ...[
+                      _drawerSectionLabel(theme, group.label),
                       for (final child in group.children)
                         _DrawerTile(
                           item: child,
