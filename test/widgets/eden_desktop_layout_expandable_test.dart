@@ -608,6 +608,50 @@ void main() {
           reason: 'the very first gesture on a seeded-open group is a close');
     });
 
+    // --- 22: geometry. Widget tests cannot SEE this, so assert the numbers ---
+
+    testWidgets(
+        '22. children of an expanded group are indented at least to their header',
+        (tester) async {
+      await _pump(tester, navItems: [_aurora(initiallyExpanded: true)]);
+
+      final headerIconDx =
+          tester.getTopLeft(find.byIcon(Icons.folder_outlined)).dx;
+      final childIconDx =
+          tester.getTopLeft(find.byIcon(Icons.chat_bubble_outline).first).dx;
+      final headerLabelDx = tester.getTopLeft(find.text('Aurora')).dx;
+      final childLabelDx = tester.getTopLeft(find.text('Kickoff notes')).dx;
+
+      // The header sits behind a 4px pad + an 18px chevron + a 4px gap, so its
+      // icon starts at 38 inside a sidebar whose ListView pads by 12.
+      expect(headerIconDx, 38.0, reason: 'header geometry is the baseline');
+      expect(headerLabelDx, 70.0);
+
+      // The defect: children were laid out at the plain _NavTile inset (24/56),
+      // LESS than their own header, so an expanded group read as a heading
+      // followed by unrelated top-level rows.
+      expect(childIconDx, greaterThanOrEqualTo(headerIconDx),
+          reason: 'a child must never start left of its own header');
+      expect(childLabelDx, greaterThanOrEqualTo(headerLabelDx));
+      expect(childIconDx, 38.0);
+      expect(childLabelDx, 70.0);
+
+      // Both children, not just the first.
+      expect(tester.getTopLeft(find.byIcon(Icons.chat_bubble_outline).last).dx,
+          38.0);
+    });
+
+    testWidgets(
+        '22b. a group that did NOT opt in keeps its exact original geometry',
+        (tester) async {
+      // The indent is a property of the disclosure, not of grouping. Additivity
+      // is a number here too.
+      await _pump(tester, navItems: [_workspace]);
+
+      expect(tester.getTopLeft(find.byIcon(Icons.inbox_outlined)).dx, 24.0);
+      expect(tester.getTopLeft(find.text('Inbox')).dx, 56.0);
+    });
+
     testWidgets('20b. collapsed rail still reports the first child id, unchanged by expandable',
         (tester) async {
       String? tapped;
