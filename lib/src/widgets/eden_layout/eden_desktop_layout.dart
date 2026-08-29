@@ -217,9 +217,13 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                       item.children.any(
                                           (c) => c.id == widget.selectedId)),
                               onTap: () {
+                                final willExpand =
+                                    !_expandedGroupIds.contains(item.id);
                                 setState(() {
-                                  if (!_expandedGroupIds.remove(item.id)) {
+                                  if (willExpand) {
                                     _expandedGroupIds.add(item.id);
+                                  } else {
+                                    _expandedGroupIds.remove(item.id);
                                   }
                                 });
                                 // Report the GROUP's own id — never
@@ -228,7 +232,12 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                 // on the same tap that discloses (aodex's
                                 // PROJECTS header), and it cannot do that if it
                                 // can't tell a group tap from a child tap.
-                                widget.onNavChanged(item.id);
+                                //
+                                // But only on the EXPAND half. Closing a group
+                                // is tidying the sidebar; firing there yanked
+                                // the user back to the group they were putting
+                                // away, from wherever they actually were.
+                                if (willExpand) widget.onNavChanged(item.id);
                               },
                             ),
                             if (_expandedGroupIds.contains(item.id))
