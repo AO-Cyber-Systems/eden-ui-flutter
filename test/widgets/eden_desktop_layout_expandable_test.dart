@@ -189,8 +189,9 @@ void main() {
       );
 
       // And the announced action must actually disclose the children.
-      tester.binding.pipelineOwner.semanticsOwner!
-          .performAction(header.id, SemanticsAction.tap);
+      // tester.semantics.tap drives the SEMANTICS action, not a hit test, and
+      // throws if the node does not offer it — which is the defect itself.
+      tester.semantics.tap(find.semantics.byLabel('Aurora'));
       await tester.pumpAndSettle();
       expect(find.text('Kickoff notes'), findsOneWidget);
       handle.dispose();
