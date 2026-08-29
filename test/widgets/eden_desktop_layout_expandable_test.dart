@@ -32,6 +32,19 @@ EdenNavItem _aurora({
       ],
     );
 
+/// A second expandable group, so seed-sync can be tested per id rather than
+/// per whole-set. Child labels are distinct from Aurora's on purpose.
+EdenNavItem _borealis({bool initiallyExpanded = false}) => EdenNavItem(
+      id: 'proj-borealis',
+      label: 'Borealis',
+      icon: Icons.folder_outlined,
+      expandable: true,
+      initiallyExpanded: initiallyExpanded,
+      children: const [
+        EdenNavItem(id: 'conv-standup', label: 'Standup', icon: Icons.chat_bubble_outline),
+      ],
+    );
+
 /// A group that never opts in — the path that must stay byte-identical.
 const EdenNavItem _workspace = EdenNavItem(
   id: 'workspace',
@@ -249,6 +262,75 @@ void main() {
       expect(tester.widget<Text>(find.text('Aurora')).style?.fontWeight,
           FontWeight.w600);
       handle.dispose();
+    });
+
+    testWidgets(
+        '10. a rebuild driven by ANOTHER group must not reopen one the user closed',
+        (tester) async {
+      // aodex rebuilds navItems from live data, so didUpdateWidget runs
+      // constantly with the same seeds and one moving part.
+      await _pump(tester,
+          navItems: [_aurora(initiallyExpanded: true), _borealis()]);
+      expect(find.text('Kickoff notes'), findsOneWidget);
+
+      // The user tidies the sidebar.
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kickoff notes'), findsNothing);
+
+      // A rebuild arrives in which only BOREALIS's seed changed. Aurora's own
+      // seed is byte-identical to the one it already had.
+      await _pump(tester, navItems: [
+        _aurora(initiallyExpanded: true),
+        _borealis(initiallyExpanded: true),
+      ]);
+
+      expect(find.text('Standup'), findsOneWidget,
+          reason: "borealis's own seed changed, so borealis opens");
+      expect(find.text('Kickoff notes'), findsNothing,
+          reason: 'aurora\'s seed did NOT change, so the user\'s close stands — '
+              'a whole-set comparison springs it back open under the cursor');
+    });
+
+    testWidgets(
+        '11. a seed that DOES change for a group still moves that group',
+        (tester) async {
+      // The over-fix guard for 10: per-id diffing must not become "ignore the
+      // parent forever".
+      await _pump(tester, navItems: [_aurora(), _borealis()]);
+      expect(find.text('Kickoff notes'), findsNothing);
+
+      await _pump(
+          tester, navItems: [_aurora(initiallyExpanded: true), _borealis()]);
+      expect(find.text('Kickoff notes'), findsOneWidget,
+          reason: 'false -> true on this id opens it');
+
+      await _pump(tester, navItems: [_aurora(), _borealis()]);
+      expect(find.text('Kickoff notes'), findsNothing,
+          reason: 'true -> false on this id closes it');
+    });
+
+    testWidgets(
+        '12. expansion state for a group that no longer exists is pruned',
+        (tester) async {
+      await _pump(tester, navItems: [_aurora(), _borealis()]);
+
+      // User-driven expansion, so nothing about it is derivable from the seeds.
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kickoff notes'), findsOneWidget);
+
+      // Aurora is deleted upstream. Seeds are unchanged (both still false), so
+      // a whole-set comparison sees no difference and never drops the id.
+      await _pump(tester, navItems: [_borealis()]);
+      expect(find.text('Aurora'), findsNothing);
+
+      // Aurora comes back as a fresh group that asks to be CLOSED.
+      await _pump(tester, navItems: [_aurora(), _borealis()]);
+      expect(find.text('Aurora'), findsOneWidget);
+      expect(find.text('Kickoff notes'), findsNothing,
+          reason: 'a stale id left in _expandedGroupIds resurrects an old '
+              'disclosure on a group that arrived asking to be closed');
     });
 
     // --- 18/19/20: the additivity net ---------------------------------------
