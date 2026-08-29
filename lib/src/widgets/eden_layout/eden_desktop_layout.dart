@@ -246,6 +246,11 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                   item: child,
                                   isSelected: child.id == widget.selectedId,
                                   collapsed: _collapsed,
+                                  // Line the child's icon up UNDER its header's
+                                  // icon. Indented less than the header, an
+                                  // expanded group read as a heading followed
+                                  // by unrelated top-level rows.
+                                  indent: _kExpandableChildIndent,
                                   onTap: () => widget.onNavChanged(child.id),
                                 ),
                           ] else ...[
@@ -399,6 +404,27 @@ class _SidebarHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Nav row geometry
+// ---------------------------------------------------------------------------
+
+/// Horizontal inset of a plain [_NavTile].
+const double _kNavTileHorizontalPadding = 12;
+
+/// The chevron column an [_ExpandableNavHeader] carries and a [_NavTile] does
+/// not: a leading pad, the chevron itself, and the gap after it.
+const double _kExpandableHeaderLeftPadding = 4;
+const double _kExpandableChevronSize = 18;
+const double _kExpandableChevronGap = 4;
+
+/// How much further a disclosed child indents so its icon lands under its own
+/// header's icon rather than under the header's chevron. Derived, not a magic
+/// 14, so it cannot drift away from the header if the chevron column changes.
+const double _kExpandableChildIndent = _kExpandableHeaderLeftPadding +
+    _kExpandableChevronSize +
+    _kExpandableChevronGap -
+    _kNavTileHorizontalPadding;
+
+// ---------------------------------------------------------------------------
 // Section label (shared by the static group header and EdenNavItem.caption)
 // ---------------------------------------------------------------------------
 
@@ -483,7 +509,10 @@ class _ExpandableNavHeader extends StatelessWidget {
           child: Container(
             height: 40,
             margin: const EdgeInsets.only(bottom: 2),
-            padding: const EdgeInsets.only(left: 4, right: 12),
+            padding: const EdgeInsets.only(
+              left: _kExpandableHeaderLeftPadding,
+              right: _kNavTileHorizontalPadding,
+            ),
             decoration: BoxDecoration(
               color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
               borderRadius: EdenRadii.borderRadiusMd,
@@ -492,10 +521,10 @@ class _ExpandableNavHeader extends StatelessWidget {
               children: [
                 Icon(
                   expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                  size: 18,
+                  size: _kExpandableChevronSize,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: _kExpandableChevronGap),
                 Icon(
                   isSelected ? (item.activeIcon ?? item.icon) : item.icon,
                   size: 20,
@@ -534,12 +563,17 @@ class _NavTile extends StatelessWidget {
     required this.isSelected,
     required this.collapsed,
     required this.onTap,
+    this.indent = 0,
   });
 
   final EdenNavItem item;
   final bool isSelected;
   final bool collapsed;
   final VoidCallback onTap;
+
+  /// Extra left inset. Non-zero only for the children of a disclosed group, so
+  /// every other caller keeps its exact original geometry.
+  final double indent;
 
   @override
   Widget build(BuildContext context) {
@@ -598,7 +632,10 @@ class _NavTile extends StatelessWidget {
         child: Container(
           height: 40,
           margin: const EdgeInsets.only(bottom: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: EdgeInsets.only(
+            left: _kNavTileHorizontalPadding + indent,
+            right: _kNavTileHorizontalPadding,
+          ),
           decoration: BoxDecoration(
             color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
             borderRadius: EdenRadii.borderRadiusMd,
