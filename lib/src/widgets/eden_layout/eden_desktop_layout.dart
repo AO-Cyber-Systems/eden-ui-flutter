@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
@@ -78,16 +77,23 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   /// gesture, not a consumer-held selection, so there is no callback out.
   late Set<String> _expandedGroupIds;
 
-  static Set<String> _seedExpanded(List<EdenNavItem> items) => {
+  /// Every expandable group in [items], mapped to the seed it is asking for.
+  /// A map, not a set of the true ones: the difference between "this group
+  /// wants to be closed" and "this group is not here any more" is the whole
+  /// point of [_syncExpansion].
+  static Map<String, bool> _seedMap(List<EdenNavItem> items) => {
         for (final item in items)
-          if (item.expandable && item.initiallyExpanded) item.id,
+          if (item.expandable) item.id: item.initiallyExpanded,
       };
 
   @override
   void initState() {
     super.initState();
     _collapsed = widget.initiallyCollapsed;
-    _expandedGroupIds = _seedExpanded(widget.navItems);
+    _expandedGroupIds = {
+      for (final e in _seedMap(widget.navItems).entries)
+        if (e.value) e.key,
+    };
   }
 
   @override
@@ -97,11 +103,36 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
     if (widget.initiallyCollapsed != oldWidget.initiallyCollapsed) {
       _collapsed = widget.initiallyCollapsed;
     }
-    // Same contract for expansion: a parent forces a change by rebuilding with
-    // different `initiallyExpanded` values.
-    final seeded = _seedExpanded(widget.navItems);
-    if (!setEquals(seeded, _seedExpanded(oldWidget.navItems))) {
-      _expandedGroupIds = seeded;
+    // Same contract for expansion, but applied PER ID. Comparing whole seed
+    // sets and assigning wholesale meant that any group arriving with a changed
+    // seed re-derived every other group too — so a group the user had just
+    // closed sprang back open under the cursor. Consumers that rebuild
+    // navItems from live data (aodex's PROJECTS) hit that on every refresh.
+    _syncExpansion(oldWidget.navItems, widget.navItems);
+  }
+
+  /// Reconciles [_expandedGroupIds] against a new [newItems] list.
+  ///
+  /// Two rules, in order:
+  ///  1. Prune — an id whose group is gone is dropped, so a group that is
+  ///     deleted and later re-added does not resurrect an old disclosure.
+  ///  2. Diff — only ids whose OWN `initiallyExpanded` actually changed are
+  ///     re-derived from the seed. Every other id keeps whatever the user last
+  ///     gestured. A group that is new to the list has no previous seed, so its
+  ///     seed is what it asks for.
+  void _syncExpansion(List<EdenNavItem> oldItems, List<EdenNavItem> newItems) {
+    final oldSeeds = _seedMap(oldItems);
+    final newSeeds = _seedMap(newItems);
+
+    _expandedGroupIds.removeWhere((id) => !newSeeds.containsKey(id));
+
+    for (final entry in newSeeds.entries) {
+      if (oldSeeds[entry.key] == entry.value) continue;
+      if (entry.value) {
+        _expandedGroupIds.add(entry.key);
+      } else {
+        _expandedGroupIds.remove(entry.key);
+      }
     }
   }
 
