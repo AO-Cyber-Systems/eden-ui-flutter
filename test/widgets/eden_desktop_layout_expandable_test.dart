@@ -685,6 +685,62 @@ void main() {
       expect(tester.getTopLeft(find.text('Inbox')).dx, 56.0);
     });
 
+    testWidgets('22c. a group that is not open renders no rule', (tester) async {
+      // The rule is the disclosure's containment signal, so it exists exactly
+      // while there is something disclosed. A shut group is a single row and a
+      // stray hairline beside it would read as an empty container.
+      await _pump(tester, navItems: [_aurora(), _borealis()]);
+
+      expect(find.text('Kickoff notes'), findsNothing,
+          reason: 'precondition: both groups are shut');
+      expect(find.byKey(const ValueKey('eden-nav-group-rule-proj-aurora')),
+          findsNothing);
+      expect(find.byKey(const ValueKey('eden-nav-group-rule-proj-borealis')),
+          findsNothing);
+
+      // ...and it appears on the tap that opens one, for that group only.
+      await tester.tap(find.text('Aurora'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('eden-nav-group-rule-proj-aurora')),
+          findsOneWidget);
+      expect(find.byKey(const ValueKey('eden-nav-group-rule-proj-borealis')),
+          findsNothing,
+          reason: 'the rule is per group, not per sidebar');
+    });
+
+    testWidgets(
+        '22d. the RULE is the only thing that separates a disclosed group from a plain one',
+        (tester) async {
+      // THE TRAP IN THIS CHANGE. Case 22 used to differ from 22b by 14px:
+      // 38/70 against 24/56. Reclaiming the indent makes both paths land on
+      // 24/56, so the two cases now assert the same numbers and either could
+      // be deleted without the other noticing — 22b would be vacuous as a
+      // guard of the non-disclosed path, and 22 would no longer prove that
+      // disclosure does anything at all.
+      //
+      // This case is what keeps them apart. Both groups render in ONE sidebar
+      // so the comparison is a fact about a single layout: identical row
+      // geometry, and a rule under exactly one of them.
+      await _pump(
+        tester,
+        navItems: [_workspace, _aurora(initiallyExpanded: true)],
+      );
+
+      expect(tester.getTopLeft(find.byIcon(Icons.inbox_outlined)).dx,
+          tester.getTopLeft(find.byIcon(Icons.chat_bubble_outline).first).dx,
+          reason: 'a disclosed child costs no more width than a plain nav row');
+      expect(tester.getTopLeft(find.text('Inbox')).dx,
+          tester.getTopLeft(find.text('Kickoff notes')).dx);
+
+      expect(find.byKey(const ValueKey('eden-nav-group-rule-proj-aurora')),
+          findsOneWidget,
+          reason: 'the disclosed group is contained by a rule');
+      expect(find.byKey(const ValueKey('eden-nav-group-rule-workspace')),
+          findsNothing,
+          reason: 'a static section header is not a disclosure');
+    });
+
     testWidgets('20b. collapsed rail still reports the first child id, unchanged by expandable',
         (tester) async {
       String? tapped;
