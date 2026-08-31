@@ -611,7 +611,7 @@ void main() {
     // --- 22: geometry. Widget tests cannot SEE this, so assert the numbers ---
 
     testWidgets(
-        '22. children of an expanded group are indented at least to their header',
+        '22. an expanded group binds its children with a hairline rule, not an indent',
         (tester) async {
       await _pump(tester, navItems: [_aurora(initiallyExpanded: true)]);
 
@@ -627,18 +627,51 @@ void main() {
       expect(headerIconDx, 38.0, reason: 'header geometry is the baseline');
       expect(headerLabelDx, 70.0);
 
-      // The defect: children were laid out at the plain _NavTile inset (24/56),
-      // LESS than their own header, so an expanded group read as a heading
-      // followed by unrelated top-level rows.
-      expect(childIconDx, greaterThanOrEqualTo(headerIconDx),
-          reason: 'a child must never start left of its own header');
-      expect(childLabelDx, greaterThanOrEqualTo(headerLabelDx));
-      expect(childIconDx, 38.0);
-      expect(childLabelDx, 70.0);
-
-      // Both children, not just the first.
+      // RECLAIMED. 20-02 originally paid for containment with a 14px indent
+      // (children at 38/70, lined up under their own header's icon). Horizontal
+      // space is the scarcest resource in this rail — real labels truncate
+      // ("FedRAMP High Autho...") — so the indent was traded for a hairline
+      // rule, which costs zero layout width. Children are back at the plain
+      // _NavTile inset.
+      expect(childIconDx, 24.0, reason: 'the 14px indent is reclaimed');
+      expect(childLabelDx, 56.0);
       expect(tester.getTopLeft(find.byIcon(Icons.chat_bubble_outline).last).dx,
-          38.0);
+          24.0, reason: 'both children, not just the first');
+      expect(tester.getTopLeft(find.text('Retro')).dx, 56.0);
+
+      // 20-02's original invariant was `child >= header`. It is RETIRED here,
+      // deliberately: it is now false by design (24 < 38), because the thing it
+      // was standing in for — "these rows belong to the group above them" — is
+      // carried by the rule instead of by the inset. Retiring it without
+      // replacing it would leave case 22 green on exactly the layout 20-02 was
+      // written to stop: a heading followed by unrelated top-level rows. So the
+      // replacement invariant is asserted below, and it is now the load-bearing
+      // half of this case.
+      expect(childIconDx, lessThan(headerIconDx),
+          reason: 'the reclaim is real, not an accident of equal insets');
+
+      // THE NEW INVARIANT: child rows are visually bound to their header by a
+      // vertical hairline rule spanning the whole disclosed block.
+      final rule = tester.getRect(
+          find.byKey(const ValueKey('eden-nav-group-rule-proj-aurora')));
+
+      // 1.0 logical px, in the gutter between the ListView's own 12px pad and
+      // the 24px child icon column. Zero layout width: it must not push content
+      // right and must not overlap the icon.
+      expect(rule.width, 1.0);
+      expect(rule.left, 17.0);
+      expect(rule.left, greaterThan(12.0), reason: 'inside the ListView pad');
+      expect(rule.right, lessThan(childIconDx),
+          reason: 'clear of the child icon column');
+
+      // One rule for the whole block, top of the first child to bottom of the
+      // last — not a segment per row.
+      final firstChild = tester.getRect(find.byIcon(Icons.chat_bubble_outline).first);
+      final lastChild = tester.getRect(find.byIcon(Icons.chat_bubble_outline).last);
+      expect(rule.top, lessThanOrEqualTo(firstChild.top));
+      expect(rule.bottom, greaterThanOrEqualTo(lastChild.bottom));
+      expect(rule.height, 82.0,
+          reason: 'two 40px rows plus the 2px margin between them');
     });
 
     testWidgets(
