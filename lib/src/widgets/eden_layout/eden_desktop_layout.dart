@@ -241,18 +241,20 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                               },
                             ),
                             if (_expandedGroupIds.contains(item.id))
-                              for (final child in item.children)
-                                _NavTile(
-                                  item: child,
-                                  isSelected: child.id == widget.selectedId,
-                                  collapsed: _collapsed,
-                                  // Line the child's icon up UNDER its header's
-                                  // icon. Indented less than the header, an
-                                  // expanded group read as a heading followed
-                                  // by unrelated top-level rows.
-                                  indent: _kExpandableChildIndent,
-                                  onTap: () => widget.onNavChanged(child.id),
-                                ),
+                              _DisclosedChildren(
+                                groupId: item.id,
+                                children: [
+                                  for (final child in item.children)
+                                    _NavTile(
+                                      item: child,
+                                      isSelected:
+                                          child.id == widget.selectedId,
+                                      collapsed: _collapsed,
+                                      onTap: () =>
+                                          widget.onNavChanged(child.id),
+                                    ),
+                                ],
+                              ),
                           ] else ...[
                             if (!_collapsed)
                               Padding(
@@ -416,13 +418,22 @@ const double _kExpandableHeaderLeftPadding = 4;
 const double _kExpandableChevronSize = 18;
 const double _kExpandableChevronGap = 4;
 
-/// How much further a disclosed child indents so its icon lands under its own
-/// header's icon rather than under the header's chevron. Derived, not a magic
-/// 14, so it cannot drift away from the header if the chevron column changes.
-const double _kExpandableChildIndent = _kExpandableHeaderLeftPadding +
-    _kExpandableChevronSize +
-    _kExpandableChevronGap -
-    _kNavTileHorizontalPadding;
+/// Vertical gap a nav row leaves under itself. Named so the containment rule
+/// can stop at the LAST child's bottom edge rather than overhang into it.
+const double _kNavRowBottomMargin = 2;
+
+/// The hairline that binds a disclosed group's children to their header.
+///
+/// It replaces the 14px indent 20-02 first used. An indent buys containment
+/// with the scarcest resource this rail has — label width, which already
+/// truncates — whereas a rule in the existing gutter costs zero layout width.
+/// Same device as aodex's knowledge folder browser, so the two surfaces agree.
+const double _kExpandableRuleWidth = 1;
+
+/// Inset from the children block's own left edge. The block starts at the
+/// ListView's 12px pad and a child icon starts 12 further in, so 5 lands the
+/// rule at dx 17: clear of the pad, clear of the icon column.
+const double _kExpandableRuleInset = 5;
 
 // ---------------------------------------------------------------------------
 // Section label (shared by the static group header and EdenNavItem.caption)
@@ -508,7 +519,7 @@ class _ExpandableNavHeader extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: Container(
             height: 40,
-            margin: const EdgeInsets.only(bottom: 2),
+            margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
             padding: const EdgeInsets.only(
               left: _kExpandableHeaderLeftPadding,
               right: _kNavTileHorizontalPadding,
@@ -554,6 +565,49 @@ class _ExpandableNavHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Disclosed children of an expandable group
+// ---------------------------------------------------------------------------
+
+/// The rows of an OPEN group, bound to their header by a single vertical
+/// hairline in the gutter to their left.
+///
+/// The rows themselves keep the plain [_NavTile] inset, so a disclosed child is
+/// geometrically identical to any other nav row and no label width is spent on
+/// belonging. The rule is the whole containment signal: one continuous line
+/// from the top of the first child to the bottom of the last, never a segment
+/// per row, and never present on a collapsed group — the caller only builds
+/// this when the group is expanded.
+class _DisclosedChildren extends StatelessWidget {
+  const _DisclosedChildren({required this.groupId, required this.children});
+
+  final String groupId;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Stack(
+      children: [
+        Column(mainAxisSize: MainAxisSize.min, children: children),
+        Positioned(
+          left: _kExpandableRuleInset,
+          top: 0,
+          // Stop at the last row's content edge instead of overhanging into
+          // the margin it leaves for the next item.
+          bottom: _kNavRowBottomMargin,
+          child: Container(
+            key: ValueKey('eden-nav-group-rule-$groupId'),
+            width: _kExpandableRuleWidth,
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Nav tile
 // ---------------------------------------------------------------------------
 
@@ -563,17 +617,12 @@ class _NavTile extends StatelessWidget {
     required this.isSelected,
     required this.collapsed,
     required this.onTap,
-    this.indent = 0,
   });
 
   final EdenNavItem item;
   final bool isSelected;
   final bool collapsed;
   final VoidCallback onTap;
-
-  /// Extra left inset. Non-zero only for the children of a disclosed group, so
-  /// every other caller keeps its exact original geometry.
-  final double indent;
 
   @override
   Widget build(BuildContext context) {
@@ -599,7 +648,7 @@ class _NavTile extends StatelessWidget {
             child: Container(
               width: double.infinity,
               height: 44,
-              margin: const EdgeInsets.only(bottom: 2),
+              margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
               decoration: BoxDecoration(
                 color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
                 borderRadius: EdenRadii.borderRadiusMd,
@@ -631,10 +680,9 @@ class _NavTile extends StatelessWidget {
         onTap: onTap,
         child: Container(
           height: 40,
-          margin: const EdgeInsets.only(bottom: 2),
-          padding: EdgeInsets.only(
-            left: _kNavTileHorizontalPadding + indent,
-            right: _kNavTileHorizontalPadding,
+          margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _kNavTileHorizontalPadding,
           ),
           decoration: BoxDecoration(
             color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
