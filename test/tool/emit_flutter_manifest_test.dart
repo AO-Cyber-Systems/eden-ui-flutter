@@ -11,7 +11,6 @@
 
 import 'dart:convert';
 
-import 'package:eden_ui_flutter/dev_app/registry/register_all.dart';
 import 'package:eden_ui_flutter/dev_app/registry/story_registry.dart';
 import 'package:flutter_test/flutter_test.dart';
 
