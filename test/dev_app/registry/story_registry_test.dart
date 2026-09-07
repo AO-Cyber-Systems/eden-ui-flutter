@@ -8,8 +8,6 @@ import 'package:eden_ui_flutter/dev_app/registry/story_registry.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-enum _TestVariant { a, b, c }
-
 /// Helper to build a minimal story with the given component, name, and id.
 EdenStory _story({
   required String component,
