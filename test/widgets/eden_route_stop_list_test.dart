@@ -218,7 +218,7 @@ void main() {
       final rlv = tester.widget<ReorderableListView>(
         find.byType(ReorderableListView),
       );
-      rlv.onReorder(0, 3);
+      rlv.onReorder!(0, 3);
       expect(receivedOld, 0);
       expect(receivedNew, 2,
           reason: 'consumer should receive intuitive newIndex=2 (not raw 3)');
@@ -241,7 +241,7 @@ void main() {
         find.byType(ReorderableListView),
       );
       // Moving UP (newIndex < oldIndex) — Flutter's raw is the intuitive index.
-      rlv.onReorder(2, 0);
+      rlv.onReorder!(2, 0);
       expect(receivedOld, 2);
       expect(receivedNew, 0);
     });
