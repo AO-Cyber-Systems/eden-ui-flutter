@@ -6,8 +6,8 @@
 import 'package:eden_ui_flutter/dev_app/registry/knob_values.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Private test enum — only used in tests
-enum _TestVariant { a, b, c }
+// Private test enum — two distinct values are all the get/copyWith round-trips need.
+enum _TestVariant { b, c }
 
 void main() {
   group('KnobValues', () {
