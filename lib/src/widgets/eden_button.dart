@@ -45,6 +45,18 @@ class EdenButton extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final colors = _resolveColors(theme, isDark);
     final sizing = _resolveSizing();
+    // EdenButton owns SIZE and WEIGHT; the ambient theme owns the FAMILY.
+    //
+    // _resolveSizing()'s TextStyle deliberately carries no family, and
+    // ButtonStyleButton resolves textStyle with a strict `??` -- so passing it
+    // through unchanged BEATS the theme's labelLarge and leaves the label
+    // asking for no family at all. On web that falls back to the browser font,
+    // rendering every button in a different typeface from its surroundings.
+    // Take only the family off labelLarge; size and weight stay the button's.
+    final labelStyle = sizing.textStyle.copyWith(
+      fontFamily: theme.textTheme.labelLarge?.fontFamily,
+      fontFamilyFallback: theme.textTheme.labelLarge?.fontFamilyFallback,
+    );
 
     final borderRadius = pill ? EdenRadii.borderRadiusFull : EdenRadii.borderRadiusLg;
 
@@ -84,7 +96,7 @@ class EdenButton extends StatelessWidget {
             side: BorderSide(color: disabled ? colors.foreground.withValues(alpha: 0.3) : colors.foreground),
             padding: sizing.padding,
             shape: RoundedRectangleBorder(borderRadius: borderRadius),
-            textStyle: sizing.textStyle,
+            textStyle: labelStyle,
           ),
           child: child,
         ),
@@ -103,7 +115,7 @@ class EdenButton extends StatelessWidget {
           elevation: 0,
           padding: sizing.padding,
           shape: RoundedRectangleBorder(borderRadius: borderRadius),
-          textStyle: sizing.textStyle,
+          textStyle: labelStyle,
         ),
         child: child,
       ),
