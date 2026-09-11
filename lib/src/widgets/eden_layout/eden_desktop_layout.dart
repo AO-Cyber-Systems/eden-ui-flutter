@@ -71,10 +71,29 @@ class EdenDesktopLayout extends StatefulWidget {
 class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   late bool _collapsed;
 
+  /// Ids of expandable groups currently disclosed. Owned here, exactly as
+  /// [_collapsed] is: seeded in [initState] from the widget, re-synced in
+  /// [didUpdateWidget] when the parent forces a change. Expansion is a view
+  /// gesture, not a consumer-held selection, so there is no callback out.
+  late Set<String> _expandedGroupIds;
+
+  /// Every expandable group in [items], mapped to the seed it is asking for.
+  /// A map, not a set of the true ones: the difference between "this group
+  /// wants to be closed" and "this group is not here any more" is the whole
+  /// point of [_syncExpansion].
+  static Map<String, bool> _seedMap(List<EdenNavItem> items) => {
+        for (final item in items)
+          if (item.expandable) item.id: item.initiallyExpanded,
+      };
+
   @override
   void initState() {
     super.initState();
     _collapsed = widget.initiallyCollapsed;
+    _expandedGroupIds = {
+      for (final e in _seedMap(widget.navItems).entries)
+        if (e.value) e.key,
+    };
   }
 
   @override
@@ -83,6 +102,37 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
     // Sync collapse state when the parent forces a change (e.g. responsive resize).
     if (widget.initiallyCollapsed != oldWidget.initiallyCollapsed) {
       _collapsed = widget.initiallyCollapsed;
+    }
+    // Same contract for expansion, but applied PER ID. Comparing whole seed
+    // sets and assigning wholesale meant that any group arriving with a changed
+    // seed re-derived every other group too — so a group the user had just
+    // closed sprang back open under the cursor. Consumers that rebuild
+    // navItems from live data (aodex's PROJECTS) hit that on every refresh.
+    _syncExpansion(oldWidget.navItems, widget.navItems);
+  }
+
+  /// Reconciles [_expandedGroupIds] against a new [newItems] list.
+  ///
+  /// Two rules, in order:
+  ///  1. Prune — an id whose group is gone is dropped, so a group that is
+  ///     deleted and later re-added does not resurrect an old disclosure.
+  ///  2. Diff — only ids whose OWN `initiallyExpanded` actually changed are
+  ///     re-derived from the seed. Every other id keeps whatever the user last
+  ///     gestured. A group that is new to the list has no previous seed, so its
+  ///     seed is what it asks for.
+  void _syncExpansion(List<EdenNavItem> oldItems, List<EdenNavItem> newItems) {
+    final oldSeeds = _seedMap(oldItems);
+    final newSeeds = _seedMap(newItems);
+
+    _expandedGroupIds.removeWhere((id) => !newSeeds.containsKey(id));
+
+    for (final entry in newSeeds.entries) {
+      if (oldSeeds[entry.key] == entry.value) continue;
+      if (entry.value) {
+        _expandedGroupIds.add(entry.key);
+      } else {
+        _expandedGroupIds.remove(entry.key);
+      }
     }
   }
 
@@ -129,47 +179,122 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                     ),
                     children: [
                       for (final item in widget.navItems) ...[
-                        if (item.children.isNotEmpty) ...[
+                        // Non-interactive items first. Both are skipped in the
+                        // 72px rail: a rule or a 10px shouted word in an icon
+                        // column is noise (D5 — the collapsed rail is icons).
+                        if (item.isDivider) ...[
                           if (!_collapsed)
                             Padding(
                               key: item.widgetKey,
-                              padding: const EdgeInsets.only(
-                                left: 12, top: 16, bottom: 4,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: EdenSpacing.space2,
                               ),
-                              child: Text(
-                                item.label.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                              child: Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                            ),
+                        ] else if (item.isCaption) ...[
+                          if (!_collapsed)
+                            _NavSectionLabel(key: item.widgetKey, label: item.label),
+                        ] else if (item.children.isNotEmpty) ...[
+                          if (!_collapsed && item.expandable) ...[
+                            _ExpandableNavHeader(
+                              key: item.widgetKey,
+                              item: item,
+                              expanded: _expandedGroupIds.contains(item.id),
+                              // A CLOSED group stands in for the selected child
+                              // it is hiding — otherwise a selection inside a
+                              // closed group leaves the whole sidebar with no
+                              // selection anywhere. Same substitution the 72px
+                              // rail already makes below, and for the same
+                              // reason: the child row is not on screen. Once
+                              // OPEN the child paints its own highlight, so the
+                              // header stops borrowing it.
+                              isSelected: item.id == widget.selectedId ||
+                                  (!_expandedGroupIds.contains(item.id) &&
+                                      item.children.any(
+                                          (c) => c.id == widget.selectedId)),
+                              onTap: () {
+                                final willExpand =
+                                    !_expandedGroupIds.contains(item.id);
+                                setState(() {
+                                  if (willExpand) {
+                                    _expandedGroupIds.add(item.id);
+                                  } else {
+                                    _expandedGroupIds.remove(item.id);
+                                  }
+                                });
+                                // Report the GROUP's own id — never
+                                // children.first.id as the collapsed branch
+                                // below does. A consumer must be able to scope
+                                // on the same tap that discloses (aodex's
+                                // PROJECTS header), and it cannot do that if it
+                                // can't tell a group tap from a child tap.
+                                //
+                                // But only on the EXPAND half. Closing a group
+                                // is tidying the sidebar; firing there yanked
+                                // the user back to the group they were putting
+                                // away, from wherever they actually were.
+                                if (willExpand) widget.onNavChanged(item.id);
+                              },
+                            ),
+                            if (_expandedGroupIds.contains(item.id))
+                              _DisclosedChildren(
+                                groupId: item.id,
+                                children: [
+                                  for (final child in item.children)
+                                    _NavTile(
+                                      item: child,
+                                      isSelected:
+                                          child.id == widget.selectedId,
+                                      collapsed: _collapsed,
+                                      onTap: () =>
+                                          widget.onNavChanged(child.id),
+                                    ),
+                                ],
+                              ),
+                          ] else ...[
+                            if (!_collapsed)
+                              Padding(
+                                key: item.widgetKey,
+                                padding: _kNavSectionLabelPadding,
+                                child: Text(
+                                  item.label.toUpperCase(),
+                                  style: _navSectionLabelStyle(theme),
                                 ),
                               ),
-                            ),
-                          if (!_collapsed)
-                            for (final child in item.children)
+                            if (!_collapsed)
+                              for (final child in item.children)
+                                _NavTile(
+                                  item: child,
+                                  isSelected: child.id == widget.selectedId,
+                                  collapsed: _collapsed,
+                                  onTap: () => widget.onNavChanged(child.id),
+                                )
+                            else
+                              // Collapsed: render parent icon but use first child's
+                              // ID for navigation and selection matching.
                               _NavTile(
-                                item: child,
-                                isSelected: child.id == widget.selectedId,
+                                item: EdenNavItem(
+                                  id: item.children.first.id,
+                                  label: item.label,
+                                  icon: item.icon,
+                                  activeIcon: item.activeIcon ?? item.children.first.activeIcon,
+                                  badge: item.children.first.badge,
+                                ),
+                                isSelected: item.children.any((c) => c.id == widget.selectedId),
                                 collapsed: _collapsed,
-                                onTap: () => widget.onNavChanged(child.id),
-                              )
-                          else
-                            // Collapsed: render parent icon but use first child's
-                            // ID for navigation and selection matching.
-                            _NavTile(
-                              item: EdenNavItem(
-                                id: item.children.first.id,
-                                label: item.label,
-                                icon: item.icon,
-                                activeIcon: item.activeIcon ?? item.children.first.activeIcon,
-                                badge: item.children.first.badge,
+                                onTap: () => widget.onNavChanged(item.children.first.id),
                               ),
-                              isSelected: item.children.any((c) => c.id == widget.selectedId),
-                              collapsed: _collapsed,
-                              onTap: () => widget.onNavChanged(item.children.first.id),
-                            ),
+                          ],
                         ] else
+                          // Leaf, INCLUDING an `expandable` group whose children
+                          // list is empty: no children means no disclosure, so
+                          // the chevron is ABSENT rather than inert and the item
+                          // renders exactly as it does today. aodex's PROJECTS
+                          // on a fresh account lands here (BCP-R8).
                           _NavTile(
                             item: item,
                             isSelected: item.id == widget.selectedId,
@@ -281,6 +406,208 @@ class _SidebarHeader extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Nav row geometry
+// ---------------------------------------------------------------------------
+
+/// Horizontal inset of a plain [_NavTile].
+const double _kNavTileHorizontalPadding = 12;
+
+/// The chevron column an [_ExpandableNavHeader] carries and a [_NavTile] does
+/// not: a leading pad, the chevron itself, and the gap after it.
+const double _kExpandableHeaderLeftPadding = 4;
+const double _kExpandableChevronSize = 18;
+const double _kExpandableChevronGap = 4;
+
+/// Vertical gap a nav row leaves under itself. Named so the containment rule
+/// can stop at the LAST child's bottom edge rather than overhang into it.
+const double _kNavRowBottomMargin = 2;
+
+/// The hairline that binds a disclosed group's children to their header.
+///
+/// It replaces the 14px indent 20-02 first used. An indent buys containment
+/// with the scarcest resource this rail has — label width, which already
+/// truncates — whereas a rule in the existing gutter costs zero layout width.
+/// Same device as aodex's knowledge folder browser, so the two surfaces agree.
+const double _kExpandableRuleWidth = 1;
+
+/// Inset from the children block's own left edge. The block starts at the
+/// ListView's 12px pad and a child icon starts 12 further in, so 5 lands the
+/// rule at dx 17: clear of the pad, clear of the icon column.
+const double _kExpandableRuleInset = 5;
+
+// ---------------------------------------------------------------------------
+// Section label (shared by the static group header and EdenNavItem.caption)
+// ---------------------------------------------------------------------------
+
+const EdgeInsets _kNavSectionLabelPadding =
+    EdgeInsets.only(left: 12, top: 16, bottom: 4);
+
+TextStyle _navSectionLabelStyle(ThemeData theme) => TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.8,
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+
+/// A passive band. No tap target, no icon, no `button: true` — a screen reader
+/// must not offer it as an action. Shares its style with the static group
+/// header above so a consumer's caption sits pixel-consistent beside it.
+class _NavSectionLabel extends StatelessWidget {
+  const _NavSectionLabel({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: _kNavSectionLabelPadding,
+      child: Text(
+        label.toUpperCase(),
+        style: _navSectionLabelStyle(Theme.of(context)),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Expandable group header
+// ---------------------------------------------------------------------------
+
+/// Disclosure header for a group with `expandable: true`.
+///
+/// Sentence case, not the shouted uppercase of the static band: a row the user
+/// can act on should not look like a passive heading.
+class _ExpandableNavHeader extends StatelessWidget {
+  const _ExpandableNavHeader({
+    super.key,
+    required this.item,
+    required this.expanded,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final EdenNavItem item;
+  final bool expanded;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fg = isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
+
+    // One semantics node for the whole header: `expanded` is the property the
+    // screen reader and the E2E tooling key on, and a competing label from the
+    // child Text would split it into two nodes. The chevron, icon and badge are
+    // decorative here — the count is folded into the label instead.
+    return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
+      button: true,
+      expanded: expanded,
+      selected: isSelected,
+      label: item.badge == null ? item.label : '${item.label}, ${item.badge}',
+      // The action has to live HERE, not on the GestureDetector: the
+      // ExcludeSemantics below deliberately drops the child subtree (so the
+      // chevron, icon, label and badge do not split into competing nodes), and
+      // it drops the GestureDetector's SemanticsAction.tap with them. Without
+      // this the node announces `button: true`, a reader double-taps, and
+      // nothing happens — the children become permanently unreachable.
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            height: 40,
+            margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
+            padding: const EdgeInsets.only(
+              left: _kExpandableHeaderLeftPadding,
+              right: _kNavTileHorizontalPadding,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
+              borderRadius: EdenRadii.borderRadiusMd,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  expanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                  size: _kExpandableChevronSize,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: _kExpandableChevronGap),
+                Icon(
+                  isSelected ? (item.activeIcon ?? item.icon) : item.icon,
+                  size: 20,
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: fg,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // A count belongs to the header, not to a phantom child row.
+                if (item.badge != null) _Badge(text: item.badge!),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Disclosed children of an expandable group
+// ---------------------------------------------------------------------------
+
+/// The rows of an OPEN group, bound to their header by a single vertical
+/// hairline in the gutter to their left.
+///
+/// The rows themselves keep the plain [_NavTile] inset, so a disclosed child is
+/// geometrically identical to any other nav row and no label width is spent on
+/// belonging. The rule is the whole containment signal: one continuous line
+/// from the top of the first child to the bottom of the last, never a segment
+/// per row, and never present on a collapsed group — the caller only builds
+/// this when the group is expanded.
+class _DisclosedChildren extends StatelessWidget {
+  const _DisclosedChildren({required this.groupId, required this.children});
+
+  final String groupId;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Stack(
+      children: [
+        Column(mainAxisSize: MainAxisSize.min, children: children),
+        Positioned(
+          left: _kExpandableRuleInset,
+          top: 0,
+          // Stop at the last row's content edge instead of overhanging into
+          // the margin it leaves for the next item.
+          bottom: _kNavRowBottomMargin,
+          child: Container(
+            key: ValueKey('eden-nav-group-rule-$groupId'),
+            width: _kExpandableRuleWidth,
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Nav tile
 // ---------------------------------------------------------------------------
 
@@ -321,7 +648,7 @@ class _NavTile extends StatelessWidget {
             child: Container(
               width: double.infinity,
               height: 44,
-              margin: const EdgeInsets.only(bottom: 2),
+              margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
               decoration: BoxDecoration(
                 color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
                 borderRadius: EdenRadii.borderRadiusMd,
@@ -353,8 +680,10 @@ class _NavTile extends StatelessWidget {
         onTap: onTap,
         child: Container(
           height: 40,
-          margin: const EdgeInsets.only(bottom: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _kNavTileHorizontalPadding,
+          ),
           decoration: BoxDecoration(
             color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
             borderRadius: EdenRadii.borderRadiusMd,
