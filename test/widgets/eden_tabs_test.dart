@@ -54,5 +54,43 @@ void main() {
       expect(find.byIcon(Icons.home), findsOneWidget);
       expect(find.byIcon(Icons.settings), findsOneWidget);
     });
+
+    testWidgets('an item key resolves to that tab, and its label is a '
+        'descendant', (tester) async {
+      final keyedTabs = [
+        const EdenTabItem(label: 'Overview', key: Key('x.tab.overview')),
+        const EdenTabItem(label: 'Details', key: Key('x.tab.details')),
+        const EdenTabItem(label: 'History'), // unkeyed sibling still renders
+      ];
+      await tester.pumpWidget(wrap(
+        EdenTabs(tabs: keyedTabs, selectedIndex: 0, onChanged: (_) {}),
+      ));
+
+      expect(find.byKey(const Key('x.tab.overview')), findsOneWidget);
+      expect(find.byKey(const Key('x.tab.details')), findsOneWidget);
+      expect(find.text('History'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('x.tab.details')),
+          matching: find.text('Details'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a keyed tab is tappable through its key', (tester) async {
+      int? selected;
+      final keyedTabs = [
+        const EdenTabItem(label: 'Overview', key: Key('x.tab.overview')),
+        const EdenTabItem(label: 'Details', key: Key('x.tab.details')),
+      ];
+      await tester.pumpWidget(wrap(
+        EdenTabs(
+            tabs: keyedTabs, selectedIndex: 0, onChanged: (i) => selected = i),
+      ));
+
+      await tester.tap(find.byKey(const Key('x.tab.details')));
+      expect(selected, 1);
+    });
   });
 }

@@ -8,11 +8,22 @@ class EdenTabItem {
     required this.label,
     this.icon,
     this.badge,
+    this.key,
   });
 
   final String label;
   final IconData? icon;
   final String? badge;
+
+  /// Optional test locator applied to the **outermost** rendered tab widget,
+  /// so `find.byKey(...)` resolves the tappable tab and the label/icon/badge
+  /// are its descendants.
+  ///
+  /// Mirrors [EdenTableRow.key]: [EdenTabItem] is a plain data class, so a
+  /// caller has no other way to address one tab of a set. Optional — every
+  /// existing `EdenTabItem(label: ...)` call site compiles unchanged, and when
+  /// null the rendered tree is identical to before.
+  final Key? key;
 }
 
 /// Mirrors the eden_tabs / eden_tab_item Rails components.
@@ -50,6 +61,7 @@ class EdenTabs extends StatelessWidget {
             final isSelected = index == selectedIndex;
 
             return Semantics(
+              key: tab.key,
               button: true,
               label: tab.label,
               selected: isSelected,

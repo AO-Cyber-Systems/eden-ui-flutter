@@ -146,6 +146,12 @@ class EdenDataTable extends StatelessWidget {
               );
             }
 
+            // Applied last so the key sits on the OUTERMOST row widget — a
+            // find.byKey then resolves the tappable row, not a child of it.
+            if (row.key != null) {
+              rowWidget = KeyedSubtree(key: row.key, child: rowWidget);
+            }
+
             return Column(
               children: [
                 rowWidget,
@@ -275,6 +281,7 @@ class _DenseBody extends StatelessWidget {
             : EdenColors.neutral[50]!.withValues(alpha: 0.5))
         : null;
     return Container(
+      key: row.key,
       height: _rowHeight,
       color: stripedBg,
       padding: const EdgeInsets.symmetric(horizontal: EdenDataTable._densePad),
@@ -347,7 +354,14 @@ class EdenTableColumn {
 
 /// Row data for [EdenDataTable].
 class EdenTableRow {
-  const EdenTableRow({required this.cells});
+  const EdenTableRow({required this.cells, this.key});
 
   final List<Widget> cells;
+
+  /// Optional key applied to the outermost rendered row widget.
+  ///
+  /// Lets a test locate a row by the identity of the record it renders rather
+  /// than by its position, e.g. `Key('posts_list.row.$id')`. Optional and
+  /// additive — existing `EdenTableRow(cells: [...])` call sites are unchanged.
+  final Key? key;
 }
