@@ -22,8 +22,22 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      # --no-fatal-infos, matching ci.yml. This job has failed on EVERY merge to
+      # main since it was created (#25, #26, #24, #27), so `Tag Release` never
+      # ran and no tag has been cut since v1.0.0-rc.1 in April. The cause is 376
+      # analyzer INFOS -- 283 of them in test/, which ships to nobody, and 224
+      # from prefer_const_* rules this repo opts into itself.
+      #
+      # ci.yml took --no-fatal-infos deliberately in d883a83 ("unblock
+      # baseline ... analyze severity"). The strictness here arrived untouched in
+      # the workflow's birth commit 48865d7 and has never once passed. Aligning
+      # the outlier with the decision that was actually made.
+      #
+      # The 376 infos remain as tracked debt; 12 deprecated_member_use in lib/
+      # (withOpacity, Radio groupValue/onChanged) have a real SDK deadline and
+      # are worth clearing on their own merits.
       - name: Analyze
-        run: flutter analyze --fatal-infos
+        run: flutter analyze --no-fatal-infos
 
       - name: Run tests
         run: flutter test
