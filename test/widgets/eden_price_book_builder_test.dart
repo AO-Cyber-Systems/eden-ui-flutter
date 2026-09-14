@@ -1,4 +1,5 @@
 import 'package:eden_ui_flutter/src/widgets/eden_price_book_builder.dart';
+import 'package:eden_ui_flutter/src/widgets/eden_select.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -122,9 +123,16 @@ void main() {
         initialData: PriceBookFixtures.hvac(),
         onSave: (_) {},
       ), width: 800);
-      // EdenSelect renders a DropdownButtonFormField — verify by type
-      expect(find.byType(DropdownButtonFormField<EdenPriceBookSection>),
-          findsOneWidget);
+      // Assert the PUBLIC widget, not a Material internal. This previously
+      // asserted DropdownButtonFormField, reaching through EdenSelect to the
+      // Material widget it happened to wrap -- so dropping that wrapper for
+      // Eden's own overlay menu broke a case whose actual intent ("narrow
+      // width shows a select instead of tabs") still holds perfectly.
+      //
+      // EdenSelect's own suite covers the behaviour (opens on tap, lists
+      // options, fires onChanged, disabled stays shut); this case only needs
+      // to know WHICH control the builder chose at 800pt.
+      expect(find.byType(EdenSelect<EdenPriceBookSection>), findsOneWidget);
     });
 
     testWidgets('renders without overflow at 390pt iPhone-narrow',
