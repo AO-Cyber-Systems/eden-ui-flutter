@@ -312,6 +312,104 @@ Purposes that resolve `autofillHints == null` — `multilineText`, `searchQuery`
 `quantity`, `none` — contribute no hint, so no id, so **no collision**. Repeated notes fields can
 safely carry `multilineText`.
 
+### The geometry problem — correct hints are still not enough on web
+
+Everything above can be perfect and a password manager will still ignore the form, because of a
+second, independent defect: **Flutter's engine collapses every autofill input that is not currently
+focused to a zero-sized box.**
+
+From `web_ui/.../text_editing.dart`, `_styleAutofillElements()`:
+
+```dart
+if (shouldHideElement) {
+  elementStyle
+    ..width = '0'
+    ..height = '0';
+}
+```
+
+`EngineAutofillForm.fromFrameworkMessage` calls it as
+`shouldHideElement: !isSafariDesktopStrategy`. Flutter hit this exact problem before and shipped a
+fix — but **only for Safari Desktop** ([flutter#71275](https://github.com/flutter/flutter/issues/71275),
+quoted in that same source comment). On Chrome, Edge, Brave and Firefox every field except the
+focused one is a `0x0` box.
+
+Password managers deliberately skip non-visible fields when deciding whether something is a login
+form, and 1Password's own guidance is to hide with `opacity: 0` rather than `width: 0; height: 0`.
+A login form needs a **visible password field** to be classified as a login form at all — so the
+password field is never seen, the form is never classified, and no fill is ever offered.
+
+**Measured live in Chromium** on the built catalog (Autofill → Login Form), after focusing the email
+field — before the shim, and with it installed:
+
+| element | before | with the shim | note |
+|---|---|---|---|
+| `email` (focused) | `819x22` | `819x22` — untouched | the focused field always has real dimensions |
+| `current-password` (not focused) | **`0x0`** | **`160x24`, `opacity: 0`** | the bug, and the fix |
+| `.submitBtn` | `0x0` at `-9999px` | `0x0` — untouched | the SAVE trigger, not a fill target |
+
+Typing was confirmed end to end across a focus swap: both values coexisted, and swapping focus
+restyled correctly in both directions.
+
+### What the shim does
+
+`EdenAutofillScope` installs it automatically on web (`initState`, behind `kIsWeb`). You do not need
+to call anything.
+
+- It is **web-only**, behind a conditional import. Off web it is a compile-time no-op and
+  `dart:js_interop` is never reached.
+- A `MutationObserver` watches for added nodes and for `style` attribute changes, because **the
+  engine rewrites these styles on every focus change** — a one-shot sweep at startup would be undone
+  by the first focus swap.
+- A collapsed input is given `width: 160px; height: 24px; opacity: 0; position: absolute;
+  pointer-events: none`, each `!important`. Non-zero box, invisible to the user, non-interactive.
+- It **never touches the focused field**: it only matches elements whose *inline* width or height is
+  zero, and the focused field carries real dimensions.
+- It **never touches the hidden `type="submit"` button**, which must stay `0x0` and offscreen —
+  that is the element `finishAutofillContext` clicks to raise the save prompt.
+- It never uses `visibility: hidden` or `display: none`; both would re-hide the field and reinstate
+  the bug.
+
+### Opting out
+
+```dart
+void main() {
+  edenWebAutofillFixEnabled = false; // exported from package:eden_ui_flutter/eden_ui.dart
+  runApp(const MyApp());
+}
+```
+
+Set it **before the first `EdenAutofillScope` mounts**. The call is safe to write unconditionally —
+the non-web stub declares the same flag, so you do not need to guard it with `kIsWeb`.
+
+### How far this is actually verified
+
+The **predicate** — which elements may be restyled, and the two that must never be
+(focused field, submit button) — is pure Dart and is covered by
+`test/widgets/eden_web_autofill_fix_test.dart`.
+
+The **DOM half** — the observer, and the restyle itself — has **no automated coverage and cannot
+have any**: `kIsWeb` is a compile-time constant and `false` under `flutter test`, so the web
+implementation is not even compiled by the unit suite. It is verified by recorded real-browser
+measurement (`40-19-BROWSER-EVIDENCE.md` and the table above), **not** by the test suite. Do not
+add a test that appears to cover it.
+
+### This is a workaround; it should not outlive the bug
+
+Tracked upstream as [flutter#61301](https://github.com/flutter/flutter/issues/61301) (open since
+2020, P1) and [flutter#174773](https://github.com/flutter/flutter/issues/174773). **If the engine
+stops collapsing non-focused autofill inputs, this shim becomes redundant and should be deleted**,
+not left in place fighting a fix.
+
+### Known follow-on, NOT handled here
+
+Once the field is detectable, [flutter#125125](https://github.com/flutter/flutter/issues/125125)
+becomes reachable: 1Password draws its own coloured box over the input it has identified, and
+because the input is an invisible overlay rather than the painted Flutter field, that box can appear
+in the wrong place. Neutralising CSS may be needed. **This package does not handle it today** — the
+shim makes the field detectable and stops there. If you see a stray coloured rectangle over a login
+form on web, that is this, not a layout bug in your app.
+
 ---
 
 ## 6. Selection and copy
@@ -487,6 +585,8 @@ workarounds that fight the engine.
 | [flutter#116889](https://github.com/flutter/flutter/issues/116889) | `finishAutofillContext()` doesn't bring up the system prompt (iOS) | Open |
 | [flutter#69111](https://github.com/flutter/flutter/issues/69111) | `finishAutofillContext()` doing nothing; cannot save user input (Android) | Open |
 | [flutter#104547](https://github.com/flutter/flutter/issues/104547) | Reimplement `SelectableText` on `SelectionArea` | Open — confirms `SelectionArea` is the strategic API |
+| [flutter#71275](https://github.com/flutter/flutter/issues/71275) | Non-focused autofill inputs collapsed to `0x0`; fixed for Safari Desktop only | Fixed for Safari Desktop only — see section 5 |
+| [flutter#125125](https://github.com/flutter/flutter/issues/125125) | 1Password draws a coloured box over the detected input | Open — NOT worked around here |
 
 **What this means in practice:** correct hints + an autofill group + `finishAutofillContext` is the
 **ceiling** of what the framework can deliver today. Browser-extension password managers on Flutter
