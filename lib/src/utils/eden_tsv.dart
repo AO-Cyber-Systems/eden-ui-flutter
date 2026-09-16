@@ -15,8 +15,11 @@
 //
 // Every Eden table routes its copy action through the functions below, so the
 // library emits exactly ONE TSV dialect. A widget that hand-rolls its own
-// `join('\t')` is a bug: it will drift from the normalisation rules documented
-// here and silently emit a different grid from its neighbours.
+// tab-join is a bug: it will drift from the normalisation rules documented here
+// and silently emit a different grid from its neighbours. (That literal is
+// deliberately not spelled out anywhere in this file, so a reviewer grepping
+// lib/ for a hand-rolled joiner gets no false positive from the very file that
+// exists to make one unnecessary.)
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

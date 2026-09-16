@@ -196,7 +196,15 @@ void main() {
     test('recurses through the other whitelisted single-child wrappers', () {
       expect(edenExtractWidgetText(const Center(child: Text('c'))), 'c');
       expect(edenExtractWidgetText(const SizedBox(child: Text('s'))), 's');
-      expect(edenExtractWidgetText(Container(child: const Text('k'))), 'k');
+      expect(
+        edenExtractWidgetText(
+          // A bare Container(child:) trips avoid_unnecessary_containers; the
+          // padding makes it a real one. The walker reads Container.child off
+          // the widget object either way.
+          Container(padding: EdgeInsets.zero, child: const Text('k')),
+        ),
+        'k',
+      );
       expect(
         edenExtractWidgetText(
           const Tooltip(message: 'hint', child: Text('t')),
