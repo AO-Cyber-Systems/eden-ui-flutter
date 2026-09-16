@@ -260,6 +260,31 @@ void main() {
       expect(captured, isNot(contains('null')));
     });
 
+    // Case 5c — a column that declares NO cellBuilder at all. Distinct from a
+    // cell that renders something textless: there is no widget to extract from,
+    // so this is its own branch, and the mutation sweep found it uncovered
+    // while 5b passed (40-RESEARCH.md Appendix B5 — one mutation per path).
+    testWidgets('a column with no cellBuilder copies as an empty cell',
+        (WidgetTester tester) async {
+      final List<EdenGridColumn<_Person>> columns = <EdenGridColumn<_Person>>[
+        EdenGridColumn<_Person>(
+          id: 'name',
+          label: 'Name',
+          cellBuilder: (_Person row, int index) => Text(row.name),
+        ),
+        // No cellBuilder, no copyValue. The grid renders SizedBox.shrink here.
+        const EdenGridColumn<_Person>(id: 'blank', label: 'Blank'),
+      ];
+
+      await tester.pumpWidget(_host(rows: _kPeople, columns: columns));
+
+      await tester.tap(find.byTooltip('Copy row').first);
+      await tester.pump();
+
+      expect(captured, 'Alice\t');
+      expect(captured, isNot(contains('null')));
+    });
+
     // Case 6.
     testWidgets('copyable: false renders no affordance',
         (WidgetTester tester) async {

@@ -272,6 +272,26 @@ void main() {
       expect(captured, isNot(contains('\n')));
     });
 
+    // Case 16c2 — copy-row scope, asserted with TWO results present.
+    //
+    // The single-result fixtures above cannot prove this: with one row,
+    // "copy this row" and "copy every row" produce byte-identical output, so a
+    // widget that copied the whole table would pass them. The mutation sweep
+    // caught exactly that (40-RESEARCH.md Appendix B5).
+    testWidgets('copy-row copies only its own result',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(_host());
+
+      // Default sort is date descending, so Hemoglobin renders first.
+      await tester.tap(find.byTooltip('Copy row').first);
+      await tester.pump();
+
+      expect(captured, startsWith('Hemoglobin\t'));
+      expect(captured, isNot(contains('\n')));
+      expect(captured, isNot(contains('Albumin')));
+      expect(captured, isNot(contains('ALB')));
+    });
+
     // Case 16d.
     testWidgets('copyable: false renders no affordance',
         (WidgetTester tester) async {
