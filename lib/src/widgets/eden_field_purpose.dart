@@ -395,6 +395,18 @@ enum EdenFieldPurpose {
         EdenFieldPurpose.searchQuery => const EdenFieldSemantics(
             keyboardType: TextInputType.text,
             textInputAction: TextInputAction.search,
+            // Search boxes in this library are command palettes, log and audit
+            // filters, branch/ref pickers and column filters. Their input is
+            // identifiers, regex fragments and git refs — never prose. Letting
+            // the keyboard rewrite what was typed turns a filter that finds
+            // nothing into a filter that silently finds the WRONG thing, with
+            // no visible cause.
+            //
+            // Set here rather than at each call site on purpose: per-site
+            // overrides are precisely the independent-property drift that
+            // EdenFieldPurpose exists to delete.
+            autocorrect: false,
+            enableSuggestions: false,
           ),
         EdenFieldPurpose.multilineText => const EdenFieldSemantics(
             keyboardType: TextInputType.multiline,

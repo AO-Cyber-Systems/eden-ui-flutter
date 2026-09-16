@@ -390,4 +390,22 @@ void main() {
       );
     });
   });
+
+  test('searchQuery disables autocorrect and suggestions', () {
+    // Search boxes in this library are command palettes, log/audit filters,
+    // branch-ref pickers and column filters: identifiers, regex fragments and
+    // git refs, never prose. An autocorrected filter does not fail loudly - it
+    // silently matches the WRONG thing.
+    //
+    // Pinned centrally because per-site overrides are the independent-property
+    // drift EdenFieldPurpose exists to delete. EdenFieldSemantics defaults BOTH
+    // of these to true, so this only holds while searchQuery overrides them.
+    final EdenFieldSemantics s = EdenFieldPurpose.searchQuery.semantics;
+    expect(s.autocorrect, isFalse,
+        reason: 'a rewritten query silently matches the wrong thing');
+    expect(s.enableSuggestions, isFalse);
+    expect(s.textInputAction, TextInputAction.search);
+    expect(s.autofillHints, isNull,
+        reason: 'a search box has no autofill identity to offer');
+  });
 }
