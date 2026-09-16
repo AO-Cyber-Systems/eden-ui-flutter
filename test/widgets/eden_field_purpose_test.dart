@@ -359,7 +359,7 @@ void main() {
           continue;
         }
         byHintList
-            .putIfAbsent(hints.join(' '), () => <EdenFieldPurpose>[])
+            .putIfAbsent(hints.join('\u0000'), () => <EdenFieldPurpose>[])
             .add(purpose);
       }
 
