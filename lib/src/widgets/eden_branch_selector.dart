@@ -333,6 +333,14 @@ class _EdenBranchPopoverState extends State<_EdenBranchPopover> {
         EdenSpacing.space3,
         EdenSpacing.space2,
       ),
+      // eden-field-purpose: EdenFieldPurpose.none — an incremental filter
+      // over the already-loaded branch/tag list. The text typed here is a query
+      // against `widget.branches`, never a value a password manager could
+      // supply, so no autofill hint is truthful. Deliberately NOT searchQuery:
+      // there is no onSubmitted, so TextInputAction.search would put a
+      // misleading action key on the soft keyboard. Shape C: marker comment, no
+      // semantics spread — spreading none.semantics would autocorrect and
+      // sentence-capitalize git refs, which are case-sensitive.
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocus,
@@ -600,6 +608,12 @@ class _EdenBranchPopoverState extends State<_EdenBranchPopover> {
               ),
               const SizedBox(width: EdenSpacing.space2),
               Expanded(
+                // eden-field-purpose: EdenFieldPurpose.none — the name of a
+                // git branch being created. A ref name is a repository
+                // identifier, never a value a password manager holds, so no
+                // autofill hint is truthful. Shape C: marker comment, no
+                // semantics spread — spreading none.semantics would
+                // autocorrect and sentence-capitalize a case-sensitive git ref.
                 child: TextField(
                   controller: _createController,
                   style: TextStyle(

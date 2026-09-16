@@ -249,6 +249,15 @@ class _NumericField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // eden-field-purpose: EdenFieldPurpose.none — a font-size style value
+    // (8–72pt), authoring content rather than anything a password manager
+    // could supply, so no autofill hint is truthful. Deliberately NOT
+    // decimalAmount: that purpose resolves the same numeric keyboard but also
+    // TextInputAction.next, and this field commits on submit / tap-outside, so
+    // moving focus on Enter would change behaviour for no autofill gain
+    // (the enum emits zero hints for both members). Shape C: marker comment,
+    // no semantics spread — spreading none.semantics would replace the
+    // decimal keyboard with TextInputType.text.
     return TextField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

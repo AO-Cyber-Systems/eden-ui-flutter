@@ -466,6 +466,19 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
                         fontStyle: FontStyle.italic,
                       ),
                     )
+                  // eden-field-purpose: EdenFieldPurpose.none — one note row
+                  // of a variable-length checklist, rendered once per item and
+                  // recursively per child. A note is authoring content, not a
+                  // value a password manager could supply, so no autofill hint
+                  // is truthful; and N rows sharing one hint would emit N DOM
+                  // elements with the same id/name
+                  // (text_editing.dart:514-531). Deliberately NOT
+                  // multilineText even though maxLines is 2: maxLines != 1
+                  // already resolves TextInputType.multiline and
+                  // TextInputAction.newline in TextField's own initializer
+                  // (text_field.dart:355), so the purpose would only add
+                  // sentence capitalization to a repeated row. Shape C: marker
+                  // comment, no semantics spread.
                   : TextField(
                       controller: TextEditingController(text: item.note),
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -652,6 +665,11 @@ class _EdenChecklistBuilderState extends State<EdenChecklistBuilder> {
     return Row(
       children: [
         Expanded(
+          // eden-field-purpose: EdenFieldPurpose.none — the text of a new
+          // checklist item. Authoring content the user is composing, never a
+          // value a password manager holds, so no autofill hint is truthful.
+          // Shape C: marker comment, no semantics spread — spreading
+          // none.semantics would force sentence capitalization onto item text.
           child: TextField(
             controller: _addController,
             focusNode: _addFocus,

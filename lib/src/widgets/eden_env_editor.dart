@@ -233,6 +233,14 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
       child: Row(
         children: [
           // Key field
+          // eden-field-purpose: EdenFieldPurpose.none — the NAME of an
+          // environment variable, rendered once per entry. An env key is a
+          // config identifier, never a value a password manager holds, so no
+          // autofill hint is truthful; and N rows sharing one hint would emit N
+          // DOM elements with the same id/name (text_editing.dart:514-531).
+          // Shape C: marker comment, no semantics spread — spreading
+          // none.semantics would force sentence capitalization onto a key that
+          // is conventionally SCREAMING_SNAKE_CASE.
           Expanded(
             flex: 3,
             child: TextField(
@@ -267,6 +275,21 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
             ),
           ),
           // Value field
+          // eden-field-purpose: EdenFieldPurpose.none — the VALUE of an
+          // environment variable, rendered once per entry. Deliberately NOT
+          // currentPassword or any other password-family purpose even though
+          // this value may be a secret: that hint would make a password manager
+          // offer the user's saved LOGIN credentials for an unrelated config
+          // value, and offer to save this one as a login. Masking is a
+          // presentation concern handled by the reveal toggle below (and by
+          // EdenSecretField where a first-class secret is wanted), not by an
+          // autofill hint. N rows sharing one hint would also emit N DOM
+          // elements with the same id/name (text_editing.dart:514-531).
+          // Shape C: marker comment, no semantics spread — spreading
+          // none.semantics would overwrite the dynamic `obscureText` below and
+          // break the reveal toggle. While obscured, copy and cut are
+          // hard-disabled by the framework (editable_text.dart:2641-2646);
+          // revealing the value restores both. That posture is unchanged here.
           Expanded(
             flex: 5,
             child: TextField(

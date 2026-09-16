@@ -195,6 +195,14 @@ class _EdenLabelPickerContentState extends State<_EdenLabelPickerContent> {
           Divider(height: 1, color: theme.colorScheme.outlineVariant),
 
           // Search
+          // eden-field-purpose: EdenFieldPurpose.none — an incremental filter
+          // over the already-loaded label list. The text typed here is a query
+          // against `widget.labels`, never a value a password manager could
+          // supply, so no autofill hint is truthful. Deliberately NOT
+          // searchQuery: there is no onSubmitted, so TextInputAction.search
+          // would put a misleading action key on the soft keyboard. Shape C:
+          // marker comment, no semantics spread — spreading none.semantics
+          // would sentence-capitalize a filter box.
           Padding(
             padding: const EdgeInsets.all(EdenSpacing.space4),
             child: TextField(
@@ -381,6 +389,12 @@ class _CreateForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // eden-field-purpose: EdenFieldPurpose.none — the name of a new
+          // label being authored. A label name is taxonomy the user is
+          // composing, never a value a password manager holds, so no autofill
+          // hint is truthful. Shape C: marker comment, no semantics spread —
+          // spreading none.semantics would force sentence capitalization onto a
+          // label name.
           TextField(
             controller: nameController,
             autofocus: true,

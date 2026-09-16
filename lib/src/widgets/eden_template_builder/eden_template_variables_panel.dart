@@ -68,6 +68,15 @@ class _EdenTemplateVariablesPanelState
                 ),
               ),
               const SizedBox(height: 8),
+              // eden-field-purpose: EdenFieldPurpose.none — an incremental
+              // filter over the already-loaded variables registry. The text
+              // typed here is a query against `allGroups`, never a value a
+              // password manager could supply, so no autofill hint is truthful.
+              // Deliberately NOT searchQuery: there is no onSubmitted, so
+              // TextInputAction.search would put a misleading action key on the
+              // soft keyboard. Shape C: marker comment, no semantics spread —
+              // spreading none.semantics would change textCapitalization to
+              // sentences on a filter box.
               TextField(
                 decoration: const InputDecoration(
                   hintText: 'Search fields…',
