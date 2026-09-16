@@ -258,6 +258,19 @@ class _MonthField extends StatelessWidget {
         children: [
           const Text('Month', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 4),
+          // eden-field-purpose: EdenFieldPurpose.none — one component of a
+          // memorable date, not an autofillable value in its own right.
+// Why not EdenFieldPurpose.birthday: AutofillHints.birthday denotes the
+// WHOLE date. This widget renders three SEPARATE component fields, and
+// EdenFieldPurpose models no split birthdayDay / birthdayMonth /
+// birthdayYear members, so tagging a 2-digit component with the
+// whole-date hint would be a false semantic claim AND would give three
+// DOM elements the same id/name (text_editing.dart:514-531). The dartdoc
+// also scopes this widget to "date-of-birth and SIMILAR inputs" with an
+// arbitrary firstDate/lastDate range, so it is not birthday-only.
+// Shape C (marker comment, no semantics spread) is used deliberately:
+// none.semantics resolves TextInputType.text, which would regress the
+// numeric keypad these digitsOnly fields already have.
           if (asText)
             TextField(
               controller: controller,
@@ -326,6 +339,8 @@ class _DayField extends StatelessWidget {
         children: [
           const Text('Day', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 4),
+          // eden-field-purpose: EdenFieldPurpose.none — day component of a
+          // memorable date; see the Month field above for the full rationale.
           TextField(
             controller: controller,
             decoration: InputDecoration(
@@ -370,6 +385,8 @@ class _YearField extends StatelessWidget {
         children: [
           const Text('Year', style: TextStyle(fontSize: 12)),
           const SizedBox(height: 4),
+          // eden-field-purpose: EdenFieldPurpose.none — year component of a
+          // memorable date; see the Month field above for the full rationale.
           TextField(
             controller: controller,
             decoration: InputDecoration(

@@ -360,6 +360,12 @@ class _OverlayContent<T> extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Search field.
+                  // eden-field-purpose: EdenFieldPurpose.none — an in-overlay
+                  // filter over the already-loaded option list. Same reasoning
+                  // as EdenCombobox: the text is a query, not a value.
+                  // Deliberately NOT searchQuery — there is nothing to submit,
+                  // so TextInputAction.search would put a misleading action key
+                  // on the soft keyboard. Shape C: marker comment, no spread.
                   if (searchable)
                     Padding(
                       padding: const EdgeInsets.all(8),
