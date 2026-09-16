@@ -7,7 +7,8 @@
 // to stdout). The test pins the eden-docs ManifestEntry contract that the Go
 // portal merges in: explorer=='flutter', non-empty id/component/name/path,
 // path == '/flutter/#/story/<id>', NO 'status' key, sorted by (component, name),
-// and one entry per registered story (45 from 38-05).
+// and one entry per registered story (45 from 38-05, plus the 4 autofill /
+// selection stories Objective 040 adds -> 49).
 
 import 'dart:convert';
 
@@ -30,7 +31,9 @@ void main() {
       StoryRegistry.instance.all().length,
       reason: 'one manifest entry per registered story',
     );
-    expect(entries.length, 45, reason: '38-05 registers 45 stories');
+    expect(entries.length, 49,
+        reason: '38-05 registers 45 stories; Objective 40 adds 4 '
+            'autofill/selection stories');
   });
 
   test('every entry matches the eden-docs flutter ManifestEntry contract', () {

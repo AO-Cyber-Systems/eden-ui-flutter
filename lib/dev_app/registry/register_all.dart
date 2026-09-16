@@ -2,8 +2,10 @@
 //
 // Central story registration for the Eden Flutter component explorer (38-05).
 //
-// Registers all 45 stories in three groups:
+// Registers all 49 stories in four groups:
 //   - 6 interactive stories (one knob-driven story per interactive component)
+//   - 4 autofill/selection stories (Objective 040 - EdenFieldPurpose,
+//     EdenAutofillScope, EdenSelectableRegion and table TSV copy)
 //   - 6 gallery stories    (full-screen overview for each interactive component)
 //   - 33 static stories    (zero-knob wrapper for every non-interactive screen)
 //
@@ -19,6 +21,7 @@ import '../screens/cards_screen.dart';
 import '../screens/inputs_screen.dart';
 import '../screens/navigation_screen.dart';
 import '../screens/overlays_screen.dart';
+import '../stories/autofill_selection_story.dart';
 import '../stories/overlays_story.dart';
 import '../stories/static_stories.dart';
 import 'eden_story.dart';
@@ -83,16 +86,21 @@ final List<EdenStory> _galleryStories = [
 // Entry point
 // ---------------------------------------------------------------------------
 
-/// Registers all 45 [EdenStory] instances with [StoryRegistry.instance].
+/// Registers all 49 [EdenStory] instances with [StoryRegistry.instance].
 ///
 /// Call once before `runApp()`. In tests, call after `StoryRegistry.instance.clear()`
 /// in `setUp()` to ensure a clean slate.
 ///
-/// Registration order: interactive → galleries → static.
+/// Registration order: interactive → autofill/selection → galleries → static.
+/// Order of registration does not affect output order: [StoryRegistry.all]
+/// sorts by (component, name).
 void registerAllStories() {
   final registry = StoryRegistry.instance;
 
   for (final story in interactiveStories) {
+    registry.register(story);
+  }
+  for (final story in autofillSelectionStories) {
     registry.register(story);
   }
   for (final story in _galleryStories) {
