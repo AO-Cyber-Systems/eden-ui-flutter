@@ -110,12 +110,24 @@ void _disableBrowserContextMenuOnce() {
 /// )
 /// ```
 ///
-/// ## Nesting is safe
+/// ## Nesting collapses instead of fragmenting
 ///
-/// An [EdenSelectableRegion] inside another [EdenSelectableRegion] is redundant
-/// but harmless: `SelectionArea` scopes selection to the nearest ancestor
-/// registrar, so the inner region simply owns its own subtree. Nothing throws
-/// and no text becomes unreachable. Prefer a single region high in the tree.
+/// Objective 040 installs this widget at more than one level ON PURPOSE — the
+/// Eden layouts wrap `body`, the Eden pages wrap their content, and the
+/// `MaterialApp.builder` recipe above wraps the whole app — so nesting is the
+/// DEFAULT, not an edge case.
+///
+/// Two raw `SelectionArea`s nested inside each other are two SEPARATE selection
+/// scopes: a drag begun in the outer one stops dead at the inner one's boundary,
+/// so "select the whole page" would silently break exactly where more selection
+/// was added. To prevent that, a *plain* nested [EdenSelectableRegion] — one
+/// with no [contextMenuBuilder], [onSelectionChanged] or [focusNode] — detects
+/// the ancestor region and becomes a no-op, leaving a single scope that spans
+/// everything.
+///
+/// A *configured* nested region is still honoured and does open its own scope,
+/// because that is an explicit request: silently discarding a caller's
+/// [contextMenuBuilder] would be worse than the extra scope.
 ///
 /// ## Tables need TSV copy as well
 ///
@@ -184,25 +196,68 @@ class _EdenSelectableRegionState extends State<EdenSelectableRegion> {
     }
   }
 
+  /// True when this region carries no caller-specific configuration — i.e. it
+  /// is a bare "make this subtree selectable" wrapper rather than a deliberate
+  /// nested scope with its own menu, focus or change callback.
+  bool get _isPlainWrapper =>
+      widget.contextMenuBuilder == null &&
+      widget.onSelectionChanged == null &&
+      widget.focusNode == null;
+
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) {
       return widget.child;
     }
+
+    // Objective 040 bakes this widget in at MORE THAN ONE level by design:
+    // EdenDesktopLayout/EdenMobileLayout wrap `body`, the Eden pages wrap their
+    // own content, and the documented MaterialApp.builder recipe wraps the whole
+    // app. Nesting is therefore the DEFAULT outcome, not an edge case.
+    //
+    // Two nested SelectionAreas are two SEPARATE selection scopes: a drag begun
+    // in the outer one stops dead at the inner one's boundary, so "select the
+    // whole page" silently stops working exactly where we added more selection.
+    //
+    // So a PLAIN inner wrapper defers to the ancestor and becomes a no-op. A
+    // configured one (custom menu / focus node / change callback) is honoured,
+    // because that is an explicit request for a distinct scope — silently
+    // dropping a caller's contextMenuBuilder would be worse than the nesting.
+    final hasAncestor =
+        context.dependOnInheritedWidgetOfExactType<_EdenSelectionScope>() != null;
+    if (hasAncestor && _isPlainWrapper) {
+      return widget.child;
+    }
+
     // `contextMenuBuilder` is forwarded ONLY when non-null so that
     // `SelectionArea`'s own Material default survives a null here.
-    if (widget.contextMenuBuilder == null) {
-      return SelectionArea(
-        focusNode: widget.focusNode,
-        onSelectionChanged: widget.onSelectionChanged,
-        child: widget.child,
-      );
-    }
-    return SelectionArea(
-      focusNode: widget.focusNode,
-      onSelectionChanged: widget.onSelectionChanged,
-      contextMenuBuilder: widget.contextMenuBuilder,
-      child: widget.child,
-    );
+    final Widget area = widget.contextMenuBuilder == null
+        ? SelectionArea(
+            focusNode: widget.focusNode,
+            onSelectionChanged: widget.onSelectionChanged,
+            child: widget.child,
+          )
+        : SelectionArea(
+            focusNode: widget.focusNode,
+            onSelectionChanged: widget.onSelectionChanged,
+            contextMenuBuilder: widget.contextMenuBuilder,
+            child: widget.child,
+          );
+
+    return _EdenSelectionScope(child: area);
   }
+}
+
+/// Marks that an [EdenSelectableRegion] is already active above this point in
+/// the tree, so a plain nested one can defer to it instead of opening a second,
+/// disjoint selection scope.
+///
+/// Private on purpose: this is an implementation detail of how Objective 040
+/// makes "selection on by default at several layers" compose. Callers control
+/// nesting through [EdenSelectableRegion.enabled] or `SelectionContainer.disabled`.
+class _EdenSelectionScope extends InheritedWidget {
+  const _EdenSelectionScope({required super.child});
+
+  @override
+  bool updateShouldNotify(_EdenSelectionScope oldWidget) => false;
 }

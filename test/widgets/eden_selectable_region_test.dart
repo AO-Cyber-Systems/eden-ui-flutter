@@ -65,20 +65,47 @@ void main() {
       expect(find.text('nested text'), findsOneWidget,
           reason: 'text under a nested region must stay reachable');
 
-      // The invariant that matters: the INNER subtree has exactly one owning
-      // region, because SelectionArea scopes selection to the nearest ancestor
-      // registrar. The inner region is redundant, not harmful.
+      // THE INVARIANT THAT MATTERS: a plain nested pair collapses to ONE
+      // scope, not two.
+      //
+      // Two nested SelectionAreas would be two SEPARATE selection scopes — a
+      // drag begun in the outer one stops dead at the inner one's boundary. Since
+      // Objective 040 installs this widget at several levels by design (layouts
+      // wrap `body`, pages wrap their content, the MaterialApp.builder recipe
+      // wraps the app), fragmenting on nest would silently break "select the
+      // whole page" exactly where more selection was added.
       expect(
-        find.descendant(
-          of: find.byType(EdenSelectableRegion).last,
-          matching: find.byType(SelectableRegion),
-        ),
+        find.byType(SelectableRegion),
         findsOneWidget,
+        reason: 'a PLAIN nested EdenSelectableRegion must defer to its ancestor '
+            'and become a no-op, leaving one scope spanning everything',
       );
+    });
 
-      // Observed total count for the nested pair, recorded in 40-02-SUMMARY:
-      // one SelectableRegion per EdenSelectableRegion (no de-duplication).
-      expect(find.byType(SelectableRegion), findsNWidgets(2));
+    testWidgets('a CONFIGURED nested region still opens its own scope',
+        (tester) async {
+      // The other half of the contract: collapsing is for bare wrappers only.
+      // Silently discarding an explicitly-passed contextMenuBuilder would be a
+      // worse failure than the extra scope, so a configured inner region is
+      // honoured.
+      await tester.pumpWidget(wrap(
+        EdenSelectableRegion(
+          child: EdenSelectableRegion(
+            contextMenuBuilder: (context, selectableRegionState) =>
+                const SizedBox.shrink(),
+            child: const Text('configured nested'),
+          ),
+        ),
+      ));
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('configured nested'), findsOneWidget);
+      expect(
+        find.byType(SelectableRegion),
+        findsNWidgets(2),
+        reason: 'an inner region carrying its own contextMenuBuilder is a '
+            'deliberate distinct scope and must NOT be collapsed away',
+      );
     });
 
     testWidgets('SelectionContainer.disabled excludes a subtree',
