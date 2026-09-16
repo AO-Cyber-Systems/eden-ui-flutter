@@ -690,22 +690,35 @@ void main() {
       await tester.tap(find.text('Reset password'));
       await tester.pumpAndSettle();
 
-      // TWO saves, and both are accounted for:
-      //   1. `EdenAutofillScope.commit()` on the success path -- the one this
-      //      TRD adds, fired at the moment the new password is accepted.
-      //   2. `AutofillGroupState.dispose()`, because
-      //      `AutofillGroup.onDisposeAction` DEFAULTS to
-      //      `AutofillContextAction.commit` (`autofill.dart:75`, dispatched at
-      //      `:232-243`) and reaching the success state unmounts the form that
-      //      holds the group.
+      // EXACTLY ONE save: the explicit `EdenAutofillScope.commit()` on the
+      // success path, fired at the moment the new password is accepted.
       //
-      // The second is pre-existing framework behaviour, not something this
-      // sweep introduced -- the page already wrapped these fields in a bare
-      // `AutofillGroup`. It is pinned here rather than tolerated as a fuzzy
-      // ">= 1" so that either half disappearing fails loudly.
-      expect(savesIn(calls), hasLength(2),
-          reason: 'one explicit commit on success, one from the framework '
-              'disposing the topmost AutofillGroup (autofill.dart:232-243)');
+      // This assertion used to expect TWO. The second came from
+      // `AutofillGroupState.dispose()`, because `AutofillGroup.onDisposeAction`
+      // DEFAULTS to `AutofillContextAction.commit` (`autofill.dart:75`,
+      // dispatched at `:232-243`), and reaching the success state unmounts the
+      // form holding the group.
+      //
+      // That implicit save was removed in `77279a6`: it fires on ANY unmount,
+      // so navigating away from a FAILED sign-in also offered to save the wrong
+      // password, and it bypassed both `commit()` and
+      // `EdenForm.commitAutofillOnSubmit` — the two controls that exist so
+      // saving happens only once the app knows the credential is good.
+      // `EdenAutofillScope` now defaults `onDisposeAction` to `cancel`.
+      //
+      // Pinned exactly, not as a fuzzy ">= 1", so that a silent return of the
+      // implicit save fails loudly here.
+      expect(savesIn(calls), hasLength(1),
+          reason: 'only the explicit success-path commit may save; dispose must '
+              'cancel (EdenAutofillScope.onDisposeAction defaults to cancel)');
+      expect(
+        calls.where((MethodCall c) =>
+            c.method == 'TextInput.finishAutofillContext' &&
+            c.arguments == false),
+        isNotEmpty,
+        reason: 'unmounting the form must still FINISH the autofill context — '
+            'as a cancel, so the platform is told to discard rather than save',
+      );
       expect(find.text('Password reset successful'), findsOneWidget,
           reason: 'the page must reach its success state too');
     });
