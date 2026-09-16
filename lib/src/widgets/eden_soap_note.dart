@@ -241,7 +241,7 @@ class _EdenSOAPNoteState extends State<EdenSOAPNote> {
               borderRadius: BorderRadius.circular(EdenRadii.sm),
               border: Border.all(color: theme.dividerColor, width: 1),
             ),
-            child: SelectableText(
+            child: Text(
               value.isEmpty ? '—' : value,
               style: theme.textTheme.bodyMedium,
             ),

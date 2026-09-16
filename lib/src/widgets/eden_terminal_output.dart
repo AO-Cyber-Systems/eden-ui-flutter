@@ -82,7 +82,7 @@ class EdenTerminalOutput extends StatelessWidget {
   Widget _buildOutputBody() {
     final outputWidget = SingleChildScrollView(
       padding: const EdgeInsets.all(EdenSpacing.space4),
-      child: SelectableText(
+      child: Text(
         output,
         style: TextStyle(
           fontFamily: 'monospace',

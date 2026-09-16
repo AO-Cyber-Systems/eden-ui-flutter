@@ -206,7 +206,7 @@ class _EdenCommitDetailState extends State<EdenCommitDetail> {
           ),
         ],
         const Spacer(),
-        SelectableText(
+        Text(
           widget.sha,
           style: theme.textTheme.bodySmall?.copyWith(
             fontFamily: 'monospace',

@@ -524,7 +524,7 @@ class _ArticleDetailHostState extends State<_ArticleDetailHost> {
           const SizedBox(height: EdenSpacing.space4),
 
           // Body
-          SelectableText(
+          Text(
             article.body?.isNotEmpty == true
                 ? article.body!
                 : 'No content available.',

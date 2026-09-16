@@ -234,7 +234,11 @@ void main() {
   });
 
   group('EdenReceiptPreview — sms mode', () {
-    testWidgets('sms mode renders a SelectableText', (tester) async {
+    // TRD 40-07: the sms body is now a plain Text. Selection is supplied by
+    // the ambient EdenSelectableRegion the layouts/pages install, not by the
+    // leaf widget, so these assert on Text -- the single-widget expectation
+    // below is what keeps `tester.widget<Text>` unambiguous.
+    testWidgets('sms mode renders a single plain Text body', (tester) async {
       await tester.pumpWidget(
         wrap(
           EdenReceiptPreview(
@@ -243,7 +247,9 @@ void main() {
           ),
         ),
       );
-      expect(find.byType(SelectableText), findsOneWidget);
+      expect(find.byType(Text), findsOneWidget,
+          reason: 'sms mode is one plain-text blob the consumer can copy; a '
+              'SelectableText here would be an un-draggable selection island');
     });
 
     testWidgets('sms mode body contains store name', (tester) async {
@@ -255,7 +261,7 @@ void main() {
           ),
         ),
       );
-      final selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      final selectable = tester.widget<Text>(find.byType(Text));
       expect(selectable.data, contains('Eden Coffee Co.'));
     });
 
@@ -268,7 +274,7 @@ void main() {
           ),
         ),
       );
-      final selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      final selectable = tester.widget<Text>(find.byType(Text));
       expect(selectable.data, contains('Total:'));
       expect(selectable.data, contains('Subtotal:'));
     });
@@ -282,7 +288,7 @@ void main() {
           ),
         ),
       );
-      final selectable = tester.widget<SelectableText>(find.byType(SelectableText));
+      final selectable = tester.widget<Text>(find.byType(Text));
       expect(selectable.data, contains('Espresso Single'));
       expect(selectable.data, contains('Croissant'));
     });

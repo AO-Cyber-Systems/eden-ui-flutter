@@ -304,7 +304,7 @@ class _EdenEmailViewerState extends State<EdenEmailViewer> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(EdenSpacing.space4),
-      child: SelectableText(
+      child: Text(
         content,
         style: isHtml
             ? theme.textTheme.bodyMedium
