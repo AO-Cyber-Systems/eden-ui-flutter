@@ -4,6 +4,7 @@ import '../tokens/spacing.dart';
 import '../widgets/eden_button.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_alert.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A forgot-password page that collects an email address and sends a reset link.
 ///
@@ -86,7 +87,7 @@ class _EdenForgotPasswordPageState extends State<EdenForgotPasswordPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Center(
+      body: EdenSelectableRegion(child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space5,
@@ -99,7 +100,7 @@ class _EdenForgotPasswordPageState extends State<EdenForgotPasswordPage> {
                 : _buildForm(theme, isDark),
           ),
         ),
-      ),
+      )),
     );
   }
 

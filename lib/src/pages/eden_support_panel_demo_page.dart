@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/support_panel/eden_support_panel.dart';
 import '../widgets/support_panel/eden_support_panel_config.dart';
 import '../widgets/support_panel/support_panel_models.dart';
+import '../widgets/eden_selectable_region.dart';
 
 // ---------------------------------------------------------------------------
 // Mock data
@@ -335,7 +336,7 @@ class _DemoContent extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Support Panel Demo')),
-      body: Center(
+      body: EdenSelectableRegion(child: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
@@ -377,7 +378,7 @@ class _DemoContent extends StatelessWidget {
             ],
           ),
         ),
-      ),
+      )),
     );
   }
 }

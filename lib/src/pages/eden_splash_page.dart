@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
 import '../widgets/eden_spinner.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A splash/loading page with branding, optional app name, tagline, spinner,
 /// and version text.
@@ -70,7 +71,7 @@ class _EdenSplashPageState extends State<EdenSplashPage>
 
     return Scaffold(
       backgroundColor: widget.backgroundColor ?? theme.colorScheme.surface,
-      body: Stack(
+      body: EdenSelectableRegion(child: Stack(
         children: [
           // --- Centered branding ---
           Center(
@@ -127,7 +128,7 @@ class _EdenSplashPageState extends State<EdenSplashPage>
               ),
             ),
         ],
-      ),
+      )),
     );
   }
 }

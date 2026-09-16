@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// Data class representing a single onboarding step.
 class EdenOnboardingStep {
@@ -89,7 +90,7 @@ class _EdenOnboardingPageState extends State<EdenOnboardingPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      body: SafeArea(
+      body: EdenSelectableRegion(child: SafeArea(
         child: Column(
           children: [
             // --- Top bar with skip ---
@@ -170,7 +171,7 @@ class _EdenOnboardingPageState extends State<EdenOnboardingPage> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A maintenance/downtime page displayed when the app or a service is
 /// undergoing scheduled maintenance.
@@ -50,7 +51,7 @@ class EdenMaintenancePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Center(
+    return EdenSelectableRegion(child: Center(
       child: Padding(
         padding: const EdgeInsets.all(EdenSpacing.space8),
         child: Column(
@@ -157,7 +158,7 @@ class EdenMaintenancePage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   String _formatTime(DateTime dateTime) {

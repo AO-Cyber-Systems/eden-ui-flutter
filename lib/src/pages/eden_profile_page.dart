@@ -5,6 +5,7 @@ import '../widgets/eden_badge.dart';
 import '../widgets/eden_button.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_settings_section.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A user profile page with personal info editing, password change, and account
 /// danger zone sections.
@@ -142,7 +143,7 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
+    return EdenSelectableRegion(child: SingleChildScrollView(
       padding: const EdgeInsets.all(EdenSpacing.space6),
       child: Center(
         child: ConstrainedBox(
@@ -170,7 +171,7 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader(ThemeData theme) {

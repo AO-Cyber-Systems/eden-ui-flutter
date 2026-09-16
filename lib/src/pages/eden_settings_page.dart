@@ -4,6 +4,7 @@ import '../widgets/eden_button.dart';
 import '../widgets/eden_settings_section.dart';
 import '../widgets/eden_theme_selector.dart';
 import '../widgets/eden_toggle.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A settings page with appearance, notification, and account sections.
 ///
@@ -47,7 +48,7 @@ class EdenSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
+    return EdenSelectableRegion(child: SingleChildScrollView(
       padding: const EdgeInsets.all(EdenSpacing.space6),
       child: Center(
         child: ConstrainedBox(
@@ -83,7 +84,7 @@ class EdenSettingsPage extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildAppearanceSection() {

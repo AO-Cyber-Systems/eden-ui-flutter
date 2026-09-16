@@ -6,6 +6,7 @@ import '../widgets/eden_input.dart';
 import '../widgets/eden_oauth_buttons.dart';
 import '../widgets/eden_divider.dart';
 import '../widgets/eden_alert.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A complete sign-up page with name, email, password, confirm password,
 /// optional terms acceptance, and OAuth providers.
@@ -133,7 +134,7 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Center(
+      body: EdenSelectableRegion(child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space5,
@@ -144,7 +145,7 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
             child: _buildCard(theme, isDark),
           ),
         ),
-      ),
+      )),
     );
   }
 

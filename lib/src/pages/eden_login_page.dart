@@ -7,6 +7,7 @@ import '../widgets/eden_input.dart';
 import '../widgets/eden_oauth_buttons.dart';
 import '../widgets/eden_divider.dart';
 import '../widgets/eden_alert.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// Configuration for dev login bypass.
 class EdenDevLoginConfig {
@@ -156,7 +157,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Column(
+      body: EdenSelectableRegion(child: Column(
         children: [
           if (_showDevBanner) _buildDevBanner(theme, isDark),
           Expanded(
@@ -174,7 +175,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

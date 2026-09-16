@@ -4,6 +4,7 @@ import '../tokens/spacing.dart';
 import '../widgets/eden_button.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_alert.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A reset-password page for setting a new password.
 ///
@@ -93,7 +94,7 @@ class _EdenResetPasswordPageState extends State<EdenResetPasswordPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Center(
+      body: EdenSelectableRegion(child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space5,
@@ -106,7 +107,7 @@ class _EdenResetPasswordPageState extends State<EdenResetPasswordPage> {
                 : _buildForm(theme, isDark),
           ),
         ),
-      ),
+      )),
     );
   }
 
