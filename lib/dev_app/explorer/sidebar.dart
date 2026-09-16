@@ -6,6 +6,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:eden_ui_flutter/eden_ui.dart';
+
 import '../registry/eden_story.dart';
 import '../registry/story_registry.dart';
 
@@ -51,7 +53,21 @@ class _ExplorerSidebarState extends State<ExplorerSidebar> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8),
+            // eden-field-purpose: EdenFieldPurpose.searchQuery -- filters the
+            // story list. No autofill identity.
             child: TextField(
+              autofillHints:
+                  EdenFieldPurpose.searchQuery.semantics.autofillHints,
+              keyboardType:
+                  EdenFieldPurpose.searchQuery.semantics.keyboardType,
+              obscureText: EdenFieldPurpose.searchQuery.semantics.obscureText,
+              textInputAction:
+                  EdenFieldPurpose.searchQuery.semantics.textInputAction,
+              textCapitalization:
+                  EdenFieldPurpose.searchQuery.semantics.textCapitalization,
+              autocorrect: EdenFieldPurpose.searchQuery.semantics.autocorrect,
+              enableSuggestions:
+                  EdenFieldPurpose.searchQuery.semantics.enableSuggestions,
               decoration: const InputDecoration(
                 isDense: true,
                 hintText: 'Search stories',

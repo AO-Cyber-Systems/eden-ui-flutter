@@ -140,11 +140,23 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
                       child: const Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          EdenInput(label: 'Full Name', hint: 'Enter your name'),
+                          // An "Edit Profile" modal edits the signed-in user's
+                          // OWN details, so these carry real identity purposes.
+                          EdenInput(
+                              label: 'Full Name',
+                              hint: 'Enter your name',
+                              purpose: EdenFieldPurpose.personName),
                           SizedBox(height: 12),
-                          EdenInput(label: 'Email', hint: 'you@example.com'),
+                          EdenInput(
+                              label: 'Email',
+                              hint: 'you@example.com',
+                              purpose: EdenFieldPurpose.email),
                           SizedBox(height: 12),
-                          EdenInput(label: 'Bio', hint: 'Tell us about yourself', maxLines: 3),
+                          EdenInput(
+                              label: 'Bio',
+                              hint: 'Tell us about yourself',
+                              maxLines: 3,
+                              purpose: EdenFieldPurpose.multilineText),
                         ],
                       ),
                       actions: [
@@ -185,7 +197,10 @@ class _OverlaysScreenState extends State<OverlaysScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const EdenInput(label: 'Search', hint: 'Filter by name...'),
+                            const EdenInput(
+                                label: 'Search',
+                                hint: 'Filter by name...',
+                                purpose: EdenFieldPurpose.searchQuery),
                             const SizedBox(height: 16),
                             const EdenSelect<String>(
                               label: 'Status',

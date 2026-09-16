@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// The execution status of a job log step.
 enum EdenJobLogStepStatus {
@@ -166,10 +167,20 @@ class _EdenJobLogState extends State<EdenJobLog> {
   }
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    // eden-field-purpose: EdenFieldPurpose.searchQuery -- filters the job's log
+    // lines. No autofill identity.
+    const searchPurpose = EdenFieldPurpose.searchQuery;
     return SizedBox(
       height: 36,
       child: TextField(
         controller: _searchController,
+        autofillHints: searchPurpose.semantics.autofillHints,
+        keyboardType: searchPurpose.semantics.keyboardType,
+        obscureText: searchPurpose.semantics.obscureText,
+        textInputAction: searchPurpose.semantics.textInputAction,
+        textCapitalization: searchPurpose.semantics.textCapitalization,
+        autocorrect: searchPurpose.semantics.autocorrect,
+        enableSuggestions: searchPurpose.semantics.enableSuggestions,
         style: theme.textTheme.bodySmall,
         decoration: InputDecoration(
           hintText: 'Search logs...',

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 import 'approval_queue/approval_filter_bar.dart';
 import 'approval_queue/approval_card.dart';
 
@@ -178,6 +179,12 @@ class _EdenApprovalQueueState extends State<EdenApprovalQueue> {
     required String actionLabel,
     bool isDestructive = false,
   }) {
+    // eden-field-purpose: EdenFieldPurpose.multilineText -- the approval /
+    // rejection comment box. `maxLines: 4` makes it a genuine multi-line
+    // composer, so the `TextInputAction.newline` this resolves is correct:
+    // the dialog submits through its ElevatedButton, never through
+    // `onSubmitted`.
+    const commentPurpose = EdenFieldPurpose.multilineText;
     final controller = TextEditingController();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -200,6 +207,13 @@ class _EdenApprovalQueueState extends State<EdenApprovalQueue> {
                   controller: controller,
                   maxLines: 4,
                   autofocus: true,
+                  autofillHints: commentPurpose.semantics.autofillHints,
+                  keyboardType: commentPurpose.semantics.keyboardType,
+                  obscureText: commentPurpose.semantics.obscureText,
+                  textInputAction: commentPurpose.semantics.textInputAction,
+                  textCapitalization: commentPurpose.semantics.textCapitalization,
+                  autocorrect: commentPurpose.semantics.autocorrect,
+                  enableSuggestions: commentPurpose.semantics.enableSuggestions,
                   decoration: InputDecoration(
                     hintText: 'Add a comment...',
                     filled: true,

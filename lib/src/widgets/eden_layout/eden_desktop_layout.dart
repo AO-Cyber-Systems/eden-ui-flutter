@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
+import '../eden_field_purpose.dart';
 import '../eden_selectable_region.dart';
 import 'layout_data.dart';
 
@@ -853,6 +854,10 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // eden-field-purpose: EdenFieldPurpose.searchQuery -- the top-bar search
+    // box. No autofill identity; the purpose resolves keyboardType and
+    // textInputAction together.
+    const searchPurpose = EdenFieldPurpose.searchQuery;
     final theme = Theme.of(context);
 
     return Container(
@@ -900,6 +905,15 @@ class _TopBar extends StatelessWidget {
                         identifier: 'eden-topbar-search',
                         textField: true,
                         child: TextField(
+                          autofillHints: searchPurpose.semantics.autofillHints,
+                          keyboardType: searchPurpose.semantics.keyboardType,
+                          obscureText: searchPurpose.semantics.obscureText,
+                          textInputAction: searchPurpose.semantics.textInputAction,
+                          textCapitalization:
+                              searchPurpose.semantics.textCapitalization,
+                          autocorrect: searchPurpose.semantics.autocorrect,
+                          enableSuggestions:
+                              searchPurpose.semantics.enableSuggestions,
                           decoration: InputDecoration(
                             hintText: config.searchHint,
                             hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),

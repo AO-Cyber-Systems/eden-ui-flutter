@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../eden_badge.dart';
 import '../eden_button.dart';
 import '../eden_empty_state.dart';
+import '../eden_field_purpose.dart';
 import '../eden_input.dart';
 import '../eden_select.dart';
 import '../eden_spinner.dart';
@@ -232,19 +233,27 @@ class _EdenTicketTabState extends State<EdenTicketTab> {
                   style: theme.textTheme.titleMedium,
                 ),
                 const SizedBox(height: EdenSpacing.space4),
+                // `none` -- a support-ticket subject line authors new content
+                // describing a problem. It is not any saved identity value, and
+                // `maxLines` is the default 1 so multilineText does not apply.
                 EdenInput(
                   label: 'Subject',
                   hint: 'Describe your issue briefly',
                   controller: _subject,
                   onChanged: (_) => setState(() {}), // refresh canSubmit
+                  purpose: EdenFieldPurpose.none,
                 ),
                 const SizedBox(height: EdenSpacing.space3),
+                // `multilineText` -- a genuine multi-line body (maxLines: 4).
+                // The purpose now resolves the multiline keyboardType that was
+                // previously passed by hand, so hint and keyboard cannot drift
+                // apart (editable_text.dart:1855-1858).
                 EdenInput(
                   label: 'Description',
                   hint: 'Provide more detail (optional)',
                   controller: _description,
                   maxLines: 4,
-                  keyboardType: TextInputType.multiline,
+                  purpose: EdenFieldPurpose.multilineText,
                 ),
                 const SizedBox(height: EdenSpacing.space3),
                 EdenSelect<SupportTicketPriority>(

@@ -34,11 +34,14 @@ final inputsInteractiveStory = EdenStory(
     const BoolKnob(key: 'enabled', label: 'Enabled', defaultValue: true),
     const BoolKnob(key: 'error', label: 'Error', defaultValue: false),
   ],
+  // `none` -- a generic knob-driven demo of size/enabled/error. It represents
+  // no real-world value, so it has no autofill identity to claim.
   build: (BuildContext context, KnobValues k) => EdenInput(
     label: 'Demo Input',
     hint: 'Type something...',
     size: k.get<EdenInputSize>('size'),
     enabled: k.get<bool>('enabled'),
     errorText: k.get<bool>('error') ? 'This field has an error.' : null,
+    purpose: EdenFieldPurpose.none,
   ),
 );

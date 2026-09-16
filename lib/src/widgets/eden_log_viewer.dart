@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radii.dart';
+import 'eden_field_purpose.dart';
 
 /// Severity level for log entries.
 enum EdenLogLevel {
@@ -204,6 +205,9 @@ class _EdenLogViewerState extends State<EdenLogViewer> {
   }
 
   Widget _buildToolbar(BuildContext context) {
+    // eden-field-purpose: EdenFieldPurpose.searchQuery -- filters the log rows
+    // already on screen. No autofill identity.
+    const searchPurpose = EdenFieldPurpose.searchQuery;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final levelCounts = _buildLevelCounts();
@@ -219,6 +223,13 @@ class _EdenLogViewerState extends State<EdenLogViewer> {
               child: TextField(
                 controller: _searchController,
                 onChanged: _handleSearchChanged,
+                autofillHints: searchPurpose.semantics.autofillHints,
+                keyboardType: searchPurpose.semantics.keyboardType,
+                obscureText: searchPurpose.semantics.obscureText,
+                textInputAction: searchPurpose.semantics.textInputAction,
+                textCapitalization: searchPurpose.semantics.textCapitalization,
+                autocorrect: searchPurpose.semantics.autocorrect,
+                enableSuggestions: searchPurpose.semantics.enableSuggestions,
                 style: theme.textTheme.bodySmall,
                 decoration: InputDecoration(
                   hintText: 'Search logs...',

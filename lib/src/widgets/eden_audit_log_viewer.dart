@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tokens/colors.dart';
+import 'eden_field_purpose.dart';
 
 /// A single immutable audit-log entry.
 ///
@@ -240,12 +241,23 @@ class _EdenAuditLogViewerState extends State<EdenAuditLogViewer> {
   }
 
   Widget _buildFilterRow() {
+    // eden-field-purpose: EdenFieldPurpose.searchQuery -- an actor filter over
+    // already-rendered audit rows. No autofill identity; the purpose resolves
+    // keyboardType and textInputAction together.
+    const actorFilterPurpose = EdenFieldPurpose.searchQuery;
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
+            autofillHints: actorFilterPurpose.semantics.autofillHints,
+            keyboardType: actorFilterPurpose.semantics.keyboardType,
+            obscureText: actorFilterPurpose.semantics.obscureText,
+            textInputAction: actorFilterPurpose.semantics.textInputAction,
+            textCapitalization: actorFilterPurpose.semantics.textCapitalization,
+            autocorrect: actorFilterPurpose.semantics.autocorrect,
+            enableSuggestions: actorFilterPurpose.semantics.enableSuggestions,
             decoration: const InputDecoration(
               isDense: true,
               hintText: 'Filter by actor…',
