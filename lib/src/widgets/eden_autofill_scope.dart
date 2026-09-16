@@ -79,10 +79,33 @@ class EdenAutofillScope extends StatefulWidget {
     super.key,
     required this.child,
     this.enabled = true,
+    this.onDisposeAction = AutofillContextAction.cancel,
   });
 
   /// The subtree whose fields share one autofill context.
   final Widget child;
+
+  /// What happens to the autofill context when the TOPMOST scope is disposed.
+  ///
+  /// Defaults to [AutofillContextAction.cancel], which is NOT Flutter's default.
+  ///
+  /// `AutofillGroup` defaults this to [AutofillContextAction.commit]
+  /// (`widgets/autofill.dart:75`), and its `dispose` then calls
+  /// `TextInput.finishAutofillContext()` with `shouldSave` defaulting to true
+  /// (`widgets/autofill.dart:232-243`). That means simply NAVIGATING AWAY from a
+  /// form offers to save whatever was typed — including after a failed sign-in,
+  /// which is how a password manager ends up storing a wrong password.
+  ///
+  /// That implicit path would also bypass [EdenAutofillScope.commit] and
+  /// `EdenForm.commitAutofillOnSubmit` entirely: both exist precisely so saving
+  /// is a deliberate act taken only once the app knows the credential is good.
+  /// A default of `commit` would make those controls decorative.
+  ///
+  /// So the default here is inverted: dispose CANCELS, and saving happens only
+  /// through an explicit [commit] call. Pass
+  /// [AutofillContextAction.commit] if a surface genuinely wants Flutter's
+  /// implicit behaviour, and say why at the call site.
+  final AutofillContextAction onDisposeAction;
 
   /// When false this widget is a pass-through — no [AutofillGroup] is
   /// installed, though the scope's State remains reachable so an enclosing
@@ -137,5 +160,12 @@ class EdenAutofillScopeState extends State<EdenAutofillScope> {
 
   @override
   Widget build(BuildContext context) =>
-      widget.enabled ? AutofillGroup(child: widget.child) : widget.child;
+      widget.enabled
+          ? AutofillGroup(
+              // Explicit, and deliberately NOT Flutter's default of `commit` —
+              // see [onDisposeAction]. Navigating away must never be a save.
+              onDisposeAction: widget.onDisposeAction,
+              child: widget.child,
+            )
+          : widget.child;
 }

@@ -179,4 +179,92 @@ void main() {
       );
     });
   });
+
+  group('EdenAutofillScope dispose action', () {
+    // AutofillGroup defaults onDisposeAction to commit (widgets/autofill.dart:75)
+    // and its dispose then calls finishAutofillContext() with shouldSave
+    // defaulting to TRUE (:232-243). So merely navigating away from a form would
+    // offer to save whatever was typed - including after a FAILED sign-in.
+    //
+    // That path bypasses commit() and EdenForm.commitAutofillOnSubmit entirely,
+    // which would make both controls decorative. EdenAutofillScope therefore
+    // inverts the default to cancel.
+    testWidgets('disposing the scope does NOT save by default', (tester) async {
+      final List<MethodCall> calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.textInput,
+        (MethodCall call) async {
+          calls.add(call);
+          return null;
+        },
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: EdenAutofillScope(
+              child: TextField(autofillHints: <String>[AutofillHints.username]),
+            ),
+          ),
+        ),
+      );
+      calls.clear();
+
+      // Navigate away - the scope is disposed.
+      await tester.pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
+      await tester.pump();
+
+      final Iterable<MethodCall> finishes = calls.where(
+        (MethodCall c) => c.method == 'TextInput.finishAutofillContext',
+      );
+      for (final MethodCall c in finishes) {
+        expect(
+          c.arguments,
+          isFalse,
+          reason: 'dispose must cancel, never save: a failed sign-in followed by '
+              'navigation would otherwise make the platform store a wrong password',
+        );
+      }
+
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.textInput, null);
+    });
+
+    testWidgets('onDisposeAction: commit is still available when asked for',
+        (tester) async {
+      final List<MethodCall> calls = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.textInput,
+        (MethodCall call) async {
+          calls.add(call);
+          return null;
+        },
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: EdenAutofillScope(
+              onDisposeAction: AutofillContextAction.commit,
+              child: TextField(autofillHints: <String>[AutofillHints.username]),
+            ),
+          ),
+        ),
+      );
+      calls.clear();
+
+      await tester.pumpWidget(const MaterialApp(home: Scaffold(body: SizedBox())));
+      await tester.pump();
+
+      expect(
+        calls.any((MethodCall c) =>
+            c.method == 'TextInput.finishAutofillContext' && c.arguments == true),
+        isTrue,
+        reason: 'opting in must restore Flutter default behaviour',
+      );
+
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.textInput, null);
+    });
+  });
 }
