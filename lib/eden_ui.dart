@@ -551,4 +551,4 @@ export 'src/widgets/eden_field_purpose.dart';
 // Do not reorder, merge, or pre-fill them — the target files do not exist yet.
 export 'src/widgets/eden_selectable_region.dart';
 export 'src/widgets/eden_autofill_scope.dart';
-// EDEN40-ANCHOR-TSV
+export 'src/utils/eden_tsv.dart';
