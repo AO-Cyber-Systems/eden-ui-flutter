@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
 import 'eden_card.dart';
 import 'eden_chip.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 
 /// Field types supported by the intake form builder.
@@ -554,9 +555,13 @@ class _ConfigFormState extends State<_ConfigForm> {
     return ListView(
       padding: const EdgeInsets.all(EdenSpacing.space3),
       children: [
+        // EdenFieldPurpose.none - the author-facing LABEL of a form field
+        // being designed, not a value a password manager could ever fill.
+        // maxLines is 1 so it is not multilineText.
         EdenInput(
           label: 'Label',
           controller: _labelCtrl,
+          purpose: EdenFieldPurpose.none,
           onChanged: (v) =>
               widget.state.updateField(f.id, (x) => x.copyWith(label: v)),
         ),
@@ -570,10 +575,15 @@ class _ConfigFormState extends State<_ConfigForm> {
         ),
         if (hasOptions) ...[
           const SizedBox(height: EdenSpacing.space2),
+          // EdenFieldPurpose.multilineText - maxLines is 3, so by the
+          // maxLines discriminator this is a multi-line composer. none would
+          // resolve TextInputAction.done and make Enter submit instead of
+          // inserting a newline, which would be a regression on a 3-line box.
           EdenInput(
             label: 'Options (comma-separated)',
             controller: _optionsCtrl,
             maxLines: 3,
+            purpose: EdenFieldPurpose.multilineText,
             onChanged: (v) => widget.state.updateField(
               f.id,
               (x) => x.copyWith(

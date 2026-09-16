@@ -4,6 +4,7 @@ import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import 'eden_card.dart';
 import 'eden_equipment_record_card.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 
 /// Severity of the warranty failure.
@@ -214,10 +215,14 @@ class _EdenWarrantyClaimState extends State<EdenWarrantyClaim> {
             }),
           ),
         const SizedBox(height: 8),
+        // EdenFieldPurpose.none - a free-text description of a replacement
+        // part. maxLines is 1 so it is not multilineText, and no autofill hint
+        // describes a part name.
         EdenInput(
           controller: _partLabelCtrl,
           label: 'Part label',
           hint: 'e.g. Run capacitor 45/5 µF',
+          purpose: EdenFieldPurpose.none,
           onChanged: (_) => setState(() {}),
         ),
       ],
@@ -229,11 +234,16 @@ class _EdenWarrantyClaimState extends State<EdenWarrantyClaim> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // EdenFieldPurpose.multilineText - maxLines is 4, so this is a real
+        // multi-line composer. multilineText resolves the multiline keyboard and
+        // TextInputAction.newline, which is what TextField/EditableText already
+        // derived from maxLines > 1, so Enter still inserts a newline.
         EdenInput(
           controller: _descriptionCtrl,
           label: 'Failure description',
           hint: 'Describe what failed and how',
           maxLines: 4,
+          purpose: EdenFieldPurpose.multilineText,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: EdenSpacing.space3),
@@ -251,10 +261,13 @@ class _EdenWarrantyClaimState extends State<EdenWarrantyClaim> {
           ],
         ),
         const SizedBox(height: EdenSpacing.space3),
+        // EdenFieldPurpose.multilineText - maxLines is 3; free-form technician
+        // prose, so sentence capitalisation is correct here.
         EdenInput(
           controller: _notesCtrl,
           label: 'Technician notes (optional)',
           maxLines: 3,
+          purpose: EdenFieldPurpose.multilineText,
         ),
         if (widget.onPickPhoto != null) ...[
           const SizedBox(height: EdenSpacing.space3),

@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_empty_state.dart';
+import 'eden_field_purpose.dart';
 
 /// A single line item in a packout (truck-load inventory) checklist.
 class EdenPackoutItem {
@@ -358,6 +359,9 @@ class _PackoutItemCardState extends State<_PackoutItemCard> {
 
   @override
   Widget build(BuildContext context) {
+    final EdenFieldSemantics qty = EdenFieldPurpose.quantity.semantics;
+    final EdenFieldSemantics notes =
+        EdenFieldPurpose.multilineText.semantics;
     final theme = Theme.of(context);
     final item = widget.item;
     final borderColor =
@@ -461,11 +465,23 @@ class _PackoutItemCardState extends State<_PackoutItemCard> {
                     Row(
                       children: [
                         Expanded(
+                          // eden-field-purpose: EdenFieldPurpose.quantity -
+                          // a whole-unit "used" count. The digitsOnly formatter
+                          // rejects '.', so decimalAmount would offer a decimal
+                          // key that cannot be used. quantity resolves NO
+                          // autofill hints, so the B7 duplicate-DOM-id hazard
+                          // does not arise across the repeated item cards.
                           child: TextField(
                             key:
                                 ValueKey('eden_packout_used_${item.id}'),
                             controller: _usedController,
-                            keyboardType: TextInputType.number,
+                            autofillHints: qty.autofillHints,
+                            keyboardType: qty.keyboardType,
+                            obscureText: qty.obscureText,
+                            textInputAction: qty.textInputAction,
+                            textCapitalization: qty.textCapitalization,
+                            autocorrect: qty.autocorrect,
+                            enableSuggestions: qty.enableSuggestions,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                             ],
@@ -476,11 +492,20 @@ class _PackoutItemCardState extends State<_PackoutItemCard> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
+                          // eden-field-purpose: EdenFieldPurpose.quantity -
+                          // a whole-unit "returned" count, same digitsOnly
+                          // constraint as "Used".
                           child: TextField(
                             key: ValueKey(
                                 'eden_packout_returned_${item.id}'),
                             controller: _returnedController,
-                            keyboardType: TextInputType.number,
+                            autofillHints: qty.autofillHints,
+                            keyboardType: qty.keyboardType,
+                            obscureText: qty.obscureText,
+                            textInputAction: qty.textInputAction,
+                            textCapitalization: qty.textCapitalization,
+                            autocorrect: qty.autocorrect,
+                            enableSuggestions: qty.enableSuggestions,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
                             ],
@@ -492,10 +517,23 @@ class _PackoutItemCardState extends State<_PackoutItemCard> {
                       ],
                     ),
                     const SizedBox(height: 12),
+                    // eden-field-purpose: EdenFieldPurpose.multilineText -
+                    // maxLines is 2, so this is a real multi-line composer.
+                    // multilineText resolves the multiline keyboard and the
+                    // newline input action, which are exactly what TextField
+                    // and EditableText already derive from maxLines > 1, so
+                    // Enter still inserts a newline rather than submitting.
                     TextField(
                       key: ValueKey('eden_packout_notes_${item.id}'),
                       controller: _notesController,
                       maxLines: 2,
+                      autofillHints: notes.autofillHints,
+                      keyboardType: notes.keyboardType,
+                      obscureText: notes.obscureText,
+                      textInputAction: notes.textInputAction,
+                      textCapitalization: notes.textCapitalization,
+                      autocorrect: notes.autocorrect,
+                      enableSuggestions: notes.enableSuggestions,
                       decoration:
                           const InputDecoration(labelText: 'Notes (optional)'),
                       onChanged: (_) => _onAnyEditChanged(),

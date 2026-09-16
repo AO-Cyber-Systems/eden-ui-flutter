@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_alert.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 import 'eden_receiving_flow.dart' show EdenVarianceReason;
 import 'eden_search_input.dart';
@@ -506,6 +507,10 @@ class _EdenStoreTransferFlowState extends State<EdenStoreTransferFlow> {
           SizedBox(
             key: const ValueKey('shippingCarrier'),
             width: 280,
+            // eden-field-purpose: EdenFieldPurpose.none - the name of the
+            // SHIPPING CARRIER (FedEx, UPS), not the signed-in user's own
+            // employer, so organizationName would be a false claim and would
+            // make a password manager offer the wrong company. Shape C.
             child: TextField(
               controller: _carrierController,
               enabled: !_isWalkIn,
@@ -518,6 +523,9 @@ class _EdenStoreTransferFlowState extends State<EdenStoreTransferFlow> {
           const SizedBox(height: 8),
           SizedBox(
             width: 280,
+            // eden-field-purpose: EdenFieldPurpose.none - a carrier tracking
+            // reference. It is not oneTimeCode (not a delivered passcode) and
+            // not creditCardNumber; no autofill hint describes it. Shape C.
             child: TextField(
               controller: _trackingController,
               enabled: !_isWalkIn,
@@ -729,6 +737,7 @@ class _ReceiveRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final EdenFieldSemantics qty = EdenFieldPurpose.quantity.semantics;
     final theme = Theme.of(context);
     final mismatch =
         received.receivedQty != null && received.receivedQty != item.qty;
@@ -751,6 +760,11 @@ class _ReceiveRow extends StatelessWidget {
             children: [
               SizedBox(
                 width: 120,
+                // eden-field-purpose: EdenFieldPurpose.quantity - a received
+                // unit count. quantity resolves TextInputType.number, exactly
+                // the keyboard this field already had, and resolves NO autofill
+                // hints, so the B7 duplicate-DOM-id hazard does not arise even
+                // though _ReceiveRow is rendered once per transfer line.
                 child: TextField(
                   key: ValueKey('receivedQty-${item.lineId}'),
                   controller: qtyController,
@@ -758,7 +772,13 @@ class _ReceiveRow extends StatelessWidget {
                     labelText: 'Received',
                     isDense: true,
                   ),
-                  keyboardType: TextInputType.number,
+                  autofillHints: qty.autofillHints,
+                  keyboardType: qty.keyboardType,
+                  obscureText: qty.obscureText,
+                  textInputAction: qty.textInputAction,
+                  textCapitalization: qty.textCapitalization,
+                  autocorrect: qty.autocorrect,
+                  enableSuggestions: qty.enableSuggestions,
                   onChanged: (v) {
                     final parsed = num.tryParse(v);
                     if (parsed != null) onReceivedQtyChanged(parsed);

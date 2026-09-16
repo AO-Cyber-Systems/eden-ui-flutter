@@ -7,6 +7,7 @@ import 'eden_app_mode.dart' show kEdenAppModeCompactMax;
 import 'eden_card.dart';
 import 'eden_data_table.dart';
 import 'eden_empty_state.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 import 'eden_modal.dart';
 import 'eden_select.dart';
@@ -648,7 +649,14 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
     await EdenModal.show<void>(
       context,
       title: 'Rename category',
-      child: EdenInput(controller: controller, label: 'Name'),
+      // EdenFieldPurpose.none - the name of a price-book CATEGORY, not a
+      // person or organisation, so personName/organizationName would be false
+      // claims and would make a password manager offer the wrong data.
+      child: EdenInput(
+        controller: controller,
+        label: 'Name',
+        purpose: EdenFieldPurpose.none,
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
@@ -848,12 +856,22 @@ class _EdenPriceBookBuilderState extends State<EdenPriceBookBuilder> {
           children: [
             Text(tier, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 6),
-            EdenInput(controller: label, label: 'Label'),
+            // EdenFieldPurpose.none - a free-text tier label ("Good"),
+            // single-line, with no autofill meaning.
+            EdenInput(
+                controller: label,
+                label: 'Label',
+                purpose: EdenFieldPurpose.none),
             const SizedBox(height: 6),
+            // EdenFieldPurpose.decimalAmount - a money price. The previous
+            // TextInputType.number gave mobile users no decimal key even though
+            // the value round-trips through double.tryParse, so '9.99' was
+            // untypeable; decimalAmount fixes that.
             EdenInput(
                 controller: price,
                 label: 'Price',
-                keyboardType: TextInputType.number),
+                hint: '0.00',
+                purpose: EdenFieldPurpose.decimalAmount),
           ],
         );
 
@@ -1156,9 +1174,14 @@ class _BaseRateInputState extends State<_BaseRateInput> {
 
   @override
   Widget build(BuildContext context) {
+    // EdenFieldPurpose.decimalAmount - an item's base FLAT RATE in money,
+    // seeded with toStringAsFixed(2) and parsed with double.tryParse. The
+    // previous TextInputType.number offered no decimal key, so the 2 decimal
+    // places this field renders were untypeable on mobile.
     return EdenInput(
       controller: _ctrl,
-      keyboardType: TextInputType.number,
+      hint: '0.00',
+      purpose: EdenFieldPurpose.decimalAmount,
       onSubmitted: (s) {
         final v = double.tryParse(s);
         if (v != null) widget.onChanged(v);
@@ -1195,10 +1218,12 @@ class _MarkupInputState extends State<_MarkupInput> {
 
   @override
   Widget build(BuildContext context) {
+    // EdenFieldPurpose.decimalAmount - a markup percentage rendered with
+    // toStringAsFixed(1) and parsed with double.tryParse, so it is decimal.
     return EdenInput(
       controller: _ctrl,
       hint: '%',
-      keyboardType: TextInputType.number,
+      purpose: EdenFieldPurpose.decimalAmount,
       onChanged: (s) {
         if (s.isEmpty) {
           widget.onChanged(null);
@@ -1229,9 +1254,21 @@ class _TaxRateCell extends StatelessWidget {
       return Text('${(v * 100).toStringAsFixed(2)}%');
     }
     // Use a bare TextField so the cell fits within the dense table's 32pt row.
+    // eden-field-purpose: EdenFieldPurpose.decimalAmount - a tax RATE parsed
+    // with double.tryParse and displayed as a percentage to 2 places, so it is
+    // decimal. No hintText is added: this cell is rendered once per row inside a
+    // dense 32pt table and decimalAmount emits no autofill hints, so a DOM
+    // placeholder would buy no password-manager signal.
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return TextField(
       controller: controller,
-      keyboardType: TextInputType.number,
+      autofillHints: money.autofillHints,
+      keyboardType: money.keyboardType,
+      obscureText: money.obscureText,
+      textInputAction: money.textInputAction,
+      textCapitalization: money.textCapitalization,
+      autocorrect: money.autocorrect,
+      enableSuggestions: money.enableSuggestions,
       style: const TextStyle(fontSize: 13),
       decoration: const InputDecoration(
         isDense: true,

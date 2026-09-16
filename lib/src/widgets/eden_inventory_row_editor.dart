@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
 import 'eden_adaptive_layout.dart';
 import 'eden_currency_display.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 import 'eden_stock_level_indicator.dart';
 
@@ -422,9 +423,14 @@ class _EdenInventoryRowEditorState extends State<EdenInventoryRowEditor> {
 
   Widget _costCell(ThemeData theme) {
     if (widget.editable) {
+      // EdenFieldPurpose.decimalAmount - unit cost in money. Resolves the
+      // same numberWithOptions(decimal: true) keyboard this cell already had,
+      // and emits NO autofill hints, so rendering one of these per inventory row
+      // cannot collide on DOM ids (40-RESEARCH.md B7).
       return EdenInput(
         controller: _costCtl,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        hint: '0.00',
+        purpose: EdenFieldPurpose.decimalAmount,
         size: EdenInputSize.sm,
       );
     }
@@ -438,9 +444,12 @@ class _EdenInventoryRowEditorState extends State<EdenInventoryRowEditor> {
 
   Widget _priceCell(ThemeData theme) {
     if (widget.editable) {
+      // EdenFieldPurpose.decimalAmount - retail price in money, same
+      // decimal keyboard as before.
       return EdenInput(
         controller: _priceCtl,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        hint: '0.00',
+        purpose: EdenFieldPurpose.decimalAmount,
         size: EdenInputSize.sm,
       );
     }
@@ -454,9 +463,12 @@ class _EdenInventoryRowEditorState extends State<EdenInventoryRowEditor> {
 
   Widget _onHandCell(ThemeData theme) {
     if (widget.editable) {
+      // EdenFieldPurpose.quantity - an on-hand unit count rendered from an
+      // int (data.onHand). quantity resolves TextInputType.number, exactly the
+      // keyboard this cell already had.
       return EdenInput(
         controller: _onHandCtl,
-        keyboardType: TextInputType.number,
+        purpose: EdenFieldPurpose.quantity,
         size: EdenInputSize.sm,
       );
     }
@@ -465,9 +477,10 @@ class _EdenInventoryRowEditorState extends State<EdenInventoryRowEditor> {
 
   Widget _reorderCell(ThemeData theme) {
     if (widget.editable) {
+      // EdenFieldPurpose.quantity - a reorder-point unit count, also an int.
       return EdenInput(
         controller: _reorderCtl,
-        keyboardType: TextInputType.number,
+        purpose: EdenFieldPurpose.quantity,
         size: EdenInputSize.sm,
       );
     }
@@ -476,8 +489,12 @@ class _EdenInventoryRowEditorState extends State<EdenInventoryRowEditor> {
 
   Widget _locationCell(ThemeData theme) {
     if (widget.editable) {
+      // EdenFieldPurpose.none - a warehouse bin/location code (e.g. "A-12"),
+      // NOT a postal address. streetAddressLine1/addressCity would be false
+      // claims and would make a password manager offer the user's home address.
       return EdenInput(
         controller: _locationCtl,
+        purpose: EdenFieldPurpose.none,
         size: EdenInputSize.sm,
       );
     }

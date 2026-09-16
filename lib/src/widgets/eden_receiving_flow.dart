@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_alert.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 import 'eden_search_input.dart';
 import 'eden_select.dart';
@@ -544,11 +545,15 @@ class _EdenReceivingFlowState extends State<EdenReceivingFlow> {
             children: [
               SizedBox(
                 width: 100,
+                // EdenFieldPurpose.decimalAmount - a received quantity parsed
+                // with num.tryParse; the cell already used a decimal keyboard,
+                // which decimalAmount resolves identically. It emits NO autofill
+                // hints, so rendering one per PO line cannot produce duplicate
+                // DOM ids (40-RESEARCH.md B7).
                 child: EdenInput(
                   key: ValueKey('received-qty-${e.lineId}'),
                   controller: _qtyCtls[e.lineId],
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  purpose: EdenFieldPurpose.decimalAmount,
                   size: EdenInputSize.sm,
                   onChanged: (v) {
                     final parsed = num.tryParse(v);
@@ -627,6 +632,9 @@ class _EdenReceivingFlowState extends State<EdenReceivingFlow> {
                         const SizedBox(width: 12),
                         SizedBox(
                           width: 120,
+                          // EdenFieldPurpose.decimalAmount - a new unit cost
+                          // in money, parsed with double.tryParse and converted
+                          // to cents. Same decimal keyboard as before.
                           child: EdenInput(
                             controller: _costCtls.putIfAbsent(
                               e.lineId,
@@ -634,10 +642,7 @@ class _EdenReceivingFlowState extends State<EdenReceivingFlow> {
                             ),
                             hint: 'New cost',
                             size: EdenInputSize.sm,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
+                            purpose: EdenFieldPurpose.decimalAmount,
                             onChanged: (v) {
                               final parsed = double.tryParse(v);
                               setState(() {

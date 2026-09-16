@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
 import 'eden_banner.dart';
+import 'eden_field_purpose.dart';
 import 'eden_segmented_control.dart';
 
 /// Type of promotion authored by [EdenPromotionAuthor].
@@ -387,6 +388,11 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.showLabelField) ...[
+            // eden-field-purpose: EdenFieldPurpose.none - a free-text name for
+            // this promotion. It is not a person or organisation name, so no
+            // autofill hint is truthful, and maxLines is 1 so it is not
+            // multilineText either. Left as shape C so the field's existing
+            // keyboard and Enter behaviour are unchanged.
             TextFormField(
               controller: _labelController,
               decoration: const InputDecoration(
@@ -458,6 +464,9 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
   }
 
   Widget _buildBogoBody() {
+    // Buy/Get are whole-unit counts; the percent-off value is a decimal.
+    final EdenFieldSemantics qty = EdenFieldPurpose.quantity.semantics;
+    final EdenFieldSemantics pct = EdenFieldPurpose.decimalAmount.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -479,9 +488,18 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
         Row(
           children: [
             Expanded(
+              // eden-field-purpose: EdenFieldPurpose.quantity - a whole-unit
+              // "buy N" count. The digitsOnly formatter rejects '.', so a
+              // decimal keyboard would offer a key that cannot be used.
               child: TextFormField(
                 controller: _buyQtyController,
-                keyboardType: TextInputType.number,
+                autofillHints: qty.autofillHints,
+                keyboardType: qty.keyboardType,
+                obscureText: qty.obscureText,
+                textInputAction: qty.textInputAction,
+                textCapitalization: qty.textCapitalization,
+                autocorrect: qty.autocorrect,
+                enableSuggestions: qty.enableSuggestions,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
@@ -495,9 +513,17 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
             ),
             const SizedBox(width: EdenSpacing.space2),
             Expanded(
+              // eden-field-purpose: EdenFieldPurpose.quantity - a whole-unit
+              // "get N" count, same digitsOnly constraint as "Buy".
               child: TextFormField(
                 controller: _getQtyController,
-                keyboardType: TextInputType.number,
+                autofillHints: qty.autofillHints,
+                keyboardType: qty.keyboardType,
+                obscureText: qty.obscureText,
+                textInputAction: qty.textInputAction,
+                textCapitalization: qty.textCapitalization,
+                autocorrect: qty.autocorrect,
+                enableSuggestions: qty.enableSuggestions,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
@@ -514,10 +540,17 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
         if (_rule.discountKind ==
             EdenPromotionDiscountKind.buyXgetYPercentOff) ...[
           const SizedBox(height: EdenSpacing.space2),
+          // eden-field-purpose: EdenFieldPurpose.decimalAmount - a percent-off
+          // value with up to 2 decimal places (the formatter allows '.').
           TextFormField(
             controller: _discountValueController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            autofillHints: pct.autofillHints,
+            keyboardType: pct.keyboardType,
+            obscureText: pct.obscureText,
+            textInputAction: pct.textInputAction,
+            textCapitalization: pct.textCapitalization,
+            autocorrect: pct.autocorrect,
+            enableSuggestions: pct.enableSuggestions,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}\.?\d{0,2}')),
             ],
@@ -535,6 +568,7 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
   }
 
   Widget _buildMemberPricingBody() {
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -553,10 +587,18 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
           onChanged: _onDiscountKindChange,
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount - a money or
+        // percent discount with up to 2 decimal places (the formatter
+        // allows '.'), shown with a '$' prefix or a '%' suffix.
         TextFormField(
           controller: _discountValueController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -582,13 +624,22 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
   }
 
   Widget _buildCouponCodeBody() {
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // eden-field-purpose: EdenFieldPurpose.none - a coupon code is an
+        // opaque merchant-issued token. It is NOT oneTimeCode (not a delivered
+        // passcode) and NOT creditCardNumber; claiming either would make a
+        // password manager offer irrelevant data. Kept as shape C so the
+        // deliberate uppercase capitalisation and formatter survive; autocorrect
+        // is turned off because mangling a code as it is typed is a real bug.
         TextFormField(
           controller: _couponCodeController,
           textCapitalization: TextCapitalization.characters,
+          autocorrect: false,
+          enableSuggestions: false,
           inputFormatters: <TextInputFormatter>[
             _UpperCaseTextFormatter(),
           ],
@@ -614,10 +665,18 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
           onChanged: _onDiscountKindChange,
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount - a money or
+        // percent discount with up to 2 decimal places (the formatter
+        // allows '.'), shown with a '$' prefix or a '%' suffix.
         TextFormField(
           controller: _discountValueController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -678,6 +737,7 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
   }
 
   Widget _buildConstraintForm() {
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return ExpansionTile(
       title: const Text('Constraints (window + limits + minimum)'),
       tilePadding: EdgeInsets.zero,
@@ -702,10 +762,17 @@ class _EdenPromotionAuthorState extends State<EdenPromotionAuthor> {
           ],
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount - a dollar
+        // subtotal threshold with 2 decimal places.
         TextFormField(
           controller: _minSubtotalController,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
