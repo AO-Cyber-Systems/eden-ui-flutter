@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import '../utils/eden_tsv.dart';
 
 /// Mirrors the eden_table Rails component.
 ///
@@ -20,6 +21,7 @@ class EdenDataTable extends StatelessWidget {
     this.striped = false,
     this.hoverable = true,
     this.onRowTap,
+    this.copyable = false,
   })  : isDense = false,
         freezeFirstColumn = false,
         bulkSelectable = false,
@@ -46,6 +48,7 @@ class EdenDataTable extends StatelessWidget {
     this.bulkSelectable = false,
     this.selectedRowIndices = const {},
     this.onSelectionChanged,
+    this.copyable = false,
   }) : isDense = true;
 
   final List<EdenTableColumn> columns;
@@ -53,6 +56,17 @@ class EdenDataTable extends StatelessWidget {
   final bool striped;
   final bool hoverable;
   final ValueChanged<int>? onRowTap;
+
+  /// Shows a copy affordance per row and a copy-table action in the header.
+  ///
+  /// Off by default. `SelectionArea` concatenates a drag-selection with no cell
+  /// delimiters (40-RESEARCH.md section 5), so a table that wants
+  /// paste-into-a-spreadsheet behaviour has to offer it explicitly; but this
+  /// library has several downstream consumers and a new icon appearing in every
+  /// existing table unannounced is a visual regression. Opt in per table.
+  ///
+  /// Honoured by BOTH constructors, including [EdenDataTable.dense].
+  final bool copyable;
 
   // Dense-only fields. Ignored by the default constructor.
   final bool isDense;
@@ -95,17 +109,19 @@ class EdenDataTable extends StatelessWidget {
               vertical: EdenSpacing.space3,
             ),
             child: Row(
-              children: columns.map((col) {
-                return Expanded(
-                  flex: col.flex,
-                  child: Text(
-                    col.label,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+              children: <Widget>[
+                for (final EdenTableColumn col in columns)
+                  Expanded(
+                    flex: col.flex,
+                    child: Text(
+                      col.label,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                );
-              }).toList(),
+                if (copyable) _copyTableButton(),
+              ],
             ),
           ),
           Divider(height: 1, thickness: 1, color: theme.colorScheme.outlineVariant),
@@ -124,12 +140,13 @@ class EdenDataTable extends StatelessWidget {
                 vertical: EdenSpacing.space3,
               ),
               child: Row(
-                children: [
+                children: <Widget>[
                   for (int i = 0; i < columns.length; i++)
                     Expanded(
                       flex: columns[i].flex,
                       child: i < row.cells.length ? row.cells[i] : const SizedBox.shrink(),
                     ),
+                  if (copyable) _copyRowButton(row),
                 ],
               ),
             );
@@ -161,6 +178,55 @@ class EdenDataTable extends StatelessWidget {
             );
           }),
         ],
+      ),
+    );
+  }
+
+  /// Clipboard values for [row], one per cell.
+  ///
+  /// [EdenTableRow.copyValues] wins when supplied, because the caller knows
+  /// what the record actually holds; otherwise the cell widgets are read
+  /// best-effort. Widgets that yield no text (an icon, an avatar, a button)
+  /// become an EMPTY cell rather than the string "null", so the column
+  /// alignment of the pasted grid survives.
+  List<String> _rowValues(EdenTableRow row) {
+    final List<String>? explicit = row.copyValues;
+    if (explicit != null) return explicit;
+    return row.cells
+        .map((Widget cell) => edenExtractWidgetText(cell) ?? '')
+        .toList();
+  }
+
+  List<List<String>> _allRowValues() => rows.map(_rowValues).toList();
+
+  List<String> _headerValues() =>
+      columns.map((EdenTableColumn col) => col.label).toList();
+
+  /// Copies this row alone, TAB-delimited and with NO header line.
+  ///
+  /// Wrapped in [SelectionContainer.disabled] so a drag-select across the table
+  /// picks up the data and not the word "Copy" (40-RESEARCH.md section 5).
+  Widget _copyRowButton(EdenTableRow row) {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: Icon(Icons.copy, size: 16, color: EdenColors.neutral[500]),
+        tooltip: 'Copy row',
+        onPressed: () => edenCopyTsv(<List<String>>[_rowValues(row)]),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      ),
+    );
+  }
+
+  /// Copies the whole grid: column labels first, then every row.
+  Widget _copyTableButton() {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: Icon(Icons.copy_all, size: 16, color: EdenColors.neutral[500]),
+        tooltip: 'Copy table',
+        onPressed: () => edenCopyTsv(_allRowValues(), header: _headerValues()),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
       ),
     );
   }
@@ -266,6 +332,7 @@ class _DenseBody extends StatelessWidget {
                 child: _headerCell(context, col),
               ),
             ),
+          if (table.copyable) table._copyTableButton(),
         ],
       ),
     );
@@ -298,6 +365,7 @@ class _DenseBody extends StatelessWidget {
                 child: i < row.cells.length ? row.cells[i] : const SizedBox.shrink(),
               ),
             ),
+          if (table.copyable) table._copyRowButton(row),
         ],
       ),
     );
@@ -354,9 +422,19 @@ class EdenTableColumn {
 
 /// Row data for [EdenDataTable].
 class EdenTableRow {
-  const EdenTableRow({required this.cells, this.key});
+  const EdenTableRow({required this.cells, this.key, this.copyValues});
 
   final List<Widget> cells;
+
+  /// Explicit clipboard values for this row, one per column.
+  ///
+  /// When null the values are read best-effort out of the cell widgets via
+  /// [edenExtractWidgetText]. Supply this whenever a cell renders something
+  /// other than plain text — a badge, an avatar, a formatted amount, a relative
+  /// timestamp — so the copied value is the DATA rather than whatever string
+  /// happened to be on screen. `1,234.50 USD` on screen is rarely what belongs
+  /// in a spreadsheet cell.
+  final List<String>? copyValues;
 
   /// Optional key applied to the outermost rendered row widget.
   ///
