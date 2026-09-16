@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../tokens/colors.dart';
+import 'eden_field_purpose.dart';
 
 /// Input size presets.
 enum EdenInputSize { sm, md, lg }
@@ -15,21 +16,66 @@ class EdenInput extends StatelessWidget {
     this.helperText,
     this.errorText,
     this.size = EdenInputSize.md,
+    @Deprecated(
+      'Use `purpose:` instead. Supplying obscureText independently of the '
+      'autofill hint is how a password field ends up as DOM type="text" on web '
+      '(text_editing.dart:514-531), invisible to password managers. '
+      'Will be removed in eden_ui_flutter 4.0.',
+    )
     this.obscureText = false,
     this.enabled = true,
     this.prefixIcon,
     this.suffixIcon,
     this.onChanged,
     this.onSubmitted,
+    @Deprecated(
+      'Use `purpose:` instead. Supplying keyboardType independently of '
+      'autofillHints is the hint<->keyboardType mismatch this library now '
+      'prevents (editable_text.dart:1855-1858). '
+      'Will be removed in eden_ui_flutter 4.0.',
+    )
     this.keyboardType,
     this.maxLines = 1,
     this.autofocus = false,
+    @Deprecated(
+      'Use `purpose:` instead. Supplying autofillHints independently of '
+      'keyboardType is the hint<->keyboardType mismatch this library now '
+      'prevents (editable_text.dart:1855-1858). '
+      'Will be removed in eden_ui_flutter 4.0.',
+    )
     this.autofillHints,
     this.readOnly = false,
     this.focusNode,
     this.inputFormatters,
     this.onTap,
-  });
+    this.purpose = EdenFieldPurpose.none,
+  })  : assert(
+          purpose == EdenFieldPurpose.none || autofillHints == null,
+          'EdenInput: a non-none `purpose` already resolves autofillHints. '
+          'Passing `autofillHints:` as well reintroduces exactly the '
+          'hint<->keyboardType mismatch (editable_text.dart:1855-1858) that '
+          'EdenFieldPurpose exists to prevent. Drop the raw `autofillHints:` '
+          'argument, or use EdenFieldPurpose.none if you genuinely need '
+          'manual control.',
+        ),
+        assert(
+          purpose == EdenFieldPurpose.none || keyboardType == null,
+          'EdenInput: a non-none `purpose` already resolves keyboardType. '
+          'Passing `keyboardType:` as well reintroduces exactly the '
+          'hint<->keyboardType mismatch (editable_text.dart:1855-1858) that '
+          'EdenFieldPurpose exists to prevent. Drop the raw `keyboardType:` '
+          'argument, or use EdenFieldPurpose.none if you genuinely need '
+          'manual control.',
+        ),
+        assert(
+          purpose == EdenFieldPurpose.none || !obscureText,
+          'EdenInput: a non-none `purpose` already resolves obscureText '
+          'together with a password-family autofill hint. Passing '
+          '`obscureText:` as well can produce an obscured field with no '
+          'password hint, which web renders as DOM type="text" '
+          '(text_editing.dart:514-531). Drop the raw `obscureText:` argument, '
+          'or use EdenFieldPurpose.none if you genuinely need manual control.',
+        );
 
   final TextEditingController? controller;
   final String? label;
@@ -37,36 +83,76 @@ class EdenInput extends StatelessWidget {
   final String? helperText;
   final String? errorText;
   final EdenInputSize size;
+  /// Superseded by [purpose], which resolves this together with the autofill
+  /// hint so an obscured field always carries a password-family hint.
   final bool obscureText;
   final bool enabled;
   final IconData? prefixIcon;
   final IconData? suffixIcon;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  /// Superseded by [purpose], which resolves this together with
+  /// [autofillHints] so the two can never disagree.
   final TextInputType? keyboardType;
+
+  /// Stays the caller's business even for a purposed field:
+  /// [EdenFieldPurpose.multilineText] resolves [TextInputType.multiline] but
+  /// deliberately does NOT set [maxLines].
   final int maxLines;
   final bool autofocus;
+  /// Superseded by [purpose], which emits platform-correctly ORDERED hints
+  /// (iOS and web read only the first one - autofill.dart:688-694).
   final Iterable<String>? autofillHints;
   final bool readOnly;
   final FocusNode? focusNode;
   final List<TextInputFormatter>? inputFormatters;
   final VoidCallback? onTap;
 
+  /// The semantic purpose of this field. ONE value resolves [autofillHints]
+  /// (in platform-correct order), [keyboardType], [obscureText],
+  /// `textInputAction` and `textCapitalization` as a consistent set - see
+  /// [EdenFieldPurpose].
+  ///
+  /// Defaults to [EdenFieldPurpose.none]: optional and additive, so existing
+  /// call sites are unchanged.
+  ///
+  /// Also set [hint] on any field with a non-none purpose - `hintText` becomes
+  /// the DOM `placeholder` on web (text_editing.dart:471) and password-manager
+  /// heuristics read it. It is free classification signal.
+  final EdenFieldPurpose purpose;
+
   @override
   Widget build(BuildContext context) {
     final sizing = _resolveSizing();
     final hasError = errorText != null;
 
+    // ONE value resolves the whole set, so the hint <-> keyboardType pair can
+    // never drift apart (editable_text.dart:1855-1858).
+    final EdenFieldSemantics semantics = purpose.semantics;
+    final bool isPurposed = purpose != EdenFieldPurpose.none;
+
     Widget field = TextField(
       controller: controller,
-      obscureText: obscureText,
+      obscureText: isPurposed ? semantics.obscureText : obscureText,
       enabled: enabled,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
-      keyboardType: keyboardType,
+      // When `purpose` is none the caller's value - very often null - is
+      // forwarded verbatim, so behaviour is byte-identical to before this
+      // parameter existed. TextField itself then applies its own
+      // `keyboardType ?? (maxLines == 1 ? text : multiline)` default
+      // (text_field.dart:354).
+      keyboardType: isPurposed ? semantics.keyboardType : keyboardType,
       maxLines: maxLines,
       autofocus: autofocus,
-      autofillHints: autofillHints,
+      autofillHints: isPurposed ? semantics.autofillHints : autofillHints,
+      // New forwards. On the `none` branch they must be the Flutter defaults
+      // so nothing changes for existing callers.
+      textInputAction: isPurposed ? semantics.textInputAction : null,
+      textCapitalization:
+          isPurposed ? semantics.textCapitalization : TextCapitalization.none,
+      autocorrect: isPurposed ? semantics.autocorrect : true,
+      enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
       readOnly: readOnly,
       focusNode: focusNode,
       inputFormatters: inputFormatters,
