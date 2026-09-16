@@ -749,8 +749,13 @@ class _EdenBarcodeScannerState extends State<EdenBarcodeScanner>
           Row(
             children: [
               Expanded(
+                // eden-field-purpose: EdenFieldPurpose.none -- a scanned or
+                // hand-keyed barcode has no autofill identity. Autocorrect and
+                // suggestions are off so the keyboard cannot mangle a code.
                 child: TextField(
                   controller: _manualController,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontFamily: 'monospace',
                     color: isDark ? Colors.white : EdenColors.neutral[900],

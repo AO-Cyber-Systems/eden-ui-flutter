@@ -5,6 +5,7 @@ import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
 import 'eden_banner.dart';
 import 'eden_currency_display.dart';
+import 'eden_field_purpose.dart';
 
 /// A recipient (staff member, technician, etc.) of a tip split.
 @immutable
@@ -484,6 +485,11 @@ class _RecipientRow extends StatelessWidget {
   }
 
   Widget _buildPercentControl(BuildContext context) {
+    // A whole-number share percentage (0-100), NOT money: the formatter below
+    // rejects '.', so `decimalAmount` would offer a decimal key that does
+    // nothing. `quantity` resolves the same integer keyboard this field
+    // already used.
+    const percentPurpose = EdenFieldPurpose.quantity;
     return Row(
       children: [
         Expanded(
@@ -499,10 +505,16 @@ class _RecipientRow extends StatelessWidget {
         const SizedBox(width: EdenSpacing.space2),
         SizedBox(
           width: 72,
+          // eden-field-purpose: EdenFieldPurpose.quantity
           child: TextFormField(
             controller: controller,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: false),
+            autofillHints: percentPurpose.semantics.autofillHints,
+            keyboardType: percentPurpose.semantics.keyboardType,
+            obscureText: percentPurpose.semantics.obscureText,
+            textInputAction: percentPurpose.semantics.textInputAction,
+            textCapitalization: percentPurpose.semantics.textCapitalization,
+            autocorrect: percentPurpose.semantics.autocorrect,
+            enableSuggestions: percentPurpose.semantics.enableSuggestions,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}')),
             ],
@@ -519,13 +531,20 @@ class _RecipientRow extends StatelessWidget {
   }
 
   Widget _buildAmountControl(BuildContext context) {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
     return Row(
       children: [
         Expanded(
+          // eden-field-purpose: EdenFieldPurpose.decimalAmount
           child: TextFormField(
             controller: controller,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            autofillHints: amountPurpose.semantics.autofillHints,
+            keyboardType: amountPurpose.semantics.keyboardType,
+            obscureText: amountPurpose.semantics.obscureText,
+            textInputAction: amountPurpose.semantics.textInputAction,
+            textCapitalization: amountPurpose.semantics.textCapitalization,
+            autocorrect: amountPurpose.semantics.autocorrect,
+            enableSuggestions: amountPurpose.semantics.enableSuggestions,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],

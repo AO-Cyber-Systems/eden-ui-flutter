@@ -4,6 +4,7 @@ import '../theme/eden_status_palette.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import 'eden_card.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 import 'eden_select.dart';
 import 'eden_stat_card.dart';
@@ -350,6 +351,7 @@ class _EdenDeliveryVarianceCardState extends State<EdenDeliveryVarianceCard> {
             controller: _noteCtrl,
             label: 'Reason note (optional)',
             maxLines: 3,
+            purpose: EdenFieldPurpose.multilineText,
             onChanged: (_) => setState(() {}),
           ),
         ],

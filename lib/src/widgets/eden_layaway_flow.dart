@@ -14,6 +14,7 @@ import '../tokens/spacing.dart';
 import 'eden_alert.dart';
 import 'eden_badge.dart';
 import 'eden_date_picker.dart';
+import 'eden_field_purpose.dart';
 import 'eden_payment_entry.dart';
 import 'eden_select.dart';
 
@@ -396,6 +397,7 @@ class _EdenLayawayFlowState extends State<EdenLayawayFlow> {
   }
 
   Widget _buildCreateStep2(BuildContext context) {
+    const depositPurpose = EdenFieldPurpose.decimalAmount;
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(EdenSpacing.space3),
@@ -411,11 +413,16 @@ class _EdenLayawayFlowState extends State<EdenLayawayFlow> {
           SizedBox(
             key: const ValueKey('depositAmount'),
             width: 200,
+            // eden-field-purpose: EdenFieldPurpose.decimalAmount
             child: TextField(
               controller: _depositController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              autofillHints: depositPurpose.semantics.autofillHints,
+              keyboardType: depositPurpose.semantics.keyboardType,
+              obscureText: depositPurpose.semantics.obscureText,
+              textInputAction: depositPurpose.semantics.textInputAction,
+              textCapitalization: depositPurpose.semantics.textCapitalization,
+              autocorrect: depositPurpose.semantics.autocorrect,
+              enableSuggestions: depositPurpose.semantics.enableSuggestions,
               decoration: const InputDecoration(
                 prefixText: r'$',
                 labelText: 'Deposit amount',
@@ -437,6 +444,7 @@ class _EdenLayawayFlowState extends State<EdenLayawayFlow> {
   }
 
   Widget _buildCreateStep3(BuildContext context) {
+    const installmentCountPurpose = EdenFieldPurpose.quantity;
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(EdenSpacing.space3),
@@ -455,11 +463,22 @@ class _EdenLayawayFlowState extends State<EdenLayawayFlow> {
             const SizedBox(height: 12),
             SizedBox(
               width: 200,
+              // eden-field-purpose: EdenFieldPurpose.quantity
               child: TextField(
                 decoration: const InputDecoration(
                   labelText: 'Installment count (optional)',
                 ),
-                keyboardType: TextInputType.number,
+                autofillHints:
+                    installmentCountPurpose.semantics.autofillHints,
+                keyboardType: installmentCountPurpose.semantics.keyboardType,
+                obscureText: installmentCountPurpose.semantics.obscureText,
+                textInputAction:
+                    installmentCountPurpose.semantics.textInputAction,
+                textCapitalization:
+                    installmentCountPurpose.semantics.textCapitalization,
+                autocorrect: installmentCountPurpose.semantics.autocorrect,
+                enableSuggestions:
+                    installmentCountPurpose.semantics.enableSuggestions,
                 onChanged: (v) {
                   setState(() => _installmentCount = int.tryParse(v));
                 },
@@ -656,6 +675,7 @@ class _EdenLayawayFlowState extends State<EdenLayawayFlow> {
   }
 
   Widget _buildInstallmentForm(BuildContext context, EdenLayawayState s) {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -663,9 +683,16 @@ class _EdenLayawayFlowState extends State<EdenLayawayFlow> {
         const SizedBox(height: 8),
         SizedBox(
           width: 220,
+          // eden-field-purpose: EdenFieldPurpose.decimalAmount
           child: TextField(
             controller: _installmentAmountController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            autofillHints: amountPurpose.semantics.autofillHints,
+            keyboardType: amountPurpose.semantics.keyboardType,
+            obscureText: amountPurpose.semantics.obscureText,
+            textInputAction: amountPurpose.semantics.textInputAction,
+            textCapitalization: amountPurpose.semantics.textCapitalization,
+            autocorrect: amountPurpose.semantics.autocorrect,
+            enableSuggestions: amountPurpose.semantics.enableSuggestions,
             decoration: const InputDecoration(
               prefixText: r'$',
               labelText: 'Amount',

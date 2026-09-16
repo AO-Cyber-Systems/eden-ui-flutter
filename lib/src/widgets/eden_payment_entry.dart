@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../tokens/spacing.dart';
 import 'eden_banner.dart';
 import 'eden_chip.dart';
+import 'eden_field_purpose.dart';
 
 /// Controls how quick-tender denomination buttons update the tendered amount.
 ///
@@ -500,6 +501,7 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
 
   @override
   Widget build(BuildContext context) {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
     final showReference = _showReference();
     final denominations = widget.quickTenderDenominations;
     final changeDueRow = _changeDueRow();
@@ -533,9 +535,16 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
         ),
         const SizedBox(height: EdenSpacing.space3),
         if (denominations != null) _quickTenderRow(denominations),
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount
         TextFormField(
           controller: _amountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: amountPurpose.semantics.autofillHints,
+          keyboardType: amountPurpose.semantics.keyboardType,
+          obscureText: amountPurpose.semantics.obscureText,
+          textInputAction: amountPurpose.semantics.textInputAction,
+          textCapitalization: amountPurpose.semantics.textCapitalization,
+          autocorrect: amountPurpose.semantics.autocorrect,
+          enableSuggestions: amountPurpose.semantics.enableSuggestions,
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
           ],
@@ -556,6 +565,12 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
         if (changeDueRow != null) changeDueRow,
         if (showReference) ...[
           const SizedBox(height: EdenSpacing.space3),
+          // eden-field-purpose: EdenFieldPurpose.none -- the label is chosen
+          // at runtime by `_referenceHint()` ('Check #', 'Gift card #',
+          // 'Account ID', 'Last 4 of card'...), so no single purpose is true
+          // for it. Note 'Last 4 of card' is a receipt reference, NOT a PAN --
+          // tagging it `creditCardNumber` would offer a 16-digit card number
+          // for a 4-digit field.
           TextField(
             controller: _referenceController,
             decoration: InputDecoration(
@@ -567,6 +582,9 @@ class _EdenPaymentEntryState extends State<EdenPaymentEntry> {
           ),
         ],
         const SizedBox(height: EdenSpacing.space3),
+        // eden-field-purpose: EdenFieldPurpose.none -- single-line free-text
+        // note. No autofill identity, and `multilineText` would put a
+        // multiline keyboard on a maxLines:1 field.
         TextField(
           controller: _noteController,
           decoration: const InputDecoration(
