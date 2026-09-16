@@ -28,7 +28,8 @@ import 'layout_data.dart';
 /// data, so a drag-select cannot pick up navigation labels. Opt out with
 /// `selectableBody: false`, or wrap one subtree in `SelectionContainer.disabled`.
 ///
-/// Not using an Eden layout? Get the same behaviour app-wide:
+/// Not using an Eden layout? Install one region app-wide with
+/// `MaterialApp.builder`:
 /// ```dart
 /// MaterialApp(
 ///   builder: (context, child) =>
