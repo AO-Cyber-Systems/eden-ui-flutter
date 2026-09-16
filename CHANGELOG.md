@@ -1,5 +1,121 @@
 # Changelog
 
+## Unreleased
+
+Password-manager autofill and universal copy/paste. Consumer setup guide:
+[docs/autofill-and-selection.md](docs/autofill-and-selection.md).
+
+No version number is claimed here. `release.yml` tags from `pubspec.yaml`'s `version:` field,
+which this change deliberately leaves at `2.0.0` — picking the next number is a release decision,
+and coupling it to a floor raise would make a bisect ambiguous. Whoever cuts the release renames
+this heading and bumps the pubspec in the same commit. The deprecations below make it a minor,
+not a patch.
+
+### Added
+
+- **`EdenFieldPurpose`** — a 26-member semantic enum. One value resolves `autofillHints` (in
+  platform-correct ORDER), `keyboardType`, `obscureText`, `textInputAction`,
+  `textCapitalization`, `autocorrect` and `enableSuggestions` as a single consistent set, so a
+  hint can no longer disagree with its keyboard. `EdenFieldPurpose.none` is an explicit,
+  greppable "no autofill purpose".
+- **`EdenAutofillScope`** — an `AutofillGroup` plus `commit()`, which calls
+  `TextInput.finishAutofillContext(shouldSave: true)`. That call appeared nowhere in this package
+  before, which means no credential typed into an Eden form was ever savable on any platform.
+  `EdenForm` and `EdenAsyncFormScaffold` now provide a scope ambiently (`autofillScope`, default
+  true).
+- **`EdenSelectableRegion`** — `SelectionArea` plus a once-per-process
+  `BrowserContextMenu.disableContextMenu()` on web. The package previously contained zero
+  `SelectionArea`, zero `SelectableRegion` and zero `contextMenuBuilder`: rendered text could not
+  be selected anywhere.
+- **`selectableBody`** (default `true`) on `EdenDesktopLayout` and `EdenMobileLayout`, and a
+  region baked into all 10 library pages — selection is ON by default, opt out with
+  `selectableBody: false` or `SelectionContainer.disabled` for a subtree.
+- **TSV copy** — `edenCopyTsv`, `edenRowsToTsv`, `edenTsvRow`, `edenTsvCell`,
+  `edenExtractWidgetText`, plus `copyable` (default `false`) on `EdenDataTable`, `EdenDataGrid`,
+  `EdenKeyValueTable`, `EdenProjectTable` and `EdenLabResultTable`. Drag-selection alone cannot
+  copy a table: `SelectionArea` concatenates fragments in tree order with no cell delimiter, so
+  a dragged table arrives as run-together text.
+- A field-purpose regression guard (`test/tool/eden_field_purpose_guard_test.dart`) that fails
+  when a new text field lands without a purpose or a written exemption.
+
+### Changed
+
+- All **136 text fields across 69 files** now carry an explicit `EdenFieldPurpose`. Zero
+  exemptions.
+  (Planning documents said 137/70. That census was produced with a token grep that also matched
+  the words `TextField(` inside a dartdoc comment in `eden_scheduler.dart`, a file with no text
+  input at all. A comment-aware recount gives 136/69; nothing built on the inflated figure was
+  wrong.)
+- The **13 ad-hoc `SelectableText` call sites across 8 files** are now plain `Text` under a
+  selection region. Once a region wraps the page, a nested `SelectableText` is an un-draggable
+  selection *island* that stops a drag dead at its boundary — the old code went from a partial
+  win to actively harmful. There are now zero `SelectableText` widgets under `lib/`.
+
+### Deprecated (not removed)
+
+- `EdenInput.autofillHints`
+- `EdenInput.keyboardType`
+- `EdenInput.obscureText`
+
+Use `purpose:` instead. All three still work; combining any of them with a non-`none` `purpose`
+trips a debug assertion rather than applying a silent precedence rule.
+
+**Why they were deprecated and not deleted.** This package has 4+ downstream consumers and the
+constraint on this work was that a breaking change be *explicit* rather than incidental. Deleting
+three constructor parameters in the same change that raises the Flutter floor would have produced
+one commit that breaks consumers two different ways, and a consumer bisecting a build failure
+could not tell which half did it. Removal is targeted at **4.0**.
+
+The deprecation is not cosmetic. Passing `autofillHints` without the matching `keyboardType`
+leaves iOS autofill broken while looking correct in review — `TextField` resolves `keyboardType`
+in its own constructor initializer list (`material/text_field.dart:355`), so Flutter's
+`_inferKeyboardType` fallback can never fire. And `obscureText` alone does not produce a web
+password field: DOM `type="password"` derives from the hint string
+(`web_ui/.../text_editing.dart:514-531`), never from `obscureText`, so an obscured field with no
+password-family hint renders `type="text"` — plaintext in the DOM and invisible to 1Password.
+
+### Flutter floor raised to `>=3.27.0`
+
+Was `>=3.16.0`. `eden-experience-flutter` (`>=3.16.0`) and `eden-platform-flutter` (`>=1.17.0`,
+the untouched `flutter create` default) move to the same floor in lockstep, so no sibling
+advertises support it cannot deliver.
+
+**This does NOT unlock an API.** Every API this work uses — `AutofillGroup`, `AutofillHints`,
+`TextInput.finishAutofillContext`, `SelectionArea`, `SelectionContainer.disabled`,
+`contextMenuBuilder`, `BrowserContextMenu` — exists in Flutter 3.16 already. The raise is purely
+for toolchain consistency across the workspace and to stop carrying compat shims. A future reader
+deciding whether the floor can be lowered again should know it was a consistency decision, not a
+capability one.
+
+Only the `flutter:` line moved. Every `sdk:` constraint and every dependency version is untouched,
+so a bisect across this commit has one variable. The CI toolchain pin (`3.47.4` in `ci.yml` and
+`release.yml`) is a separate decision and is **not** touched here.
+
+### Consumer verification
+
+- `justin-donnaruma-us-go` — `flutter: ^3.29.0`. **Compatible.**
+- `justinforme` — Dart `^3.11.1` (= Flutter 3.41.x). **Compatible.**
+- `eden-biz-dev` and `aodex-dev` — **not checked out locally, therefore UNVERIFIED.** They were
+  not inspected and no claim is made about them. If either pins below 3.27, it will fail to
+  resolve against this release.
+
+### Known limitations
+
+Correct hints, an autofill group and `finishAutofillContext` are the ceiling of what the
+framework can deliver today. Some web password-manager flows remain broken **upstream**, notably
+[flutter#174773](https://github.com/flutter/flutter/issues/174773) (P1, fix in flight) and
+[flutter#61301](https://github.com/flutter/flutter/issues/61301) (open since 2020). Providing a
+predefined hint does not guarantee a field is eligible for autofill — the active autofill service
+decides (`services/autofill.dart:688-694`). Treat autofill as best-effort and never gate
+functionality on it.
+
+iOS Password AutoFill additionally requires an Associated Domains entitlement and a published
+`apple-app-site-association` file that **this package cannot supply** — they belong to the
+consumer app. Android autofill requires API 26+.
+
+Full list, including what is untested rather than broken:
+[docs/autofill-and-selection.md](docs/autofill-and-selection.md) section 8.
+
 ## 2.0.0
 
 The first stable tagged release. `v1.0.0-rc.1` (2026-04-23) was the only prior
