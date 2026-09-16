@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_field_purpose.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_alert.dart';
 import '../widgets/eden_selectable_region.dart';
@@ -10,6 +11,19 @@ import '../widgets/eden_selectable_region.dart';
 ///
 /// After a successful submission, the form is replaced with a success message
 /// prompting the user to check their email.
+///
+/// ## Autofill
+///
+/// The single field carries [EdenFieldPurpose.email], which resolves its hints
+/// and keyboard together (`editable_text.dart:1855-1858`).
+///
+/// Unlike the sign-in, sign-up and reset pages, this page deliberately installs
+/// NO `EdenAutofillScope`. A scope exists to make a credential SAVABLE, and
+/// there is no credential here -- only an address the user is asking a link to
+/// be sent to. Filling works from the hint alone, with no group
+/// (`text_editing.dart:514-531` applies per element), so a group would add a
+/// hidden web `<form>` and a save path for something that must never be saved
+/// as a credential. The absence is a decision, not an oversight.
 class EdenForgotPasswordPage extends StatefulWidget {
   const EdenForgotPasswordPage({
     super.key,
@@ -202,13 +216,18 @@ class _EdenForgotPasswordPageState extends State<EdenForgotPasswordPage> {
           const SizedBox(height: EdenSpacing.space4),
         ],
 
-        // Email input
+        // Email input.
+        //
+        // `email` also resolves `textInputAction: next`, where this field
+        // previously passed none at all. On this one-field form Enter therefore
+        // additionally advances focus -- but it still SUBMITS: `onSubmitted`
+        // fires for every action in `EditableText._finalizeEditing`, not only
+        // for `done`. Covered by a test rather than assumed.
         EdenInput(
           controller: _emailController,
           label: 'Email',
           hint: 'you@example.com',
-          keyboardType: TextInputType.emailAddress,
-          autofillHints: const [AutofillHints.email],
+          purpose: EdenFieldPurpose.email,
           prefixIcon: Icons.mail_outline,
           enabled: !_loading,
           onSubmitted: (_) => _handleSendResetLink(),

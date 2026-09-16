@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
+import '../widgets/eden_autofill_scope.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_field_purpose.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_alert.dart';
 import '../widgets/eden_selectable_region.dart';
@@ -10,6 +12,17 @@ import '../widgets/eden_selectable_region.dart';
 ///
 /// After successful reset, the form is replaced with a success message and a
 /// button to navigate back to the login page.
+///
+/// ## Autofill
+///
+/// Both fields carry a password-family [EdenFieldPurpose], so web renders them
+/// as DOM `type="password"` (`text_editing.dart:514-531`) and a password
+/// manager can offer to generate and then store the new secret.
+///
+/// The page owns the SAVE half: it wraps the fields in an [EdenAutofillScope]
+/// and commits ONLY once [onResetPassword] has resolved without throwing --
+/// the same moment it flips to its success state. A commit on the failure path
+/// would store a password the backend rejected.
 class EdenResetPasswordPage extends StatefulWidget {
   const EdenResetPasswordPage({
     super.key,
@@ -40,6 +53,12 @@ class EdenResetPasswordPage extends StatefulWidget {
 }
 
 class _EdenResetPasswordPageState extends State<EdenResetPasswordPage> {
+  // Reached by key, not by `EdenAutofillScope.of(context)`: the scope is built
+  // as a DESCENDANT of this State, and `of` walks ANCESTORS, so it would never
+  // find it from a handler running on this State's context.
+  final GlobalKey<EdenAutofillScopeState> _autofillScopeKey =
+      GlobalKey<EdenAutofillScopeState>();
+
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _loading = false;
@@ -74,6 +93,19 @@ class _EdenResetPasswordPageState extends State<EdenResetPasswordPage> {
 
     try {
       await widget.onResetPassword(password);
+      // The SAVE half of autofill. Hints alone only make these fields
+      // FILLABLE; the new password is never offered for SAVING without
+      // `TextInput.finishAutofillContext` -- on web `saveForms()` clicks the
+      // hidden form's submit button (`text_editing.dart:2245`).
+      //
+      // Committed here, on the one path this page calls success, and NOT in
+      // the catch below: storing a password the backend rejected is exactly
+      // the failure mode this ordering exists to avoid.
+      //
+      // Before the `mounted` guard on purpose -- `commit()` is a platform
+      // call that does not touch this element, and the scope's State is
+      // still alive at this point even if the page is about to go away.
+      _autofillScopeKey.currentState?.commit();
       if (mounted) {
         setState(() => _success = true);
       }
@@ -209,26 +241,45 @@ class _EdenResetPasswordPageState extends State<EdenResetPasswordPage> {
         ],
 
         // Password inputs
-        AutofillGroup(
+        EdenAutofillScope(
+          key: _autofillScopeKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // DUPLICATE DOM ID, ON PURPOSE -- do not "fix" this pair.
+              //
+              // The web engine sets BOTH `element.name` and `element.id` to the
+              // hint string (`text_editing.dart:514-531`), so this field and the
+              // confirmation below it -- both resolving
+              // `AutofillHints.newPassword` -- emit the SAME DOM id inside one
+              // autofill group.
+              //
+              // That is accepted, not overlooked. Two `autocomplete="new-password"`
+              // inputs is the standard HTML password-reset shape; browsers and
+              // 1Password handle it, and duplicate ids are tolerated by HTML
+              // parsing. Both alternatives are worse: dropping the hint on the
+              // confirm field makes it DOM `type="text"` (the password in
+              // plaintext in the DOM, and invisible to 1Password), and inventing
+              // a distinct hint string emits an invalid `autocomplete` token. The
+              // rationale in full, plus the reason the two stay SEPARATE enum
+              // members, is on [EdenFieldPurpose.newPasswordConfirm].
               EdenInput(
                 controller: _passwordController,
                 label: 'New password',
                 hint: 'Enter your new password',
-                obscureText: true,
-                autofillHints: const [AutofillHints.newPassword],
+                purpose: EdenFieldPurpose.newPassword,
                 prefixIcon: Icons.lock_outline,
                 enabled: !_loading,
               ),
               const SizedBox(height: EdenSpacing.space4),
+              // Second half of the deliberate duplicate-id pair documented
+              // above. Distinct MEMBER, same resolved hint -- see
+              // [EdenFieldPurpose.newPasswordConfirm].
               EdenInput(
                 controller: _confirmPasswordController,
                 label: 'Confirm password',
                 hint: 'Re-enter your new password',
-                obscureText: true,
-                autofillHints: const [AutofillHints.newPassword],
+                purpose: EdenFieldPurpose.newPasswordConfirm,
                 prefixIcon: Icons.lock_outline,
                 enabled: !_loading,
                 onSubmitted: (_) => _handleResetPassword(),
