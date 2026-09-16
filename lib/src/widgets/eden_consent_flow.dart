@@ -339,6 +339,13 @@ class _EdenConsentFlowState extends State<EdenConsentFlow> {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.none — this names the WITNESS,
+        // a third party who by definition is not the person holding the
+        // device (the signer signs the pad above; the witness attests to it).
+        // `personName` would offer the device owner's own saved name and could
+        // write the wrong identity into a legal consent record — the exact
+        // false positive this sweep exists to avoid. Shape C: marker comment
+        // only, no semantics spread, Flutter defaults preserved.
         TextField(
           key: const ValueKey<String>('witness_name_field'),
           controller: _witnessNameController,

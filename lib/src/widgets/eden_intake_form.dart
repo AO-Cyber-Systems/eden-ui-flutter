@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
 import 'eden_button.dart';
 import 'eden_date_picker.dart';
+import 'eden_field_purpose.dart';
 
 /// Supported question types in [EdenIntakeForm].
 enum EdenIntakeQuestionType { text, longText, singleChoice, multipleChoice, number, date, yesNo }
@@ -24,6 +25,7 @@ class EdenIntakeQuestion {
     this.visibleWhen,
     this.validate,
     this.placeholder,
+    this.purpose = EdenFieldPurpose.none,
   });
 
   /// Stable identifier (used as the key in the answers map).
@@ -57,6 +59,51 @@ class EdenIntakeQuestion {
 
   /// Placeholder / hint shown inside the input for text-style questions.
   final String? placeholder;
+
+  /// The semantic purpose of this question's input, declared once per SCHEMA
+  /// rather than per render. ONE value resolves autofillHints (in
+  /// platform-correct order), keyboardType, obscureText, textInputAction and
+  /// textCapitalization as a consistent set — see [EdenFieldPurpose].
+  ///
+  /// Defaults to [EdenFieldPurpose.none] so existing schemas are unchanged.
+  /// When left at `none`, [type] still supplies a sensible fallback:
+  /// [EdenIntakeQuestionType.number] renders as [EdenFieldPurpose.decimalAmount],
+  /// preserving the decimal keyboard that type has always had.
+  ///
+  /// This widget CANNOT infer a purpose for itself: the question set is
+  /// caller-supplied, so only the caller knows whether a `text` question asks
+  /// for the respondent's own name or for a description of their symptoms.
+  /// Declaring the purpose here is what makes real intake autofill possible —
+  /// without an autofill hint, web emits `autocomplete="on"` with no `name` and
+  /// no `id`, which is why password managers cannot classify the field
+  /// (`text_editing.dart:514-531`).
+  ///
+  /// Declare identity purposes ([EdenFieldPurpose.personName],
+  /// [EdenFieldPurpose.email], [EdenFieldPurpose.telephoneNumber], the address
+  /// members, [EdenFieldPurpose.birthday]) ONLY on questions that ask the
+  /// person filling the form about THEMSELVES. On a clinician-operated intake
+  /// the answers describe a third party, and offering the clinician's own saved
+  /// identity would write the wrong person into the record — leave those at
+  /// `none`.
+  ///
+  /// Duplicate-DOM-id note (`40-RESEARCH.md` B7): this widget mounts exactly one
+  /// question at a time, so two questions may safely share a hint-bearing
+  /// purpose — they are never in the same autofill scope simultaneously.
+  final EdenFieldPurpose purpose;
+}
+
+/// Resolves the purpose actually applied to [q]'s input widget.
+///
+/// A schema-declared [EdenIntakeQuestion.purpose] always wins. Otherwise the
+/// declared [EdenIntakeQuestionType] supplies the fallback, so that leaving
+/// `purpose` unset never silently downgrades a keyboard the type already had
+/// (`none` resolves TextInputType.text, which would break decimal entry).
+EdenFieldPurpose _effectivePurpose(EdenIntakeQuestion q) {
+  if (q.purpose != EdenFieldPurpose.none) return q.purpose;
+  return switch (q.type) {
+    EdenIntakeQuestionType.number => EdenFieldPurpose.decimalAmount,
+    _ => EdenFieldPurpose.none,
+  };
 }
 
 /// A declarative branching intake questionnaire.
@@ -259,11 +306,27 @@ class _EdenIntakeFormState extends State<EdenIntakeForm> {
   }
 
   Widget _buildInputFor(EdenIntakeQuestion q) {
+    // The schema declares intent once; this is where it reaches the field.
+    // On the `none` branch every forward is the Flutter default, so an
+    // unpurposed question renders byte-identically to before this sweep — the
+    // same isPurposed shape EdenInput uses (TRD 40-03).
+    final purpose = _effectivePurpose(q);
+    final isPurposed = purpose != EdenFieldPurpose.none;
+    final semantics = purpose.semantics;
     switch (q.type) {
       case EdenIntakeQuestionType.text:
         return TextField(
           key: ValueKey<String>('input_${q.id}'),
           controller: _controllerFor(q),
+          autofillHints: isPurposed ? semantics.autofillHints : null,
+          keyboardType: isPurposed ? semantics.keyboardType : null,
+          obscureText: isPurposed ? semantics.obscureText : false,
+          textInputAction: isPurposed ? semantics.textInputAction : null,
+          textCapitalization: isPurposed
+              ? semantics.textCapitalization
+              : TextCapitalization.none,
+          autocorrect: isPurposed ? semantics.autocorrect : true,
+          enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
           decoration: InputDecoration(hintText: q.placeholder),
           onChanged: (v) => setState(() => _answers[q.id] = v),
         );
@@ -273,6 +336,15 @@ class _EdenIntakeFormState extends State<EdenIntakeForm> {
           controller: _controllerFor(q),
           minLines: 3,
           maxLines: 6,
+          autofillHints: isPurposed ? semantics.autofillHints : null,
+          keyboardType: isPurposed ? semantics.keyboardType : null,
+          obscureText: isPurposed ? semantics.obscureText : false,
+          textInputAction: isPurposed ? semantics.textInputAction : null,
+          textCapitalization: isPurposed
+              ? semantics.textCapitalization
+              : TextCapitalization.none,
+          autocorrect: isPurposed ? semantics.autocorrect : true,
+          enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
           decoration: InputDecoration(hintText: q.placeholder),
           onChanged: (v) => setState(() => _answers[q.id] = v),
         );
@@ -315,7 +387,15 @@ class _EdenIntakeFormState extends State<EdenIntakeForm> {
         return TextField(
           key: ValueKey<String>('input_${q.id}'),
           controller: _controllerFor(q),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: isPurposed ? semantics.autofillHints : null,
+          keyboardType: isPurposed ? semantics.keyboardType : null,
+          obscureText: isPurposed ? semantics.obscureText : false,
+          textInputAction: isPurposed ? semantics.textInputAction : null,
+          textCapitalization: isPurposed
+              ? semantics.textCapitalization
+              : TextCapitalization.none,
+          autocorrect: isPurposed ? semantics.autocorrect : true,
+          enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
           decoration: InputDecoration(hintText: q.placeholder),
           onChanged: (v) {
             final parsed = num.tryParse(v);

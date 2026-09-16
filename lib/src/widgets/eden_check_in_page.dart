@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_badge.dart';
+import 'eden_field_purpose.dart';
 import 'eden_card.dart';
 import 'eden_description_list.dart';
 import 'eden_gps_status_indicator.dart';
@@ -258,6 +259,10 @@ class _EdenCheckInPageState extends State<EdenCheckInPage> {
     final theme = Theme.of(context);
     final hasCheckedIn = _hasCheckedIn;
     final hasCheckedOut = _hasCheckedOut;
+    // Shape B (TRD 40-15) — see 40-RESEARCH.md B1: a TextField resolves a null
+    // keyboardType in its own initializer list, so hints and keyboard must
+    // come from one EdenFieldPurpose or they drift apart silently.
+    final notes = EdenFieldPurpose.multilineText.semantics;
 
     return Scaffold(
       appBar: AppBar(
@@ -402,9 +407,20 @@ class _EdenCheckInPageState extends State<EdenCheckInPage> {
           ],
 
           // Notes input
+          // eden-field-purpose: EdenFieldPurpose.multilineText — free-form
+          // detail about the visit. This page asks nothing about the user's
+          // identity (check-in/out is GPS- and session-driven), so there is no
+          // contact field here to autofill despite the TRD's expectation.
           TextField(
             controller: _notesController,
             maxLines: 3,
+            autofillHints: notes.autofillHints,
+            keyboardType: notes.keyboardType,
+            obscureText: notes.obscureText,
+            textInputAction: notes.textInputAction,
+            textCapitalization: notes.textCapitalization,
+            autocorrect: notes.autocorrect,
+            enableSuggestions: notes.enableSuggestions,
             decoration: const InputDecoration(
               labelText: 'Notes (optional)',
               hintText: 'Add any details about this visit',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
+import '../eden_field_purpose.dart';
 import '../eden_permission_matrix.dart';
 
 class RoleHeaderRow extends StatelessWidget {
@@ -504,6 +505,7 @@ class _BreakGlassJustificationDialogState
 
   @override
   Widget build(BuildContext context) {
+    final justification = EdenFieldPurpose.multilineText.semantics;
     return AlertDialog(
       title: const Text('Break-glass override'),
       content: Column(
@@ -515,10 +517,22 @@ class _BreakGlassJustificationDialogState
             style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 12),
+          // eden-field-purpose: EdenFieldPurpose.multilineText — a written
+          // audit justification, NOT the matrix filter the TRD table assumed
+          // (that one lives in eden_permission_matrix.dart). Prose explaining
+          // an override decision; it holds no identity and must never be
+          // prefilled from a saved profile.
           TextField(
             autofocus: true,
             minLines: 3,
             maxLines: 6,
+            autofillHints: justification.autofillHints,
+            keyboardType: justification.keyboardType,
+            obscureText: justification.obscureText,
+            textInputAction: justification.textInputAction,
+            textCapitalization: justification.textCapitalization,
+            autocorrect: justification.autocorrect,
+            enableSuggestions: justification.enableSuggestions,
             decoration: const InputDecoration(
               labelText: 'Justification (≥ 20 characters)',
               helperText: 'Required for audit trail',

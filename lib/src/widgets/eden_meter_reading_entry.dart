@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_authenticated_image.dart';
+import 'eden_field_purpose.dart';
 
 /// Capture source for a meter reading. Consumer maps domain semantics.
 enum EdenMeterReadingSource { manual, telemetry, customerReported }
@@ -197,14 +198,31 @@ class _EdenMeterReadingEntryState extends State<EdenMeterReadingEntry> {
 
   @override
   Widget build(BuildContext context) {
+    // Shape B (TRD 40-15): one EdenFieldPurpose resolves the hints AND the
+    // keyboard together. `_inferKeyboardType` never runs for a TextField —
+    // `material/text_field.dart:355` resolves a null keyboardType in the
+    // constructor's initializer list — so setting hints alone would leave the
+    // keyboard wrong (40-RESEARCH.md B1).
+    final gallons = EdenFieldPurpose.decimalAmount.semantics;
+    final notes = EdenFieldPurpose.multilineText.semantics;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount — a metered
+        // volume reading. An observation about equipment, never about a
+        // person, so it carries no autofill hint; the purpose exists to pin
+        // the decimal keyboard to the same source as everything else.
         TextField(
           controller: _gallonsCtrl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: gallons.autofillHints,
+          keyboardType: gallons.keyboardType,
+          obscureText: gallons.obscureText,
+          textInputAction: gallons.textInputAction,
+          textCapitalization: gallons.textCapitalization,
+          autocorrect: gallons.autocorrect,
+          enableSuggestions: gallons.enableSuggestions,
           decoration: InputDecoration(
             labelText: 'Gallons',
             suffixText: widget.unitLabel,
@@ -220,15 +238,30 @@ class _EdenMeterReadingEntryState extends State<EdenMeterReadingEntry> {
             title: Text(_sourceLabel(src)),
           ),
         const SizedBox(height: EdenSpacing.space3),
+        // eden-field-purpose: EdenFieldPurpose.none — an opaque workforce
+        // identifier issued by the operator's employer. It is NOT a login
+        // credential, so `username` would be a false claim: it would make a
+        // password manager offer (and offer to save) the user's sign-in
+        // identity in a field that is not one. Shape C — marker comment only,
+        // no semantics spread, Flutter defaults preserved byte-identically.
         TextField(
           controller: _operatorCtrl,
           decoration: const InputDecoration(labelText: 'Operator ID'),
         ),
         const SizedBox(height: EdenSpacing.space3),
+        // eden-field-purpose: EdenFieldPurpose.multilineText — a free-form
+        // observation about the reading. Narrative, not identity, so no hint.
         TextField(
           controller: _notesCtrl,
           maxLines: 3,
           maxLength: 500,
+          autofillHints: notes.autofillHints,
+          keyboardType: notes.keyboardType,
+          obscureText: notes.obscureText,
+          textInputAction: notes.textInputAction,
+          textCapitalization: notes.textCapitalization,
+          autocorrect: notes.autocorrect,
+          enableSuggestions: notes.enableSuggestions,
           decoration: const InputDecoration(labelText: 'Notes (optional)'),
         ),
         const SizedBox(height: EdenSpacing.space3),

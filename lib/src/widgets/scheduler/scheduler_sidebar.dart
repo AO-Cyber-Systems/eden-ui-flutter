@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
+import '../eden_field_purpose.dart';
 import 'scheduler_controller.dart';
 import 'scheduler_mobile_view.dart' show EdenSchedulerResourceChipStrip;
 import 'scheduler_models.dart';
@@ -301,11 +302,24 @@ class _EdenSchedulerSearchFieldState extends State<EdenSchedulerSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final search = EdenFieldPurpose.searchQuery.semantics;
     return SizedBox(
       height: 36,
+      // eden-field-purpose: EdenFieldPurpose.searchQuery — a debounced filter
+      // over the schedule. Deliberately hint-free (there is no valid
+      // `autocomplete` token for a search query), but it does resolve
+      // TextInputAction.search, which is the observable change here. Safe:
+      // this field has no onSubmitted, so nothing depended on the old action.
       child: TextField(
         controller: _text,
         onChanged: _onChanged,
+        autofillHints: search.autofillHints,
+        keyboardType: search.keyboardType,
+        obscureText: search.obscureText,
+        textInputAction: search.textInputAction,
+        textCapitalization: search.textCapitalization,
+        autocorrect: search.autocorrect,
+        enableSuggestions: search.enableSuggestions,
         decoration: InputDecoration(
           hintText: widget.hintText,
           isDense: true,

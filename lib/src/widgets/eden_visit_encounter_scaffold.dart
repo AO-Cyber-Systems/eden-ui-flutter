@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_blocking_alerts.dart';
+import 'eden_field_purpose.dart';
 import 'eden_section_header.dart';
 import 'eden_soap_note.dart';
 import 'eden_vitals_row.dart';
@@ -275,6 +276,7 @@ class _EdenVisitEncounterScaffoldState
 
   Widget _chiefComplaintBody(BuildContext context) {
     final theme = Theme.of(context);
+    final narrative = EdenFieldPurpose.multilineText.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -284,11 +286,22 @@ class _EdenVisitEncounterScaffoldState
               ?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.multilineText — the clinician
+        // transcribing the PATIENT's stated reason for the visit. The content
+        // describes a third party and is a clinical observation, not an
+        // identity, so it carries no autofill hint by design.
         TextField(
           key: const Key('chief-complaint-input'),
           controller: _chiefComplaintCtrl,
           minLines: 3,
           maxLines: null,
+          autofillHints: narrative.autofillHints,
+          keyboardType: narrative.keyboardType,
+          obscureText: narrative.obscureText,
+          textInputAction: narrative.textInputAction,
+          textCapitalization: narrative.textCapitalization,
+          autocorrect: narrative.autocorrect,
+          enableSuggestions: narrative.enableSuggestions,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             isDense: true,
