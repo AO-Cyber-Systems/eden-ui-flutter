@@ -7,6 +7,33 @@ import 'eden_field_purpose.dart';
 enum EdenInputSize { sm, md, lg }
 
 /// Mirrors the eden_input Rails component.
+///
+/// ## Autofill
+///
+/// Prefer [purpose] over the deprecated raw [autofillHints], [keyboardType] and
+/// [obscureText] arguments: one value resolves all three as a consistent set,
+/// so a hint can never drift away from the keyboard it requires
+/// (editable_text.dart:1855-1858).
+///
+/// ```dart
+/// // Before (still works, deprecated - hint and keyboard can drift apart):
+/// EdenInput(label: 'Email', keyboardType: TextInputType.emailAddress,
+///           autofillHints: const [AutofillHints.email])
+///
+/// // After:
+/// EdenInput(label: 'Email', hint: 'you@example.com',
+///           purpose: EdenFieldPurpose.email)
+/// ```
+///
+/// A field with no legitimate autofill purpose must SAY so with
+/// [EdenFieldPurpose.none]. An omitted purpose is indistinguishable from an
+/// oversight, and the guard test treats it as a defect.
+///
+/// Set [hint] on every purposed field: `hintText` becomes the DOM `placeholder`
+/// on web (text_editing.dart:471), and password-manager heuristics read it.
+///
+/// Hints alone only make a field FILLABLE. Nothing is ever SAVED without
+/// `finishAutofillContext` - see `EdenAutofillScope` for that half.
 class EdenInput extends StatelessWidget {
   const EdenInput({
     super.key,
@@ -146,8 +173,16 @@ class EdenInput extends StatelessWidget {
       maxLines: maxLines,
       autofocus: autofocus,
       autofillHints: isPurposed ? semantics.autofillHints : autofillHints,
-      // New forwards. On the `none` branch they must be the Flutter defaults
-      // so nothing changes for existing callers.
+      // New forwards. On the `none` branch they must be the Flutter defaults so
+      // nothing changes for existing callers.
+      //
+      // `autocorrect` is passed as a non-null bool DELIBERATELY. It is a
+      // non-nullable `bool` (default true) on the declared floor 3.27.0 and
+      // only became nullable later, where null means
+      // `_inferAutocorrect(autofillHints:)` (editable_text.dart:920). Passing
+      // null would not compile at the floor. The inference differs from a plain
+      // `true` only on iOS for username/password hints, which is exactly the
+      // case a real `purpose` resolves explicitly - and on every platform.
       textInputAction: isPurposed ? semantics.textInputAction : null,
       textCapitalization:
           isPurposed ? semantics.textCapitalization : TextCapitalization.none,
