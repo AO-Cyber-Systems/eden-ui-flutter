@@ -537,3 +537,18 @@ export 'src/widgets/eden_media_picker_view.dart';
 
 // ─────────── Upstream — Schema-driven form primitive ───────────
 export 'src/widgets/eden_schema_form.dart';
+
+// ─────────── Objective 040 — Autofill + Universal Copy/Paste ───────────
+// EdenFieldPurpose resolves autofillHints + keyboardType + obscureText +
+// textInputAction + textCapitalization as ONE consistent set, so the documented
+// hint<->keyboardType coupling (editable_text.dart:1855) and the platform
+// hint-order divergence (autofill.dart:688) cannot be got wrong by a caller.
+export 'src/widgets/eden_field_purpose.dart';
+
+// The three anchors below are replaced, one line each, by later Objective 040
+// TRDs: 40-02 owns SELECTION, 40-04 owns AUTOFILL, 40-05 owns TSV. They are
+// serialized into separate waves so no two agents write this file at once.
+// Do not reorder, merge, or pre-fill them — the target files do not exist yet.
+// EDEN40-ANCHOR-SELECTION
+// EDEN40-ANCHOR-AUTOFILL
+// EDEN40-ANCHOR-TSV
