@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
+import '../eden_selectable_region.dart';
 import 'layout_data.dart';
 
 /// Standard desktop/web layout with collapsible sidebar, top bar, and content area.
@@ -17,6 +18,23 @@ import 'layout_data.dart';
 /// │──────────│                                  │
 /// │  User    │                                  │
 /// └──────────┴──────────────────────────────────┘
+/// ```
+///
+/// ## Text selection
+///
+/// [body] is wrapped in an [EdenSelectableRegion] by default, so its text is
+/// drag-selectable and copyable with no per-widget change. Only [body] is
+/// wrapped: sidebar, top bar, nav items and the bottom bar are chrome, not
+/// data, so a drag-select cannot pick up navigation labels. Opt out with
+/// `selectableBody: false`, or wrap one subtree in `SelectionContainer.disabled`.
+///
+/// Not using an Eden layout? Get the same behaviour app-wide:
+/// ```dart
+/// MaterialApp(
+///   builder: (context, child) =>
+///       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
+///   home: MyHomePage(),
+/// )
 /// ```
 class EdenDesktopLayout extends StatefulWidget {
   const EdenDesktopLayout({
@@ -35,6 +53,7 @@ class EdenDesktopLayout extends StatefulWidget {
     this.collapsedWidth = 72,
     this.sidebarFooter,
     this.supportPanel,
+    this.selectableBody = true,
   });
 
   final List<EdenNavItem> navItems;
@@ -63,6 +82,18 @@ class EdenDesktopLayout extends StatefulWidget {
   /// )
   /// ```
   final Widget? supportPanel;
+
+  /// Makes the [body] content drag-selectable and copyable by wrapping it in an
+  /// [EdenSelectableRegion]. Default TRUE - this is the carrier that delivers
+  /// universal copy/paste to apps built on the Eden layouts.
+  ///
+  /// Only [body] is wrapped. Sidebar, top bar, nav items and the bottom bar are
+  /// chrome, not data, and stay outside the region so a drag-select cannot pick
+  /// up navigation labels.
+  ///
+  /// Set false for a surface that must not be selectable, or wrap an individual
+  /// subtree in `SelectionContainer.disabled` for a finer-grained opt-out.
+  final bool selectableBody;
 
   @override
   State<EdenDesktopLayout> createState() => _EdenDesktopLayoutState();
@@ -322,7 +353,11 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
               children: [
                 if (widget.topBar != null)
                   _TopBar(config: widget.topBar!, onMenuTap: null),
-                Expanded(child: widget.body),
+                Expanded(
+                  child: widget.selectableBody
+                      ? EdenSelectableRegion(child: widget.body)
+                      : widget.body,
+                ),
               ],
             ),
           ),
