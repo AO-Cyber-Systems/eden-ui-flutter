@@ -550,5 +550,5 @@ export 'src/widgets/eden_field_purpose.dart';
 // serialized into separate waves so no two agents write this file at once.
 // Do not reorder, merge, or pre-fill them — the target files do not exist yet.
 export 'src/widgets/eden_selectable_region.dart';
-// EDEN40-ANCHOR-AUTOFILL
+export 'src/widgets/eden_autofill_scope.dart';
 // EDEN40-ANCHOR-TSV
