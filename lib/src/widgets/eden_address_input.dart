@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 import 'map_providers/eden_map_provider.dart';
 import 'map_providers/eden_map_types.dart';
 
@@ -192,6 +193,16 @@ class _EdenAddressInputState extends State<EdenAddressInput> {
 
   @override
   Widget build(BuildContext context) {
+    // One purpose per field, in field order. This widget is the reason those
+    // five EdenFieldPurpose members exist: with the right `autocomplete` token
+    // on each, a password manager can fill the whole block in one action
+    // (text_editing.dart:514-531).
+    final line1Semantics = EdenFieldPurpose.streetAddressLine1.semantics;
+    final line2Semantics = EdenFieldPurpose.streetAddressLine2.semantics;
+    final citySemantics = EdenFieldPurpose.addressCity.semantics;
+    final regionSemantics = EdenFieldPurpose.addressState.semantics;
+    final postalSemantics = EdenFieldPurpose.postalCode.semantics;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -199,6 +210,13 @@ class _EdenAddressInputState extends State<EdenAddressInput> {
         TextField(
           controller: _line1,
           enabled: widget.enabled,
+          autofillHints: line1Semantics.autofillHints,
+          keyboardType: line1Semantics.keyboardType,
+          obscureText: line1Semantics.obscureText,
+          textInputAction: line1Semantics.textInputAction,
+          textCapitalization: line1Semantics.textCapitalization,
+          autocorrect: line1Semantics.autocorrect,
+          enableSuggestions: line1Semantics.enableSuggestions,
           decoration: InputDecoration(
             labelText: widget.line1Label,
             border: const OutlineInputBorder(),
@@ -230,6 +248,13 @@ class _EdenAddressInputState extends State<EdenAddressInput> {
         TextField(
           controller: _line2,
           enabled: widget.enabled,
+          autofillHints: line2Semantics.autofillHints,
+          keyboardType: line2Semantics.keyboardType,
+          obscureText: line2Semantics.obscureText,
+          textInputAction: line2Semantics.textInputAction,
+          textCapitalization: line2Semantics.textCapitalization,
+          autocorrect: line2Semantics.autocorrect,
+          enableSuggestions: line2Semantics.enableSuggestions,
           decoration: InputDecoration(
             labelText: widget.line2Label,
             border: const OutlineInputBorder(),
@@ -240,6 +265,13 @@ class _EdenAddressInputState extends State<EdenAddressInput> {
         TextField(
           controller: _city,
           enabled: widget.enabled,
+          autofillHints: citySemantics.autofillHints,
+          keyboardType: citySemantics.keyboardType,
+          obscureText: citySemantics.obscureText,
+          textInputAction: citySemantics.textInputAction,
+          textCapitalization: citySemantics.textCapitalization,
+          autocorrect: citySemantics.autocorrect,
+          enableSuggestions: citySemantics.enableSuggestions,
           decoration: InputDecoration(
             labelText: widget.cityLabel,
             border: const OutlineInputBorder(),
@@ -250,6 +282,13 @@ class _EdenAddressInputState extends State<EdenAddressInput> {
         TextField(
           controller: _region,
           enabled: widget.enabled,
+          autofillHints: regionSemantics.autofillHints,
+          keyboardType: regionSemantics.keyboardType,
+          obscureText: regionSemantics.obscureText,
+          textInputAction: regionSemantics.textInputAction,
+          textCapitalization: regionSemantics.textCapitalization,
+          autocorrect: regionSemantics.autocorrect,
+          enableSuggestions: regionSemantics.enableSuggestions,
           decoration: InputDecoration(
             labelText: widget.regionLabel,
             border: const OutlineInputBorder(),
@@ -260,6 +299,13 @@ class _EdenAddressInputState extends State<EdenAddressInput> {
         TextField(
           controller: _postal,
           enabled: widget.enabled,
+          autofillHints: postalSemantics.autofillHints,
+          keyboardType: postalSemantics.keyboardType,
+          obscureText: postalSemantics.obscureText,
+          textInputAction: postalSemantics.textInputAction,
+          textCapitalization: postalSemantics.textCapitalization,
+          autocorrect: postalSemantics.autocorrect,
+          enableSuggestions: postalSemantics.enableSuggestions,
           decoration: InputDecoration(
             labelText: widget.postalLabel,
             border: const OutlineInputBorder(),

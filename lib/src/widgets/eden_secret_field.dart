@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radii.dart';
+import 'eden_field_purpose.dart';
 
 /// Clipboard handling mode for [EdenSecretField].
 ///
@@ -183,6 +184,27 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
     Color borderColor,
     Color focusBorderColor,
   ) {
+    // The one thing this sweep changes here: a password-family autofill hint.
+    // Without it web renders DOM type="text" (text_editing.dart:514-531) - the
+    // secret sits in the DOM as plaintext and 1Password can neither fill nor
+    // save it. Everything else about this widget's clipboard posture is
+    // deliberate and stays exactly as it is:
+    //   - obscureText: true HARD-DISABLES copy and cut
+    //     (editable_text.dart:2641-2646), which is why _buildSuffixButtons
+    //     carries an explicit copy button in standard mode;
+    //   - EdenSecretClipboardMode.classified suppresses that button and
+    //     announces 'Classified - copy disabled' (DoD CUI pattern);
+    //   - the delta > 4 paste-from-outside heuristic in _handleChange.
+    //
+    // DELIBERATE PARTIAL SPREAD: semantics.obscureText is NOT forwarded.
+    // EdenFieldPurpose.currentPassword resolves it to a constant `true`, but
+    // this widget owns obscuring via its reveal toggle (_toggleObscured), and
+    // forwarding the constant would break that toggle. The DOM password type
+    // is derived from the HINT, never from obscureText, so the security
+    // property the hint buys is unaffected by which side owns the toggle.
+    const purpose = EdenFieldPurpose.currentPassword;
+    final secretSemantics = purpose.semantics;
+
     return Container(
       decoration: BoxDecoration(
         color: surfaceBg,
@@ -191,6 +213,12 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
       child: TextField(
         controller: _controller,
         obscureText: _obscured,
+        autofillHints: secretSemantics.autofillHints,
+        keyboardType: secretSemantics.keyboardType,
+        textInputAction: secretSemantics.textInputAction,
+        textCapitalization: secretSemantics.textCapitalization,
+        autocorrect: secretSemantics.autocorrect,
+        enableSuggestions: secretSemantics.enableSuggestions,
         onChanged: _handleChange,
         style: theme.textTheme.bodyMedium?.copyWith(
           fontFamily: 'monospace',
