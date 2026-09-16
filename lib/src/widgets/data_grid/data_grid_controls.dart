@@ -141,3 +141,54 @@ class PaginationButton extends StatelessWidget {
     );
   }
 }
+
+/// Copies the grid's on-screen rows to the clipboard as TSV.
+///
+/// Lives here rather than on the grid header because this file is the grid's
+/// control strip: [ColumnVisibilityButton] already establishes the outlined,
+/// 30-high, label-plus-icon shape, and a copy action that looked different
+/// from its neighbour would read as a different class of control.
+///
+/// Wrapped in [SelectionContainer.disabled] by the caller, not here, so the
+/// exclusion sits next to the rest of the grid's selection decisions.
+///
+/// Carries a `'Copy table'` tooltip even though its label already reads
+/// `Copy table`. The tooltip is the contract every Eden table's copy
+/// affordance exposes — [EdenDataTable] and [EdenKeyValueTable] are icon-only,
+/// so the tooltip is the ONLY thing all five share — and it keeps the label
+/// discoverable when the button is narrowed enough to ellipsize.
+class CopyTableButton extends StatelessWidget {
+  /// Creates a copy-table control.
+  const CopyTableButton({super.key, required this.onPressed});
+
+  /// Invoked when the control is pressed.
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Tooltip(
+      message: 'Copy table',
+      child: SizedBox(
+        height: 30,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: const Icon(Icons.copy_all, size: 16),
+          label: Text(
+            'Copy table',
+            style: theme.textTheme.labelSmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            side: BorderSide(color: theme.colorScheme.outlineVariant),
+            shape: RoundedRectangleBorder(
+              borderRadius: EdenRadii.borderRadiusSm,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -2,7 +2,20 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radii.dart';
+import '../utils/eden_tsv.dart';
 import 'data_grid/data_grid_controls.dart';
+import 'eden_field_purpose.dart';
+
+/// Resolved semantics for the grid's column-filter input.
+///
+/// Hoisted to a file-level final so the purpose is stated once and the
+/// `TextField` below cannot drift into hints and a keyboard that disagree —
+/// which is the whole point of [EdenFieldPurpose] (40-RESEARCH.md Appendix B1:
+/// `TextField` resolves a null `keyboardType` in its own initializer list, so
+/// Flutter's inference from `autofillHints` never runs and hints alone fix
+/// nothing).
+final EdenFieldSemantics _kFilterFieldSemantics =
+    EdenFieldPurpose.searchQuery.semantics;
 
 /// Column definition for [EdenDataGrid].
 class EdenGridColumn<T> {
@@ -40,6 +53,17 @@ class EdenGridColumn<T> {
   /// Custom comparator for sorting this column.
   final int Function(T a, T b)? comparator;
 
+  /// Explicit clipboard value for this column.
+  ///
+  /// Required for columns whose [cellBuilder] renders a badge, avatar, chart or
+  /// icon; falls back to `edenExtractWidgetText` on the built cell otherwise.
+  ///
+  /// The fallback reads whatever text is ON SCREEN, which for a formatted
+  /// amount or a relative timestamp is a rendering rather than the datum, and
+  /// which for a non-textual cell is nothing at all. Supply this whenever the
+  /// copied value should be the DATA.
+  final String Function(T row)? copyValue;
+
   /// Text alignment for cells in this column.
   final TextAlign textAlign;
 
@@ -55,6 +79,7 @@ class EdenGridColumn<T> {
     this.pinned = false,
     this.cellBuilder,
     this.comparator,
+    this.copyValue,
     this.textAlign = TextAlign.start,
   });
 }
@@ -103,6 +128,7 @@ class EdenDataGrid<T> extends StatefulWidget {
     this.onColumnsReordered,
     this.hiddenColumns,
     this.frozenRowCount = 0,
+    this.copyable = false,
   });
 
   final List<EdenGridColumn<T>> columns;
@@ -143,6 +169,22 @@ class EdenDataGrid<T> extends StatefulWidget {
   /// Number of data rows to freeze at the top (below the header).
   /// Frozen rows remain visible while scrolling vertically.
   final int frozenRowCount;
+
+  /// Shows a copy-table control in the toolbar and a copy affordance per row.
+  ///
+  /// Off by default. `SelectionArea` concatenates a drag-selection with no cell
+  /// delimiters (40-RESEARCH.md section 5), so a grid that wants
+  /// paste-into-a-spreadsheet behaviour has to offer it explicitly; but this
+  /// widget has several downstream consumers and a new control appearing in
+  /// every existing grid unannounced is a visual regression. Opt in per grid.
+  ///
+  /// Copy emits the VIEW, never the source collections: the columns actually on
+  /// screen, in their on-screen order (hidden, reordered and pinned all applied),
+  /// and the rows in [rows] as supplied. Filtering and sorting are controlled by
+  /// the owner of this widget — [onFilter] and [onSort] only report intent, and
+  /// [rows] is whatever the owner passed back — so [rows] IS the filtered,
+  /// sorted view and no re-derivation happens here.
+  final bool copyable;
 
   @override
   State<EdenDataGrid<T>> createState() => _EdenDataGridState<T>();
@@ -194,7 +236,7 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     double fixedTotal = 0;
     double flexTotal = 0;
     if (widget.selectable) fixedTotal += 48;
-    if (widget.rowActions != null) fixedTotal += 120;
+    if (_showRowActions) fixedTotal += 120;
     for (final col in _orderedVisibleColumns) {
       if (col.width != null) {
         fixedTotal += col.width!;
@@ -286,6 +328,91 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
 
   bool get _hasPinnedColumns => _pinnedColumns.isNotEmpty;
 
+  /// Whether the trailing 120px actions column is rendered.
+  ///
+  /// Copy-row lives in that column, so it has to exist for a grid that supplies
+  /// no [EdenDataGrid.rowActions] but does opt into copy. Every width
+  /// calculation reads this rather than `rowActions != null`, so the reserved
+  /// width and the rendered content cannot disagree.
+  bool get _showRowActions => widget.rowActions != null || widget.copyable;
+
+  /// Whether the toolbar strip above the grid body is rendered.
+  bool get _hasToolbar => widget.copyable || widget.hiddenColumns != null;
+
+  // ---------------------------------------------------------------------------
+  // Clipboard
+  //
+  // Everything below emits the VIEW. The two ways this grid's view differs from
+  // its inputs are handled in opposite places, and conflating them is the bug
+  // this section exists to avoid:
+  //
+  //   * COLUMNS diverge INSIDE this widget. `_orderedVisibleColumns` drops
+  //     hidden columns, applies the drag-reorder order and floats pinned
+  //     columns to the front. Copying `widget.columns` would emit columns the
+  //     user cannot see, in an order they never chose.
+  //   * ROWS diverge OUTSIDE it. This grid is controlled: `_handleSort` calls
+  //     `widget.onSort` and the filter field calls `widget.onFilter`, neither
+  //     touches state, and `build` renders `widget.rows` verbatim. The owner
+  //     filters and sorts, then passes the result back. So `widget.rows` IS the
+  //     filtered, sorted, paginated view — re-deriving anything here would
+  //     invent a second, disagreeing opinion about what is on screen.
+  // ---------------------------------------------------------------------------
+
+  /// One clipboard cell.
+  ///
+  /// [EdenGridColumn.copyValue] wins when supplied, because the caller knows
+  /// what the record actually holds. Otherwise the cell widget is built and read
+  /// best-effort; a cell that yields no text — an icon, an avatar, a sparkline —
+  /// becomes an EMPTY cell rather than the string "null", so the column
+  /// alignment of the pasted grid survives.
+  String _cellCopyValue(EdenGridColumn<T> column, T row, int index) {
+    final String Function(T row)? explicit = column.copyValue;
+    if (explicit != null) return explicit(row);
+    final Widget? cell = column.cellBuilder?.call(row, index);
+    if (cell == null) return '';
+    return edenExtractWidgetText(cell) ?? '';
+  }
+
+  /// Clipboard values for the row at [index], one per VISIBLE column.
+  List<String> _rowCopyValues(int index) {
+    final T row = widget.rows[index];
+    return _orderedVisibleColumns
+        .map((EdenGridColumn<T> col) => _cellCopyValue(col, row, index))
+        .toList();
+  }
+
+  /// Every on-screen row, each already reduced to its visible columns.
+  List<List<String>> _visibleRowValues() {
+    return <List<String>>[
+      for (int i = 0; i < widget.rows.length; i++) _rowCopyValues(i),
+    ];
+  }
+
+  /// Header labels for the VISIBLE columns, in their on-screen order.
+  List<String> _visibleHeaderValues() =>
+      _orderedVisibleColumns.map((EdenGridColumn<T> col) => col.label).toList();
+
+  /// Copies the whole on-screen grid: column labels first, then every row.
+  void _copyTable() {
+    edenCopyTsv(_visibleRowValues(), header: _visibleHeaderValues());
+  }
+
+  /// Copies one row alone, TAB-delimited and with NO header line.
+  ///
+  /// Wrapped in [SelectionContainer.disabled] so a drag-select across the grid
+  /// picks up the data and not the word "Copy" (40-RESEARCH.md section 5).
+  Widget _copyRowButton(int index) {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: Icon(Icons.copy, size: 16, color: EdenColors.neutral[500]),
+        tooltip: 'Copy row',
+        onPressed: () => edenCopyTsv(<List<String>>[_rowCopyValues(index)]),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      ),
+    );
+  }
+
   void _handleSort(EdenGridColumn<T> column) {
     if (!column.sortable || widget.onSort == null) return;
     final current = widget.sort;
@@ -346,7 +473,7 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     for (final col in _orderedVisibleColumns) {
       w += _columnWidths[col.id] ?? col.minWidth;
     }
-    if (widget.rowActions != null) w += 120;
+    if (_showRowActions) w += 120;
     return w;
   }
 
@@ -355,7 +482,7 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     for (final col in _unpinnedColumns) {
       w += _columnWidths[col.id] ?? col.minWidth;
     }
-    if (widget.rowActions != null) w += 120;
+    if (_showRowActions) w += 120;
     return w;
   }
 
@@ -405,9 +532,8 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
           return Column(
             mainAxisSize: hasBoundedHeight ? MainAxisSize.max : MainAxisSize.min,
             children: [
-              // Column visibility toolbar (shown when hiddenColumns param is used).
-              if (widget.hiddenColumns != null)
-                _buildColumnVisibilityToolbar(theme, isDark),
+              // Control strip (copy-table and/or column visibility).
+              if (_hasToolbar) _buildToolbar(theme, isDark),
               wrappedBody,
               // Pagination footer
               if (_hasPagination) _buildPagination(theme, isDark),
@@ -493,7 +619,7 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     bool? includeActions,
   }) {
     final showCheckbox = includeCheckbox ?? (includeCheckboxDefault && widget.selectable);
-    final showActions = includeActions ?? (widget.rowActions != null);
+    final showActions = includeActions ?? _showRowActions;
     final frozenCount = widget.frozenRowCount.clamp(0, widget.rows.length);
     final hasFrozenRows = frozenCount > 0;
 
@@ -566,7 +692,13 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
     );
   }
 
-  Widget _buildColumnVisibilityToolbar(ThemeData theme, bool isDark) {
+  /// The control strip above the grid body.
+  ///
+  /// Both controls are optional and independent, so the strip renders whenever
+  /// EITHER is asked for. `CopyTableButton` is wrapped in
+  /// [SelectionContainer.disabled] here rather than inside itself, keeping this
+  /// widget's selection decisions in one place.
+  Widget _buildToolbar(ThemeData theme, bool isDark) {
     return Container(
       decoration: BoxDecoration(
         border: Border(
@@ -581,18 +713,25 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
       child: Row(
         children: [
           const Spacer(),
-          ColumnVisibilityButton(
-            columns: widget.columns,
-            hiddenColumns: _hiddenColumns,
-            onToggle: (columnId, visible) {
-              // Column visibility is controlled by the parent via
-              // hiddenColumns. We can't mutate it directly, so we call
-              // the reorder callback which the parent can use to track
-              // visibility changes. For a pure visibility toggle, the
-              // parent should manage hiddenColumns state externally.
-              // This button provides the UI affordance.
-            },
-          ),
+          if (widget.copyable)
+            SelectionContainer.disabled(
+              child: CopyTableButton(onPressed: _copyTable),
+            ),
+          if (widget.copyable && widget.hiddenColumns != null)
+            const SizedBox(width: EdenSpacing.space2),
+          if (widget.hiddenColumns != null)
+            ColumnVisibilityButton(
+              columns: widget.columns,
+              hiddenColumns: _hiddenColumns,
+              onToggle: (columnId, visible) {
+                // Column visibility is controlled by the parent via
+                // hiddenColumns. We can't mutate it directly, so we call
+                // the reorder callback which the parent can use to track
+                // visibility changes. For a pure visibility toggle, the
+                // parent should manage hiddenColumns state externally.
+                // This button provides the UI affordance.
+              },
+            ),
         ],
       ),
     );
@@ -909,6 +1048,26 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
                 child: SizedBox(
                   height: 30,
                   child: TextField(
+                    // The column filter is a search box, so it resolves
+                    // `TextInputAction.search` and NO autofill hints — there is
+                    // no `AutofillHints` constant for a search query. It is
+                    // deliberately `searchQuery` rather than `none`, because
+                    // `none` would also drop the search key from the soft
+                    // keyboard.
+                    //
+                    // `enableInteractiveSelection` is deliberately NOT set:
+                    // 40-RESEARCH.md Appendix A probe 3 demonstrated that a
+                    // normal, non-obscured field is already selectable and
+                    // copyable, so touching it would only remove working
+                    // behaviour.
+                    autofillHints: _kFilterFieldSemantics.autofillHints,
+                    keyboardType: _kFilterFieldSemantics.keyboardType,
+                    obscureText: _kFilterFieldSemantics.obscureText,
+                    textInputAction: _kFilterFieldSemantics.textInputAction,
+                    textCapitalization:
+                        _kFilterFieldSemantics.textCapitalization,
+                    autocorrect: _kFilterFieldSemantics.autocorrect,
+                    enableSuggestions: _kFilterFieldSemantics.enableSuggestions,
                     style: const TextStyle(fontSize: 12),
                     decoration: InputDecoration(
                       hintText: 'Filter...',
@@ -1017,7 +1176,10 @@ class _EdenDataGridState<T> extends State<EdenDataGrid<T>> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: widget.rowActions!(row, index),
+                      children: <Widget>[
+                        ...?widget.rowActions?.call(row, index),
+                        if (widget.copyable) _copyRowButton(index),
+                      ],
                     ),
                   ),
                 ),
