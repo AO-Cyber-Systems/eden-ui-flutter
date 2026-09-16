@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../eden_field_purpose.dart';
 import '../process_models.dart';
 
 /// Lightweight template summary used by the task-group editor's import slot.
@@ -159,6 +160,7 @@ class _EdenProcessTaskGroupEditorDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const descPurpose = EdenFieldPurpose.multilineText;
     return AlertDialog(
       title: const Text('Edit Task Group'),
       content: SizedBox(
@@ -168,6 +170,9 @@ class _EdenProcessTaskGroupEditorDialogState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // eden-field-purpose: EdenFieldPurpose.none -- a task-group name
+              // is authoring content inside a process definition, not the
+              // user's own data. No password manager has anything to offer it.
               TextField(
                 controller: _nameCtrl,
                 focusNode: _nameFocus,
@@ -175,10 +180,19 @@ class _EdenProcessTaskGroupEditorDialogState
                 onSubmitted: (_) => _saveName(),
               ),
               const SizedBox(height: 12),
+              // eden-field-purpose: EdenFieldPurpose.multilineText -- genuinely
+              // multi-line (maxLines: 2). Typed but deliberately unfilled.
               TextField(
                 controller: _descCtrl,
                 focusNode: _descFocus,
                 maxLines: 2,
+                autofillHints: descPurpose.semantics.autofillHints,
+                keyboardType: descPurpose.semantics.keyboardType,
+                obscureText: descPurpose.semantics.obscureText,
+                textInputAction: descPurpose.semantics.textInputAction,
+                textCapitalization: descPurpose.semantics.textCapitalization,
+                autocorrect: descPurpose.semantics.autocorrect,
+                enableSuggestions: descPurpose.semantics.enableSuggestions,
                 decoration: const InputDecoration(labelText: 'Description'),
                 onSubmitted: (_) => _saveDescription(),
               ),
@@ -243,6 +257,10 @@ class _EdenProcessTaskGroupEditorDialogState
               const SizedBox(height: 16),
               Text('Workflow hooks', style: theme.textTheme.bodyMedium),
               const SizedBox(height: 6),
+              // eden-field-purpose: EdenFieldPurpose.none -- a workflow id is
+              // an opaque numeric reference to another record, not a quantity
+              // and not user data. The existing number keyboard is deliberate
+              // and stays: with no hints there is no mismatch to prevent.
               TextField(
                 key: const ValueKey('hook-onAllCompleteWorkflowId'),
                 controller: _allCompleteCtrl,
@@ -257,6 +275,10 @@ class _EdenProcessTaskGroupEditorDialogState
                     widget.group.onAllCompleteWorkflowId),
               ),
               const SizedBox(height: 8),
+              // eden-field-purpose: EdenFieldPurpose.none -- a workflow id is
+              // an opaque numeric reference to another record, not a quantity
+              // and not user data. The existing number keyboard is deliberate
+              // and stays: with no hints there is no mismatch to prevent.
               TextField(
                 key: const ValueKey('hook-onItemNaWorkflowId'),
                 controller: _itemNaCtrl,
@@ -269,6 +291,10 @@ class _EdenProcessTaskGroupEditorDialogState
                     _itemNaCtrl, widget.group.onItemNaWorkflowId),
               ),
               const SizedBox(height: 8),
+              // eden-field-purpose: EdenFieldPurpose.none -- a workflow id is
+              // an opaque numeric reference to another record, not a quantity
+              // and not user data. The existing number keyboard is deliberate
+              // and stays: with no hints there is no mismatch to prevent.
               TextField(
                 key: const ValueKey('hook-onItemCantDoWorkflowId'),
                 controller: _itemCantDoCtrl,

@@ -93,8 +93,16 @@ class _EdenConditionNodeState extends State<EdenConditionNode> {
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 4),
+                // eden-field-purpose: EdenFieldPurpose.none -- the name of a
+                // record field being tested (`priority`, `order.total`). It is
+                // an expression fragment, not user data; autocorrect and
+                // suggestions are forced OFF so the keyboard cannot silently
+                // rewrite the predicate. `none` leaves both ON, so they are set
+                // explicitly rather than spread.
                 TextField(
                   controller: fieldCtrl,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   decoration: const InputDecoration(
                     hintText: 'e.g. priority, status, amount',
                     isDense: true,
@@ -126,8 +134,15 @@ class _EdenConditionNodeState extends State<EdenConditionNode> {
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 4),
+                // eden-field-purpose: EdenFieldPurpose.none -- the literal
+                // the field is compared against. Its type varies per condition
+                // (word, status token, number), so no one keyboard or hint is
+                // correct; autocorrect and suggestions are OFF for the same
+                // reason as the field box above.
                 TextField(
                   controller: valueCtrl,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   decoration: const InputDecoration(
                     hintText: 'e.g. high, completed, 5000',
                     isDense: true,

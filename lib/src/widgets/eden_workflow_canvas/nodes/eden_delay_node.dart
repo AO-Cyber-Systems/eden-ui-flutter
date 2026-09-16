@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 import '../../eden_diagram/diagram_data.dart';
+import '../../eden_field_purpose.dart';
 
 class EdenDelayNodeConfig {
   const EdenDelayNodeConfig({this.onUpdate, this.onDelete});
@@ -74,6 +75,7 @@ class _EdenDelayNodeState extends State<EdenDelayNode> {
     var newMinutes = _delayMinutes;
     final minutesCtrl =
         TextEditingController(text: newMinutes.toString());
+    const minutesPurpose = EdenFieldPurpose.quantity;
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
@@ -119,9 +121,20 @@ class _EdenDelayNodeState extends State<EdenDelayNode> {
                     ),
                   ),
                   const SizedBox(height: 4),
+                  // eden-field-purpose: EdenFieldPurpose.quantity -- a whole
+                  // number of minutes to wait, parsed with `int.tryParse`.
+                  // Typed but deliberately unfilled; the number keyboard now
+                  // comes from the purpose instead of being set by hand.
                   TextField(
                     controller: minutesCtrl,
-                    keyboardType: TextInputType.number,
+                    autofillHints: minutesPurpose.semantics.autofillHints,
+                    keyboardType: minutesPurpose.semantics.keyboardType,
+                    obscureText: minutesPurpose.semantics.obscureText,
+                    textInputAction: minutesPurpose.semantics.textInputAction,
+                    textCapitalization:
+                        minutesPurpose.semantics.textCapitalization,
+                    autocorrect: minutesPurpose.semantics.autocorrect,
+                    enableSuggestions: minutesPurpose.semantics.enableSuggestions,
                     decoration: const InputDecoration(
                       isDense: true,
                       border: OutlineInputBorder(),

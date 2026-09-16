@@ -255,6 +255,11 @@ class _EdenProcessTaskNodeState extends State<EdenProcessTaskNode> {
         }
         return KeyEventResult.ignored;
       },
+      // eden-field-purpose: EdenFieldPurpose.none -- an inline rename box for
+      // a task's name. Two reasons, either sufficient: the value is
+      // authoring content, not the user's data; and this node is repeated per
+      // item on the canvas, so any hint would emit duplicate DOM name/id
+      // attributes (40-RESEARCH.md Appendix B7, text_editing.dart:514-531).
       child: TextField(
         controller: _nameCtrl,
         focusNode: _nameFocus,

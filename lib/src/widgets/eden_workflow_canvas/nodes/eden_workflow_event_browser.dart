@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../eden_field_purpose.dart';
 import '../workflow_field_registry.dart';
 
 class EdenWorkflowEventBrowser extends StatefulWidget {
@@ -60,6 +61,7 @@ class _EdenWorkflowEventBrowserState extends State<EdenWorkflowEventBrowser> {
     final theme = Theme.of(context);
     final allFields = EdenWorkflowFieldRegistry.instance.all();
     final query = _searchController.text;
+    const searchPurpose = EdenFieldPurpose.searchQuery;
 
     if (allFields.isEmpty) {
       return const SizedBox(
@@ -93,8 +95,21 @@ class _EdenWorkflowEventBrowserState extends State<EdenWorkflowEventBrowser> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
+            // eden-field-purpose: EdenFieldPurpose.searchQuery -- a real
+            // search box over the field registry (search icon, live filter).
+            // Typed but deliberately unfilled: the enum emits no hints for a
+            // search query, so nothing is claimed and no DOM id is minted. Only
+            // the on-screen action key changes (done -> search), which
+            // `_finalizeEditing` handles identically (editable_text.dart:3771).
             child: TextField(
               controller: _searchController,
+              autofillHints: searchPurpose.semantics.autofillHints,
+              keyboardType: searchPurpose.semantics.keyboardType,
+              obscureText: searchPurpose.semantics.obscureText,
+              textInputAction: searchPurpose.semantics.textInputAction,
+              textCapitalization: searchPurpose.semantics.textCapitalization,
+              autocorrect: searchPurpose.semantics.autocorrect,
+              enableSuggestions: searchPurpose.semantics.enableSuggestions,
               decoration: const InputDecoration(
                 hintText: 'Search fields...',
                 prefixIcon: Icon(Icons.search, size: 18),

@@ -320,6 +320,11 @@ class _EdenProcessTaskGroupNodeState extends State<EdenProcessTaskGroupNode> {
         }
         return KeyEventResult.ignored;
       },
+      // eden-field-purpose: EdenFieldPurpose.none -- an inline rename box for
+      // a task group's name. Two reasons, either sufficient: the value is
+      // authoring content, not the user's data; and this node is repeated per
+      // item on the canvas, so any hint would emit duplicate DOM name/id
+      // attributes (40-RESEARCH.md Appendix B7, text_editing.dart:514-531).
       child: TextField(
         controller: _nameCtrl,
         focusNode: _nameFocus,
@@ -511,6 +516,11 @@ class _EdenProcessTaskGroupNodeState extends State<EdenProcessTaskGroupNode> {
         }
         return KeyEventResult.ignored;
       },
+      // eden-field-purpose: EdenFieldPurpose.none -- an inline rename box for
+      // a task's name inside a group. Two reasons, either sufficient: the value is
+      // authoring content, not the user's data; and this node is repeated per
+      // item on the canvas, so any hint would emit duplicate DOM name/id
+      // attributes (40-RESEARCH.md Appendix B7, text_editing.dart:514-531).
       child: TextField(
         controller: _taskNameCtrl,
         focusNode: _taskNameFocus,
