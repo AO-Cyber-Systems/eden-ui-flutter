@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'eden_autofill_scope.dart';
 import 'eden_button.dart';
 import 'eden_spinner.dart';
 
@@ -130,6 +131,11 @@ class EdenAsyncError<T> extends EdenAsyncSnapshot<T> {
 ///
 /// For **create** (new entity) mode, bypass this widget entirely and just
 /// render the form — this scaffold is strictly for **edit** mode.
+///
+/// The hydrated data branch is wrapped in an [EdenAutofillScope], so the fields
+/// built by [builder] share one autofill context. Asking the platform to SAVE
+/// remains explicit: call `EdenAutofillScope.of(context).commit()` after your
+/// save request succeeds.
 class EdenAsyncFormScaffold<T> extends StatefulWidget {
   const EdenAsyncFormScaffold({
     super.key,
@@ -139,6 +145,7 @@ class EdenAsyncFormScaffold<T> extends StatefulWidget {
     this.onRetry,
     this.errorMessage = 'Failed to load',
     this.retryLabel = 'Retry',
+    this.autofillScope = true,
   });
 
   /// The asynchronously-loaded resource to hydrate the form from.
@@ -164,6 +171,13 @@ class EdenAsyncFormScaffold<T> extends StatefulWidget {
 
   /// Label on the retry button.
   final String retryLabel;
+
+  /// Wraps the hydrated data branch in an [EdenAutofillScope] so descendant
+  /// fields share one AutofillGroup. Default true — additive.
+  ///
+  /// The loading and error branches are never wrapped: they contain no fields,
+  /// and an AutofillGroup around a spinner is noise.
+  final bool autofillScope;
 
   @override
   State<EdenAsyncFormScaffold<T>> createState() =>
@@ -212,7 +226,8 @@ class _EdenAsyncFormScaffoldState<T> extends State<EdenAsyncFormScaffold<T>> {
       ),
       data: (data) {
         _maybeHydrate(data);
-        return widget.builder(context, data);
+        final body = widget.builder(context, data);
+        return widget.autofillScope ? EdenAutofillScope(child: body) : body;
       },
     );
   }
