@@ -554,3 +554,12 @@ export 'src/widgets/eden_field_purpose.dart';
 export 'src/widgets/eden_selectable_region.dart';
 export 'src/widgets/eden_autofill_scope.dart';
 export 'src/utils/eden_tsv.dart';
+
+// The web-only autofill GEOMETRY shim. Correct hints are still not enough on
+// web: the engine collapses every non-focused autofill input to 0x0
+// (text_editing.dart _styleAutofillElements, shouldHideElement:
+// !isSafariDesktopStrategy), and password managers skip invisible fields, so
+// the password field is never seen. EdenAutofillScope installs this itself;
+// it is exported so a consumer can reach the opt-out flag
+// (edenWebAutofillFixEnabled = false, before the first scope mounts).
+export 'src/utils/eden_web_autofill_fix.dart';

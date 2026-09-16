@@ -18,8 +18,11 @@
 // Convention: forward-don't-reimplement.  `StatefulWidget` only so callers have
 // a State to reach for imperatively; nothing here fires on its own.
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+import '../utils/eden_web_autofill_fix.dart';
 
 /// Groups the credential fields in [child] into one autofill context and
 /// exposes the one call that makes a platform offer to SAVE what was typed.
@@ -66,6 +69,37 @@ import 'package:flutter/services.dart';
 /// field both tagged `AutofillHints.newPassword` emit DUPLICATE DOM ids. See
 /// `EdenFieldPurpose.newPasswordConfirm`, where that constraint and the
 /// resulting hint choice are documented.
+///
+/// ## Web geometry: why mounting this scope also installs a DOM shim
+///
+/// On web this widget installs a one-shot geometry shim
+/// (`edenInstallWebAutofillFix`, `lib/src/utils/eden_web_autofill_fix.dart`).
+/// It exists because correct hints are still not enough on web.
+///
+/// Flutter's engine collapses every autofill input that is NOT currently
+/// focused to a zero-sized box -- `_styleAutofillElements()` in the engine's
+/// `text_editing.dart` sets `width: 0; height: 0`, called with
+/// `shouldHideElement: !isSafariDesktopStrategy`, so the workaround Flutter
+/// shipped for that problem applies to Safari Desktop only (flutter#71275).
+/// Password managers deliberately skip non-visible fields when classifying a
+/// login form, so the password field is never seen and no fill is offered.
+///
+/// The shim gives collapsed inputs a real box with `opacity: 0`. It never
+/// touches the FOCUSED field (which has real dimensions) and never touches the
+/// hidden `type=submit` button (which is the SAVE trigger and must stay 0x0).
+/// Off web it is a compile-time no-op.
+///
+/// To opt out, set the flag once before the first scope mounts:
+///
+/// ```dart
+/// void main() {
+///   edenWebAutofillFixEnabled = false; // no-op off web
+///   runApp(const MyApp());
+/// }
+/// ```
+///
+/// Upstream: flutter#61301 and flutter#174773. If the engine stops collapsing
+/// these elements, the shim becomes redundant and should be removed.
 ///
 /// ## Best effort, never a gate
 ///
@@ -138,6 +172,17 @@ class EdenAutofillScope extends StatefulWidget {
 /// State for [EdenAutofillScope]. Nothing here runs automatically; both
 /// [commit] and [cancel] are imperative, caller-driven actions.
 class EdenAutofillScopeState extends State<EdenAutofillScope> {
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb && widget.enabled) {
+      // One-shot and idempotent, mirroring _disableBrowserContextMenuOnce() in
+      // eden_selectable_region.dart: several scopes can mount in one app, and
+      // only the first does any work. Off web this call compiles to a no-op.
+      edenInstallWebAutofillFix();
+    }
+  }
+
   /// Ends the autofill context and asks the platform to SAVE what was entered.
   ///
   /// Call this ONLY after the credential has actually been accepted — after the
