@@ -545,10 +545,12 @@ export 'src/widgets/eden_schema_form.dart';
 // hint-order divergence (autofill.dart:688) cannot be got wrong by a caller.
 export 'src/widgets/eden_field_purpose.dart';
 
-// The three anchors below are replaced, one line each, by later Objective 040
-// TRDs: 40-02 owns SELECTION, 40-04 owns AUTOFILL, 40-05 owns TSV. They are
-// serialized into separate waves so no two agents write this file at once.
-// Do not reorder, merge, or pre-fill them — the target files do not exist yet.
+// EdenSelectableRegion makes a subtree's text drag-selectable and, on web, makes
+// Flutter's own context menu appear at all. EdenAutofillScope is the other half
+// of autofill: hints make a field FILLABLE, but nothing is ever SAVED without
+// finishAutofillContext. eden_tsv exists because SelectionArea concatenates
+// fragments in tree order with no cell delimiters, so drag-copying a table is
+// unusable and tabular surfaces need an explicit TSV action as well.
 export 'src/widgets/eden_selectable_region.dart';
 export 'src/widgets/eden_autofill_scope.dart';
 export 'src/utils/eden_tsv.dart';
