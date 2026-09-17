@@ -3,8 +3,8 @@ description: Eden UI component library for Flutter — ported from the Eden UI R
 version: 2.0.0
 
 environment:
-  sdk: ">=3.2.0 <4.0.0"
-  flutter: ">=3.16.0"
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   flutter:
@@ -14,6 +14,19 @@ dependencies:
   flutter_highlight: ^0.7.0
   showcaseview: ^5.0.1
   qr_flutter: ^4.1.0
+  # PROMOTION, not a new package. `web` was already resolved transitively at
+  # 1.1.1 (via http, itself via google_fonts); declaring it direct changed
+  # exactly one line of pubspec.lock -- `dependency: transitive` became
+  # `dependency: "direct main"` -- with no version change and no package
+  # added. It backs the web-only autofill geometry shim in
+  # lib/src/utils/eden_web_autofill_fix_web.dart.
+  #
+  # Caveat worth knowing: web 1.1.1 itself declares `sdk: ^3.4.0`, which is
+  # above this package's stale `>=3.2.0` lower bound. Nothing conforming is
+  # affected, because the declared `flutter: >=3.27.0` floor already implies
+  # Dart 3.6. The `sdk` bound is left alone deliberately: widening the
+  # package's declared SDK contract is out of scope for this fix.
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

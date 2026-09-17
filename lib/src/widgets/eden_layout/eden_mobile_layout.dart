@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
+import '../eden_selectable_region.dart';
 import 'layout_data.dart';
 
 /// Standard mobile layout with app bar, bottom navigation, and drawer.
@@ -19,6 +20,24 @@ import 'layout_data.dart';
 /// ```
 ///
 /// Overflow nav items (beyond 5) go into a "More" drawer.
+///
+/// ## Text selection
+///
+/// [body] is wrapped in an [EdenSelectableRegion] by default, so its text is
+/// drag-selectable and copyable with no per-widget change. Only [body] is
+/// wrapped: sidebar, top bar, nav items and the bottom bar are chrome, not
+/// data, so a drag-select cannot pick up navigation labels. Opt out with
+/// `selectableBody: false`, or wrap one subtree in `SelectionContainer.disabled`.
+///
+/// Not using an Eden layout? Install one region app-wide with
+/// `MaterialApp.builder`:
+/// ```dart
+/// MaterialApp(
+///   builder: (context, child) =>
+///       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
+///   home: MyHomePage(),
+/// )
+/// ```
 class EdenMobileLayout extends StatelessWidget {
   const EdenMobileLayout({
     super.key,
@@ -31,6 +50,7 @@ class EdenMobileLayout extends StatelessWidget {
     this.logo,
     this.floatingAction,
     this.maxBottomItems = 5,
+    this.selectableBody = true,
   });
 
   final List<EdenNavItem> navItems;
@@ -42,6 +62,18 @@ class EdenMobileLayout extends StatelessWidget {
   final Widget? logo;
   final Widget? floatingAction;
   final int maxBottomItems;
+
+  /// Makes the [body] content drag-selectable and copyable by wrapping it in an
+  /// [EdenSelectableRegion]. Default TRUE - this is the carrier that delivers
+  /// universal copy/paste to apps built on the Eden layouts.
+  ///
+  /// Only [body] is wrapped. Sidebar, top bar, nav items and the bottom bar are
+  /// chrome, not data, and stay outside the region so a drag-select cannot pick
+  /// up navigation labels.
+  ///
+  /// Set false for a surface that must not be selectable, or wrap an individual
+  /// subtree in `SelectionContainer.disabled` for a finer-grained opt-out.
+  final bool selectableBody;
 
   /// Flatten grouped nav items into the list of real DESTINATIONS.
   ///
@@ -79,7 +111,7 @@ class EdenMobileLayout extends StatelessWidget {
           ? _buildAppBar(context, theme)
           : null,
       drawer: _buildDrawer(context, theme, flat),
-      body: body,
+      body: selectableBody ? EdenSelectableRegion(child: body) : body,
       floatingActionButton: floatingAction,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

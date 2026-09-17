@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 // ---------------------------------------------------------------------------
 // Data models
@@ -428,6 +429,7 @@ class _EdenMapViewState extends State<EdenMapView>
   // ---------------------------------------------------------------------------
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    final search = EdenFieldPurpose.searchQuery.semantics;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? EdenColors.neutral[800] : Colors.white,
@@ -440,9 +442,21 @@ class _EdenMapViewState extends State<EdenMapView>
           ),
         ],
       ),
+      // eden-field-purpose: EdenFieldPurpose.searchQuery — deliberately NOT
+      // streetAddressLine1. A map search box is a query, not a form field: an
+      // address hint would drop a password-manager autofill panel over the map
+      // and would claim the typed text is the user's own address when it is
+      // usually somewhere they are looking for.
       child: TextField(
         controller: _searchController,
         onChanged: widget.onSearchChanged,
+        autofillHints: search.autofillHints,
+        keyboardType: search.keyboardType,
+        obscureText: search.obscureText,
+        textInputAction: search.textInputAction,
+        textCapitalization: search.textCapitalization,
+        autocorrect: search.autocorrect,
+        enableSuggestions: search.enableSuggestions,
         style: theme.textTheme.bodyMedium?.copyWith(
           color: isDark ? Colors.white : EdenColors.neutral[900],
         ),

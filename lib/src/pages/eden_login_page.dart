@@ -2,11 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
+import '../widgets/eden_autofill_scope.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_field_purpose.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_oauth_buttons.dart';
 import '../widgets/eden_divider.dart';
 import '../widgets/eden_alert.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// Configuration for dev login bypass.
 class EdenDevLoginConfig {
@@ -33,6 +36,21 @@ class EdenDevLoginConfig {
 /// password inputs, OAuth buttons, and navigation links. In debug mode (or when
 /// explicitly enabled via [devLoginConfig]), a development banner is shown at
 /// the top of the page for one-tap dev login.
+///
+/// ## Autofill
+///
+/// The credential fields carry [EdenFieldPurpose.email] and
+/// [EdenFieldPurpose.currentPassword], which resolve the autofill hints and the
+/// keyboard type together so they can never disagree
+/// (`editable_text.dart:1855-1858`).
+///
+/// This page also owns the SAVE half: it wraps its fields in an
+/// [EdenAutofillScope] and calls `commit()` itself, but ONLY after [onLogin]
+/// resolves without throwing. A throw is what this page treats as a failed
+/// sign-in (it populates the error alert), so committing there would ask the OS
+/// and 1Password to save credentials that were just REJECTED. Callers need do
+/// nothing; a caller that swallows its own auth errors inside [onLogin] and
+/// returns normally will, however, make this page commit a failed attempt.
 class EdenLoginPage extends StatefulWidget {
   const EdenLoginPage({
     super.key,
@@ -85,6 +103,12 @@ class EdenLoginPage extends StatefulWidget {
 class _EdenLoginPageState extends State<EdenLoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // Reached by key, not by `EdenAutofillScope.of(context)`: the scope is built
+  // as a DESCENDANT of this State, and `of` walks ANCESTORS, so it would never
+  // find it from a handler running on this State's context.
+  final GlobalKey<EdenAutofillScopeState> _autofillScopeKey =
+      GlobalKey<EdenAutofillScopeState>();
   bool _loading = false;
   String? _error;
 
@@ -111,6 +135,16 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
 
     try {
       await widget.onLogin(email, password);
+      // The SAVE half of autofill. Correct hints only make a field FILLABLE;
+      // a credential is never offered for SAVING on web, iOS or Android
+      // without `TextInput.finishAutofillContext` -- on web the engine's
+      // `saveForms()` clicks the hidden form's submit button
+      // (`text_editing.dart:2245`) and that synthetic click is what raises the
+      // browser's "Save password?" prompt.
+      //
+      // Placed HERE, on the success path, deliberately: committing after a
+      // REJECTED attempt makes 1Password offer to save the wrong password.
+      _autofillScopeKey.currentState?.commit();
     } catch (e) {
       if (mounted) {
         setState(() => _error = e.toString());
@@ -122,6 +156,10 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
     }
   }
 
+  // Deliberately does NOT commit the autofill context. Dev login bypasses the
+  // text fields entirely, so committing here would ask the password manager to
+  // save whatever the (typically empty) inputs contain, under the real site's
+  // origin.
   Future<void> _handleDevLogin() async {
     final config = widget.devLoginConfig;
     if (config == null) return;
@@ -156,7 +194,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Column(
+      body: EdenSelectableRegion(child: Column(
         children: [
           if (_showDevBanner) _buildDevBanner(theme, isDark),
           Expanded(
@@ -174,7 +212,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -268,7 +306,8 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
         ],
 
         // Form
-        AutofillGroup(
+        EdenAutofillScope(
+          key: _autofillScopeKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -276,8 +315,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
                 controller: _emailController,
                 label: 'Email',
                 hint: 'you@example.com',
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
+                purpose: EdenFieldPurpose.email,
                 prefixIcon: Icons.mail_outline,
                 enabled: !_loading,
               ),
@@ -286,8 +324,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
                 controller: _passwordController,
                 label: 'Password',
                 hint: 'Enter your password',
-                obscureText: true,
-                autofillHints: const [AutofillHints.password],
+                purpose: EdenFieldPurpose.currentPassword,
                 prefixIcon: Icons.lock_outline,
                 enabled: !_loading,
                 onSubmitted: (_) => _handleLogin(),

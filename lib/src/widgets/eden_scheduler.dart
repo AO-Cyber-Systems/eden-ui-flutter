@@ -101,6 +101,12 @@ class EdenScheduler extends StatefulWidget {
   /// disposed automatically.
   ///
   /// Mirrors the Flutter `TextField(controller: …)` lifetime-aware pattern.
+  ///
+  /// eden-field-purpose: EdenFieldPurpose.none is NOT APPLICABLE here — this
+  /// file instantiates no text input at all. The sole field-census match in it
+  /// is the prose reference on the line above, not a widget. The scheduler's
+  /// one real search box lives in `scheduler/scheduler_sidebar.dart` and is
+  /// purposed there.
   final EdenSchedulerController? controller;
 
   /// When true, force the mobile/compact composite view regardless of width.

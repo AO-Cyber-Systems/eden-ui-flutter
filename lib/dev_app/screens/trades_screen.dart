@@ -525,11 +525,24 @@ class _TradesScreenState extends State<TradesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          EdenInput(label: 'Customer Name', hint: 'e.g. Robert Johnson'),
+                          // Real purposes: each resolves the correct keyboard
+                          // (name / phone / streetAddress) as well as the hint,
+                          // matching the precedent set for the gift-card
+                          // recipient fields.
+                          EdenInput(
+                              label: 'Customer Name',
+                              hint: 'e.g. Robert Johnson',
+                              purpose: EdenFieldPurpose.personName),
                           SizedBox(height: EdenSpacing.space3),
-                          EdenInput(label: 'Phone', hint: '(555) 123-4567'),
+                          EdenInput(
+                              label: 'Phone',
+                              hint: '(555) 123-4567',
+                              purpose: EdenFieldPurpose.telephoneNumber),
                           SizedBox(height: EdenSpacing.space3),
-                          EdenInput(label: 'Address', hint: '742 Evergreen Terrace'),
+                          EdenInput(
+                              label: 'Address',
+                              hint: '742 Evergreen Terrace',
+                              purpose: EdenFieldPurpose.streetAddressLine1),
                         ],
                       ),
                     ),
@@ -542,11 +555,25 @@ class _TradesScreenState extends State<TradesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          EdenInput(label: 'Service Type', hint: 'HVAC, Plumbing, Electrical...'),
+                          // `none` -- a trade-domain taxonomy value, not any
+                          // saved identity the platform can offer.
+                          EdenInput(
+                              label: 'Service Type',
+                              hint: 'HVAC, Plumbing, Electrical...',
+                              purpose: EdenFieldPurpose.none),
                           SizedBox(height: EdenSpacing.space3),
-                          EdenInput(label: 'Issue Description', hint: 'Describe the problem...', maxLines: 3),
+                          EdenInput(
+                              label: 'Issue Description',
+                              hint: 'Describe the problem...',
+                              maxLines: 3,
+                              purpose: EdenFieldPurpose.multilineText),
                           SizedBox(height: EdenSpacing.space3),
-                          EdenInput(label: 'Priority', hint: 'Normal'),
+                          // `none` -- an enum-like severity level, not an
+                          // autofillable value.
+                          EdenInput(
+                              label: 'Priority',
+                              hint: 'Normal',
+                              purpose: EdenFieldPurpose.none),
                         ],
                       ),
                     ),
@@ -559,11 +586,30 @@ class _TradesScreenState extends State<TradesScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          EdenInput(label: 'Preferred Date', hint: '03/25/2026'),
+                          // `none` -- a future appointment date. The enum has
+                          // no generic date member; `birthday` and
+                          // `creditCardExpirationDate` are the only date
+                          // purposes and both would be false claims.
+                          EdenInput(
+                              label: 'Preferred Date',
+                              hint: '03/25/2026',
+                              purpose: EdenFieldPurpose.none),
                           SizedBox(height: EdenSpacing.space3),
-                          EdenInput(label: 'Time Window', hint: 'Morning (8 AM–12 PM)'),
+                          // `none` -- a scheduling slot label, not an
+                          // autofillable value.
+                          EdenInput(
+                              label: 'Time Window',
+                              hint: 'Morning (8 AM–12 PM)',
+                              purpose: EdenFieldPurpose.none),
                           SizedBox(height: EdenSpacing.space3),
-                          EdenInput(label: 'Assigned Technician', hint: 'Auto-assign'),
+                          // `none` -- a dispatch assignment chosen from staff
+                          // (often literally 'Auto-assign'), NOT a person
+                          // identifying themselves. `personName` would offer
+                          // the dispatcher's own saved name here.
+                          EdenInput(
+                              label: 'Assigned Technician',
+                              hint: 'Auto-assign',
+                              purpose: EdenFieldPurpose.none),
                         ],
                       ),
                     ),

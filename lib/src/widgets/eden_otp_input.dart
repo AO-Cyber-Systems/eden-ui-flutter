@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// N-digit OTP code entry with one input per digit.
 ///
@@ -124,6 +125,22 @@ class _EdenOtpInputState extends State<EdenOtpInput> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // The single highest-value hint in the library: iOS surfaces the SMS code
+    // above the keyboard purely from AutofillHints.oneTimeCode, and Android's
+    // autofill service reads it too. Autocorrect and suggestions are OFF —
+    // resolved by the purpose, not set independently.
+    //
+    // Applied to EVERY box, not just the first: a box that is part of a
+    // one-time code but carries no purpose would be a false `none`. On web this
+    // means N elements share id/name 'oneTimeCode' (text_editing.dart:514-531),
+    // the same deliberate trade-off already locked in for
+    // newPassword/newPasswordConfirm — duplicate ids are tolerated by HTML
+    // parsing and are a Flutter-web artifact, not something fixable from here.
+    // A full code landing in any one box is redistributed by _handleChange.
+    const purpose = EdenFieldPurpose.oneTimeCode;
+    final codeSemantics = purpose.semantics;
+
     final boxes = <Widget>[];
     for (var i = 0; i < widget.length; i++) {
       if (i > 0) boxes.add(SizedBox(width: widget.gap));
@@ -138,7 +155,13 @@ class _EdenOtpInputState extends State<EdenOtpInput> {
             autofocus: widget.autofocus && i == 0,
             enabled: widget.enabled,
             textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
+            autofillHints: codeSemantics.autofillHints,
+            keyboardType: codeSemantics.keyboardType,
+            obscureText: codeSemantics.obscureText,
+            textInputAction: codeSemantics.textInputAction,
+            textCapitalization: codeSemantics.textCapitalization,
+            autocorrect: codeSemantics.autocorrect,
+            enableSuggestions: codeSemantics.enableSuggestions,
             style: theme.textTheme.titleLarge,
             decoration: InputDecoration(
               counterText: '',

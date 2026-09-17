@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 import 'eden_app_mode.dart' show kEdenAppModeExpandedMin;
 
 /// Edit vs read-only mode for [EdenSOAPNote].
@@ -215,6 +216,7 @@ class _EdenSOAPNoteState extends State<EdenSOAPNote> {
     final isView = widget.mode == EdenSoapMode.view;
     final toolbar = widget.sectionToolbarSlotBuilder?.call(sectionKey);
     final voice = widget.voiceInputSlotBuilder?.call(sectionKey);
+    final narrative = EdenFieldPurpose.multilineText.semantics;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -241,16 +243,28 @@ class _EdenSOAPNoteState extends State<EdenSOAPNote> {
               borderRadius: BorderRadius.circular(EdenRadii.sm),
               border: Border.all(color: theme.dividerColor, width: 1),
             ),
-            child: SelectableText(
+            child: Text(
               value.isEmpty ? '—' : value,
               style: theme.textTheme.bodyMedium,
             ),
           )
         else
+          // eden-field-purpose: EdenFieldPurpose.multilineText — one of the
+          // four SOAP sections. All four render through this same helper, and
+          // the purpose is hint-FREE, so repeating it emits no duplicate DOM
+          // id (40-RESEARCH.md B7). Clinical narrative about the patient, not
+          // identity about the device user.
           TextField(
             controller: controller,
             minLines: 3,
             maxLines: null,
+            autofillHints: narrative.autofillHints,
+            keyboardType: narrative.keyboardType,
+            obscureText: narrative.obscureText,
+            textInputAction: narrative.textInputAction,
+            textCapitalization: narrative.textCapitalization,
+            autocorrect: narrative.autocorrect,
+            enableSuggestions: narrative.enableSuggestions,
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(EdenRadii.sm),

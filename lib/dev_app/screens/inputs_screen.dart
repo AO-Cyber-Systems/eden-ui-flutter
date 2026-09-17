@@ -26,11 +26,14 @@ class _InputsScreenState extends State<InputsScreen> {
         children: [
           InteractivePlayground(
             title: 'Interactive Explorer',
+            // `none` -- a generic knob-driven demo shell with no real-world
+            // meaning, so it has no autofill identity to claim.
             preview: EdenInput(
               label: 'Demo Input',
               hint: 'Type something...',
               enabled: _inputEnabled,
               errorText: _inputShowError ? 'This field has an error.' : null,
+              purpose: EdenFieldPurpose.none,
             ),
             controls: [
               ToggleControl(label: 'Enabled', value: _inputEnabled, onChanged: (v) => setState(() => _inputEnabled = v)),
@@ -44,6 +47,7 @@ class _InputsScreenState extends State<InputsScreen> {
               label: 'Email',
               hint: 'you@example.com',
               prefixIcon: Icons.email_outlined,
+              purpose: EdenFieldPurpose.email,
             ),
           ),
           Section(
@@ -51,10 +55,14 @@ class _InputsScreenState extends State<InputsScreen> {
             child: Column(
               children: EdenInputSize.values.map((s) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
+                // `none` -- these three render the SAME field once per size,
+                // so a shared hint would emit duplicate DOM name/id values
+                // (text_editing.dart:514-531). They demonstrate sizing only.
                 child: EdenInput(
                   label: s.name.toUpperCase(),
                   hint: '${s.name} input',
                   size: s,
+                  purpose: EdenFieldPurpose.none,
                 ),
               )).toList(),
             ),
@@ -65,24 +73,32 @@ class _InputsScreenState extends State<InputsScreen> {
               label: 'Username',
               hint: 'Enter your username',
               helperText: 'Must be at least 3 characters.',
+              purpose: EdenFieldPurpose.username,
             ),
           ),
           const Section(
             title: 'Error State',
+            // `currentPassword` resolves obscureText TOGETHER with a
+            // password-family hint, which is what makes the field DOM
+            // type="password" on web (text_editing.dart:514-531). The raw
+            // `obscureText: true` it replaces did not.
             child: EdenInput(
               label: 'Password',
               hint: 'Enter password',
-              obscureText: true,
               errorText: 'Password is too short.',
               suffixIcon: Icons.visibility_off,
+              purpose: EdenFieldPurpose.currentPassword,
             ),
           ),
           const Section(
             title: 'Disabled Input',
+            // `none` -- demonstrates the disabled visual state; it holds no
+            // real value and has no autofill identity.
             child: EdenInput(
               label: 'Read-only',
               hint: 'This input is disabled',
               enabled: false,
+              purpose: EdenFieldPurpose.none,
             ),
           ),
           const Section(
@@ -91,6 +107,7 @@ class _InputsScreenState extends State<InputsScreen> {
               label: 'Message',
               hint: 'Type your message...',
               maxLines: 4,
+              purpose: EdenFieldPurpose.multilineText,
             ),
           ),
           const EdenDivider(label: 'Toggles'),

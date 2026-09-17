@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../eden_badge.dart';
+import '../eden_field_purpose.dart';
 import '../eden_input.dart';
 import '../eden_spinner.dart';
 import '../../tokens/radii.dart';
@@ -377,10 +378,16 @@ class _EdenTicketDetailViewState extends State<EdenTicketDetailView> {
             child: Row(
               children: [
                 Expanded(
+                  // `none` -- a ticket reply composer. It authors new content,
+                  // so it has no autofill identity, and `maxLines` is the
+                  // default 1: multilineText would resolve
+                  // `TextInputAction.newline` and stop Enter reaching
+                  // `onSubmitted`, breaking send-on-Enter.
                   child: EdenInput(
                     controller: _commentController,
                     hint: 'Add a comment...',
                     onSubmitted: (_) => _submitComment(),
+                    purpose: EdenFieldPurpose.none,
                   ),
                 ),
                 const SizedBox(width: EdenSpacing.space2),

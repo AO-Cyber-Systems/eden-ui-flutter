@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 import 'eden_photo_capture_page.dart' show EdenCapturedPhoto;
 import 'eden_signature_capture_page.dart' show EdenSignatureCaptureResult;
 
@@ -557,6 +558,14 @@ class _FieldWidgetState extends State<_FieldWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final field = widget.field;
+    // Shape B (TRD 40-15). Both purposes below are hint-FREE, which is what
+    // makes them safe here: a section renders every one of its fields at once
+    // (line ~478), so a shared hint-bearing purpose would emit N DOM elements
+    // with the same id/name (`text_editing.dart:514-531`, 40-RESEARCH.md B7).
+    // A purpose with `autofillHints == null` sets neither, so repetition is a
+    // non-issue while the keyboard still comes from a single source.
+    final narrative = EdenFieldPurpose.multilineText.semantics;
+    final measurement = EdenFieldPurpose.decimalAmount.semantics;
     switch (field.type) {
       case EdenInspectionFieldType.text:
       case EdenInspectionFieldType.longText:
@@ -564,6 +573,10 @@ class _FieldWidgetState extends State<_FieldWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildLabel(context),
+            // eden-field-purpose: EdenFieldPurpose.multilineText — an
+            // inspector's written finding about the asset under inspection.
+            // An observation about a THIRD PARTY's property, not about the
+            // device user, so it deliberately claims no identity hint.
             TextFormField(
               controller: _textController,
               enabled: widget.enabled,
@@ -572,6 +585,13 @@ class _FieldWidgetState extends State<_FieldWidget> {
                   : 3,
               minLines:
                   field.type == EdenInspectionFieldType.longText ? 3 : null,
+              autofillHints: narrative.autofillHints,
+              keyboardType: narrative.keyboardType,
+              obscureText: narrative.obscureText,
+              textInputAction: narrative.textInputAction,
+              textCapitalization: narrative.textCapitalization,
+              autocorrect: narrative.autocorrect,
+              enableSuggestions: narrative.enableSuggestions,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               onChanged: (v) => widget.onValueChanged(v),
             ),
@@ -582,11 +602,20 @@ class _FieldWidgetState extends State<_FieldWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildLabel(context),
+            // eden-field-purpose: EdenFieldPurpose.decimalAmount — a measured
+            // inspection value. NOT `quantity`: that resolves
+            // TextInputType.number, which would remove the decimal key this
+            // field has always had and `double.tryParse` below depends on.
             TextFormField(
               controller: _textController,
               enabled: widget.enabled,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              autofillHints: measurement.autofillHints,
+              keyboardType: measurement.keyboardType,
+              obscureText: measurement.obscureText,
+              textInputAction: measurement.textInputAction,
+              textCapitalization: measurement.textCapitalization,
+              autocorrect: measurement.autocorrect,
+              enableSuggestions: measurement.enableSuggestions,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
               ],

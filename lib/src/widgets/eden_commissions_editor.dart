@@ -8,6 +8,7 @@ import 'eden_banner.dart';
 import 'eden_button.dart';
 import 'eden_card.dart';
 import 'eden_currency_display.dart';
+import 'eden_field_purpose.dart';
 import 'eden_segmented_control.dart';
 
 /// Modes of commission supported by [EdenCommissionsEditor].
@@ -448,6 +449,10 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (widget.showLabelField) ...[
+              // eden-field-purpose: EdenFieldPurpose.none - a free-text name for
+              // this commission rule. No autofill hint is truthful, and maxLines
+              // is 1 so it is not multilineText. Shape C, so the field's
+              // existing keyboard and Enter behaviour are unchanged.
               TextFormField(
                 controller: _labelController,
                 decoration: const InputDecoration(
@@ -519,13 +524,22 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
   }
 
   Widget _buildPercentForm() {
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount - a commission
+        // percentage with up to 2 decimal places (the formatter allows '.').
         TextFormField(
           controller: _percentController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}\.?\d{0,2}')),
           ],
@@ -551,13 +565,22 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
   }
 
   Widget _buildFixedForm() {
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount - a flat dollar
+        // amount per qualifying sale, 2 decimal places.
         TextFormField(
           controller: _fixedController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -664,6 +687,10 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
   }
 
   Widget _tierRow(int index, EdenCommissionTier tier, bool canRemove) {
+    // Repeated once per tier. decimalAmount resolves NO autofill hints, so the
+    // duplicate-DOM-id hazard of 40-RESEARCH.md B7 (element.name and element.id
+    // are both derived from the hint string) does not arise here.
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     final threshold = tier.thresholdAmount.toStringAsFixed(2);
     final ratePct = (tier.rate * 100).toStringAsFixed(1);
     return Semantics(
@@ -674,10 +701,17 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
           children: [
             Expanded(
               flex: 5,
+              // eden-field-purpose: EdenFieldPurpose.decimalAmount - the
+              // dollar threshold this tier starts above, 2 decimal places.
               child: TextFormField(
                 controller: _tierThresholdControllers[index],
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                autofillHints: money.autofillHints,
+                keyboardType: money.keyboardType,
+                obscureText: money.obscureText,
+                textInputAction: money.textInputAction,
+                textCapitalization: money.textCapitalization,
+                autocorrect: money.autocorrect,
+                enableSuggestions: money.enableSuggestions,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.allow(
                     RegExp(r'^\d+\.?\d{0,2}'),
@@ -694,10 +728,17 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
             const SizedBox(width: EdenSpacing.space2),
             Expanded(
               flex: 5,
+              // eden-field-purpose: EdenFieldPurpose.decimalAmount - this
+              // tier's commission rate as a percentage, 2 decimal places.
               child: TextFormField(
                 controller: _tierRateControllers[index],
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                autofillHints: money.autofillHints,
+                keyboardType: money.keyboardType,
+                obscureText: money.obscureText,
+                textInputAction: money.textInputAction,
+                textCapitalization: money.textCapitalization,
+                autocorrect: money.autocorrect,
+                enableSuggestions: money.enableSuggestions,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.allow(
                     RegExp(r'^\d{0,3}\.?\d{0,2}'),
@@ -785,6 +826,9 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
   }
 
   Widget _splitRow(int index, EdenCommissionSplitParticipant participant) {
+    // Repeated once per participant; quantity resolves NO autofill hints, so
+    // 40-RESEARCH.md B7's duplicate-DOM-id hazard does not arise.
+    final EdenFieldSemantics wholePct = EdenFieldPurpose.quantity.semantics;
     final theme = Theme.of(context);
     final initial = participant.displayName.isNotEmpty
         ? participant.displayName.substring(0, 1).toUpperCase()
@@ -818,10 +862,19 @@ class _EdenCommissionsEditorState extends State<EdenCommissionsEditor> {
           ),
           SizedBox(
             width: 80,
+            // eden-field-purpose: EdenFieldPurpose.quantity - a whole-number
+            // share percentage. The formatter is RegExp(r'^\d{0,3}') and the
+            // existing keyboard is numberWithOptions(decimal: false), so '.' is
+            // rejected; decimalAmount would add a decimal key that does nothing.
             child: TextFormField(
               controller: _splitShareControllers[index],
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: false),
+              autofillHints: wholePct.autofillHints,
+              keyboardType: wholePct.keyboardType,
+              obscureText: wholePct.obscureText,
+              textInputAction: wholePct.textInputAction,
+              textCapitalization: wholePct.textCapitalization,
+              autocorrect: wholePct.autocorrect,
+              enableSuggestions: wholePct.enableSuggestions,
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}')),
               ],

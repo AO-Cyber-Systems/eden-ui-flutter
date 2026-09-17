@@ -3,6 +3,10 @@
 // Full-registry smoke test for the complete StoryRegistry (38-05).
 // Asserts exact count, unique URL-safe ids, deterministic sort, and pumps
 // every story once at its defaultKnobValues.
+//
+// Objective 040 (TRD 40-17) raised the total from 45 to 49 by registering the
+// autofill/selection stories. This count is a real contract: registering a new
+// story is meant to break it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,8 +24,10 @@ void main() {
     StoryRegistry.instance.clear();
   });
 
-  test('registry has exactly 45 stories (6 interactive + 6 galleries + 33 static)', () {
-    expect(StoryRegistry.instance.all().length, equals(45));
+  test(
+      'registry has exactly 49 stories '
+      '(6 interactive + 4 autofill/selection + 6 galleries + 33 static)', () {
+    expect(StoryRegistry.instance.all().length, equals(49));
   });
 
   test('all story ids are unique', () {

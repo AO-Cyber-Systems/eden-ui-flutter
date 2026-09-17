@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens/spacing.dart';
 import 'eden_alert.dart';
+import 'eden_field_purpose.dart';
 import 'eden_payment_entry.dart';
 import 'eden_search_input.dart';
 import 'eden_secret_field.dart';
@@ -630,6 +631,9 @@ class _RefundLineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A refundable line quantity is a whole count, not money and not a card
+    // number. The refund REASON is an EdenSelect, not a text field.
+    const qtyPurpose = EdenFieldPurpose.quantity;
     final theme = Theme.of(context);
     final reasonOptions = [
       for (final r in EdenRefundReason.values)
@@ -657,13 +661,20 @@ class _RefundLineRow extends StatelessWidget {
           );
           final qtyField = SizedBox(
             width: 80,
+            // eden-field-purpose: EdenFieldPurpose.quantity
             child: TextField(
               key: ValueKey('refundQty-${line.lineId}'),
               decoration: const InputDecoration(
                 hintText: 'Qty',
                 isDense: true,
               ),
-              keyboardType: TextInputType.number,
+              autofillHints: qtyPurpose.semantics.autofillHints,
+              keyboardType: qtyPurpose.semantics.keyboardType,
+              obscureText: qtyPurpose.semantics.obscureText,
+              textInputAction: qtyPurpose.semantics.textInputAction,
+              textCapitalization: qtyPurpose.semantics.textCapitalization,
+              autocorrect: qtyPurpose.semantics.autocorrect,
+              enableSuggestions: qtyPurpose.semantics.enableSuggestions,
               onChanged: (v) {
                 final q = int.tryParse(v) ?? 0;
                 onQtyChanged(q);

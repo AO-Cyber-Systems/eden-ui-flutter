@@ -151,8 +151,8 @@ void main() {
           ),
         ),
       );
-      final selectable =
-          tester.widget<SelectableText>(find.byType(SelectableText));
+      // TRD 40-07: sms body migrated SelectableText -> plain Text.
+      final selectable = tester.widget<Text>(find.byType(Text));
       // Custom formatter produces "2,70 €" style output.
       expect(selectable.data, contains('2,70 €'));
     });

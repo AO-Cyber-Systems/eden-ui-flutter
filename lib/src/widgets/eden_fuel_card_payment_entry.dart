@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import 'eden_card.dart';
+import 'eden_field_purpose.dart';
 import 'eden_input.dart';
 
 /// Fleet-card networks Eden's fuel module supports out-of-the-box.
@@ -384,8 +385,7 @@ class _EdenFuelCardPaymentEntryState extends State<EdenFuelCardPaymentEntry> {
           controller: _panCtrl,
           label: 'Card number',
           hint: 'PAN — securely retained as last 4 only',
-          obscureText: true,
-          keyboardType: TextInputType.number,
+          purpose: EdenFieldPurpose.creditCardNumber,
           onChanged: (_) => setState(() {}),
         ),
         if (_panCtrl.text.length >= 4) ...[
@@ -414,27 +414,37 @@ class _EdenFuelCardPaymentEntryState extends State<EdenFuelCardPaymentEntry> {
     final ctrl = _promptCtrls[p.fieldKey]!;
     switch (p.kind) {
       case EdenFuelCardPromptKind.numericPin:
+        // eden-field-purpose: EdenFieldPurpose.none -- a fleet-card driver PIN
+        // is not an account password. `currentPassword` would offer the user's
+        // saved passwords here AND force a text keyboard onto a numeric PIN,
+        // so this field keeps manual control of obscureText + keyboardType.
         return EdenInput(
           controller: ctrl,
           label: p.label,
+          purpose: EdenFieldPurpose.none,
           obscureText: true,
           keyboardType: TextInputType.number,
           onChanged: (_) => setState(() {}),
         );
       case EdenFuelCardPromptKind.numeric:
       case EdenFuelCardPromptKind.odometer:
+        // An odometer / meter reading is a whole number, not a card number.
         return EdenInput(
           controller: ctrl,
           label: p.label,
           hint: p.hint,
-          keyboardType: TextInputType.number,
+          purpose: EdenFieldPurpose.quantity,
           onChanged: (_) => setState(() {}),
         );
       case EdenFuelCardPromptKind.text:
+        // eden-field-purpose: EdenFieldPurpose.none -- an arbitrary fleet
+        // prompt (job code, trailer number, driver ID) defined by the caller.
+        // Nothing in the spec identifies a fillable value.
         return EdenInput(
           controller: ctrl,
           label: p.label,
           hint: p.hint,
+          purpose: EdenFieldPurpose.none,
           onChanged: (_) => setState(() {}),
         );
     }
@@ -459,14 +469,15 @@ class _EdenFuelCardPaymentEntryState extends State<EdenFuelCardPaymentEntry> {
           controller: _amountCtrl,
           label: 'Amount (USD)',
           hint: '0.00',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          purpose: EdenFieldPurpose.decimalAmount,
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
         EdenInput(
           controller: _emailCtrl,
           label: 'Receipt email (optional)',
-          keyboardType: TextInputType.emailAddress,
+          hint: 'you@example.com',
+          purpose: EdenFieldPurpose.email,
         ),
       ],
     );

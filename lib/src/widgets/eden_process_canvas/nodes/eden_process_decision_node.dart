@@ -52,6 +52,10 @@ class _EdenProcessDecisionNodeState extends State<EdenProcessDecisionNode> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // eden-field-purpose: EdenFieldPurpose.none -- a decision's
+              // name is authoring content in a process definition, and this
+              // editor opens once per decision node on the canvas, so a hint
+              // would also collide on the DOM name/id (Appendix B7).
               TextField(
                 controller: nameCtrl,
                 decoration: const InputDecoration(
@@ -60,8 +64,16 @@ class _EdenProcessDecisionNodeState extends State<EdenProcessDecisionNode> {
                 ),
               ),
               const SizedBox(height: 12),
+              // eden-field-purpose: EdenFieldPurpose.none -- a boolean
+              // expression such as `cost > 5000`. Autocorrect and suggestions
+              // are forced OFF here: an expression that the keyboard "corrects"
+              // silently changes the process's branching logic. `none`'s own
+              // semantics leave both ON, so they are set explicitly rather than
+              // spread.
               TextField(
                 controller: condCtrl,
+                autocorrect: false,
+                enableSuggestions: false,
                 decoration: const InputDecoration(
                   labelText: 'Condition (optional)',
                   hintText: 'e.g. cost > 5000',

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// A single item in the command palette.
 class EdenCommandItem {
@@ -217,6 +218,14 @@ class _EdenCommandPaletteState extends State<EdenCommandPalette> {
   }
 
   Widget _buildSearchField(bool isDark) {
+    // eden-field-purpose: EdenFieldPurpose.searchQuery -- the palette's query
+    // box. Resolves keyboardType AND textInputAction together; `autofillHints`
+    // is deliberately null (there is no AutofillHints constant for a search
+    // query). Enter-to-select is handled by the ancestor
+    // `Focus(onKeyEvent: _handleKeyEvent)`, not by `onSubmitted`, so the
+    // `TextInputAction.search` this resolves does not change selection
+    // behaviour.
+    const searchPurpose = EdenFieldPurpose.searchQuery;
     return Container(
       padding: const EdgeInsets.all(EdenSpacing.space3),
       decoration: BoxDecoration(
@@ -231,6 +240,13 @@ class _EdenCommandPaletteState extends State<EdenCommandPalette> {
         focusNode: _focusNode,
         autofocus: true,
         onChanged: _onQueryChanged,
+        autofillHints: searchPurpose.semantics.autofillHints,
+        keyboardType: searchPurpose.semantics.keyboardType,
+        obscureText: searchPurpose.semantics.obscureText,
+        textInputAction: searchPurpose.semantics.textInputAction,
+        textCapitalization: searchPurpose.semantics.textCapitalization,
+        autocorrect: searchPurpose.semantics.autocorrect,
+        enableSuggestions: searchPurpose.semantics.enableSuggestions,
         style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
           hintText: widget.placeholder,

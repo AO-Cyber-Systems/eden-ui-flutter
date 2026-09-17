@@ -1,13 +1,33 @@
 import 'package:flutter/material.dart';
 import '../tokens/spacing.dart';
+import '../widgets/eden_autofill_scope.dart';
 import '../widgets/eden_avatar.dart';
 import '../widgets/eden_badge.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_field_purpose.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_settings_section.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A user profile page with personal info editing, password change, and account
 /// danger zone sections.
+///
+/// ## Autofill
+///
+/// Before this page carried [EdenFieldPurpose]s, NONE of its six fields had a
+/// single autofill hint. That mattered most for the three password inputs: the
+/// web DOM `type` is derived from the HINT string, never from `obscureText`
+/// (`text_editing.dart:514-531`), so an obscured field with no hint rendered as
+/// `type="text"` -- the secret sitting in the DOM as plain text, and the field
+/// invisible to a password manager. Each now resolves a password-family hint.
+///
+/// Only the CHANGE-PASSWORD section is wrapped in an [EdenAutofillScope], and
+/// the commit happens after [onChangePassword] resolves without throwing. The
+/// personal-information fields are deliberately left outside it:
+/// `TextInput.finishAutofillContext` ends the whole autofill context rather
+/// than one group, so putting them in would let a name or phone edit raise a
+/// credential save prompt. Their hints still work -- filling is per element and
+/// needs no group.
 class EdenProfilePage extends StatefulWidget {
   const EdenProfilePage({
     super.key,
@@ -43,6 +63,12 @@ class EdenProfilePage extends StatefulWidget {
 }
 
 class _EdenProfilePageState extends State<EdenProfilePage> {
+  // Reached by key, not by `EdenAutofillScope.of(context)`: the scope is built
+  // as a DESCENDANT of this State, and `of` walks ANCESTORS, so it would never
+  // find it from a handler running on this State's context.
+  final GlobalKey<EdenAutofillScopeState> _autofillScopeKey =
+      GlobalKey<EdenAutofillScopeState>();
+
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
@@ -128,6 +154,18 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
         _currentPasswordController.text,
         newPassword,
       );
+      // The SAVE half of autofill, and the ONLY thing that makes the new
+      // password storable: on web `saveForms()` clicks the hidden form's
+      // submit button (`text_editing.dart:2245`) and that click is what
+      // raises "Update password?".
+      //
+      // ORDER IS LOAD-BEARING -- this must run BEFORE the clears below. The
+      // browser reads the live DOM input values at the moment of that click,
+      // so clearing the controllers first would offer to save three EMPTY
+      // fields. It also runs only after the await returned normally: a throw
+      // means the backend rejected the change, and saving then would store a
+      // password the account does not have.
+      _autofillScopeKey.currentState?.commit();
       if (mounted) {
         _currentPasswordController.clear();
         _newPasswordController.clear();
@@ -142,7 +180,7 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
+    return EdenSelectableRegion(child: SingleChildScrollView(
       padding: const EdgeInsets.all(EdenSpacing.space6),
       child: Center(
         child: ConstrainedBox(
@@ -170,7 +208,7 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildHeader(ThemeData theme) {
@@ -246,10 +284,16 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
       description: 'Update your personal details.',
       child: Column(
         children: [
+          // Had NO autofill hints and no keyboardType, so `TextField` resolved
+          // `TextInputType.text` in its own initializer list
+          // (`text_field.dart:355`). `AutofillHints.name` "requires
+          // TextInputType.name" (`editable_text.dart:1855-1858`); the purpose
+          // now sets both halves together.
           EdenInput(
             controller: _nameController,
             label: 'Display name',
             hint: 'Your display name',
+            purpose: EdenFieldPurpose.personName,
             prefixIcon: Icons.person_outline,
           ),
           const SizedBox(height: EdenSpacing.space4),
@@ -257,16 +301,16 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
             controller: _emailController,
             label: 'Email',
             hint: 'your@email.com',
+            purpose: EdenFieldPurpose.email,
             prefixIcon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: EdenSpacing.space4),
           EdenInput(
             controller: _phoneController,
             label: 'Phone',
             hint: 'Optional',
+            purpose: EdenFieldPurpose.telephoneNumber,
             prefixIcon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: EdenSpacing.space4),
           Align(
@@ -286,39 +330,82 @@ class _EdenProfilePageState extends State<EdenProfilePage> {
     return EdenSettingsSection(
       title: 'Change Password',
       description: 'Ensure your account stays secure.',
-      child: Column(
-        children: [
-          EdenInput(
-            controller: _currentPasswordController,
-            label: 'Current password',
-            obscureText: true,
-            prefixIcon: Icons.lock_outline,
-          ),
-          const SizedBox(height: EdenSpacing.space4),
-          EdenInput(
-            controller: _newPasswordController,
-            label: 'New password',
-            obscureText: true,
-            prefixIcon: Icons.lock_outline,
-          ),
-          const SizedBox(height: EdenSpacing.space4),
-          EdenInput(
-            controller: _confirmPasswordController,
-            label: 'Confirm new password',
-            obscureText: true,
-            prefixIcon: Icons.lock_outline,
-            errorText: _passwordError,
-          ),
-          const SizedBox(height: EdenSpacing.space4),
-          Align(
-            alignment: Alignment.centerRight,
-            child: EdenButton(
-              label: 'Update Password',
-              onPressed: _passwordSaving ? null : _handleChangePassword,
-              loading: _passwordSaving,
+      // The ONLY autofill scope on this page. See the class dartdoc for why the
+      // personal-information fields are deliberately outside it.
+      child: EdenAutofillScope(
+        key: _autofillScopeKey,
+        child: Column(
+          children: [
+            // All three were obscured with NO autofill hint, which on web is
+            // DOM `type="text"` (`text_editing.dart:514-531`) -- the secret in
+            // plaintext in the DOM and unreachable by a password manager. The
+            // `hint:` values are new too: `hintText` becomes the DOM
+            // `placeholder` (`text_editing.dart:471`), which password-manager
+            // heuristics read.
+            //
+            // `currentPassword` also resolves `textInputAction: done`, which is
+            // tuned for a sign-in form where the password is last. Here it sits
+            // first of three, so Enter closes the keyboard instead of
+            // advancing. Accepted rather than overridden: the alternative is
+            // `EdenFieldPurpose.none`, which would give this field back its
+            // missing hint problem -- by far the more serious defect. Nothing
+            // on this page relies on the Enter key (no field sets
+            // `onSubmitted`).
+            EdenInput(
+              controller: _currentPasswordController,
+              label: 'Current password',
+              hint: 'Enter your current password',
+              purpose: EdenFieldPurpose.currentPassword,
+              prefixIcon: Icons.lock_outline,
             ),
-          ),
-        ],
+            const SizedBox(height: EdenSpacing.space4),
+            // DUPLICATE DOM ID, ON PURPOSE -- do not "fix" this pair.
+            //
+            // The web engine sets BOTH `element.name` and `element.id` to the
+            // hint string (`text_editing.dart:514-531`), so this field and the
+            // confirmation below it -- both resolving
+            // `AutofillHints.newPassword` -- emit the SAME DOM id inside this
+            // autofill group.
+            //
+            // That is accepted, not overlooked. Two
+            // `autocomplete="new-password"` inputs is the standard HTML
+            // change-password shape; browsers and 1Password handle it, and
+            // duplicate ids are tolerated by HTML parsing. Both alternatives
+            // are worse: dropping the hint on the confirm field makes it DOM
+            // `type="text"`, and inventing a distinct hint string emits an
+            // invalid `autocomplete` token. Full rationale, and the reason the
+            // two stay SEPARATE enum members, is on
+            // [EdenFieldPurpose.newPasswordConfirm].
+            EdenInput(
+              controller: _newPasswordController,
+              label: 'New password',
+              hint: 'Choose a new password',
+              purpose: EdenFieldPurpose.newPassword,
+              prefixIcon: Icons.lock_outline,
+            ),
+            const SizedBox(height: EdenSpacing.space4),
+            // Second half of the deliberate duplicate-id pair documented above.
+            // Distinct MEMBER, same resolved hint -- see
+            // [EdenFieldPurpose.newPasswordConfirm].
+            EdenInput(
+              controller: _confirmPasswordController,
+              label: 'Confirm new password',
+              hint: 'Re-enter your new password',
+              purpose: EdenFieldPurpose.newPasswordConfirm,
+              prefixIcon: Icons.lock_outline,
+              errorText: _passwordError,
+            ),
+            const SizedBox(height: EdenSpacing.space4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: EdenButton(
+                label: 'Update Password',
+                onPressed: _passwordSaving ? null : _handleChangePassword,
+                loading: _passwordSaving,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

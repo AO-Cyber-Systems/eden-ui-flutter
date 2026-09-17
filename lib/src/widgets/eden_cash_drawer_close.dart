@@ -8,6 +8,7 @@ import 'eden_banner.dart';
 import 'eden_button.dart';
 import 'eden_card.dart';
 import 'eden_currency_display.dart';
+import 'eden_field_purpose.dart';
 
 /// A single bill / coin denomination.
 @immutable
@@ -458,6 +459,9 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
   }
 
   Widget _buildCountBody(bool narrow) {
+    // A denomination count is a whole number of bills/coins, not a payment
+    // card number and not money -- it carries no autofill identity.
+    const countPurpose = EdenFieldPurpose.quantity;
     final rows = <Widget>[];
     for (final d in widget.denominations) {
       final controller = _denomControllers[d.label]!;
@@ -474,9 +478,17 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
               Expanded(flex: 3, child: Text(d.label)),
               SizedBox(
                 width: 90,
+                // eden-field-purpose: EdenFieldPurpose.quantity
                 child: TextFormField(
                   controller: controller,
-                  keyboardType: TextInputType.number,
+                  autofillHints: countPurpose.semantics.autofillHints,
+                  keyboardType: countPurpose.semantics.keyboardType,
+                  obscureText: countPurpose.semantics.obscureText,
+                  textInputAction: countPurpose.semantics.textInputAction,
+                  textCapitalization:
+                      countPurpose.semantics.textCapitalization,
+                  autocorrect: countPurpose.semantics.autocorrect,
+                  enableSuggestions: countPurpose.semantics.enableSuggestions,
                   inputFormatters: <TextInputFormatter>[
                     FilteringTextInputFormatter.digitsOnly,
                   ],
@@ -648,16 +660,23 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
   }
 
   Widget _buildAddTxForm() {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
     return EdenCard(
       child: Padding(
         padding: const EdgeInsets.all(EdenSpacing.space3),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // eden-field-purpose: EdenFieldPurpose.decimalAmount
             TextFormField(
               controller: _txAmountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              autofillHints: amountPurpose.semantics.autofillHints,
+              keyboardType: amountPurpose.semantics.keyboardType,
+              obscureText: amountPurpose.semantics.obscureText,
+              textInputAction: amountPurpose.semantics.textInputAction,
+              textCapitalization: amountPurpose.semantics.textCapitalization,
+              autocorrect: amountPurpose.semantics.autocorrect,
+              enableSuggestions: amountPurpose.semantics.enableSuggestions,
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
               ],
@@ -669,6 +688,9 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
               ),
             ),
             const SizedBox(height: 8),
+            // eden-field-purpose: EdenFieldPurpose.none -- single-line
+            // free-text reason. No autofill identity, and `multilineText`
+            // would put a multiline keyboard on a maxLines:1 field.
             TextFormField(
               controller: _txReasonController,
               decoration: const InputDecoration(
@@ -700,12 +722,21 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
   }
 
   Widget _buildDepositBody() {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
+    const countPurpose = EdenFieldPurpose.quantity;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount
         TextFormField(
           controller: _depositCashController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: amountPurpose.semantics.autofillHints,
+          keyboardType: amountPurpose.semantics.keyboardType,
+          obscureText: amountPurpose.semantics.obscureText,
+          textInputAction: amountPurpose.semantics.textInputAction,
+          textCapitalization: amountPurpose.semantics.textCapitalization,
+          autocorrect: amountPurpose.semantics.autocorrect,
+          enableSuggestions: amountPurpose.semantics.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -720,10 +751,17 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
         Row(
           children: [
             Expanded(
+              // eden-field-purpose: EdenFieldPurpose.decimalAmount
               child: TextFormField(
                 controller: _depositCheckAmountController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                autofillHints: amountPurpose.semantics.autofillHints,
+                keyboardType: amountPurpose.semantics.keyboardType,
+                obscureText: amountPurpose.semantics.obscureText,
+                textInputAction: amountPurpose.semantics.textInputAction,
+                textCapitalization:
+                    amountPurpose.semantics.textCapitalization,
+                autocorrect: amountPurpose.semantics.autocorrect,
+                enableSuggestions: amountPurpose.semantics.enableSuggestions,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                 ],
@@ -738,9 +776,17 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
             const SizedBox(width: 8),
             SizedBox(
               width: 100,
+              // eden-field-purpose: EdenFieldPurpose.quantity
               child: TextFormField(
                 controller: _depositCheckCountController,
-                keyboardType: TextInputType.number,
+                autofillHints: countPurpose.semantics.autofillHints,
+                keyboardType: countPurpose.semantics.keyboardType,
+                obscureText: countPurpose.semantics.obscureText,
+                textInputAction: countPurpose.semantics.textInputAction,
+                textCapitalization:
+                    countPurpose.semantics.textCapitalization,
+                autocorrect: countPurpose.semantics.autocorrect,
+                enableSuggestions: countPurpose.semantics.enableSuggestions,
                 inputFormatters: <TextInputFormatter>[
                   FilteringTextInputFormatter.digitsOnly,
                 ],
@@ -754,6 +800,9 @@ class _EdenCashDrawerCloseState extends State<EdenCashDrawerClose> {
           ],
         ),
         const SizedBox(height: 8),
+        // eden-field-purpose: EdenFieldPurpose.none -- single-line free-text
+        // memo. No autofill identity, and `multilineText` would put a
+        // multiline keyboard on a maxLines:1 field.
         TextFormField(
           controller: _depositMemoController,
           decoration: const InputDecoration(

@@ -19,6 +19,8 @@
 
 import 'package:flutter/material.dart';
 
+import 'eden_field_purpose.dart';
+
 // ---------------------------------------------------------------------------
 // Public model types
 // ---------------------------------------------------------------------------
@@ -59,6 +61,7 @@ class EdenSchemaField {
     required this.type,
     this.required = false,
     this.selectOptions,
+    this.purpose = EdenFieldPurpose.none,
   });
 
   /// Unique key used to read/write [EdenSchemaForm.initialValues].
@@ -77,6 +80,38 @@ class EdenSchemaField {
   /// Option strings for [EdenSchemaFieldType.select] fields.
   /// Ignored for all other types.
   final List<String>? selectOptions;
+
+  /// The semantic purpose of this field, declared once per SCHEMA rather than
+  /// per render. ONE value resolves autofillHints (in platform-correct order),
+  /// keyboardType, obscureText, textInputAction and textCapitalization as a
+  /// consistent set — see [EdenFieldPurpose].
+  ///
+  /// Defaults to [EdenFieldPurpose.none] so existing schemas are unchanged.
+  /// When left at `none`, [type] still supplies a sensible fallback:
+  /// [EdenSchemaFieldType.number] renders as [EdenFieldPurpose.quantity] and
+  /// [EdenSchemaFieldType.mediaUrl] as [EdenFieldPurpose.url], preserving the
+  /// keyboards those types have always had.
+  ///
+  /// Declare a real purpose (e.g. [EdenFieldPurpose.email]) on any schema field
+  /// that holds a fillable value — without an autofill hint, web emits
+  /// `autocomplete="on"` with no `name` and no `id`, which is why password
+  /// managers cannot classify the field (text_editing.dart:514-531).
+  final EdenFieldPurpose purpose;
+}
+
+/// Resolves the purpose actually applied to [spec]'s input widget.
+///
+/// A schema-declared [EdenSchemaField.purpose] always wins. Otherwise the
+/// declared [EdenSchemaFieldType] supplies the fallback, so that leaving
+/// `purpose` unset never silently downgrades a keyboard these field types
+/// already had (`none` resolves TextInputType.text).
+EdenFieldPurpose _effectivePurpose(EdenSchemaField spec) {
+  if (spec.purpose != EdenFieldPurpose.none) return spec.purpose;
+  return switch (spec.type) {
+    EdenSchemaFieldType.number => EdenFieldPurpose.quantity,
+    EdenSchemaFieldType.mediaUrl => EdenFieldPurpose.url,
+    _ => EdenFieldPurpose.none,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -204,6 +239,13 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
   Widget _buildTextField(EdenSchemaField spec) {
     final isLocked = widget.lockedFieldKeys.contains(spec.key);
     final controller = _controllers[spec.key]!;
+    // The schema declares intent once; this is where it reaches the field.
+    // On the `none` branch every forward is the Flutter default, so an
+    // unpurposed schema renders byte-identically to before this sweep — the
+    // same isPurposed shape EdenInput uses (TRD 40-03).
+    final purpose = _effectivePurpose(spec);
+    final isPurposed = purpose != EdenFieldPurpose.none;
+    final semantics = purpose.semantics;
 
     if (isLocked) {
       return Column(
@@ -211,9 +253,21 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
         children: [
           Text(spec.label, style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 6),
+          // Locked rendering of the SAME logical field, so it carries the
+          // same purpose. `readOnly: true` (not obscured) keeps copy working
+          // — deliberately no enableInteractiveSelection override here.
           TextFormField(
             controller: controller,
             readOnly: true,
+            autofillHints: isPurposed ? semantics.autofillHints : null,
+            keyboardType: isPurposed ? semantics.keyboardType : null,
+            obscureText: isPurposed ? semantics.obscureText : false,
+            textInputAction: isPurposed ? semantics.textInputAction : null,
+            textCapitalization: isPurposed
+                ? semantics.textCapitalization
+                : TextCapitalization.none,
+            autocorrect: isPurposed ? semantics.autocorrect : true,
+            enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
             decoration: InputDecoration(
               hintText: spec.label,
               suffixIcon: const Icon(Icons.lock_outline, size: 16),
@@ -230,6 +284,15 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
+          autofillHints: isPurposed ? semantics.autofillHints : null,
+          keyboardType: isPurposed ? semantics.keyboardType : null,
+          obscureText: isPurposed ? semantics.obscureText : false,
+          textInputAction: isPurposed ? semantics.textInputAction : null,
+          textCapitalization: isPurposed
+              ? semantics.textCapitalization
+              : TextCapitalization.none,
+          autocorrect: isPurposed ? semantics.autocorrect : true,
+          enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
           decoration: InputDecoration(hintText: spec.label),
           validator: spec.required
               ? (v) => (v == null || v.trim().isEmpty)
@@ -244,6 +307,13 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
 
   Widget _buildNumberField(EdenSchemaField spec) {
     final controller = _controllers[spec.key]!;
+    // The schema declares intent once; this is where it reaches the field.
+    // On the `none` branch every forward is the Flutter default, so an
+    // unpurposed schema renders byte-identically to before this sweep — the
+    // same isPurposed shape EdenInput uses (TRD 40-03).
+    final purpose = _effectivePurpose(spec);
+    final isPurposed = purpose != EdenFieldPurpose.none;
+    final semantics = purpose.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -251,7 +321,15 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          autofillHints: isPurposed ? semantics.autofillHints : null,
+          keyboardType: isPurposed ? semantics.keyboardType : null,
+          obscureText: isPurposed ? semantics.obscureText : false,
+          textInputAction: isPurposed ? semantics.textInputAction : null,
+          textCapitalization: isPurposed
+              ? semantics.textCapitalization
+              : TextCapitalization.none,
+          autocorrect: isPurposed ? semantics.autocorrect : true,
+          enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
           decoration: InputDecoration(hintText: spec.label),
           // CRITICAL: int.tryParse prevents type-coercion bugs.
           // Matches the original CmsFrontmatterForm contract.
@@ -329,6 +407,13 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
 
   Widget _buildMediaUrlField(EdenSchemaField spec) {
     final controller = _controllers[spec.key]!;
+    // The schema declares intent once; this is where it reaches the field.
+    // On the `none` branch every forward is the Flutter default, so an
+    // unpurposed schema renders byte-identically to before this sweep — the
+    // same isPurposed shape EdenInput uses (TRD 40-03).
+    final purpose = _effectivePurpose(spec);
+    final isPurposed = purpose != EdenFieldPurpose.none;
+    final semantics = purpose.semantics;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -337,9 +422,20 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
         Row(
           children: [
             Expanded(
+              // `readOnly: true` (not obscured) stays copyable — Appendix A
+              // probe 3. No enableInteractiveSelection override.
               child: TextFormField(
                 controller: controller,
                 readOnly: true,
+                autofillHints: isPurposed ? semantics.autofillHints : null,
+                keyboardType: isPurposed ? semantics.keyboardType : null,
+                obscureText: isPurposed ? semantics.obscureText : false,
+                textInputAction: isPurposed ? semantics.textInputAction : null,
+                textCapitalization: isPurposed
+                    ? semantics.textCapitalization
+                    : TextCapitalization.none,
+                autocorrect: isPurposed ? semantics.autocorrect : true,
+                enableSuggestions: isPurposed ? semantics.enableSuggestions : true,
                 decoration: const InputDecoration(
                   hintText: 'No image selected',
                 ),
@@ -389,6 +485,13 @@ class _EdenSchemaFormState extends State<EdenSchemaForm> {
             child: Row(
               children: [
                 Expanded(
+                  // eden-field-purpose: EdenFieldPurpose.none — one row of a
+                  // variable-length repeater. It deliberately does NOT inherit
+                  // spec.purpose: N rows sharing one hint would emit N DOM
+                  // elements with the same id/name (text_editing.dart:514-531),
+                  // and a password manager filling every row with the same
+                  // value is worse than filling none. Shape C: marker comment,
+                  // no semantics spread, Flutter defaults preserved.
                   child: TextFormField(
                     initialValue: item['value']?.toString() ?? '',
                     decoration: InputDecoration(

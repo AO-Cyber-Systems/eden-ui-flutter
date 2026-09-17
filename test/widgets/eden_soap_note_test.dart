@@ -78,7 +78,13 @@ void main() {
   });
 
   group('EdenSOAPNote — view mode', () {
-    testWidgets('view mode → no TextField, SelectableText instead',
+    // TRD 40-07: view mode used to render each section value as a
+    // SelectableText. It is now plain Text under the ambient
+    // EdenSelectableRegion. `find.byType(Text)` would be vacuous here (labels,
+    // captions and buttons are Texts too), so assert on the four SECTION
+    // VALUES themselves -- that is what the old findsAtLeastNWidgets(4) was
+    // really standing in for.
+    testWidgets('view mode → no TextField, plain Text values instead',
         (tester) async {
       await tester.pumpWidget(wrap(EdenSOAPNote(
         data: SoapFixtures.annualPhysicalSigned,
@@ -86,7 +92,19 @@ void main() {
         mode: EdenSoapMode.view,
       )));
       expect(find.byType(TextField), findsNothing);
-      expect(find.byType(SelectableText), findsAtLeastNWidgets(4));
+
+      final data = SoapFixtures.annualPhysicalSigned;
+      for (final value in <String>[
+        data.subjective,
+        data.objective,
+        data.assessment,
+        data.plan,
+      ]) {
+        expect(find.text(value), findsOneWidget,
+            reason: 'each SOAP section value must render as read-only text in '
+                'view mode; selection is owned by the ambient '
+                'EdenSelectableRegion, not by the leaf widget');
+      }
     });
 
     testWidgets('view mode + signedBy → "Signed by …" caption',

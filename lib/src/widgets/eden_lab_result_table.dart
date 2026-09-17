@@ -3,10 +3,36 @@ import 'package:flutter/material.dart';
 import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
 import '../tokens/typography.dart';
+import '../utils/eden_tsv.dart';
 import 'eden_chart.dart' show EdenSparkline;
 
 /// FHIR-shape lab flag (library-owned).
 enum EdenLabFlag { normal, high, low, criticalHigh, criticalLow }
+
+/// The human label for a flag, used when copying.
+///
+/// Deliberately NOT the on-screen rendering. The table renders `H`, `L`, `HH`,
+/// `LL` and a blank for `normal` — abbreviations that are legible in a dense
+/// clinical column and meaningless in a spreadsheet, where the surrounding
+/// colour and column header are gone. The label is the datum; the abbreviation
+/// is the rendering.
+///
+/// `normal` copies as `normal` rather than the blank it renders, because an
+/// empty cell in a pasted grid reads as "no flag recorded" rather than "flag
+/// recorded, and it was normal".
+///
+/// Exhaustive `switch` with no default arm, so a new flag is a compile error
+/// here until its label is decided.
+extension EdenLabFlagLabel on EdenLabFlag {
+  /// This flag's human-readable label.
+  String get label => switch (this) {
+        EdenLabFlag.normal => 'normal',
+        EdenLabFlag.high => 'high',
+        EdenLabFlag.low => 'low',
+        EdenLabFlag.criticalHigh => 'critical high',
+        EdenLabFlag.criticalLow => 'critical low',
+      };
+}
 
 /// FHIR-shape lab result value class (library-owned — NOT FHIR-bound).
 ///
@@ -63,6 +89,7 @@ class EdenLabResultTable extends StatefulWidget {
     this.showSparkline = true,
     this.onResultTap,
     this.padding,
+    this.copyable = false,
   }) : assert(
           results.isEmpty ||
               results.every(
@@ -78,6 +105,35 @@ class EdenLabResultTable extends StatefulWidget {
   final bool showSparkline;
   final void Function(EdenLabResult)? onResultTap;
   final EdgeInsetsGeometry? padding;
+
+  /// Shows a copy-table action in the header and a copy affordance per row.
+  ///
+  /// Off by default. `SelectionArea` concatenates a drag-selection with no cell
+  /// delimiters (40-RESEARCH.md section 5), so a table that wants
+  /// paste-into-a-spreadsheet behaviour has to offer it explicitly.
+  ///
+  /// Copied columns, in order: test name, test code, value, unit, reference
+  /// range, flag, collected date, notes. Copy emits the DATA, so three of those
+  /// deliberately differ from what is rendered:
+  ///
+  /// * the **reference range** is `min-max`, and EMPTY when both bounds are
+  ///   null — the cell renders an em dash, which is a typographic placeholder,
+  ///   not a value, and would paste as a literal dash into a numeric column;
+  /// * the **flag** copies its human label, not the `H`/`HH` abbreviation
+  ///   (see [EdenLabFlagLabel]);
+  /// * the **date** is ISO-8601, not the rendered `MM/DD/YY` — a two-digit year
+  ///   is ambiguous and a localised date pastes into a spreadsheet as text.
+  ///
+  /// `trendValues` is NOT copied. It is a SERIES behind one row — the sparkline
+  /// draws it as a shape, and there is no honest single-cell representation of
+  /// it: the last value alone would imply the trend was one number, and the
+  /// whole series inlined would either need its own delimiter (there is none
+  /// available inside a TSV cell) or would silently shift every later column.
+  /// A caller who needs the series should copy it from the source record.
+  ///
+  /// Rows are copied in DISPLAY order — the active sort column and direction,
+  /// or panel-grouped canonical order when [groupByPanel] is set.
+  final bool copyable;
 
   @override
   State<EdenLabResultTable> createState() => _EdenLabResultTableState();
@@ -124,15 +180,15 @@ class _EdenLabResultTableState extends State<EdenLabResultTable> {
       return const SizedBox.shrink();
     }
 
-    final groups = widget.groupByPanel
-        ? _groupByPanel(widget.results)
-        : <String?, List<EdenLabResult>>{null: _sorted(widget.results)};
+    final groups = _displayGroups();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: widget.padding ?? EdgeInsets.zero,
       child: SizedBox(
-        width: 566, // 7 cells × (width + 8 padding) = 510 + 56
+        // 7 cells × (width + 8 padding) = 510 + 56; the copy column adds
+        // one more 32-wide cell carrying the same 8px of padding.
+        width: widget.copyable ? 606 : 566,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -140,6 +196,7 @@ class _EdenLabResultTableState extends State<EdenLabResultTable> {
               sortColumn: _sortColumn,
               ascending: _ascending,
               onSort: _onSortHeader,
+              copyAction: widget.copyable ? _copyTableButton() : null,
             ),
             ...groups.entries.expand((entry) {
               final panel = entry.key;
@@ -153,12 +210,121 @@ class _EdenLabResultTableState extends State<EdenLabResultTable> {
                     result: r,
                     showSparkline: widget.showSparkline,
                     onTap: widget.onResultTap,
+                    copyAction: widget.copyable ? _copyRowButton(r) : null,
                   ),
                 ),
               ];
             }),
           ],
         ),
+      ),
+    );
+  }
+
+  /// The rows exactly as they are rendered, grouped and ordered.
+  ///
+  /// Hoisted out of `build` so the copy callback and the render path read the
+  /// SAME list. Deriving the order twice would let a copy silently disagree with
+  /// the screen the moment either side changed — and the order here is not
+  /// incidental: it is the active sort column and direction, or the panel
+  /// grouping with its canonical intra-panel order.
+  Map<String?, List<EdenLabResult>> _displayGroups() {
+    return widget.groupByPanel
+        ? _groupByPanel(widget.results)
+        : <String?, List<EdenLabResult>>{null: _sorted(widget.results)};
+  }
+
+  // ---------------------------------------------------------------------------
+  // Clipboard
+  // ---------------------------------------------------------------------------
+
+  /// Column labels for the copied grid. Mirrors [_resultCopyValues] exactly.
+  static const List<String> _copyHeader = <String>[
+    'Test',
+    'Code',
+    'Value',
+    'Unit',
+    'Range',
+    'Flag',
+    'Date',
+    'Notes',
+  ];
+
+  /// The reference range as DATA: `min-max`, or empty when both bounds are null.
+  ///
+  /// Deliberately not the rendered `_formatRange`, which emits an em dash for a
+  /// missing range. That dash is a typographic placeholder, not a value, and
+  /// would paste as a literal character into an otherwise numeric column. The
+  /// one-sided `<x` / `>x` forms ARE data and are kept.
+  static String _copyRange(EdenLabResult r) {
+    final double? lo = r.referenceMin;
+    final double? hi = r.referenceMax;
+    if (lo != null && hi != null) {
+      return '${_formatValue(lo)}-${_formatValue(hi)}';
+    }
+    if (hi != null) return '<${_formatValue(hi)}';
+    if (lo != null) return '>${_formatValue(lo)}';
+    return '';
+  }
+
+  /// ISO-8601 calendar date, which is what a spreadsheet parses as a date.
+  ///
+  /// The cell renders `MM/DD/YY`; a two-digit year is ambiguous and a localised
+  /// date pastes as text, so neither is copyable.
+  static String _copyDate(DateTime d) {
+    final String m = d.month.toString().padLeft(2, '0');
+    final String day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$m-$day';
+  }
+
+  /// One result reduced to its clipboard cells, in [_copyHeader] order.
+  ///
+  /// `trendValues` is absent by design — see [EdenLabResultTable.copyable].
+  static List<String> _resultCopyValues(EdenLabResult r) => <String>[
+        r.testName,
+        r.testCode,
+        _formatValue(r.value),
+        r.unit,
+        _copyRange(r),
+        r.flag.label,
+        _copyDate(r.collectedAt),
+        r.notes ?? '',
+      ];
+
+  /// Every result in DISPLAY order, each reduced to its clipboard cells.
+  List<List<String>> _visibleRowValues() => _displayGroups()
+      .values
+      .expand((rows) => rows)
+      .map(_resultCopyValues)
+      .toList();
+
+  /// Copies the whole table: column labels first, then every row.
+  ///
+  /// Wrapped in [SelectionContainer.disabled] so a drag-select across the table
+  /// picks up the data and not the word "Copy" (40-RESEARCH.md section 5).
+  Widget _copyTableButton() {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: const Icon(Icons.copy_all, size: 14),
+        tooltip: 'Copy table',
+        onPressed: () => edenCopyTsv(_visibleRowValues(), header: _copyHeader),
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+      ),
+    );
+  }
+
+  /// Copies one result alone, TAB-delimited and with NO header line.
+  Widget _copyRowButton(EdenLabResult r) {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: const Icon(Icons.copy, size: 14),
+        tooltip: 'Copy row',
+        onPressed: () => edenCopyTsv(<List<String>>[_resultCopyValues(r)]),
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
       ),
     );
   }
@@ -198,11 +364,18 @@ class _HeaderRow extends StatelessWidget {
     required this.sortColumn,
     required this.ascending,
     required this.onSort,
+    this.copyAction,
   });
 
   final _SortColumn sortColumn;
   final bool ascending;
   final void Function(_SortColumn) onSort;
+
+  /// Trailing copy-table affordance, or null when the table is not copyable.
+  ///
+  /// Passed in already built rather than as a flag, so the header stays unaware
+  /// of the clipboard and the affordance keeps the wrapping the state applied.
+  final Widget? copyAction;
 
   @override
   Widget build(BuildContext context) {
@@ -248,6 +421,9 @@ class _HeaderRow extends StatelessWidget {
             onTap: () => onSort(_SortColumn.date),
           ),
           _HeaderCell(width: 80, label: 'Trend', style: style),
+          // Trailing affordance cell. Uses the same `_Cell` wrapper as the data
+          // rows, so the copy column lines up with the buttons beneath it.
+          if (copyAction != null) _Cell(width: 32, child: copyAction!),
         ],
       ),
     );
@@ -331,11 +507,15 @@ class _ResultRow extends StatelessWidget {
     required this.result,
     required this.showSparkline,
     this.onTap,
+    this.copyAction,
   });
 
   final EdenLabResult result;
   final bool showSparkline;
   final void Function(EdenLabResult)? onTap;
+
+  /// Trailing copy-row affordance, or null when the table is not copyable.
+  final Widget? copyAction;
 
   @override
   Widget build(BuildContext context) {
@@ -407,6 +587,7 @@ class _ResultRow extends StatelessWidget {
               showSparkline: showSparkline,
             ),
           ),
+          if (copyAction != null) _Cell(width: 32, child: copyAction!),
         ],
       ),
     );

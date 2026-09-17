@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
 import 'eden_app_mode.dart' show kEdenAppModeNarrowMax;
+import 'eden_field_purpose.dart';
 
 /// Country descriptor: ISO-3166 alpha-2 code, dial code, flag emoji, name.
 @immutable
@@ -197,6 +198,9 @@ class _EdenPhoneInputState extends State<EdenPhoneInput> {
 
   @override
   Widget build(BuildContext context) {
+    const purpose = EdenFieldPurpose.telephoneNumber;
+    final phoneSemantics = purpose.semantics;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < widget.narrowBreakpoint;
@@ -244,7 +248,15 @@ class _EdenPhoneInputState extends State<EdenPhoneInput> {
               child: TextField(
                 controller: _controller,
                 enabled: widget.enabled,
-                keyboardType: TextInputType.phone,
+                autofillHints: phoneSemantics.autofillHints,
+                keyboardType: phoneSemantics.keyboardType,
+                obscureText: phoneSemantics.obscureText,
+                textInputAction: phoneSemantics.textInputAction,
+                textCapitalization: phoneSemantics.textCapitalization,
+                autocorrect: phoneSemantics.autocorrect,
+                enableSuggestions: phoneSemantics.enableSuggestions,
+                // The national-number mask stays the widget's own business —
+                // the purpose only supplies hints + TextInputType.phone.
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'[\d\s\-\(\)]')),
                 ],

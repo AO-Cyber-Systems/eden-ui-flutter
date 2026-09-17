@@ -11,6 +11,7 @@ import 'eden_banner.dart';
 import 'eden_button.dart';
 import 'eden_card.dart';
 import 'eden_currency_display.dart';
+import 'eden_field_purpose.dart';
 
 /// Modes of [EdenGiftCardManager].
 enum EdenGiftCardMode { issue, redeem, lookup, balance, ledger }
@@ -308,13 +309,23 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
   }
 
   Widget _buildIssue() {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
+    const namePurpose = EdenFieldPurpose.personName;
+    const notesPurpose = EdenFieldPurpose.multilineText;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount
         TextFormField(
           controller: _issueAmountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: amountPurpose.semantics.autofillHints,
+          keyboardType: amountPurpose.semantics.keyboardType,
+          obscureText: amountPurpose.semantics.obscureText,
+          textInputAction: amountPurpose.semantics.textInputAction,
+          textCapitalization: amountPurpose.semantics.textCapitalization,
+          autocorrect: amountPurpose.semantics.autocorrect,
+          enableSuggestions: amountPurpose.semantics.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -330,16 +341,31 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
           },
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.personName
         TextFormField(
           controller: _issueRecipientNameController,
+          autofillHints: namePurpose.semantics.autofillHints,
+          keyboardType: namePurpose.semantics.keyboardType,
+          obscureText: namePurpose.semantics.obscureText,
+          textInputAction: namePurpose.semantics.textInputAction,
+          textCapitalization: namePurpose.semantics.textCapitalization,
+          autocorrect: namePurpose.semantics.autocorrect,
+          enableSuggestions: namePurpose.semantics.enableSuggestions,
           decoration: const InputDecoration(
             labelText: 'Recipient name',
+            // `hintText` becomes the DOM `placeholder` on web
+            // (text_editing.dart:471) and password managers read it.
+            hintText: 'Recipient full name',
             isDense: true,
             border: OutlineInputBorder(),
           ),
           onChanged: (_) => _emitIssueDraft(),
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.none -- "contact" accepts an
+        // email OR a phone number (stored as a free-form `recipientContact`
+        // string). Claiming either would give the wrong keyboard and offer the
+        // wrong saved value for half the uses.
         TextFormField(
           controller: _issueRecipientContactController,
           decoration: const InputDecoration(
@@ -374,9 +400,17 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
           ],
         ),
         const SizedBox(height: EdenSpacing.space2),
+        // eden-field-purpose: EdenFieldPurpose.multilineText
         TextFormField(
           controller: _issueNotesController,
           maxLines: 2,
+          autofillHints: notesPurpose.semantics.autofillHints,
+          keyboardType: notesPurpose.semantics.keyboardType,
+          obscureText: notesPurpose.semantics.obscureText,
+          textInputAction: notesPurpose.semantics.textInputAction,
+          textCapitalization: notesPurpose.semantics.textCapitalization,
+          autocorrect: notesPurpose.semantics.autocorrect,
+          enableSuggestions: notesPurpose.semantics.enableSuggestions,
           decoration: const InputDecoration(
             labelText: 'Notes',
             isDense: true,
@@ -401,6 +435,7 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
   }
 
   Widget _buildRedeem() {
+    const amountPurpose = EdenFieldPurpose.decimalAmount;
     final r = widget.record;
     if (r == null) {
       return const EdenBanner(
@@ -442,9 +477,16 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
           ),
         ),
         const SizedBox(height: EdenSpacing.space3),
+        // eden-field-purpose: EdenFieldPurpose.decimalAmount
         TextFormField(
           controller: _redeemAmountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          autofillHints: amountPurpose.semantics.autofillHints,
+          keyboardType: amountPurpose.semantics.keyboardType,
+          obscureText: amountPurpose.semantics.obscureText,
+          textInputAction: amountPurpose.semantics.textInputAction,
+          textCapitalization: amountPurpose.semantics.textCapitalization,
+          autocorrect: amountPurpose.semantics.autocorrect,
+          enableSuggestions: amountPurpose.semantics.enableSuggestions,
           inputFormatters: <TextInputFormatter>[
             FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
           ],
@@ -494,6 +536,9 @@ class _EdenGiftCardManagerState extends State<EdenGiftCardManager> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // eden-field-purpose: EdenFieldPurpose.none -- a gift-card code is
+        // NOT a payment card number. Tagging it `creditCardNumber` would invite
+        // a password manager to fill a real PAN into a stored-value code field.
         TextFormField(
           controller: _lookupCodeController,
           decoration: const InputDecoration(

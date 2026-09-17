@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// A rich chat input with attachments, typing callbacks, and multi-line support.
 class EdenMessageInput extends StatefulWidget {
@@ -88,6 +89,14 @@ class _EdenMessageInputState extends State<EdenMessageInput> {
     final isDark = theme.brightness == Brightness.dark;
     final isEmpty = _controller.text.trim().isEmpty;
 
+    // A chat composer. Explicitly NOT `none`: it genuinely wants the multiline
+    // keyboard and the newline action key, and multilineText resolves both
+    // together with sentence capitalization. It resolves null autofillHints —
+    // there is no autofill token for free-form prose, and inventing one would
+    // emit an invalid `autocomplete` value.
+    const purpose = EdenFieldPurpose.multilineText;
+    final composerSemantics = purpose.semantics;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -138,10 +147,19 @@ class _EdenMessageInputState extends State<EdenMessageInput> {
                     controller: _controller,
                     focusNode: _focusNode,
                     enabled: widget.enabled,
+                    // minLines/maxLines stay the widget's own business:
+                    // multilineText resolves TextInputType.multiline but
+                    // deliberately does NOT set line counts.
                     minLines: widget.minLines,
                     maxLines: widget.maxLines,
                     onChanged: _handleChanged,
-                    textInputAction: TextInputAction.newline,
+                    autofillHints: composerSemantics.autofillHints,
+                    keyboardType: composerSemantics.keyboardType,
+                    obscureText: composerSemantics.obscureText,
+                    textInputAction: composerSemantics.textInputAction,
+                    textCapitalization: composerSemantics.textCapitalization,
+                    autocorrect: composerSemantics.autocorrect,
+                    enableSuggestions: composerSemantics.enableSuggestions,
                     style: TextStyle(
                       fontSize: 14,
                       color: theme.colorScheme.onSurface,

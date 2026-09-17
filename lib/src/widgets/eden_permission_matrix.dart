@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 import 'permission_matrix/matrix_cells.dart';
 
 // ---------------------------------------------------------------------------
@@ -310,10 +311,21 @@ class _EdenPermissionMatrixState extends State<EdenPermissionMatrix> {
   }
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
+    final search = EdenFieldPurpose.searchQuery.semantics;
     return SizedBox(
       height: 40,
+      // eden-field-purpose: EdenFieldPurpose.searchQuery — filters the
+      // permission rows. Hint-free by design; no onSubmitted, so resolving
+      // TextInputAction.search changes nothing this widget relied on.
       child: TextField(
         onChanged: (v) => setState(() => _searchQuery = v),
+        autofillHints: search.autofillHints,
+        keyboardType: search.keyboardType,
+        obscureText: search.obscureText,
+        textInputAction: search.textInputAction,
+        textCapitalization: search.textCapitalization,
+        autocorrect: search.autocorrect,
+        enableSuggestions: search.enableSuggestions,
         style: TextStyle(
           fontSize: 14,
           color: theme.colorScheme.onSurface,

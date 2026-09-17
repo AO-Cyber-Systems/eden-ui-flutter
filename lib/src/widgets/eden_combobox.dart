@@ -260,6 +260,13 @@ class _EdenComboboxState<T> extends State<EdenCombobox<T>> {
           link: _layerLink,
           child: Focus(
             onKeyEvent: _onKeyEvent,
+            // eden-field-purpose: EdenFieldPurpose.none — a type-ahead filter
+            // over a fixed, caller-supplied option list. The text typed here is
+            // a query against `widget.options`, never a value a password
+            // manager could supply, so no autofill hint is truthful.
+            // Shape C (marker comment, no semantics spread): none.semantics
+            // exists to describe the absence of a purpose, and spreading it
+            // would change textCapitalization to sentences on a filter box.
             child: TextField(
               controller: _textController,
               focusNode: _focusNode,

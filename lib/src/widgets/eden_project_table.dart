@@ -3,6 +3,20 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import '../utils/eden_tsv.dart';
+import 'eden_field_purpose.dart';
+
+/// Resolved semantics for the inline cell editor.
+///
+/// [EdenFieldPurpose.none] is the correct purpose, not a missing one: a cell
+/// editor has no autofill meaning a password manager could act on — one
+/// controller is reused for every column, so the field's subject changes on each
+/// tap and any hint would be wrong for most cells. `none` states that
+/// deliberately, which an omitted purpose cannot (an omission is
+/// indistinguishable from an oversight, and the wave-5/6 sweep would reopen this
+/// file to ask).
+final EdenFieldSemantics _kCellEditorSemantics =
+    EdenFieldPurpose.none.semantics;
 
 /// The type of a project-table field.
 enum EdenProjectFieldType {
@@ -126,6 +140,7 @@ class EdenProjectTable extends StatefulWidget {
     this.onSort,
     this.onAddRow,
     this.onSelectionChanged,
+    this.copyable = false,
   });
 
   /// Column definitions.
@@ -159,6 +174,39 @@ class EdenProjectTable extends StatefulWidget {
 
   /// Called when row selection changes.
   final ValueChanged<Set<String>>? onSelectionChanged;
+
+  /// Shows a copy-table action in the header and a copy affordance per row.
+  ///
+  /// Off by default. `SelectionArea` concatenates a drag-selection with no cell
+  /// delimiters (40-RESEARCH.md section 5), so a table that wants
+  /// paste-into-a-spreadsheet behaviour has to offer it explicitly; opting in
+  /// per table keeps a new icon from appearing in every existing consumer.
+  ///
+  /// Copy emits the DATA, never the rendering. Per [EdenProjectFieldType]:
+  ///
+  /// | Type | Copied | Rendered |
+  /// |---|---|---|
+  /// | `text` | the raw string | the same |
+  /// | `number` | the number as shown | the same |
+  /// | `date` | ISO-8601 `yyyy-MM-dd` | the same |
+  /// | `select` | the option label | the same |
+  /// | `status` | the option label | a coloured badge |
+  /// | `priority` | the option label | a coloured badge |
+  /// | `assignee` | the assignee's NAME | avatar initials, then the name |
+  ///
+  /// Two of those rows are where a naive implementation goes wrong. `assignee`
+  /// renders `JD` in the avatar; `JD` is a rendering and the name is the datum,
+  /// so the name is copied. `status` and `priority` render a badge whose COLOUR
+  /// carries meaning on screen and none at all in a spreadsheet, so the label is
+  /// copied and the colour is dropped.
+  ///
+  /// Rows are copied in DISPLAY order, which is group order when
+  /// [groupByFieldId] is set. Rows inside a COLLAPSED group are still copied:
+  /// collapsing folds rows out of view the way scrolling does, it does not
+  /// remove them from the table the way a filter would, and a copy-table that
+  /// silently dropped them would disagree with the row counts in the group
+  /// headers the user can still see.
+  final bool copyable;
 
   @override
   State<EdenProjectTable> createState() => _EdenProjectTableState();
@@ -262,6 +310,90 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
   }
 
   // ---------------------------------------------------------------------------
+  // Clipboard
+  // ---------------------------------------------------------------------------
+
+  /// One clipboard cell, chosen by field TYPE rather than by what got rendered.
+  ///
+  /// Written as an exhaustive `switch` with no default arm, so adding a member
+  /// to [EdenProjectFieldType] is a compile error here until its copy
+  /// representation is decided — a new type must not silently inherit
+  /// `toString()`.
+  ///
+  /// `select`, `status` and `priority` route through [_findOption] even though
+  /// this widget stores the option LABEL in [EdenProjectRow.fields] (the lookup
+  /// matches on `opt.label`), which makes the lookup an identity today. It is
+  /// kept because it states the contract at the point of use: the copied value
+  /// is the option's label. If the row model ever stores an id or an enum name
+  /// instead, this is the line that has to change, and it is already looking in
+  /// the right place. A value matching no option falls back to its raw text,
+  /// which is exactly what the cell renders in that case.
+  String _copyValue(EdenProjectRow row, EdenProjectField field) {
+    final String text = _cellText(row, field);
+    switch (field.type) {
+      case EdenProjectFieldType.text:
+      case EdenProjectFieldType.number:
+      // `_cellText` already emits ISO-8601 for a DateTime, which is what a
+      // spreadsheet parses as a date; a localised string pastes as text.
+      case EdenProjectFieldType.date:
+      // The name, never the avatar initials derived from it.
+      case EdenProjectFieldType.assignee:
+        return text;
+      case EdenProjectFieldType.select:
+      case EdenProjectFieldType.status:
+      case EdenProjectFieldType.priority:
+        return _findOption(field, text)?.label ?? text;
+    }
+  }
+
+  /// Clipboard values for [row], one per field, in column order.
+  List<String> _rowCopyValues(EdenProjectRow row) =>
+      widget.fields.map((f) => _copyValue(row, f)).toList();
+
+  /// Every row in DISPLAY order — group order when grouping is active.
+  ///
+  /// Reads the same [_groupedRows] the build method does, so the copied order
+  /// cannot drift from the rendered order.
+  List<List<String>> _visibleRowValues() => _groupedRows()
+      .values
+      .expand((rows) => rows)
+      .map(_rowCopyValues)
+      .toList();
+
+  List<String> _headerCopyValues() =>
+      widget.fields.map((f) => f.label).toList();
+
+  /// Copies the whole table: field labels first, then every row.
+  ///
+  /// Wrapped in [SelectionContainer.disabled] so a drag-select across the table
+  /// picks up the data and not the word "Copy" (40-RESEARCH.md section 5).
+  Widget _copyTableButton() {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: Icon(Icons.copy_all, size: 16, color: EdenColors.neutral[500]),
+        tooltip: 'Copy table',
+        onPressed: () =>
+            edenCopyTsv(_visibleRowValues(), header: _headerCopyValues()),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      ),
+    );
+  }
+
+  /// Copies one row alone, TAB-delimited and with NO header line.
+  Widget _copyRowButton(EdenProjectRow row) {
+    return SelectionContainer.disabled(
+      child: IconButton(
+        icon: Icon(Icons.copy, size: 16, color: EdenColors.neutral[500]),
+        tooltip: 'Copy row',
+        onPressed: () => edenCopyTsv(<List<String>>[_rowCopyValues(row)]),
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
 
@@ -328,6 +460,10 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
                           ),
                   );
                 }),
+                // Trailing affordance slot. Fixed width, mirrored exactly by
+                // the row slot below, so the data columns stay aligned.
+                if (widget.copyable)
+                  SizedBox(width: 32, child: _copyTableButton()),
               ],
             ),
           ),
@@ -546,6 +682,8 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
                           ),
                   );
                 }),
+                if (widget.copyable)
+                  SizedBox(width: 32, child: _copyRowButton(row)),
               ],
             ),
           ),
@@ -573,6 +711,16 @@ class _EdenProjectTableState extends State<EdenProjectTable> {
         child: TextField(
           controller: _editController,
           autofocus: true,
+          // `enableInteractiveSelection` is deliberately NOT set: 40-RESEARCH.md
+          // Appendix A probe 3 showed a normal field is already selectable and
+          // copyable, so touching it would only remove working behaviour.
+          autofillHints: _kCellEditorSemantics.autofillHints,
+          keyboardType: _kCellEditorSemantics.keyboardType,
+          obscureText: _kCellEditorSemantics.obscureText,
+          textInputAction: _kCellEditorSemantics.textInputAction,
+          textCapitalization: _kCellEditorSemantics.textCapitalization,
+          autocorrect: _kCellEditorSemantics.autocorrect,
+          enableSuggestions: _kCellEditorSemantics.enableSuggestions,
           style: theme.textTheme.bodySmall,
           decoration: InputDecoration(
             isDense: true,

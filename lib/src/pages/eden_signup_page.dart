@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
+import '../widgets/eden_autofill_scope.dart';
 import '../widgets/eden_button.dart';
+import '../widgets/eden_field_purpose.dart';
 import '../widgets/eden_input.dart';
 import '../widgets/eden_oauth_buttons.dart';
 import '../widgets/eden_divider.dart';
 import '../widgets/eden_alert.dart';
+import '../widgets/eden_selectable_region.dart';
 
 /// A complete sign-up page with name, email, password, confirm password,
 /// optional terms acceptance, and OAuth providers.
+///
+/// ## Autofill
+///
+/// Each field carries an [EdenFieldPurpose], which resolves its autofill hints
+/// and keyboard type as one consistent set (`editable_text.dart:1855-1858`).
+///
+/// The page owns the SAVE half too: it wraps the fields in an
+/// [EdenAutofillScope] and commits ONLY after [onSignUp] resolves without
+/// throwing, because a throw is what this page treats as a failed sign-up.
+/// Committing on the failure path would ask the OS and 1Password to store a
+/// credential the server just rejected.
 class EdenSignUpPage extends StatefulWidget {
   const EdenSignUpPage({
     super.key,
@@ -64,6 +78,12 @@ class EdenSignUpPage extends StatefulWidget {
 }
 
 class _EdenSignUpPageState extends State<EdenSignUpPage> {
+  // Reached by key, not by `EdenAutofillScope.of(context)`: the scope is built
+  // as a DESCENDANT of this State, and `of` walks ANCESTORS, so it would never
+  // find it from a handler running on this State's context.
+  final GlobalKey<EdenAutofillScopeState> _autofillScopeKey =
+      GlobalKey<EdenAutofillScopeState>();
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -110,6 +130,15 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
 
     try {
       await widget.onSignUp(name, email, password);
+      // The SAVE half of autofill. Correct hints only make a field FILLABLE; a
+      // credential is never offered for SAVING on any platform without
+      // `TextInput.finishAutofillContext` -- on web the engine's `saveForms()`
+      // clicks the hidden form's submit button (`text_editing.dart:2245`), and
+      // that synthetic click is what raises "Save password?".
+      //
+      // On the success path deliberately: committing after a REJECTED sign-up
+      // makes 1Password offer to save a credential that does not exist.
+      _autofillScopeKey.currentState?.commit();
     } catch (e) {
       if (mounted) {
         setState(() => _error = e.toString());
@@ -133,7 +162,7 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Center(
+      body: EdenSelectableRegion(child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space5,
@@ -144,7 +173,7 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
             child: _buildCard(theme, isDark),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -187,7 +216,8 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
         ],
 
         // Form
-        AutofillGroup(
+        EdenAutofillScope(
+          key: _autofillScopeKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -195,7 +225,14 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
                 controller: _nameController,
                 label: 'Display name',
                 hint: 'Your name',
-                autofillHints: const [AutofillHints.name],
+                // Was `autofillHints: [AutofillHints.name]` with NO
+                // keyboardType, which `TextField` resolved to
+                // `TextInputType.text` in its own initializer list
+                // (`text_field.dart:355`) before `_inferKeyboardType` could
+                // ever run. `AutofillHints.name` "requires TextInputType.name"
+                // (`editable_text.dart:1855-1858`), so this field was
+                // mis-keyboarded. The purpose fixes both halves at once.
+                purpose: EdenFieldPurpose.personName,
                 prefixIcon: Icons.person_outline,
                 enabled: !_loading,
               ),
@@ -204,28 +241,45 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
                 controller: _emailController,
                 label: 'Email',
                 hint: 'you@example.com',
-                keyboardType: TextInputType.emailAddress,
-                autofillHints: const [AutofillHints.email],
+                purpose: EdenFieldPurpose.email,
                 prefixIcon: Icons.mail_outline,
                 enabled: !_loading,
               ),
               const SizedBox(height: EdenSpacing.space4),
+              // DUPLICATE DOM ID, ON PURPOSE -- do not "fix" this pair.
+              //
+              // The web engine sets BOTH `element.name` and `element.id` to the
+              // hint string (`text_editing.dart:514-531`), so this field and the
+              // confirmation below it -- both resolving
+              // `AutofillHints.newPassword` -- emit the SAME DOM id inside one
+              // autofill group.
+              //
+              // That is accepted, not overlooked. Two `autocomplete="new-password"`
+              // inputs is the standard HTML signup shape; browsers and 1Password
+              // handle it, and duplicate ids are tolerated by HTML parsing. Both
+              // alternatives are worse: dropping the hint on the confirm field
+              // makes it DOM `type="text"` (the password in plaintext in the DOM,
+              // and invisible to 1Password), and inventing a distinct hint string
+              // emits an invalid `autocomplete` token. The rationale in full,
+              // plus the reason the two stay SEPARATE enum members, is on
+              // [EdenFieldPurpose.newPasswordConfirm].
               EdenInput(
                 controller: _passwordController,
                 label: 'Password',
                 hint: 'Create a password',
-                obscureText: true,
-                autofillHints: const [AutofillHints.newPassword],
+                purpose: EdenFieldPurpose.newPassword,
                 prefixIcon: Icons.lock_outline,
                 enabled: !_loading,
               ),
               const SizedBox(height: EdenSpacing.space4),
+              // Second half of the deliberate duplicate-id pair documented
+              // above. Distinct MEMBER, same resolved hint -- see
+              // [EdenFieldPurpose.newPasswordConfirm].
               EdenInput(
                 controller: _confirmPasswordController,
                 label: 'Confirm password',
                 hint: 'Re-enter your password',
-                obscureText: true,
-                autofillHints: const [AutofillHints.newPassword],
+                purpose: EdenFieldPurpose.newPasswordConfirm,
                 prefixIcon: Icons.lock_outline,
                 enabled: !_loading,
                 onSubmitted: (_) => _handleSignUp(),

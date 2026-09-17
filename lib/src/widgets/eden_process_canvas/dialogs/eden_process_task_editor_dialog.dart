@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../eden_field_purpose.dart';
 import '../process_models.dart';
 import '../process_runtime_component_registry.dart';
 
@@ -211,6 +212,7 @@ class _EdenProcessTaskEditorDialogState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final components = EdenProcessRuntimeComponentRegistry.instance.all();
+    const descPurpose = EdenFieldPurpose.multilineText;
     return AlertDialog(
       title: const Text('Edit Task'),
       content: SizedBox(
@@ -220,6 +222,10 @@ class _EdenProcessTaskEditorDialogState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // eden-field-purpose: EdenFieldPurpose.none -- a task name is
+              // authoring content inside a process definition, not the user's
+              // own data. A password manager has nothing to offer it, and
+              // claiming a hint would emit a false autocomplete token.
               TextField(
                 controller: _nameCtrl,
                 focusNode: _nameFocus,
@@ -227,10 +233,19 @@ class _EdenProcessTaskEditorDialogState
                 onSubmitted: (_) => _saveName(),
               ),
               const SizedBox(height: 12),
+              // eden-field-purpose: EdenFieldPurpose.multilineText -- genuinely
+              // multi-line (maxLines: 2). Typed but deliberately unfilled.
               TextField(
                 controller: _descCtrl,
                 focusNode: _descFocus,
                 maxLines: 2,
+                autofillHints: descPurpose.semantics.autofillHints,
+                keyboardType: descPurpose.semantics.keyboardType,
+                obscureText: descPurpose.semantics.obscureText,
+                textInputAction: descPurpose.semantics.textInputAction,
+                textCapitalization: descPurpose.semantics.textCapitalization,
+                autocorrect: descPurpose.semantics.autocorrect,
+                enableSuggestions: descPurpose.semantics.enableSuggestions,
                 decoration: const InputDecoration(labelText: 'Description'),
                 onSubmitted: (_) => _saveDescription(),
               ),
@@ -354,6 +369,10 @@ class _EdenProcessTaskEditorDialogState
               const SizedBox(height: 16),
               Text('Approval', style: theme.textTheme.bodyMedium),
               const SizedBox(height: 6),
+              // eden-field-purpose: EdenFieldPurpose.none -- the role that
+              // approves this task, not the editing user's own job title.
+              // `jobTitle` would invite a password manager to fill the author's
+              // own role into a process definition.
               TextField(
                 controller: _approvalRoleCtrl,
                 focusNode: _approvalRoleFocus,
@@ -361,6 +380,9 @@ class _EdenProcessTaskEditorDialogState
                 onSubmitted: (_) => _saveApprovalRole(),
               ),
               const SizedBox(height: 8),
+              // eden-field-purpose: EdenFieldPurpose.none -- an opaque id for
+              // ANOTHER user. `username` would offer the editor's own saved
+              // login, which is the wrong person and a false identity claim.
               TextField(
                 controller: _approvalUserCtrl,
                 focusNode: _approvalUserFocus,
@@ -429,6 +451,10 @@ class _EdenProcessTaskEditorDialogState
     FocusNode focus,
     VoidCallback onSave,
   ) {
+    // eden-field-purpose: EdenFieldPurpose.none -- a workflow id is an opaque
+    // numeric reference to another record, not a quantity and not user data.
+    // The existing number keyboard is deliberate and is left in place: with no
+    // hints there is no hint/keyboard mismatch to prevent.
     return TextField(
       key: ValueKey(keyName),
       controller: ctrl,

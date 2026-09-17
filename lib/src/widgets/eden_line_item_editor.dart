@@ -9,6 +9,7 @@ import 'eden_card.dart';
 import 'eden_currency_display.dart';
 import 'eden_data_table.dart';
 import 'eden_empty_state.dart';
+import 'eden_field_purpose.dart';
 
 /// Cross-vertical line-item composer primitive (obj 012-01).
 ///
@@ -598,6 +599,10 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // eden-field-purpose: EdenFieldPurpose.none - a free-text line-item
+          // description. maxLines is 1 (the TextField default), so it is not
+          // multilineText, and no autofill hint describes a line description.
+          // Shape C keeps this cell's existing keyboard and Enter behaviour.
           TextField(
             controller: controller,
             decoration: const InputDecoration(
@@ -639,12 +644,25 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       EdenLineItemColumn.quantity,
       _formatDoubleForField(item.quantity),
     );
+    // Rendered once per row; decimalAmount resolves NO autofill hints, so
+    // 40-RESEARCH.md B7's duplicate-DOM-id hazard (element.name and element.id
+    // are both derived from the hint string) does not arise for repeated rows.
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return _semanticsWrap(
       EdenLineItemColumn.quantity,
       item,
+      // eden-field-purpose: EdenFieldPurpose.decimalAmount - a line quantity
+      // held as a double, so fractional units (1.5 kg) must stay typeable.
+      // _decimalFormatter() is RegExp(r'[0-9.]') so '.' is accepted.
       TextField(
         controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        autofillHints: money.autofillHints,
+        keyboardType: money.keyboardType,
+        obscureText: money.obscureText,
+        textInputAction: money.textInputAction,
+        textCapitalization: money.textCapitalization,
+        autocorrect: money.autocorrect,
+        enableSuggestions: money.enableSuggestions,
         inputFormatters: [_decimalFormatter()],
         decoration: const InputDecoration(
           isDense: true,
@@ -681,12 +699,25 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       EdenLineItemColumn.unitPrice,
       _formatDoubleForField(item.unitPrice),
     );
+    // Rendered once per row; decimalAmount resolves NO autofill hints, so
+    // 40-RESEARCH.md B7's duplicate-DOM-id hazard (element.name and element.id
+    // are both derived from the hint string) does not arise for repeated rows.
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return _semanticsWrap(
       EdenLineItemColumn.unitPrice,
       item,
+      // eden-field-purpose: EdenFieldPurpose.decimalAmount - the per-unit
+      // money price. _decimalFormatter() is RegExp(r'[0-9.]'), so '.' is
+      // accepted.
       TextField(
         controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        autofillHints: money.autofillHints,
+        keyboardType: money.keyboardType,
+        obscureText: money.obscureText,
+        textInputAction: money.textInputAction,
+        textCapitalization: money.textCapitalization,
+        autocorrect: money.autocorrect,
+        enableSuggestions: money.enableSuggestions,
         inputFormatters: [_decimalFormatter()],
         decoration: const InputDecoration(
           isDense: true,
@@ -723,12 +754,24 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       EdenLineItemColumn.discount,
       initial,
     );
+    // Rendered once per row; decimalAmount resolves NO autofill hints, so
+    // 40-RESEARCH.md B7's duplicate-DOM-id hazard (element.name and element.id
+    // are both derived from the hint string) does not arise for repeated rows.
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return _semanticsWrap(
       EdenLineItemColumn.discount,
       item,
+      // eden-field-purpose: EdenFieldPurpose.decimalAmount - a money discount
+      // amount. _decimalFormatter() is RegExp(r'[0-9.]'), so '.' is accepted.
       TextField(
         controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        autofillHints: money.autofillHints,
+        keyboardType: money.keyboardType,
+        obscureText: money.obscureText,
+        textInputAction: money.textInputAction,
+        textCapitalization: money.textCapitalization,
+        autocorrect: money.autocorrect,
+        enableSuggestions: money.enableSuggestions,
         inputFormatters: [_decimalFormatter()],
         decoration: const InputDecoration(
           isDense: true,
@@ -771,12 +814,25 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       EdenLineItemColumn.tax,
       initial,
     );
+    // Rendered once per row; decimalAmount resolves NO autofill hints, so
+    // 40-RESEARCH.md B7's duplicate-DOM-id hazard (element.name and element.id
+    // are both derived from the hint string) does not arise for repeated rows.
+    final EdenFieldSemantics money = EdenFieldPurpose.decimalAmount.semantics;
     return _semanticsWrap(
       EdenLineItemColumn.tax,
       item,
+      // eden-field-purpose: EdenFieldPurpose.decimalAmount - a tax rate held
+      // as a double. _decimalFormatter() is RegExp(r'[0-9.]'), so '.' is
+      // accepted.
       TextField(
         controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        autofillHints: money.autofillHints,
+        keyboardType: money.keyboardType,
+        obscureText: money.obscureText,
+        textInputAction: money.textInputAction,
+        textCapitalization: money.textCapitalization,
+        autocorrect: money.autocorrect,
+        enableSuggestions: money.enableSuggestions,
         inputFormatters: [_decimalFormatter()],
         decoration: const InputDecoration(
           isDense: true,

@@ -208,6 +208,13 @@ class _EdenActionNodeState extends State<EdenActionNode> {
           ),
         ),
         const SizedBox(height: 4),
+        // eden-field-purpose: EdenFieldPurpose.none -- one value of an
+        // action's own config, whose meaning is decided at runtime by
+        // `spec.type` (a subject line, a URL, a count). No single hint is true
+        // for all of them, and an action node repeats on the canvas, so a hint
+        // would also collide on the DOM name/id (Appendix B7). The keyboard is
+        // already derived from `spec.type` below and is left untouched: with no
+        // hints there is no hint/keyboard mismatch to prevent.
         TextFormField(
           initialValue: currentValue ?? '',
           maxLines: spec.type == 'textarea' ? 3 : 1,

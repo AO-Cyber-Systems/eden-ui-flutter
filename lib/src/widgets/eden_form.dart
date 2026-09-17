@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
+import 'eden_autofill_scope.dart';
 
 /// Validator function signature for Eden form fields.
 typedef EdenValidator = String? Function(String? value);
@@ -73,6 +74,10 @@ enum EdenErrorDisplayMode {
 ///
 /// Manages validation state, dirty tracking, and provides a form-level error
 /// banner. Use [EdenForm.of] to access state from descendant widgets.
+///
+/// The form also provides an ambient [EdenAutofillScope], so every field inside
+/// it shares one autofill context. Asking the platform to SAVE the credential
+/// stays an explicit step — see [commitAutofillOnSubmit].
 class EdenForm extends StatefulWidget {
   const EdenForm({
     super.key,
@@ -81,6 +86,8 @@ class EdenForm extends StatefulWidget {
     this.autovalidateMode = EdenAutovalidateMode.onBlur,
     this.errorDisplayMode = EdenErrorDisplayMode.inline,
     this.showErrorBanner = false,
+    this.autofillScope = true,
+    this.commitAutofillOnSubmit = false,
   });
 
   final Widget child;
@@ -88,6 +95,24 @@ class EdenForm extends StatefulWidget {
   final EdenAutovalidateMode autovalidateMode;
   final EdenErrorDisplayMode errorDisplayMode;
   final bool showErrorBanner;
+
+  /// Wraps the form in an [EdenAutofillScope] so descendant fields share one
+  /// AutofillGroup. Default true — additive, existing call sites unchanged.
+  final bool autofillScope;
+
+  /// Opt-in: call [EdenAutofillScopeState.commit] after [onSubmit] returns
+  /// without throwing.
+  ///
+  /// Default FALSE, deliberately. [onSubmit] is a bare `VoidCallback` and
+  /// returns before any async request resolves, so "returned without throwing"
+  /// is NOT a success signal for a network login. Enabling this on an async
+  /// form makes the OS offer to save credentials that were subsequently
+  /// REJECTED.
+  ///
+  /// Enable it only for forms whose submit is genuinely synchronous. Otherwise
+  /// call `EdenAutofillScope.of(context).commit()` yourself after your request
+  /// succeeds.
+  final bool commitAutofillOnSubmit;
 
   /// Retrieves the nearest [EdenFormState] ancestor.
   static EdenFormState of(BuildContext context) {
@@ -103,6 +128,11 @@ class EdenForm extends StatefulWidget {
 /// State for [EdenForm], providing validation, dirty tracking, and submission.
 class EdenFormState extends State<EdenForm> {
   final _formKey = GlobalKey<FormState>();
+
+  // The EdenAutofillScope this widget renders is a DESCENDANT of this State's
+  // element, so EdenAutofillScope.maybeOf(context) — which walks ancestors —
+  // can never see it. Hold it by key instead.
+  final _autofillScopeKey = GlobalKey<EdenAutofillScopeState>();
   final Map<String, String?> _errors = {};
   bool _isDirty = false;
   bool _isSubmitting = false;
@@ -154,6 +184,11 @@ class EdenFormState extends State<EdenForm> {
     setState(() => _isSubmitting = true);
     try {
       widget.onSubmit?.call();
+      // Reached only when onSubmit did not throw. Still opt-in: a bare
+      // VoidCallback returning is not proof an async login succeeded.
+      if (widget.commitAutofillOnSubmit) {
+        _autofillScopeKey.currentState?.commit();
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -164,7 +199,7 @@ class EdenFormState extends State<EdenForm> {
     final activeErrors =
         _errors.entries.where((e) => e.value != null).toList();
 
-    return Form(
+    final form = Form(
       key: _formKey,
       autovalidateMode: widget.autovalidateMode == EdenAutovalidateMode.onChange
           ? AutovalidateMode.onUserInteraction
@@ -178,6 +213,12 @@ class EdenFormState extends State<EdenForm> {
           widget.child,
         ],
       ),
+    );
+
+    return EdenAutofillScope(
+      key: _autofillScopeKey,
+      enabled: widget.autofillScope,
+      child: form,
     );
   }
 }

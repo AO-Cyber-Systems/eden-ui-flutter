@@ -5,6 +5,7 @@ import '../theme/eden_status_palette.dart';
 import '../tokens/spacing.dart';
 import 'eden_chip.dart';
 import 'eden_currency_display.dart';
+import 'eden_field_purpose.dart';
 
 /// Tip preset (e.g. 18% / 20% / 25%). Stored as fraction 0..1.
 @immutable
@@ -240,6 +241,7 @@ class _EdenTippingSelectorState extends State<EdenTippingSelector> {
 
   @override
   Widget build(BuildContext context) {
+    const tipAmountPurpose = EdenFieldPurpose.decimalAmount;
     final theme = Theme.of(context);
     final selectedColor = _selectedChipColor(context);
 
@@ -264,10 +266,16 @@ class _EdenTippingSelectorState extends State<EdenTippingSelector> {
         ),
         if (_showCustomField) ...[
           const SizedBox(height: EdenSpacing.space3),
+          // eden-field-purpose: EdenFieldPurpose.decimalAmount
           TextFormField(
             controller: _customController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            autofillHints: tipAmountPurpose.semantics.autofillHints,
+            keyboardType: tipAmountPurpose.semantics.keyboardType,
+            obscureText: tipAmountPurpose.semantics.obscureText,
+            textInputAction: tipAmountPurpose.semantics.textInputAction,
+            textCapitalization: tipAmountPurpose.semantics.textCapitalization,
+            autocorrect: tipAmountPurpose.semantics.autocorrect,
+            enableSuggestions: tipAmountPurpose.semantics.enableSuggestions,
             inputFormatters: <TextInputFormatter>[
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
             ],

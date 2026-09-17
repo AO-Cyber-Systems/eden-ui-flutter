@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../eden_field_purpose.dart';
 import '../process_models.dart';
 
 /// Phase editor dialog — parity row X-1.
@@ -88,6 +89,7 @@ class _EdenProcessPhaseEditorDialogState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const descPurpose = EdenFieldPurpose.multilineText;
     return AlertDialog(
       title: const Text('Edit Phase'),
       content: SizedBox(
@@ -97,6 +99,9 @@ class _EdenProcessPhaseEditorDialogState
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // eden-field-purpose: EdenFieldPurpose.none -- a phase name is
+              // authoring content inside a process definition, not the user's
+              // own data. No password manager has anything to offer it.
               TextField(
                 controller: _nameCtrl,
                 focusNode: _nameFocus,
@@ -104,10 +109,19 @@ class _EdenProcessPhaseEditorDialogState
                 onSubmitted: (_) => _saveName(),
               ),
               const SizedBox(height: 12),
+              // eden-field-purpose: EdenFieldPurpose.multilineText -- genuinely
+              // multi-line (maxLines: 2). Typed but deliberately unfilled.
               TextField(
                 controller: _descCtrl,
                 focusNode: _descFocus,
                 maxLines: 2,
+                autofillHints: descPurpose.semantics.autofillHints,
+                keyboardType: descPurpose.semantics.keyboardType,
+                obscureText: descPurpose.semantics.obscureText,
+                textInputAction: descPurpose.semantics.textInputAction,
+                textCapitalization: descPurpose.semantics.textCapitalization,
+                autocorrect: descPurpose.semantics.autocorrect,
+                enableSuggestions: descPurpose.semantics.enableSuggestions,
                 decoration: const InputDecoration(labelText: 'Description'),
                 onSubmitted: (_) => _saveDescription(),
               ),

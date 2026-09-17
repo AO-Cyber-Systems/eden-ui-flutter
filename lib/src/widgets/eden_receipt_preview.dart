@@ -135,7 +135,7 @@ class EdenReceiptFooter {
 
 /// Output mode for [EdenReceiptPreview]. Drives the widget's structural
 /// choices (constrained-width container for thermal print preview;
-/// SelectableText with plain text for SMS clipboard share; etc.).
+/// plain Text for SMS clipboard share; etc.).
 enum EdenReceiptPreviewMode { web, print, email, sms }
 
 /// Thermal printer width preset; only meaningful when
@@ -192,8 +192,9 @@ typedef EdenReceiptCurrencyFormatter = String Function(
 /// - `email` — single-column [ListView] with no fixed-width wrapper; renders
 ///   as plain Material widgets so HTML-stripping email clients still get a
 ///   reasonable layout when rendered to images server-side.
-/// - `sms` — plain-text [SelectableText] containing the receipt body so the
-///   consumer can copy + paste into an SMS body.
+/// - `sms` — a single plain-text [Text] containing the receipt body so the
+///   consumer can copy + paste into an SMS body. Text is selectable via the
+///   ambient `EdenSelectableRegion` installed by the Eden layouts and pages.
 ///
 /// The widget knows nothing about retail. Consumer maps any domain to
 /// [EdenReceiptData].
@@ -706,7 +707,7 @@ class _SmsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(EdenSpacing.space3),
-      child: SelectableText(
+      child: Text(
         _render(),
         style: const TextStyle(fontFamily: 'monospace'),
       ),

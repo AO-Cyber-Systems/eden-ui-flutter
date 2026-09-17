@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// Display mode for the markdown editor.
 enum EdenMarkdownEditorMode { edit, preview, split }
@@ -175,6 +176,18 @@ class _EdenMarkdownEditorState extends State<EdenMarkdownEditor> {
   }
 
   Widget _buildEditor(ThemeData theme, bool isDark) {
+    // eden-field-purpose: EdenFieldPurpose.multilineText — the document body.
+    // Long-form prose genuinely wants the multiline keyboard, sentence
+    // capitalization and a newline action; `minLines` defaults to 8 and
+    // `maxLines` to twice that, so this is genuinely multi-line, which is the
+    // discriminator for this member. The purpose resolves the keyboard, NOT the
+    // line count — `minLines` and `maxLines` below are untouched, so Enter
+    // still inserts a newline rather than moving focus. It emits no autofill
+    // hints: there is no `AutofillHints` constant for free prose and inventing
+    // one would emit an invalid `autocomplete` token.
+    const purpose = EdenFieldPurpose.multilineText;
+    final semantics = purpose.semantics;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.keyB, meta: true): () =>
@@ -191,6 +204,13 @@ class _EdenMarkdownEditorState extends State<EdenMarkdownEditor> {
         onChanged: widget.onChanged,
         minLines: widget.minLines,
         maxLines: widget.maxLines ?? widget.minLines * 2,
+        autofillHints: semantics.autofillHints,
+        keyboardType: semantics.keyboardType,
+        obscureText: semantics.obscureText,
+        textInputAction: semantics.textInputAction,
+        textCapitalization: semantics.textCapitalization,
+        autocorrect: semantics.autocorrect,
+        enableSuggestions: semantics.enableSuggestions,
         decoration: InputDecoration(
           hintText: widget.placeholder,
           hintStyle: TextStyle(

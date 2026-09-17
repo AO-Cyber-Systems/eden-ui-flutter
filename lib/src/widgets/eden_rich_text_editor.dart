@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// Content format for the rich text editor.
 enum EdenRichTextFormat { markdown, plaintext }
@@ -246,6 +247,18 @@ class _EdenRichTextEditorState extends State<EdenRichTextEditor> {
   }
 
   Widget _buildEditor(ThemeData theme, bool isDark) {
+    // eden-field-purpose: EdenFieldPurpose.multilineText — the document body.
+    // Long-form prose genuinely wants the multiline keyboard, sentence
+    // capitalization and a newline action; `maxLines: null` already means this
+    // is unbounded, which is the discriminator for this member. The purpose
+    // resolves the keyboard, NOT the line count — `maxLines` and `expands`
+    // below are untouched, so Enter still inserts a newline rather than moving
+    // focus. It emits no autofill hints: there is no `AutofillHints` constant
+    // for free prose and inventing one would emit an invalid `autocomplete`
+    // token.
+    const purpose = EdenFieldPurpose.multilineText;
+    final semantics = purpose.semantics;
+
     return ConstrainedBox(
       constraints: BoxConstraints(
         minHeight: widget.minHeight,
@@ -260,6 +273,13 @@ class _EdenRichTextEditorState extends State<EdenRichTextEditor> {
         expands: true,
         textAlignVertical: TextAlignVertical.top,
         onChanged: widget.onChanged,
+        autofillHints: semantics.autofillHints,
+        keyboardType: semantics.keyboardType,
+        obscureText: semantics.obscureText,
+        textInputAction: semantics.textInputAction,
+        textCapitalization: semantics.textCapitalization,
+        autocorrect: semantics.autocorrect,
+        enableSuggestions: semantics.enableSuggestions,
         style: theme.textTheme.bodyMedium?.copyWith(
           fontFamily: widget.format == EdenRichTextFormat.markdown
               ? null

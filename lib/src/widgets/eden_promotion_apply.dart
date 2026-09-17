@@ -275,8 +275,17 @@ class _EdenPromotionApplyState extends State<EdenPromotionApply> {
         for (final rule in widget.availableRules) _buildRuleCard(rule),
         if (widget.showCouponCodeEntry) ...[
           const SizedBox(height: EdenSpacing.space3),
+          // eden-field-purpose: EdenFieldPurpose.none - a coupon code is an
+          // opaque merchant-issued token, not a delivered passcode (oneTimeCode)
+          // and not a card number; either claim would make a password manager
+          // offer irrelevant data. Kept as shape C: the field already resolves
+          // TextInputAction.done (single-line, non-multiline keyboard), so only
+          // autocorrect is turned off, because mangling a code as it is typed
+          // is a real bug rather than a cosmetic one.
           TextFormField(
             controller: _couponController,
+            autocorrect: false,
+            enableSuggestions: false,
             decoration: const InputDecoration(
               labelText: 'Enter coupon code',
               isDense: true,

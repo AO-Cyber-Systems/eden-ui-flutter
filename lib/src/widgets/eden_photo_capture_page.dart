@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'dart:io' show File;
 
 import '../tokens/spacing.dart';
+import 'eden_field_purpose.dart';
 
 /// Immutable captured photo passed to / from [EdenPhotoCapturePage].
 ///
@@ -241,6 +242,7 @@ class _EdenPhotoCapturePageState extends State<EdenPhotoCapturePage> {
 
     // Post-capture: photo preview + annotation overlay.
     final photo = _capturedPhoto!;
+    final caption = EdenFieldPurpose.multilineText.semantics;
     return Stack(
       children: [
         Positioned.fill(child: _photoImage(photo)),
@@ -251,10 +253,21 @@ class _EdenPhotoCapturePageState extends State<EdenPhotoCapturePage> {
           child: Container(
             padding: const EdgeInsets.all(EdenSpacing.space3),
             color: Colors.black.withValues(alpha: 0.55),
+            // eden-field-purpose: EdenFieldPurpose.multilineText — a caption
+            // describing what was photographed. An observation about the
+            // subject of the photo, never an identity belonging to the device
+            // user, so it claims no autofill hint.
             child: TextField(
               controller: _annotationController,
               style: const TextStyle(color: Colors.white),
               maxLines: 2,
+              autofillHints: caption.autofillHints,
+              keyboardType: caption.keyboardType,
+              obscureText: caption.obscureText,
+              textInputAction: caption.textInputAction,
+              textCapitalization: caption.textCapitalization,
+              autocorrect: caption.autocorrect,
+              enableSuggestions: caption.enableSuggestions,
               decoration: const InputDecoration(
                 hintText: 'Add a note (optional)',
                 hintStyle: TextStyle(color: Colors.white70),

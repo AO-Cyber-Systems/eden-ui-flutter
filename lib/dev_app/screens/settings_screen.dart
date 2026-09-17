@@ -32,9 +32,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             description: 'Your personal information.',
             child: Column(
               children: [
-                EdenInput(label: 'Display Name', hint: 'Enter your name'),
+                // The Profile section holds the signed-in user's OWN personal
+                // information, so these carry real identity purposes.
+                EdenInput(
+                    label: 'Display Name',
+                    hint: 'Enter your name',
+                    purpose: EdenFieldPurpose.personName),
                 SizedBox(height: 12),
-                EdenInput(label: 'Email', hint: 'you@example.com', prefixIcon: Icons.email_outlined),
+                EdenInput(
+                    label: 'Email',
+                    hint: 'you@example.com',
+                    prefixIcon: Icons.email_outlined,
+                    purpose: EdenFieldPurpose.email),
               ],
             ),
           ),

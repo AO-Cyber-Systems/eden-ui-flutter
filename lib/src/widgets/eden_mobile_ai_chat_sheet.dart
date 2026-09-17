@@ -452,6 +452,13 @@ class _EdenMobileAiChatSheetState extends State<EdenMobileAiChatSheet> {
                 Row(
                   children: [
                     Expanded(
+                      // eden-field-purpose: EdenFieldPurpose.none -- chat
+                      // composer. No autofill identity, and `maxLines` is the
+                      // default 1, so this is NOT multilineText: that purpose
+                      // resolves `TextInputAction.newline`, which would stop
+                      // Enter reaching `onSubmitted: _sendMessage` and break
+                      // send-on-Enter. Left at TextField's own defaults
+                      // deliberately.
                       child: TextField(
                         controller: _controller,
                         enabled: !_isStreaming,
