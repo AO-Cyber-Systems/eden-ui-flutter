@@ -28,11 +28,11 @@
 // "fix".
 library;
 
-import 'dart:math' as math;
-
 import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../test_support/ui_oracle/wcag_contrast.dart';
 
 const List<EdenNavItem> _navItems = <EdenNavItem>[
   EdenNavItem(id: 'home', label: 'Home', icon: Icons.home),
@@ -43,23 +43,11 @@ const List<EdenNavItem> _navItems = <EdenNavItem>[
 const String _selected = 'Orders';
 const String _unselected = 'Home';
 
-/// WCAG 2.x relative luminance, written out from the spec rather than read
-/// off the code under test.
-double _relativeLuminance(Color colour) {
-  double channel(double c) =>
-      c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
-  return 0.2126 * channel(colour.r) +
-      0.7152 * channel(colour.g) +
-      0.0722 * channel(colour.b);
-}
-
-double _contrastRatio(Color a, Color b) {
-  final double la = _relativeLuminance(a);
-  final double lb = _relativeLuminance(b);
-  final double hi = math.max(la, lb);
-  final double lo = math.min(la, lb);
-  return (hi + 0.05) / (lo + 0.05);
-}
+// The WCAG arithmetic moved to `test_support/ui_oracle/wcag_contrast.dart`
+// when the drawer and the "More" sheet were held to the same floor: three
+// renderings of one nav row, and two copies of the formula would be two
+// places for the floor to drift. It is still written out FROM THE SPEC and
+// still depends on nothing in `lib/` — see that file's header.
 
 Future<void> _pump(WidgetTester tester, ThemeData theme) async {
   await tester.pumpWidget(MaterialApp(
@@ -119,7 +107,7 @@ void main() {
         await _pump(tester, theme);
         final Color label = _labelColour(tester, _selected);
         expect(
-          _contrastRatio(label, bar),
+          wcagContrastRatio(label, bar),
           greaterThanOrEqualTo(4.5),
           reason: 'the selected label was the brand gold #D4A853 at 2.20:1 on '
               'white. fontSize 11 is not large text, so 4.5:1 is the floor. '
@@ -134,7 +122,7 @@ void main() {
         await _pump(tester, theme);
         final Color label = _labelColour(tester, _unselected);
         expect(
-          _contrastRatio(label, bar),
+          wcagContrastRatio(label, bar),
           greaterThanOrEqualTo(4.5),
           reason: 'onSurfaceVariant measures 4.83:1 on white and 6.91:1 on the '
               'dark bar — it passes today and must keep passing, so a fix to '
@@ -193,7 +181,7 @@ void main() {
         // border is load-bearing and not decoration.
         final Color edge = indicator.border?.top.color ?? indicator.color!;
         expect(
-          _contrastRatio(edge, bar),
+          wcagContrastRatio(edge, bar),
           greaterThanOrEqualTo(3.0),
           reason: 'the pill must be distinguishable from the bar it sits on. '
               'Measured: the gold FILL is 2.20:1 on the light bar (fails) and '
@@ -219,7 +207,7 @@ void main() {
               .first,
         );
         expect(
-          _contrastRatio(icon.color!, indicator.color!),
+          wcagContrastRatio(icon.color!, indicator.color!),
           greaterThanOrEqualTo(3.0),
           reason: 'the glyph sits ON the pill now, not on the bar. A near-'
               'white icon on gold[400] measures 2.12:1 in the dark theme, so '
