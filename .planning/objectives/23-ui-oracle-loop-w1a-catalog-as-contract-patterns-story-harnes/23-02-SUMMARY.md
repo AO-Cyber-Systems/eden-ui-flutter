@@ -196,3 +196,26 @@ this TRD's files (`pubspec.yaml` is 23-11's) and neither was attempted here. Thi
 *Objective: 23-ui-oracle-loop-w1a-catalog-as-contract*
 *TRD: 23-02*
 *Completed: 2026-09-22*
+
+## Final gate output
+
+- `flutter test` — **`02:52 +4638 ~5: All tests passed!`** (baseline 4632 + the 6 new cases; 5 skipped, 0 failed).
+- `flutter analyze` — **369 issues, 0 errors, 2 warnings** (both pre-existing, `test/widgets/eden_route_stop_list_test.dart:221` and `:244`). Identical to the pre-TRD baseline.
+
+## Self-Check: PASSED
+
+- `lib/testing.dart` — FOUND
+- `lib/testing/expect_ui_sane.dart` — FOUND
+- `lib/testing/semantics_geometry.dart` — FOUND
+- `test/testing/expect_ui_sane_test.dart` — FOUND
+- `test/testing/_fixtures/broken_surfaces.dart` — FOUND
+- Commits `e686a7d`, `8adfe63`, `b97ddf8` — FOUND
+
+### Note on STATE.md
+
+`df-tools state advance-job` / `update-progress` / `record-session` all returned
+`"Cannot parse Current Job or Total Jobs in Objective from STATE.md"` and
+`"No session fields found in STATE.md"` — this repo's `.planning/` keeps position in
+`state.json`, which WAS updated, alongside `ROADMAP.md` (`roadmap update-job-progress 23` →
+`{"status":"In Progress","complete":false}`) and `REQUIREMENTS.md` (`W1A-1a-02` marked complete).
+No STATE.md edit was fabricated to paper over the parse failure.
