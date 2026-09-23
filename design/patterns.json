@@ -1,20 +1,70 @@
 {
-  "$note": "GENERATED FILE — do not edit by hand. The machine twin of design/patterns/, built from the YAML front matter of those docs by tool/gen_pattern_catalogue.dart and locked against them in both directions by test/design/pattern_catalogue_fresh_test.dart. Consumed by DevFlow as `df-tools ui spec validate <spec> --patterns design/patterns.json` (Surface Spec §4.5 invariant I5). Entry shape: {id, kind?, must_not?} — `kind` is present only where the pattern governs one control of exactly that kind, and `must_not` is the negation set a control of that kind INHERITS and may not silently drop. Regenerate with: flutter test tool/gen_pattern_catalogue.dart",
+  "$note": "GENERATED FILE — do not edit by hand. The machine twin of design/patterns/, built from the `- `must_not: <term>`` rule lines in the BODY of those docs by tool/gen_pattern_catalogue.dart and locked against those bodies by test/design/pattern_catalogue_fresh_test.dart. Consumed by DevFlow as `df-tools ui spec validate <spec> --patterns design/patterns.json` (Surface Spec §4.5 invariant I5), which reads {id, kind?, must_not?}. `kind` is present only where the pattern governs one control of exactly that kind; `must_not` is the negation set a control of that kind INHERITS and may not silently drop, elected rule by rule in the prose with the marker *(inherited)*; `must_not_scoped` is every other rule the doc states, carried so this catalogue is a complete record of design/patterns/ rather than a fraction of it. Regenerate with: flutter test tool/gen_pattern_catalogue.dart",
   "patterns": [
     {
-      "id": "bulk-action-bar"
+      "id": "bulk-action-bar",
+      "must_not_scoped": [
+        "lose selection",
+        "report a partial failure as success",
+        "fire twice per activation",
+        "destroy data without confirmation",
+        "cover sibling hit rects",
+        "steal focus",
+        "render an unlabelled tappable",
+        "render below the tap target floor",
+        "nest semantics without a container"
+      ]
     },
     {
-      "id": "density-breakpoints"
+      "id": "density-breakpoints",
+      "must_not_scoped": [
+        "render below the tap target floor",
+        "cover sibling hit rects",
+        "exceed the rail width",
+        "lose selection",
+        "change route",
+        "render an unlabelled tappable",
+        "nest semantics without a container"
+      ]
     },
     {
-      "id": "dialog-confirm-destructive"
+      "id": "dialog-confirm-destructive",
+      "must_not_scoped": [
+        "default to the destructive action",
+        "destroy data without confirmation",
+        "fire twice per activation",
+        "navigate on close",
+        "change route",
+        "steal focus",
+        "render an unlabelled tappable",
+        "render below the tap target floor",
+        "nest semantics without a container"
+      ]
     },
     {
-      "id": "form-validation"
+      "id": "form-validation",
+      "must_not_scoped": [
+        "steal focus",
+        "fire twice per activation",
+        "change route",
+        "lose selection",
+        "replace loaded content with a spinner",
+        "render an unlabelled tappable",
+        "render below the tap target floor",
+        "nest semantics without a container"
+      ]
     },
     {
-      "id": "list-detail"
+      "id": "list-detail",
+      "must_not_scoped": [
+        "lose selection",
+        "fire twice per activation",
+        "steal focus",
+        "replace loaded content with a spinner",
+        "render below the tap target floor",
+        "render an unlabelled tappable",
+        "cover sibling hit rects"
+      ]
     },
     {
       "id": "navigation/disclosure-group",
@@ -22,19 +72,65 @@
       "must_not": [
         "fire twice per activation",
         "cover sibling hit rects"
+      ],
+      "must_not_scoped": [
+        "navigate on close",
+        "lose selection",
+        "render below the tap target floor",
+        "nest semantics without a container"
       ]
     },
     {
-      "id": "navigation/section-caption"
+      "id": "navigation/section-caption",
+      "must_not_scoped": [
+        "render a tap target",
+        "change route",
+        "steal focus",
+        "appear in the mobile bottom bar",
+        "exceed the rail width",
+        "render an unlabelled tappable"
+      ]
     },
     {
-      "id": "navigation/shell"
+      "id": "navigation/shell",
+      "must_not_scoped": [
+        "fire twice per activation",
+        "lose selection",
+        "change route",
+        "steal focus",
+        "appear in the mobile bottom bar",
+        "exceed the rail width",
+        "render below the tap target floor",
+        "render an unlabelled tappable",
+        "cover sibling hit rects",
+        "nest semantics without a container"
+      ]
     },
     {
-      "id": "state-empty-error-outage-loading"
+      "id": "state-empty-error-outage-loading",
+      "must_not_scoped": [
+        "render an empty state for a failed load",
+        "replace loaded content with a spinner",
+        "fire twice per activation",
+        "steal focus",
+        "change route",
+        "render an unlabelled tappable",
+        "render below the tap target floor"
+      ]
     },
     {
-      "id": "studio-three-pane"
+      "id": "studio-three-pane",
+      "must_not_scoped": [
+        "select the project",
+        "lose selection",
+        "steal focus",
+        "destroy data without confirmation",
+        "fire twice per activation",
+        "cover sibling hit rects",
+        "render an unlabelled tappable",
+        "render below the tap target floor",
+        "nest semantics without a container"
+      ]
     }
   ]
 }

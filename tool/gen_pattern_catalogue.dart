@@ -1,8 +1,7 @@
 // tool/gen_pattern_catalogue.dart
 //
 // Generates `design/patterns.json` — the MACHINE catalogue of the ten
-// interaction patterns in `design/patterns/` — from front matter carried in
-// those same markdown docs.
+// interaction patterns in `design/patterns/` — from the PROSE of those docs.
 //
 // WHY THIS EXISTS (the cross-repo gap it closes)
 // ----------------------------------------------
@@ -14,52 +13,90 @@
 // `{id, kind?, must_not?}`. This package shipped no such file, so `--patterns`
 // had nothing to point at and I5 reported PAT000/UNCHECKED on every run.
 //
-// HOW THE MACHINE DATA IS CARRIED
-// -------------------------------
-// The markdown docs stay the source of truth for humans. Each one now opens
-// with YAML front matter carrying only what prose cannot state unambiguously:
+// WHY THIS FILE WAS REWRITTEN (the defect it removes)
+// ---------------------------------------------------
+// The first version read the rules out of YAML front matter, with `must_not:`
+// and `must_not_scoped:` lists restating what the doc body already said. That
+// is two sources for one fact, and it drifted immediately: one of the ten docs
+// carried the lists, nine did not, so the catalogue carried 2 of the 78 rules
+// the docs state and the freshness gate reported success — because it
+// regenerated from the front matter and never read the prose. It locked the
+// OUTPUT to the GENERATOR rather than the CATALOGUE to its SOURCE.
+//
+// THE SINGLE SOURCE IS THE BODY
+// -----------------------------
+// Every rule is a line in the doc body of the form
+//
+//     - `must_not: <term>` — <prose>
+//
+// and every one of them reaches the catalogue. Front matter now carries only
+// what prose genuinely cannot state unambiguously — the catalogue `id` and the
+// Surface Spec control `kind`:
 //
 //   ---
 //   id: navigation/disclosure-group
 //   kind: disclosure-header
-//   must_not: ["fire twice per activation", "cover sibling hit rects"]
-//   must_not_scoped: ["navigate on close", "lose selection"]
 //   ---
 //
-//   * `id`      — the catalogue id. Slash-namespaced where the FILE NAME
-//                 already carries a group prefix (`navigation-*`); otherwise
-//                 the file stem. Locked to the file name by
-//                 `id.replaceAll('/', '-') == <stem>`.
-//   * `kind`    — OPTIONAL, and present only where the pattern governs ONE
-//                 control of exactly one Surface Spec control kind. A kind is
-//                 a blast radius: PAT002 makes EVERY control of that kind in
-//                 EVERY spec inherit this pattern's `must_not`. Patterns that
-//                 govern a composition (a shell, a list-detail, a studio, a
-//                 bar, a dialog) or a non-interactive element (a caption) get
-//                 NO kind and therefore inherit nothing onto anybody.
-//   * `must_not` / `must_not_scoped` — required together IFF `kind` is
-//                 present, forbidden otherwise. They PARTITION every
-//                 `must_not: <term>` token in the doc body:
-//                   - `must_not`        the terms the pattern states
-//                                       UNCONDITIONALLY for the control, under
-//                                       `## Interaction rules`. These are the
-//                                       inherited defaults §4.5 I5 means, and
-//                                       they match the schema's own definition
-//                                       of a control-level `must_not`
-//                                       ("applies to EVERY behaviour of this
-//                                       control").
-//                   - `must_not_scoped` everything else the doc states: terms
-//                                       stated under a CONDITION ("collapsing a
-//                                       group…", "when a group collapses over
-//                                       the selected child…"), which a spec
-//                                       declares per-behaviour, and terms
-//                                       stated under `## Accessibility` /
-//                                       `## Breakpoints`, which a spec carries
-//                                       in `a11y` and `hit_rect` instead.
+//   * `id`   — the catalogue id. Slash-namespaced where the FILE NAME already
+//              carries a group prefix (`navigation-*`); otherwise the file
+//              stem. Locked to the file name by
+//              `id.replaceAll('/', '-') == <stem>`.
+//   * `kind` — OPTIONAL, and present only where the pattern governs ONE
+//              control of exactly one Surface Spec control kind. A kind is a
+//              blast radius: PAT002 makes EVERY control of that kind in EVERY
+//              spec inherit this pattern's `must_not`. Patterns that govern a
+//              composition (a shell, a list-detail, a studio, a bar, a dialog)
+//              or a non-interactive element (a caption) get NO kind and
+//              therefore inherit nothing onto anybody.
 //
-// The partition is the both-directions lock: a rule added to the prose and not
-// classified reddens `test/design/pattern_catalogue_fresh_test.dart`, and a
-// front-matter term with no prose behind it reddens it too.
+// A `must_not:` / `must_not_scoped:` key in front matter is now REFUSED: it is
+// the duplicate source this rewrite removes.
+//
+// HOW THE PARTITION IS SIGNALLED — `*(inherited)*`, IN THE PROSE
+// --------------------------------------------------------------
+// The catalogue still partitions a pattern's rules into the ones a control
+// INHERITS at control level (§4.5 I5, the schema's "applies to EVERY behaviour
+// of this control") and the ones it does not. The previous pass keyed that off
+// the `## Interaction rules` section. THAT HEURISTIC DOES NOT HOLD: the one
+// doc that carried a hand-written partition classified two of its four
+// interaction rules as scoped, because `## Interaction rules` mixes rules
+// stated as flat properties of the control with rules whose prose names the
+// gesture or state they bite under ("collapsing a group…", "when a group
+// collapses over the selected child…"). The section cannot tell them apart, so
+// the section is not the signal.
+//
+// The signal is an explicit marker on the rule line itself:
+//
+//     - `must_not: fire twice per activation` *(inherited)* — the header row …
+//
+// It is stated ONCE, in the prose, immediately beside the rule it classifies —
+// one source, not a duplicate. The DEFAULT IS NOT INHERITED, because
+// inheritance is a blast radius and a blast radius should be opted into by the
+// author who understands the control, never acquired by a rule's position in
+// the file. A marker is legal only under `## Interaction rules` (an
+// accessibility or breakpoint rule is carried by a spec's `a11y` / `hit_rect`
+// fields, not by a control-level `must_not`) and only in a doc that declares a
+// `kind` (with no kind nothing can inherit, so the marker would be dead).
+//
+// WHAT THE CATALOGUE CARRIES
+// --------------------------
+//   * `must_not`        — the inherited defaults. Emitted ONLY alongside a
+//                         `kind`, because that is the pair PAT002 reads; a
+//                         `must_not` without a `kind` inherits onto nobody.
+//   * `must_not_scoped` — every other rule the doc states. DevFlow reads only
+//                         `id`, `kind` and `must_not`; this key exists so the
+//                         catalogue is a COMPLETE record of the docs and so
+//                         `test/design/pattern_catalogue_fresh_test.dart` can
+//                         prove it, by comparing the committed JSON against
+//                         the doc bodies. A catalogue that silently carries a
+//                         fraction of what the design system states is the
+//                         defect this file exists to remove.
+//
+// Together the two lists are exactly the set of `must_not: <term>` tokens in
+// the body — no more (a term with no prose behind it is impossible, since the
+// prose is what is parsed) and no fewer (a rule the body states and the JSON
+// drops reddens case 12).
 //
 // HOW TO RUN — via the flutter test runner, NOT plain `dart` (same reason as
 // tool/gen_design_md.dart):
@@ -110,32 +147,45 @@ const List<String> kControlKinds = <String>[
   'input',
 ];
 
-/// The heading whose rules are eligible to become inherited defaults.
+/// The one heading under which a rule may be elected as an inherited default.
 const String kInteractionRulesHeading = '## Interaction rules';
+
+/// The in-prose marker that elects a rule as a control-level inherited default.
+const String kInheritedMarker = '*(inherited)*';
 
 /// The `$note` written into the generated file, so a reader who opens
 /// `design/patterns.json` first learns it is generated before they edit it.
 const String kCatalogueNote =
     'GENERATED FILE — do not edit by hand. The machine twin of design/patterns/, '
-    'built from the YAML front matter of those docs by tool/gen_pattern_catalogue.dart '
-    'and locked against them in both directions by test/design/pattern_catalogue_fresh_test.dart. '
+    'built from the `- `must_not: <term>`` rule lines in the BODY of those docs by '
+    'tool/gen_pattern_catalogue.dart and locked against those bodies by '
+    'test/design/pattern_catalogue_fresh_test.dart. '
     'Consumed by DevFlow as `df-tools ui spec validate <spec> --patterns design/patterns.json` '
-    '(Surface Spec §4.5 invariant I5). Entry shape: {id, kind?, must_not?} — `kind` is present '
-    'only where the pattern governs one control of exactly that kind, and `must_not` is the '
-    'negation set a control of that kind INHERITS and may not silently drop. '
-    'Regenerate with: $kRegenerateCommand';
+    '(Surface Spec §4.5 invariant I5), which reads {id, kind?, must_not?}. `kind` is present only '
+    'where the pattern governs one control of exactly that kind; `must_not` is the negation set a '
+    'control of that kind INHERITS and may not silently drop, elected rule by rule in the prose '
+    'with the marker $kInheritedMarker; `must_not_scoped` is every other rule the doc states, '
+    'carried so this catalogue is a complete record of design/patterns/ rather than a fraction of '
+    'it. Regenerate with: $kRegenerateCommand';
 
 /// `must_not: <term>` — terms are lowercase words separated by single spaces.
 ///
-/// The same shape `test/design/patterns_test.dart` case 3 already gates. It
-/// deliberately does NOT match the front matter, whose value begins with `[`.
+/// The same shape `test/design/patterns_test.dart` case 3 already gates.
 final RegExp kMustNotToken =
     RegExp(r'must_not:\s*([a-z][a-z0-9]*(?: [a-z0-9]+)*)');
+
+/// A whole rule line: the backticked token, plus the optional election marker.
+///
+/// The marker must follow the closing backtick immediately (one space), before
+/// the em dash that opens the prose, so it reads as a classification of the
+/// rule rather than as a word in the sentence.
+final RegExp kMustNotRule = RegExp(
+    r'`must_not:\s*([a-z][a-z0-9]*(?: [a-z0-9]+)*)`(?:[ \t]*(\*\(inherited\)\*))?');
 
 /// A catalogue id: lowercase segments joined by `-` or `/`.
 final RegExp _idShape = RegExp(r'^[a-z0-9]+(?:[-/][a-z0-9]+)*$');
 
-/// Raised for any front matter this tool refuses to guess at. Every message
+/// Raised for any pattern doc this tool refuses to guess at. Every message
 /// names the file and the remedy: a generator that silently drops a pattern is
 /// the defect this whole file exists to remove.
 class PatternFrontMatterError implements Exception {
@@ -143,6 +193,25 @@ class PatternFrontMatterError implements Exception {
   const PatternFrontMatterError(this.message);
   @override
   String toString() => 'PatternFrontMatterError: $message';
+}
+
+/// One `- `must_not: <term>`` line, with where it was stated and how it was
+/// classified.
+class PatternRule {
+  /// The vocabulary term, e.g. `fire twice per activation`.
+  final String term;
+
+  /// The `## ` heading the rule sits under, e.g. `## Interaction rules`.
+  final String heading;
+
+  /// True when the line carries [kInheritedMarker].
+  final bool inherited;
+
+  const PatternRule({
+    required this.term,
+    required this.heading,
+    required this.inherited,
+  });
 }
 
 /// The machine half of one pattern doc.
@@ -159,7 +228,7 @@ class PatternEntry {
   /// Inherited defaults (§4.5 I5). Empty exactly when [kind] is null.
   final List<String> mustNot;
 
-  /// Terms the doc states that are NOT inherited at control level.
+  /// Every other rule the doc states, in document order.
   final List<String> mustNotScoped;
 
   const PatternEntry({
@@ -170,11 +239,15 @@ class PatternEntry {
     required this.mustNotScoped,
   });
 
+  /// Every rule the doc states — the completeness claim case 12 checks.
+  List<String> get statedTerms => <String>[...mustNot, ...mustNotScoped];
+
   /// The catalogue entry, in the shape `ui-spec-validate.cjs` reads.
   Map<String, Object?> toJson() => <String, Object?>{
         'id': id,
         if (kind != null) 'kind': kind,
         if (kind != null) 'must_not': mustNot,
+        'must_not_scoped': mustNotScoped,
       };
 }
 
@@ -188,60 +261,18 @@ class PatternEntry {
   return (source.substring(4, end + 1), source.substring(end + 5));
 }
 
-/// Reads `key: [ ... ]` — a JSON array, possibly spanning lines — out of
-/// [frontMatter]. Returns null when the key is absent.
-List<String>? _readList(String frontMatter, String key, String fileName) {
-  final at = RegExp('^$key:', multiLine: true).firstMatch(frontMatter);
-  if (at == null) return null;
-  final open = frontMatter.indexOf('[', at.end);
-  if (open < 0) {
-    throw PatternFrontMatterError(
-        '$fileName: front-matter key `$key` must be a JSON array (it is read '
-        'with jsonDecode, so `["a", "b"]` — no bare scalars, no trailing '
-        'commas). Remedy: rewrite the value and run $kRegenerateCommand.');
-  }
-  var depth = 0;
-  var close = -1;
-  for (var i = open; i < frontMatter.length; i++) {
-    final c = frontMatter[i];
-    if (c == '[') depth++;
-    if (c == ']') {
-      depth--;
-      if (depth == 0) {
-        close = i;
-        break;
-      }
-    }
-  }
-  if (close < 0) {
-    throw PatternFrontMatterError(
-        '$fileName: front-matter key `$key` opens a `[` that is never closed.');
-  }
-  final raw = frontMatter.substring(open, close + 1);
-  final Object? decoded;
-  try {
-    decoded = jsonDecode(raw);
-  } on FormatException catch (e) {
-    throw PatternFrontMatterError(
-        '$fileName: front-matter key `$key` is not a JSON array: ${e.message}\n'
-        '  found: $raw');
-  }
-  if (decoded is! List || decoded.any((v) => v is! String)) {
-    throw PatternFrontMatterError(
-        '$fileName: front-matter key `$key` must be a JSON array of strings.');
-  }
-  return decoded.cast<String>();
-}
-
 /// Reads `key: value` (a bare scalar) out of [frontMatter]; null when absent.
 String? _readScalar(String frontMatter, String key) {
-  final m = RegExp('^$key:[ \\t]*(.*)\$', multiLine: true)
-      .firstMatch(frontMatter);
+  final m =
+      RegExp('^$key:[ \\t]*(.*)\$', multiLine: true).firstMatch(frontMatter);
   if (m == null) return null;
   return m.group(1)!.trim();
 }
 
 /// Every `must_not: <term>` token in [body], in document order, deduplicated.
+///
+/// Kept as the plain term scan the freshness test uses to state, independently
+/// of every classification rule below, what the doc says.
 List<String> mustNotTermsIn(String body) {
   final seen = <String>{};
   final out = <String>[];
@@ -252,20 +283,25 @@ List<String> mustNotTermsIn(String body) {
   return out;
 }
 
-/// Every `must_not: <term>` token stated under `## Interaction rules`.
-///
-/// This is the ELIGIBLE set: a term may only become an inherited default if
-/// the pattern states it as part of the control's behavioural contract.
-/// `## Accessibility` and `## Breakpoints` rules are carried by a spec's
-/// `a11y` / `hit_rect` fields, not by a control-level `must_not`.
-List<String> interactionRuleTermsIn(String body) {
-  final start = body.indexOf('\n$kInteractionRulesHeading');
-  if (start < 0) return const <String>[];
-  final afterHeading = start + kInteractionRulesHeading.length + 1;
-  final next = body.indexOf('\n## ', afterHeading);
-  final section =
-      next < 0 ? body.substring(afterHeading) : body.substring(afterHeading, next);
-  return mustNotTermsIn(section);
+/// Every rule line in [body], in document order, each tagged with its heading
+/// and whether it carries the inherited-election marker.
+List<PatternRule> rulesIn(String body) {
+  final out = <PatternRule>[];
+  var heading = '<before the first heading>';
+  for (final line in body.split('\n')) {
+    if (line.startsWith('## ')) {
+      heading = line.trim();
+      continue;
+    }
+    for (final m in kMustNotRule.allMatches(line)) {
+      out.add(PatternRule(
+        term: m.group(1)!,
+        heading: heading,
+        inherited: m.group(2) != null,
+      ));
+    }
+  }
+  return out;
 }
 
 /// Parses and FULLY validates one pattern doc.
@@ -305,6 +341,20 @@ PatternEntry parsePattern(
         '"$stem" (got "${id.replaceAll('/', '-')}").');
   }
 
+  // The duplicate source this generator was rewritten to remove.
+  for (final dead in const <String>['must_not', 'must_not_scoped']) {
+    if (RegExp('^$dead:', multiLine: true).hasMatch(frontMatter)) {
+      throw PatternFrontMatterError(
+          '$fileName: front matter declares `$dead:`. Rules are read from the '
+          'doc BODY now — the front-matter lists were a second source for the '
+          'same fact and drifted: nine of the ten docs never carried them, so '
+          'the catalogue shipped 2 of 78 rules and the freshness gate passed. '
+          'Remedy: delete the `$dead:` line and, if it was electing inherited '
+          'defaults, mark those rule lines in the prose with '
+          '$kInheritedMarker, then run $kRegenerateCommand.');
+    }
+  }
+
   final kind = _readScalar(frontMatter, 'kind');
   if (kind != null && !kControlKinds.contains(kind)) {
     throw PatternFrontMatterError(
@@ -315,103 +365,85 @@ PatternEntry parsePattern(
         'single control should carry no kind, and then inherits nothing.');
   }
 
-  final mustNot = _readList(frontMatter, 'must_not', fileName);
-  final mustNotScoped = _readList(frontMatter, 'must_not_scoped', fileName);
+  final rules = rulesIn(body);
 
-  if (kind == null) {
-    if (mustNot != null || mustNotScoped != null) {
+  // Every `must_not:` token must be a real rule line. A token the rule regex
+  // cannot see is a rule written in a shape the catalogue will silently drop —
+  // exactly the failure this rewrite exists to make impossible.
+  final tokenTerms = mustNotTermsIn(body).toSet();
+  final ruleTerms = rules.map((r) => r.term).toSet();
+  final unreachable = tokenTerms.difference(ruleTerms);
+  if (unreachable.isNotEmpty) {
+    throw PatternFrontMatterError(
+        '$fileName: ${unreachable.map(jsonEncode).join(", ")} appears as '
+        '`must_not: <term>` but not as a rule line the catalogue can read. A '
+        'rule must be written with the term in backticks — '
+        '``- `must_not: <term>` — <prose>`` — or it is stated to humans and '
+        'dropped from $kCataloguePath.');
+  }
+
+  // Vocabulary — collected, not short-circuited, so one run names every miss.
+  final misses = <String>[
+    for (final term in ruleTerms.toList()..sort())
+      if (!vocabulary.contains(term)) term,
+  ];
+  if (misses.isNotEmpty) {
+    throw PatternFrontMatterError(
+        '$fileName: must_not term(s) ${misses.map(jsonEncode).join(", ")} are '
+        'not in the closed vocabulary at $kVocabularyPath. DevFlow validates '
+        'control `must_not` terms (CTRL007) against exactly that file, so a '
+        'term outside it could never be declared by a conforming spec. '
+        'Remedy: reword the rule with an existing term, or add the term to '
+        'the vocabulary deliberately — it is mirrored by W1b and is a '
+        'cross-repo change.');
+  }
+
+  // ── The election marker ─────────────────────────────────────────────────
+  final elected = <String>[];
+  final seenElected = <String>{};
+  final notElected = <String>[];
+  final seenNotElected = <String>{};
+  for (final rule in rules) {
+    if (!rule.inherited) continue;
+    if (kind == null) {
       throw PatternFrontMatterError(
-          '$fileName: `must_not` / `must_not_scoped` are declared without a '
-          '`kind:`. With no kind nothing can inherit them, so the data would '
-          'be dead. Remedy: add the `kind:` this pattern governs, or remove '
-          'both lists.');
+          '$fileName: rule ${jsonEncode(rule.term)} is marked '
+          '$kInheritedMarker, but this pattern declares no `kind:`. With no '
+          'kind nothing can inherit it, so the marker would be dead data. '
+          'Remedy: declare the `kind:` this pattern governs, or drop the '
+          'marker — a pattern governing a composition inherits nothing onto '
+          'anybody and that is the correct, deliberate outcome.');
     }
-    return PatternEntry(
-      fileName: fileName,
-      id: id,
-      kind: null,
-      mustNot: const <String>[],
-      mustNotScoped: const <String>[],
-    );
-  }
-
-  if (mustNot == null || mustNotScoped == null) {
-    throw PatternFrontMatterError(
-        '$fileName: `kind: $kind` is declared, so BOTH `must_not:` and '
-        '`must_not_scoped:` are required — together they must account for '
-        'every `must_not: <term>` in the body. '
-        'Missing: ${[if (mustNot == null) 'must_not', if (mustNotScoped == null) 'must_not_scoped'].join(" and ")}.');
-  }
-  if (mustNot.isEmpty) {
-    throw PatternFrontMatterError(
-        '$fileName: `kind: $kind` with an empty `must_not:` inherits nothing, '
-        'so the kind is doing no work. Remedy: name the unconditional rules, '
-        'or drop `kind:`.');
-  }
-
-  final overlap = mustNot.toSet().intersection(mustNotScoped.toSet());
-  if (overlap.isNotEmpty) {
-    throw PatternFrontMatterError(
-        '$fileName: ${overlap.map(jsonEncode).join(", ")} appear in BOTH '
-        '`must_not` and `must_not_scoped`. A term is either inherited at '
-        'control level or it is not.');
-  }
-
-  for (final term in <String>[...mustNot, ...mustNotScoped]) {
-    if (!vocabulary.contains(term)) {
+    if (rule.heading != kInteractionRulesHeading) {
       throw PatternFrontMatterError(
-          '$fileName: must_not term ${jsonEncode(term)} is not in the closed '
-          'vocabulary at $kVocabularyPath. DevFlow validates control `must_not` '
-          'terms (CTRL007) against exactly that file, so a term outside it '
-          'could never be declared by a conforming spec. Remedy: reword the '
-          'rule with an existing term, or add the term to the vocabulary '
-          'deliberately — it is mirrored by W1b and is a cross-repo change.');
+          '$fileName: rule ${jsonEncode(rule.term)} is marked '
+          '$kInheritedMarker under `${rule.heading}`. Only the control\'s '
+          'behavioural contract is inherited at control level; '
+          '`## Accessibility` and `## Breakpoints` rules are carried by a '
+          'spec\'s `a11y` and `hit_rect` fields. Remedy: drop the marker, or '
+          'state the rule under `$kInteractionRulesHeading`.');
     }
+    if (seenElected.add(rule.term)) elected.add(rule.term);
+  }
+  for (final rule in rules) {
+    if (seenElected.contains(rule.term)) continue;
+    if (seenNotElected.add(rule.term)) notElected.add(rule.term);
   }
 
-  // ── The both-directions lock ────────────────────────────────────────────
-  final bodyTerms = mustNotTermsIn(body).toSet();
-  final declared = <String>{...mustNot, ...mustNotScoped};
-
-  final invented = declared.difference(bodyTerms);
-  if (invented.isNotEmpty) {
+  if (kind != null && elected.isEmpty) {
     throw PatternFrontMatterError(
-        '$fileName: front matter declares ${invented.map(jsonEncode).join(", ")}, '
-        'which the doc body never states as `must_not: <term>`. The prose is '
-        'the source of truth; front matter classifies it, it does not add to '
-        'it. Remedy: state the rule in the body, or drop it from the front '
-        'matter.');
-  }
-
-  final unclassified = bodyTerms.difference(declared);
-  if (unclassified.isNotEmpty) {
-    throw PatternFrontMatterError(
-        '$fileName: the body states ${unclassified.map(jsonEncode).join(", ")}, '
-        'which the front matter classifies neither as an inherited default '
-        '(`must_not`) nor as scoped (`must_not_scoped`). A pattern with a '
-        '`kind` must account for every rule it states, or the catalogue goes '
-        'silently stale against the doc. Remedy: add each term to exactly one '
-        'of the two lists, then run $kRegenerateCommand.');
-  }
-
-  final eligible = interactionRuleTermsIn(body).toSet();
-  final ineligible = mustNot.toSet().difference(eligible);
-  if (ineligible.isNotEmpty) {
-    throw PatternFrontMatterError(
-        '$fileName: ${ineligible.map(jsonEncode).join(", ")} is listed as an '
-        'inherited default but is not stated under `$kInteractionRulesHeading`. '
-        'Only the control\'s behavioural contract is inherited at control '
-        'level; `## Accessibility` and `## Breakpoints` rules are carried by a '
-        'spec\'s `a11y` and `hit_rect` fields. Remedy: move the term to '
-        '`must_not_scoped`, or state it under `$kInteractionRulesHeading`.');
+        '$fileName: `kind: $kind` is declared but no rule is marked '
+        '$kInheritedMarker, so a control of that kind inherits nothing and the '
+        'kind is doing no work. Remedy: mark the rules this pattern states '
+        'unconditionally for the control, or drop `kind:`.');
   }
 
   return PatternEntry(
     fileName: fileName,
     id: id,
     kind: kind,
-    mustNot: mustNot,
-    mustNotScoped: mustNotScoped,
+    mustNot: kind == null ? const <String>[] : elected,
+    mustNotScoped: notElected,
   );
 }
 
@@ -487,7 +519,12 @@ void main() {
     final json = generateCatalogue(repoRoot);
     final out = File('$repoRoot/$kCataloguePath');
     out.writeAsStringSync(json);
-    stdout.writeln('gen_pattern_catalogue: wrote ${out.path}');
+    final entries = readPatterns(repoRoot);
+    final rules =
+        entries.fold<int>(0, (n, e) => n + e.statedTerms.length);
+    stdout.writeln('gen_pattern_catalogue: wrote ${out.path} — '
+        '${entries.length} patterns, $rules rules '
+        '(${entries.fold<int>(0, (n, e) => n + e.mustNot.length)} inherited)');
     expect(json, contains('"patterns"'));
   });
 }

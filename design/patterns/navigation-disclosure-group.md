@@ -1,13 +1,6 @@
 ---
 id: navigation/disclosure-group
 kind: disclosure-header
-must_not: ["fire twice per activation", "cover sibling hit rects"]
-must_not_scoped: [
-  "navigate on close",
-  "lose selection",
-  "render below the tap target floor",
-  "nest semantics without a container"
-]
 ---
 # Navigation disclosure group
 
@@ -37,13 +30,13 @@ around line 558). `EdenMobileLayout` does not render disclosure groups at all �
 - `must_not: lose selection` — when a group collapses over the selected child, the selection survives
   and the header shows it. Re-expanding the group must restore the same child as selected, with no
   round-trip through the host.
-- `must_not: fire twice per activation` — the header row is one tap target. A tap must produce exactly
-  one expand/collapse transition; a nested `InkWell` inside a `GestureDetector` on the same row is the
-  usual cause of a doubled toggle and is not allowed.
-- `must_not: cover sibling hit rects` — the header's tap rect stops at its own row. This is the live
-  constraint in this library: nav rows are laid out at a 42px pitch, so a naively enlarged 48px hit
-  rect overlaps the rows above and below and the oracle's semantics-disjointness rule flags it. Fix the
-  row height, not the hit rect.
+- `must_not: fire twice per activation` *(inherited)* — the header row is one tap target. A tap must
+  produce exactly one expand/collapse transition; a nested `InkWell` inside a `GestureDetector` on the
+  same row is the usual cause of a doubled toggle and is not allowed.
+- `must_not: cover sibling hit rects` *(inherited)* — the header's tap rect stops at its own row. This
+  is the live constraint in this library: nav rows are laid out at a 42px pitch, so a naively enlarged
+  48px hit rect overlaps the rows above and below and the oracle's semantics-disjointness rule flags
+  it. Fix the row height, not the hit rect.
 
 ## Breakpoints
 Disclosure groups exist on the desktop rail only. Below the rail/bar breakpoint the group header

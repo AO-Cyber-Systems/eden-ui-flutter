@@ -51,16 +51,20 @@ run and reports `PAT000 … UNCHECKED` on every spec. It sits in `design/` rathe
 `design/must_not_vocabulary.json` from it); a JSON file inside `design/patterns/` would read as an
 eleventh pattern.
 
-It is **generated, never hand-edited**. The machine half of each pattern is carried in YAML front
-matter at the top of that pattern's own doc, so the prose stays the source of truth and the two cannot
-drift:
+It is **generated, never hand-edited**, and the **prose in these files is its single source**. Every
+rule is a line of the form
+
+```
+- `must_not: <term>` — <prose>
+```
+
+and **every one of them reaches the catalogue**. Front matter carries only the two facts prose cannot
+state unambiguously:
 
 ```yaml
 ---
 id: navigation/disclosure-group
 kind: disclosure-header
-must_not: ["fire twice per activation", "cover sibling hit rects"]
-must_not_scoped: ["navigate on close", "lose selection", ...]
 ---
 ```
 
@@ -71,14 +75,47 @@ must_not_scoped: ["navigate on close", "lose selection", ...]
   inherits this pattern's `must_not`. Nine of the ten patterns govern a composition (a shell, a
   list–detail, a studio, a bar, a dialog) or a non-interactive element (a caption) and therefore
   declare no kind and inherit nothing onto anybody.
-* **`must_not` and `must_not_scoped` partition every `must_not:` term in the doc.** `must_not` holds
-  the rules the pattern states *unconditionally* under `## Interaction rules` — the ones that match the
-  schema's own definition of a control-level `must_not`, "applies to EVERY behaviour of this control".
-  `must_not_scoped` holds everything else the doc states: rules stated under a condition ("collapsing a
-  group…"), which a spec declares per behaviour, and rules under `## Accessibility` / `## Breakpoints`,
-  which a spec carries in `a11y` and `hit_rect` instead.
+
+A `must_not:` or `must_not_scoped:` key in front matter is **refused**. Those lists used to restate
+what the body already said, which is two sources for one fact — and they drifted at once: only one of
+the ten docs ever carried them, so the catalogue shipped 2 of the 78 rules these files state while the
+freshness gate, which regenerated from the same front matter, reported success.
+
+### Electing an inherited default: `*(inherited)*`
+
+The catalogue still separates the rules a control **inherits** at control level — the schema's
+"applies to EVERY behaviour of this control" — from the rules it does not. That separation is signalled
+by a marker on the rule line itself:
+
+```
+- `must_not: fire twice per activation` *(inherited)* — the header row is one tap target. …
+```
+
+Stated once, in the prose, beside the rule it classifies. **The default is _not_ inherited**, because
+inheritance is a blast radius and should be opted into by the author who understands the control,
+never acquired by a rule's position in the file. A marker is legal only under `## Interaction rules`
+(`## Accessibility` and `## Breakpoints` rules are carried by a spec's `a11y` and `hit_rect` fields)
+and only in a doc that declares a `kind` — with no kind nothing can inherit it, so the marker would be
+dead data.
+
+Section position is **not** the signal and never was. `## Interaction rules` mixes rules stated as flat
+properties of the control with rules whose prose names the gesture or state they bite under
+("collapsing a group…", "when a group collapses over the selected child…"); a section cannot tell them
+apart, and the one doc that carried a hand-written partition classified two of its four interaction
+rules as scoped for exactly that reason.
+
+### What the JSON carries
+
+* **`must_not`** — the elected defaults. Emitted only alongside a `kind`, because that is the pair
+  DevFlow's PAT002 reads; a `must_not` without a `kind` inherits onto nobody.
+* **`must_not_scoped`** — every other rule the doc states. DevFlow reads only `id`, `kind` and
+  `must_not`; this key exists so the catalogue is a **complete record** of this directory rather than a
+  fraction of it, and so the freshness gate can prove it.
 
 Regenerate with `flutter test tool/gen_pattern_catalogue.dart`.
-`test/design/pattern_catalogue_fresh_test.dart` fails in **both** directions — a doc edited without
-regenerating, and a JSON edited by hand — and, one level down, refuses a front-matter term the prose
-never states and a prose rule the front matter never classifies.
+`test/design/pattern_catalogue_fresh_test.dart` case 12 compares the **committed JSON against these
+doc bodies** — no front matter, no generator, no regeneration in between — so a rule written in prose
+and absent from the catalogue fails, naming the term and the file. Case 2 fails in both directions for
+a doc edited without regenerating and for a JSON edited by hand, and the unit cases refuse a marker
+that nothing can inherit, a kind that inherits nothing, and a `must_not:` token written in a shape the
+parser cannot see.

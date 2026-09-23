@@ -4,19 +4,25 @@
 // reads as `df-tools ui spec validate <spec> --patterns design/patterns.json`
 // (Surface Spec §4.5 invariant I5).
 //
-// It regenerates the catalogue IN MEMORY from the front matter of
-// `design/patterns/*.md` and compares it against the committed JSON — it never
-// writes. Both directions fail here:
+// THE ASSERTION THAT MATTERS IS CASE 12: the committed JSON is compared
+// against the DOC BODIES, with no front matter and no generator in between. An
+// earlier version of this file regenerated from YAML front matter and compared
+// bytes, which locked the OUTPUT to the GENERATOR instead of the CATALOGUE to
+// its SOURCE — and let a catalogue carrying 2 of the 78 rules the docs state
+// report success. A generated file that can go stale silently is the defect
+// this whole programme is about; a freshness gate that cannot see its own
+// source is that defect one level up.
 //
-//   * a pattern doc edited without regenerating  -> the JSON is stale
-//   * the JSON edited by hand                    -> it no longer matches the docs
+// The rest of the file holds the surrounding locks:
 //
-// and, one level down, the front matter itself is locked to the prose: a rule
-// added to a doc body and left unclassified fails, and a front-matter term with
-// no prose behind it fails. A generated file that can go stale silently is the
-// defect this whole programme is about.
+//   * case 2   a doc edited without regenerating, or the JSON edited by hand
+//   * case 3   the entry shape `ui-spec-validate.cjs` reads
+//   * case 5   every term is in the closed vocabulary (CTRL007)
+//   * cases 6-11, 14-16  the generator's own refusals, as unit cases
 //
-// See tool/gen_pattern_catalogue.dart for the generator this mirrors.
+// See tool/gen_pattern_catalogue.dart for the generator this mirrors, and for
+// why the partition is signalled by an in-prose `*(inherited)*` marker rather
+// than by which section a rule sits in.
 
 import 'dart:convert';
 import 'dart:io';
@@ -42,42 +48,45 @@ String _repoRoot() {
 // Hand-built factories, not hand-typed sample documents: each case below states
 // only the one thing it varies, so a reader can see what makes it red.
 
-/// A minimal, VALID pattern doc: the seven headings, one unconditional
-/// interaction rule, one scoped one, and front matter that classifies both.
+/// A minimal, VALID pattern doc: the seven headings, one interaction rule
+/// elected as an inherited default, one that is not, and front matter carrying
+/// only `id` and `kind`.
+///
+/// Rules are given as `(term, inherited)` pairs so a case states only the one
+/// thing it varies — the marker is the whole classification signal, so it is
+/// the only knob a case needs.
 String buildPatternDoc({
   String id = 'sample-pattern',
   String? kind = 'toggle',
-  List<String> mustNot = const <String>['fire twice per activation'],
-  List<String> mustNotScoped = const <String>['change route'],
-  List<String> interactionRuleTerms = const <String>[
-    'fire twice per activation',
-    'change route',
+  List<(String, bool)> interactionRules = const <(String, bool)>[
+    ('fire twice per activation', true),
+    ('change route', false),
   ],
-  List<String> accessibilityTerms = const <String>[],
+  List<(String, bool)> accessibilityRules = const <(String, bool)>[],
+  String? rawInteractionBody,
 }) {
   final fm = StringBuffer()
     ..writeln('---')
     ..writeln('id: $id');
   if (kind != null) fm.writeln('kind: $kind');
-  if (mustNot.isNotEmpty || kind != null) {
-    fm.writeln('must_not: ${jsonEncode(mustNot)}');
-    fm.writeln('must_not_scoped: ${jsonEncode(mustNotScoped)}');
-  }
   fm.writeln('---');
 
-  String rules(List<String> terms) => terms.isEmpty
+  String rules(List<(String, bool)> rs) => rs.isEmpty
       ? 'No rules.\n'
-      : terms.map((t) => '- `must_not: $t` — a rule.\n').join();
+      : rs
+          .map((r) =>
+              '- `must_not: ${r.$1}`${r.$2 ? ' $kInheritedMarker' : ''} — a rule.\n')
+          .join();
 
   return '$fm'
       '# Sample pattern\n\n'
       '## Intent\nA fixture.\n\n'
       '## Widgets\nNone.\n\n'
       '## States\nOne.\n\n'
-      '## Interaction rules\n${rules(interactionRuleTerms)}\n'
+      '## Interaction rules\n${rawInteractionBody ?? rules(interactionRules)}\n'
       '## Breakpoints\nNone.\n\n'
       '## Content\nNone.\n\n'
-      '## Accessibility\n${rules(accessibilityTerms)}';
+      '## Accessibility\n${rules(accessibilityRules)}';
 }
 
 /// The closed vocabulary, for the unit cases that do not touch disk.
@@ -155,10 +164,22 @@ void main() {
       expect(id, isA<String>(), reason: 'every entry resolves by `id`.');
       expect(ids.add(id! as String), isTrue, reason: 'ids are unique.');
       expect(
-        entry.keys.toSet().difference(<String>{'id', 'kind', 'must_not'}),
+        entry.keys
+            .toSet()
+            .difference(<String>{'id', 'kind', 'must_not', 'must_not_scoped'}),
         isEmpty,
-        reason: 'ui-spec-validate.cjs reads {id, kind?, must_not?} and nothing '
-            'else; an extra key is data no consumer will ever see.',
+        reason: 'ui-spec-validate.cjs reads {id, kind?, must_not?}; '
+            '`must_not_scoped` is this catalogue\'s completeness record, so '
+            'that every rule the docs state is carried and case 12 can prove '
+            'it. Any FIFTH key is data no consumer and no gate would ever '
+            'see.',
+      );
+      expect(
+        entry['must_not_scoped'],
+        isA<List<Object?>>(),
+        reason: 'every entry carries the rules it does not inherit, even when '
+            'that list is empty — an absent key would be indistinguishable '
+            'from a pattern whose rules were dropped.',
       );
       if (entry.containsKey('kind')) {
         expect(entry['must_not'], isA<List<Object?>>(),
@@ -203,72 +224,72 @@ void main() {
     }
   });
 
-  // ── Case 6: the lock refuses an INVENTED term (front matter -> prose) ────
-  test('case 6: a front-matter term the body never states is refused', () {
+  // ── Case 6: the DUPLICATE SOURCE is refused outright ────────────────────
+  test('case 6: front matter that still declares `must_not:` is refused', () {
+    final doc = buildPatternDoc().replaceFirst(
+      'kind: toggle\n',
+      'kind: toggle\nmust_not: ["fire twice per activation"]\n',
+    );
     expect(
       () => parsePattern(
-        buildPatternDoc(
-          mustNot: const <String>['fire twice per activation'],
-          mustNotScoped: const <String>['change route', 'cover sibling hit rects'],
-          interactionRuleTerms: const <String>[
-            'fire twice per activation',
-            'change route',
-          ],
-        ),
+        doc,
         fileName: 'sample-pattern.md',
         vocabulary: _sampleVocabulary(),
       ),
       throwsA(isA<PatternFrontMatterError>().having(
         (e) => e.message,
         'message',
-        contains('which the doc body never states'),
+        allOf(contains('front matter declares `must_not:`'),
+            contains(kInheritedMarker)),
       )),
-      reason: 'the prose is the source of truth; front matter classifies it, '
-          'it does not add to it.',
+      reason: 'front-matter rule lists were a second source for a fact the '
+          'prose already states, and they drifted: nine of ten docs never '
+          'carried them. The remedy names the in-prose marker.',
     );
   });
 
-  // ── Case 7: the lock refuses an UNCLASSIFIED term (prose -> front matter) ─
-  test('case 7: a body rule the front matter does not classify is refused', () {
-    expect(
-      () => parsePattern(
-        buildPatternDoc(
-          mustNot: const <String>['fire twice per activation'],
-          mustNotScoped: const <String>[],
-          interactionRuleTerms: const <String>[
-            'fire twice per activation',
-            'change route',
-          ],
-        ),
-        fileName: 'sample-pattern.md',
-        vocabulary: _sampleVocabulary(),
+  // ── Case 7: every rule the body states reaches the catalogue ────────────
+  // The unit-level twin of case 12: a rule added anywhere in the body — under
+  // any heading, marked or not — is carried. Nothing is dropped on the floor.
+  test('case 7: a rule stated in any section is carried by the entry', () {
+    final entry = parsePattern(
+      buildPatternDoc(
+        interactionRules: const <(String, bool)>[
+          ('fire twice per activation', true),
+          ('change route', false),
+        ],
+        accessibilityRules: const <(String, bool)>[
+          ('render below the tap target floor', false),
+        ],
       ),
-      throwsA(isA<PatternFrontMatterError>().having(
-        (e) => e.message,
-        'message',
-        contains('classifies neither as an inherited default'),
-      )),
-      reason: 'a rule added to a doc and never classified would leave the '
-          'catalogue silently stale against the doc.',
+      fileName: 'sample-pattern.md',
+      vocabulary: _sampleVocabulary(),
+    );
+    expect(
+      entry.statedTerms.toSet(),
+      equals(<String>{
+        'fire twice per activation',
+        'change route',
+        'render below the tap target floor',
+      }),
+      reason: 'the catalogue is a complete record of the doc, not a fraction '
+          'of it — this is the property whose absence shipped a 2-of-78 '
+          'catalogue with a green gate.',
+    );
+    expect(entry.mustNot, equals(const <String>['fire twice per activation']));
+    expect(
+      entry.mustNotScoped,
+      equals(const <String>['change route', 'render below the tap target floor']),
     );
   });
 
-  // ── Case 8: only the behavioural contract is inherited ──────────────────
-  test('case 8: an accessibility-only rule cannot be an inherited default', () {
+  // ── Case 8: only the behavioural contract may be elected ────────────────
+  test('case 8: an accessibility rule cannot be marked inherited', () {
     expect(
       () => parsePattern(
         buildPatternDoc(
-          mustNot: const <String>[
-            'fire twice per activation',
-            'render below the tap target floor',
-          ],
-          mustNotScoped: const <String>['change route'],
-          interactionRuleTerms: const <String>[
-            'fire twice per activation',
-            'change route',
-          ],
-          accessibilityTerms: const <String>[
-            'render below the tap target floor',
+          accessibilityRules: const <(String, bool)>[
+            ('render below the tap target floor', true),
           ],
         ),
         fileName: 'sample-pattern.md',
@@ -277,8 +298,11 @@ void main() {
       throwsA(isA<PatternFrontMatterError>().having(
         (e) => e.message,
         'message',
-        contains('is not stated under `## Interaction rules`'),
+        contains('under `## Accessibility`'),
       )),
+      reason: "`## Accessibility` and `## Breakpoints` rules are carried by a "
+          "spec's `a11y` and `hit_rect` fields, not by a control-level "
+          '`must_not`.',
     );
   });
 
@@ -417,6 +441,71 @@ void main() {
       isTrue,
       reason: 'every rule in the catalogue is filed as condition-scoped, so '
           'no control inherits anything and PAT002 can never fire.',
+    );
+  });
+
+  // ── Case 14: a marker with nothing to inherit it is refused ─────────────
+  test('case 14: `*(inherited)*` in a pattern with no kind is refused', () {
+    expect(
+      () => parsePattern(
+        buildPatternDoc(kind: null),
+        fileName: 'sample-pattern.md',
+        vocabulary: _sampleVocabulary(),
+      ),
+      throwsA(isA<PatternFrontMatterError>().having(
+        (e) => e.message,
+        'message',
+        contains('declares no `kind:`'),
+      )),
+      reason: 'with no kind nothing can inherit the rule, so the marker would '
+          'be dead data dressed as a contract.',
+    );
+  });
+
+  // ── Case 15: a kind that inherits nothing is refused ────────────────────
+  test('case 15: a kind with no elected rule is refused', () {
+    expect(
+      () => parsePattern(
+        buildPatternDoc(
+          interactionRules: const <(String, bool)>[
+            ('fire twice per activation', false),
+            ('change route', false),
+          ],
+        ),
+        fileName: 'sample-pattern.md',
+        vocabulary: _sampleVocabulary(),
+      ),
+      throwsA(isA<PatternFrontMatterError>().having(
+        (e) => e.message,
+        'message',
+        contains('no rule is marked'),
+      )),
+      reason: 'a kind whose must_not is empty makes PAT002 unable to fire, '
+          'which is the 2-of-78 failure in miniature.',
+    );
+  });
+
+  // ── Case 16: a rule the catalogue cannot read is refused, not dropped ───
+  test('case 16: a `must_not:` token outside a backticked rule line is refused',
+      () {
+    expect(
+      () => parsePattern(
+        buildPatternDoc(
+          rawInteractionBody:
+              '- `must_not: fire twice per activation` $kInheritedMarker — a rule.\n'
+              '- must_not: change route — a rule written without backticks.\n',
+        ),
+        fileName: 'sample-pattern.md',
+        vocabulary: _sampleVocabulary(),
+      ),
+      throwsA(isA<PatternFrontMatterError>().having(
+        (e) => e.message,
+        'message',
+        allOf(contains('"change route"'), contains('not as a rule line')),
+      )),
+      reason: 'a rule the parser cannot see is a rule stated to humans and '
+          'silently dropped from the catalogue — the exact shape of this '
+          "branch's defect. It must fail loudly, naming the term.",
     );
   });
 }
