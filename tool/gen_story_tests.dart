@@ -100,6 +100,11 @@ Map<String, String> generateStoryTestSources(List<EdenStory> stories) {
 /// set this generator covers. Read off the COMMITTED generated registration,
 /// so it is empty until 23-05 lands the first co-located story.
 List<EdenStory> coLocatedStories() {
+  // [3J[H[2J is @visibleForTesting; this file is test-only support reached by
+  // relative import from test/, but it lives outside test/ so the analyzer
+  // cannot see that. Scoped ignore with the reason rather than widening the
+  // registry's API.
+  // ignore: invalid_use_of_visible_for_testing_member
   StoryRegistry.instance.clear();
   registerGeneratedStories();
   return StoryRegistry.instance.all();

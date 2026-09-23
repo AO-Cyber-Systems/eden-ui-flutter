@@ -50,6 +50,11 @@ const String kGoldenDir = 'goldens/ci';
 /// Each `flutter test` file runs in its own isolate, so clearing first is safe
 /// and keeps the registry's duplicate-id assertion happy on a re-run.
 void ensureStoriesRegistered() {
+  // [3J[H[2J is @visibleForTesting; this file is test-only support reached by
+  // relative import from test/, but it lives outside test/ so the analyzer
+  // cannot see that. Scoped ignore with the reason rather than widening the
+  // registry's API.
+  // ignore: invalid_use_of_visible_for_testing_member
   StoryRegistry.instance.clear();
   registerAllStories();
 }
