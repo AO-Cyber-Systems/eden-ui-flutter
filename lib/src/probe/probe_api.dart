@@ -81,6 +81,9 @@ abstract final class EdenProbeApi {
       if (key != null && !_matchesKey(element, key)) {
         continue;
       }
+      if (text != null && !_matchesText(element, text)) {
+        continue;
+      }
       final Rect? rect = _globalRect(element);
       if (rect == null) {
         continue;
@@ -118,6 +121,15 @@ abstract final class EdenProbeApi {
   static bool _matchesKey(Element element, String key) {
     final Key? k = element.widget.key;
     return k != null && k.toString().contains(key);
+  }
+
+  /// Text is matched against what the user READS.
+  static bool _matchesText(Element element, String text) {
+    final Widget widget = element.widget;
+    if (widget is Text) {
+      return widget.data != null && widget.data!.contains(text);
+    }
+    return false;
   }
 
   /// The element's OWN render box, in global coordinates.
