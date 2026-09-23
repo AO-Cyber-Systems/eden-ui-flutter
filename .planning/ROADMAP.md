@@ -451,5 +451,5 @@ Jobs:
 - [ ] 23-08-TRD.md — EdenProbeScope: deterministic captures, animations and fonts pinned (wave 2)
 - [ ] 23-09-TRD.md — Ten design patterns + closed must_not vocabulary (wave 5)
 - [x] 23-10-TRD.md — DESIGN.md token block generated from lib/src/tokens/ and CI-diffed (wave 1) — COMPLETE 2026-09-22 (9/9 cases green; staleness gate proven to fail from both directions — edited markdown and an added Dart token)
-- [ ] 23-11-TRD.md — custom_lint: no_raw_color, text_style_needs_family, no_magic_spacing (wave 1)
+- [x] 23-11-TRD.md — custom_lint: no_raw_color, text_style_needs_family, no_magic_spacing (wave 1) — COMPLETE 2026-09-22 (12/12 cases green; differential control caught a FALSE GREEN in the TRD's own config shape, then proved exit 1 per rule; unscoped debt 426/772/1502)
 - [ ] 23-12-TRD.md — Release v2.2.0: CHANGELOG, additive-only contract, composed-tree gate (wave 6)
