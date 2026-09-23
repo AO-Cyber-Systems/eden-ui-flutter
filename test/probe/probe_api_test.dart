@@ -71,5 +71,27 @@ void main() {
       );
       expect(hits.map((EdenProbeHit h) => h.rect), contains(rich));
     });
+
+    testWidgets('find({identifier:}) matches a semantics identifier and returns that node\'s rect',
+        (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pumpSurface(tester, probeSemanticsSurface());
+
+      final List<EdenProbeHit> hits =
+          EdenProbeApi.find(identifier: 'eden-nav-home');
+
+      expect(hits, hasLength(1));
+      expect(hits.single.identifier, 'eden-nav-home');
+      expect(hits.single.rect.size, const Size(100, 48));
+      expect(hits.single.actions, contains('tap'));
+      handle.dispose();
+    });
+
+    testWidgets('find({}) with no criteria returns [] and does not throw',
+        (WidgetTester tester) async {
+      await _pumpSurface(tester, probeKeyedBoxSurface());
+
+      expect(EdenProbeApi.find(), isEmpty);
+    });
   });
 }
