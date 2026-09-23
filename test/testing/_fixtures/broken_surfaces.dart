@@ -440,25 +440,25 @@ Widget excludedBadgeText() {
         label: 'Orders',
         button: true,
         onTap: () {},
-        child: ExcludeSemantics(
+        child: const ExcludeSemantics(
           child: SizedBox(
             width: 240,
             height: 48,
             child: Row(
               children: <Widget>[
-                const SizedBox(width: 12),
-                const Expanded(
+                SizedBox(width: 12),
+                Expanded(
                   child: Text(
                     'Orders',
                     style: TextStyle(fontSize: 14, color: _legibleInk),
                   ),
                 ),
                 DecoratedBox(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Color(0xFFD4A853),
                     borderRadius: BorderRadius.all(Radius.circular(999)),
                   ),
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                     child: Text(
                       '99',
@@ -471,7 +471,7 @@ Widget excludedBadgeText() {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
               ],
             ),
           ),

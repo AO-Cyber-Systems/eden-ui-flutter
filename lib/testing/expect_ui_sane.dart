@@ -92,20 +92,23 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 ///    affordance are exempt: a caption band carries an identifier and nothing
 ///    to activate, and the top-bar search announces `textField: true`, whose
 ///    affordance is focus, not tap.
-/// 5. **Accessibility guidelines.** `labeledTapTargetGuideline`,
-///    `textContrastGuideline`, and a tap-target floor chosen by
+/// 5. **Accessibility guidelines.** `labeledTapTargetGuideline` and a
+///    tap-target floor chosen by
 ///    [inputModality]: WCAG 2.5.8's 24x24 for [EdenInputModality.pointer],
 ///    `androidTapTargetGuideline` (48px) + `iOSTapTargetGuideline` (44px) for
 ///    [EdenInputModality.touch]. Each failure is folded into the same
 ///    aggregated report, prefixed with the guideline's name.
 ///
-/// 6. **Painted-text contrast.** Every `Text` the semantics-driven
-///    `textContrastGuideline` did NOT evaluate is measured directly from the
-///    rendered pixels. That guideline can only look text up by a semantics
-///    node's LABEL, so a string that is nobody's label — a nav badge's count,
-///    anything inside an `ExcludeSemantics` — was never contrast-checked at
-///    all, however illegible. Text behind a modal barrier and text inside a
-///    disabled control are exempt, matching the stock rule and WCAG 1.4.3.
+/// 6. **Painted-text contrast (WCAG 1.4.3).** Every `Text` and `EditableText`
+///    in the tree is measured: its ink comes from the resolved `TextStyle`,
+///    the surface it sits on from the rendered pixels. This REPLACES Flutter's
+///    `textContrastGuideline`, which could not see badge text at all — it
+///    looks text up by a semantics node's LABEL, and a badge inside an
+///    `ExcludeSemantics` is the label of nothing — and which misreads small
+///    text, because it derives the ink from a pixel histogram that a 10px
+///    glyph has no full-coverage pixels in. Text behind a modal barrier and
+///    text inside a disabled control are exempt, as they were under the stock
+///    rule and as WCAG 1.4.3 allows.
 ///
 /// Violations are AGGREGATED: one run lists everything wrong with the surface,
 /// so a consumer fixing a screen does not play whack-a-mole.
@@ -142,11 +145,6 @@ Future<void> expectUiSane(
     violations.addAll(_overlapViolations(nodes, allowOverlap));
     violations.addAll(_tapRouteViolations(tester, nodes));
     violations.addAll(await _guidelineViolations(tester, inputModality));
-    // AFTER the guideline phase, deliberately: that phase is the first thing
-    // in the run to call `runAsync`, which is what finally executes a pending
-    // google_fonts load, and it already drains whatever that routed through
-    // the pending-exception channel. Running the painted-text walk first
-    // would move that drain out from under the handler that reports it.
     violations.addAll(await _paintedTextContrastViolations(tester));
   } finally {
     handle.dispose();
@@ -213,13 +211,13 @@ List<String> _overflowingCreatorChains(WidgetTester tester) {
 
 /// The guidelines that hold on EVERY surface, whatever drives it.
 ///
-/// GOTCHA: `textContrastGuideline` silently PASSES on a region it cannot
-/// resolve a background for (a transparent or single-colour area). A
-/// contrast fixture must use opaque colours or the check proves nothing.
+/// `textContrastGuideline` IS NOT HERE, deliberately. Contrast is measured by
+/// this library's own painted-text walk instead — see the block above
+/// `_paintedTextContrastViolations` for why the stock rule could not be kept
+/// alongside it, and what it could not see.
 const List<AccessibilityGuideline> _modalityIndependentGuidelines =
     <AccessibilityGuideline>[
   labeledTapTargetGuideline,
-  textContrastGuideline,
 ];
 
 /// The tap-target floor for [modality]. There is exactly one arm per enum
@@ -261,10 +259,10 @@ Future<List<String>> _guidelineViolations(
     }
   }
 
-  // WHY THE GUIDELINE PHASE NEEDS A FONT-CLEAN TEST ENVIRONMENT (was a KNOWN
-  // LIMITATION; fixed by `test/flutter_test_config.dart`).
+  // WHY AN IMAGE-CAPTURING CHECK NEEDS A FONT-CLEAN TEST ENVIRONMENT (was a
+  // KNOWN LIMITATION; fixed by `test/flutter_test_config.dart`).
   //
-  // `textContrastGuideline` captures the rendered image through
+  // The painted-text phase below captures the rendered image through
   // `tester.runAsync`, which lets futures that were ALREADY PENDING before
   // expectUiSane was called finally run. `EdenTheme` resolves its type scale
   // through google_fonts, which fires an unawaited font load at
@@ -276,10 +274,12 @@ Future<List<String>> _guidelineViolations(
   // can either.
   //
   // That is why a consumer repo MUST make the font load succeed offline
-  // before this phase means anything. This package does it in
+  // before the contrast rule means anything. This package does it in
   // `test/flutter_test_config.dart`, which serves the Eden type families to
-  // google_fonts from `test_support/fonts/`. Without an equivalent, an
-  // EdenTheme surface fails here with a font error instead of a verdict.
+  // google_fonts from `test_support/fonts/` AND awaits them before the first
+  // test renders — otherwise the first test in every file rasterises in a
+  // different face from the rest and any pixel measurement is decided by
+  // position in the file.
   //
   // Anything the guideline phase DID route through the pending-exception
   // channel is reported here rather than discarded.
@@ -643,11 +643,17 @@ const double _epsilon = 0.01;
 // badge. The measurement is taken from the RENDERED PIXELS, the same source
 // the stock guideline measures from.
 //
-// SCOPE — only text the stock guideline did not already evaluate. Both rules
-// run. A `Text` whose string IS some visible node's label and which is
-// hit-testable has already been measured by `textContrastGuideline`, and is
-// skipped here so one defect is not reported twice. Everything else — badges,
-// counts, chips, any string inside an excluded subtree — is measured here.
+// WHY THE STOCK RULE IS GONE RATHER THAN KEPT ALONGSIDE. Running both was the
+// first shape of this change, and the stock rule failed on its own terms the
+// moment the suite started rasterising in Eden's real type families: it
+// derives BOTH colours from a pixel histogram, and an 11px label or a 10px
+// badge digit has no full-coverage pixels for it to find, so it reports the
+// mode of the antialiased stroke shades as the ink. The mobile bar's labels
+// came back at 2.20-4.38:1 against a colour pair of 4.83:1, and the rail's
+// badge at 2.52:1 against 8.04:1 — four false accusations on conformant text.
+// It is not a rule that can be left switched on beside a correct one.
+//
+// SCOPE is therefore every `Text` and `EditableText` in the tree.
 //
 // EXEMPTION, encoded rather than assumed: WCAG 1.4.3 exempts "text that is
 // part of an inactive user interface component". The stock guideline gets that
@@ -655,13 +661,23 @@ const double _epsilon = 0.01;
 // has to do it explicitly, by skipping any `Text` painted inside a disabled
 // node's rect.
 //
-// KNOWN LIMIT, recorded rather than fixed: the coverage test is
-// "string matches a visible node's label AND the element is hit-testable". A
-// `Text` that satisfies both but whose paint bounds do not intersect that
-// node's rect is skipped by the stock rule for a third reason this one does
-// not model, and neither rule measures it. No site in this library is in that
-// position today; the alternative is reimplementing the stock traversal, which
-// buys a rarer case at the cost of a second copy of it.
+// KNOWN LIMIT, recorded rather than fixed: the background is the dominant
+// colour inside the paragraph's OWN box, which is the wrong surface when a
+// paragraph does not actually sit on the component it belongs to. The desktop
+// top bar's search hint is exactly that case — its field's layout rect is the
+// pill's full 36px, but in the captured frame the paragraph sits on the bar's
+// white surface with the pill's fill as a band below it, so the rule measures
+// 4.83:1 where the token pair is 3.81:1. It reports the pixels, which is the
+// honest answer for a rule that reads pixels; the discrepancy is a layout
+// question, and it is recorded in the CHANGELOG as one.
+//
+// KNOWN LIMIT, recorded rather than fixed: a `Text` whose ink cannot be
+// resolved from its style — `TextStyle.color` null with no `DefaultTextStyle`
+// to inherit from, or a `Text.rich` whose spans carry their own colours — is
+// not measured. `Text.rich` is the real one: `Text.data` is null there, so
+// those are skipped by the empty-string test and a low-contrast span inside a
+// rich paragraph goes unreported. Every low-contrast defect this branch found
+// was a plain `Text`; a per-span walk is the fix when one is not.
 
 /// WCAG 1.4.3 AA floors, and the size at which "large text" begins. Same
 /// numbers `MinimumTextContrastGuideline` uses, restated rather than reached
@@ -681,15 +697,12 @@ const double _kContrastTolerance = 0.01;
 Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
   final List<String> out = <String>[];
 
-  final Set<String> alreadyMeasured = _textsStockGuidelineEvaluates(tester);
   final List<Rect> disabledRegions = _disabledRegions(tester);
   final _PaintOrder paintOrder = _PaintOrder.of(tester);
 
   for (final RenderView renderView in tester.binding.renderViews) {
-    final List<Element> candidates = _unmeasuredTextElements(
+    final List<Element> candidates = _textElements(
       tester,
-      renderView,
-      alreadyMeasured,
       disabledRegions,
       paintOrder,
     );
@@ -740,23 +753,19 @@ Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
 
 /// Every `Text` element in the pumped tree that the stock guideline has NOT
 /// already measured and that WCAG does not exempt.
-List<Element> _unmeasuredTextElements(
+List<Element> _textElements(
   WidgetTester tester,
-  RenderView renderView,
-  Set<String> alreadyMeasured,
   List<Rect> disabledRegions,
   _PaintOrder paintOrder,
 ) {
   final List<Element> out = <Element>[];
   // `find.byType` skips offstage subtrees by default, which is what keeps an
   // inactive route's text out of the measurement.
-  for (final Element element in find.byType(Text).evaluate()) {
-    final Widget widget = element.widget;
-    if (widget is! Text) {
-      continue;
-    }
-    final String? text = widget.data;
-    if (text == null || text.trim().isEmpty) {
+  for (final Element element in <Element>[
+    ...find.byType(Text).evaluate(),
+    ...find.byType(EditableText).evaluate(),
+  ]) {
+    if (_stringOf(element.widget).trim().isEmpty) {
       continue;
     }
     final RenderObject? renderObject = element.renderObject;
@@ -766,25 +775,28 @@ List<Element> _unmeasuredTextElements(
     if (paintOrder.isBehindAModal(element)) {
       continue;
     }
-    if (alreadyMeasured.contains(text) &&
-        find.byElementPredicate((Element e) => e == element)
-            .hitTestable()
-            .evaluate()
-            .isNotEmpty) {
-      continue;
-    }
     final Rect bounds = _globalPaintBounds(renderObject);
     if (bounds.isEmpty) {
       continue;
     }
-    if (disabledRegions
-        .any((Rect r) => r.contains(bounds.center) || r.overlaps(bounds))) {
+    // CONTAINS THE CENTRE, not "overlaps". A disabled node that merely
+    // touches a paragraph's box must not exempt it — one large disabled
+    // region would then silence most of a screen, and an exemption that wide
+    // is how a gate stops being one.
+    if (disabledRegions.any((Rect r) => r.contains(bounds.center))) {
       continue;
     }
     out.add(element);
   }
   return out;
 }
+
+/// The string [widget] paints, for a `Text` or an `EditableText`.
+String _stringOf(Widget widget) => switch (widget) {
+      Text(:final String? data) => data ?? '',
+      EditableText(:final TextEditingController controller) => controller.text,
+      _ => '',
+    };
 
 /// [renderObject]'s paint bounds in the coordinate space the captured image is
 /// in — logical pixels, origin at the view's top-left.
@@ -795,19 +807,47 @@ Rect _globalPaintBounds(RenderBox renderObject) => MatrixUtils.transformRect(
 
 /// Measures one element and returns a violation string, or null when it
 /// conforms or cannot be measured.
+///
+/// WHY THE FOREGROUND IS READ OFF THE STYLE AND NOT OFF THE PIXELS. The stock
+/// guideline derives BOTH colours from a histogram: it splits the region's
+/// pixels at their mean HSL lightness and takes the mode of each half. That
+/// works on a paragraph with a solid stroke and falls apart on exactly the
+/// text this rule exists for. A 10px badge digit in Eden's real type families
+/// rasterises to about nine ANTIALIASED pixels and no full-coverage core, so
+/// the "dark" mode comes back as a 40%-coverage blend of ink over gold and
+/// the badge reports 2.52:1 where its colour pair is 8.04:1. Measured, on the
+/// desktop rail, with the correct ink already in place.
+///
+/// The author's colour is not a guess — it is in the resolved [TextStyle].
+/// Reading it there and measuring only the BACKGROUND from the pixels answers
+/// the question WCAG 1.4.3 actually asks, is stable across font warm-up and
+/// stroke weight, and is the same thing this repo's hand-written computed
+/// cases assert — except derived from the real tree instead of restated per
+/// case.
 String? _measureText(
   Element element,
   ByteData data,
   int imageWidth,
   int imageHeight,
 ) {
-  final Text widget = element.widget as Text;
+  final Widget widget = element.widget;
   final RenderBox box = element.renderObject! as RenderBox;
+  final String string = _stringOf(widget);
 
-  final TextStyle? declared = widget.style;
+  final TextStyle? declared = switch (widget) {
+    Text(:final TextStyle? style) => style,
+    EditableText(:final TextStyle style) => style,
+    _ => null,
+  };
   final TextStyle effective = declared == null || declared.inherit
       ? DefaultTextStyle.of(element).style.merge(declared)
       : declared;
+  final Color? foreground = effective.color;
+  if (foreground == null || foreground.a == 0) {
+    // No resolvable ink, or fully transparent. A rule that cannot establish
+    // the fact stays silent rather than accusing a control it did not measure.
+    return null;
+  }
   final double fontSize = effective.fontSize ?? _kDefaultFontSize;
   // Same predicate as the stock guideline: WCAG's "bold" is FontWeight.bold
   // exactly, not "anything heavier than normal".
@@ -818,23 +858,17 @@ String? _measureText(
           ? _kMinimumRatioLargeText
           : _kMinimumRatioNormalText;
 
-  // INFLATION: 1 logical pixel, where the stock guideline uses 4. This is a
-  // DELIBERATE divergence and it is what makes the rule usable on badges.
-  //
-  // A paragraph's own box already contains plenty of background — the line box
-  // is taller than the glyphs and the tracking between them is background —
-  // so the ring is not where the background has to come from. What the ring
-  // DOES do is drag in whatever is next to the text, and on a badge that is
-  // fatal: a 10px "3" on a pill has roughly 1px of vertical padding, so a 4px
-  // ring reaches past the pill and onto the surface behind it. The dark
-  // partition's mode then comes out as the PILL FILL rather than the glyph,
-  // and the rule reports the fill-against-surface ratio (the drawer badge read
-  // 2.11:1 — the pill's own 1.4.11 number) while the text it is supposed to be
-  // measuring is 8.04:1. One pixel keeps the measurement inside the component
-  // whose background the text actually sits on.
+  // The paragraph's OWN box, uninflated. The stock guideline inflates by 4 to
+  // find a background in the ring around the glyphs; this rule does not need
+  // to, because a line box is already taller than its glyphs and the tracking
+  // between them is background. Not inflating is what keeps the measurement
+  // inside the component the text actually sits on — a 4px ring around a 10px
+  // badge reaches past the pill and onto the surface behind it, and the
+  // background then comes back as the pill fill rather than as the fill the
+  // glyph is painted over.
   final Rect region = MatrixUtils.transformRect(
     box.getTransformTo(null),
-    box.paintBounds.inflate(1.0),
+    box.paintBounds,
   );
   if (region.right < 0 ||
       region.bottom < 0 ||
@@ -846,68 +880,76 @@ String? _measureText(
 
   final Map<int, int> histogram =
       _argbHistogram(data, region, imageWidth, imageHeight);
-  if (histogram.isEmpty) {
+  final Color? background = _dominantBackground(histogram, foreground);
+  if (background == null) {
+    // Every pixel in the region is the ink itself — there is no background to
+    // compare against, which means the region was not resolvable rather than
+    // that it failed.
     return null;
   }
-  final _ContrastPair pair = _ContrastPair.from(histogram);
-  if (pair.isSingleColour) {
-    // A region that resolves to ONE colour has no foreground/background pair
-    // to compare, which means the ink was not found — an invisible, clipped or
-    // fully-transparent paragraph. The stock guideline has the same hole and
-    // it is documented there; reporting 1.00:1 here would accuse every one of
-    // them.
-    return null;
-  }
-  final double ratio = pair.contrastRatio;
+
+  // A translucent ink has no contrast ratio of its own; composite it over what
+  // it is painted on first, or the answer is meaningless.
+  final Color ink = foreground.a == 1.0
+      ? foreground
+      : Color.alphaBlend(foreground, background);
+  final double ratio = _contrastRatio(ink, background);
   if (ratio - target >= -_kContrastTolerance) {
     return null;
   }
 
-  return 'painted text "${widget.data}" is ${ratio.toStringAsFixed(2)}:1 '
+  return 'painted text "$string" is ${ratio.toStringAsFixed(2)}:1 '
       'against its background, below the WCAG 1.4.3 floor of $target:1 for '
-      '${fontSize}px${isBold ? ' bold' : ''} text. Computed colours: light '
-      '${_hex(pair.light)}, dark ${_hex(pair.dark)}. No semantics node '
-      'publishes "${widget.data}" as its label — it is painted inside an '
-      'excluded or unlabelled subtree — so textContrastGuideline never '
-      'resolves it. Painted by:\n      '
+      '${fontSize}px${isBold ? ' bold' : ''} text. Its ink is ${_hex(ink)} and '
+      'the surface it is painted on measures ${_hex(background)}. '
+      'Painted by:\n      '
       '${element.debugGetCreatorChain(6)}';
 }
 
-/// The exact set of strings `MinimumTextContrastGuideline` will look up on the
-/// current tree, derived by replaying its own node filters.
+/// The colour a paragraph is painted ON: the most frequent colour in its box
+/// that is not the ink itself.
 ///
-/// Mirrored deliberately, including the early return: the stock walk stops
-/// descending at an invisible/merged/hidden/disabled node rather than skipping
-/// just that node, so a child of one is never evaluated either.
-Set<String> _textsStockGuidelineEvaluates(WidgetTester tester) {
-  final Set<String> out = <String>{};
-
-  void walk(SemanticsNode node) {
-    final bool isDisabled =
-        node.flagsCollection.isEnabled == ui.Tristate.isFalse;
-    if (node.isInvisible ||
-        node.isMergedIntoParent ||
-        node.flagsCollection.isHidden ||
-        isDisabled) {
-      return;
+/// Antialiased edge pixels are blends of ink and background and are therefore
+/// candidates, but on any real paragraph the untouched background outnumbers
+/// them by an order of magnitude — a line box is taller than its glyphs and
+/// the tracking between them is background — so the mode is the background.
+/// That is the one assumption this rule makes about pixels, and it is a far
+/// weaker one than "the glyph has full-coverage pixels", which is what the
+/// stock guideline needs and what small text does not have.
+Color? _dominantBackground(Map<int, int> histogram, Color foreground) {
+  final int inkArgb = foreground.toARGB32();
+  int? best;
+  int bestCount = 0;
+  for (final MapEntry<int, int> entry in histogram.entries) {
+    if (_isNear(entry.key, inkArgb)) {
+      continue;
     }
-    node.visitChildren((SemanticsNode child) {
-      walk(child);
-      return true;
-    });
-    final SemanticsData data = node.getSemanticsData();
-    if (data.flagsCollection.scopesRoute) {
-      return;
+    if (entry.value > bestCount) {
+      best = entry.key;
+      bestCount = entry.value;
     }
-    final String text = data.label.isEmpty ? data.value : data.label;
-    if (text.trim().isEmpty) {
-      return;
-    }
-    out.add(text);
   }
+  return best == null ? null : Color(best);
+}
 
-  walk(rootSemanticsNodeOf(tester));
-  return out;
+/// Whether two ARGB values are the same colour up to rasteriser rounding.
+bool _isNear(int a, int b) {
+  for (int shift = 0; shift <= 24; shift += 8) {
+    if (((a >> shift) & 0xFF) - ((b >> shift) & 0xFF) > 2 ||
+        ((b >> shift) & 0xFF) - ((a >> shift) & 0xFF) > 2) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/// WCAG 2.x contrast ratio between two OPAQUE colours.
+double _contrastRatio(Color a, Color b) {
+  final double la = a.computeLuminance();
+  final double lb = b.computeLuminance();
+  final double hi = la > lb ? la : lb;
+  final double lo = la > lb ? lb : la;
+  return (hi + 0.05) / (lo + 0.05);
 }
 
 /// Screen rects of every DISABLED semantics node, in logical pixels.
@@ -937,55 +979,6 @@ List<Rect> _disabledRegions(WidgetTester tester) {
 
   walk(rootSemanticsNodeOf(tester), Matrix4.identity());
   return out;
-}
-
-/// The most frequent light colour and the most frequent dark colour in a
-/// region, split at the region's mean HSL lightness.
-///
-/// Same partitioning as `MinimumTextContrastGuideline`'s private
-/// `_ContrastReport`, restated because it is private to `flutter_test`.
-class _ContrastPair {
-  const _ContrastPair(this.light, this.dark, {required this.isSingleColour});
-
-  factory _ContrastPair.from(Map<int, int> histogram) {
-    double totalLightness = 0;
-    int count = 0;
-    for (final MapEntry<int, int> entry in histogram.entries) {
-      totalLightness +=
-          HSLColor.fromColor(Color(entry.key)).lightness * entry.value;
-      count += entry.value;
-    }
-    final double averageLightness = totalLightness / count;
-
-    MapEntry<int, int>? light;
-    MapEntry<int, int>? dark;
-    for (final MapEntry<int, int> entry in histogram.entries) {
-      final double lightness = HSLColor.fromColor(Color(entry.key)).lightness;
-      if (lightness <= averageLightness) {
-        if (entry.value > (dark?.value ?? 0)) {
-          dark = entry;
-        }
-      } else if (entry.value > (light?.value ?? 0)) {
-        light = entry;
-      }
-    }
-
-    final bool single = light == null || dark == null;
-    return _ContrastPair(
-      Color(light?.key ?? dark!.key),
-      Color(dark?.key ?? light!.key),
-      isSingleColour: single,
-    );
-  }
-
-  final Color light;
-  final Color dark;
-
-  /// Whether the region resolved to one colour — no ink to measure.
-  final bool isSingleColour;
-
-  double get contrastRatio =>
-      (light.computeLuminance() + 0.05) / (dark.computeLuminance() + 0.05);
 }
 
 /// Colour histogram of the pixels inside [region] of an RGBA byte buffer,

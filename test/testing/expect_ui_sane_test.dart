@@ -160,6 +160,14 @@ void main() {
     //   SemanticsNode#4(..., label: "Storage almost full"): Expected contrast
     //   ratio of at least 4.5 but found 1.16 for a font size of 16.0.
     // GREEN (text lightened to #F5F5F5): exit 0.
+    //
+    // THE MESSAGE CHANGED, THE VERDICT DID NOT. The stock
+    // `textContrastGuideline` was retired in favour of the painted-text walk
+    // (it could not see badge text at all, and its histogram-derived
+    // foreground misread small text as low-contrast). The walk computes the
+    // IDENTICAL 1.16:1 on this fixture — that equality is the whole point of
+    // keeping this case: the replacement had to agree with the rule it
+    // replaced on the surface that rule could read.
     await expectLater(
       () => expectUiSane(tester, inputModality: EdenInputModality.touch),
       throwsA(
@@ -168,8 +176,8 @@ void main() {
           'message',
           allOf(
             contains('Storage almost full'),
-            contains('Expected contrast ratio of at least 4.5'),
-            contains('but found 1.16'),
+            contains('below the WCAG 1.4.3 floor of 4.5:1'),
+            contains('is 1.16:1'),
           ),
         ),
       ),
