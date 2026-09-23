@@ -118,3 +118,60 @@ class EdenLayoutUser {
   final String? initials;
   final VoidCallback? onTap;
 }
+
+// ---------------------------------------------------------------------------
+// Composition slots (TRD 23-06 / W1A-1a-06)
+// ---------------------------------------------------------------------------
+
+/// The rendering state of a nav row, as the layout knows it.
+///
+/// Handed to an [EdenNavItemBuilder] so a consumer can render the row itself
+/// without having to re-derive selection or disclosure from its own state.
+@immutable
+class EdenNavItemState {
+  const EdenNavItemState({
+    this.isSelected = false,
+    this.isExpanded = false,
+    this.isCollapsedRail = false,
+    this.depth = 0,
+  });
+
+  /// This row is the current selection.
+  final bool isSelected;
+
+  /// Meaningful only for an expandable group header: its children are shown.
+  final bool isExpanded;
+
+  /// The desktop sidebar is in its collapsed (icon rail) width.
+  final bool isCollapsedRail;
+
+  /// 0 = a top-level row, 1 = a disclosed child of an expandable group.
+  final int depth;
+}
+
+/// Renders one nav row in place of the built-in renderer.
+///
+/// Return `null` to fall back to the default rendering for THAT row — which is
+/// how a consumer replaces one item without having to re-implement the rest of
+/// the rail. (The published interface in IMPLEMENTATION-PLAN row 1a-06 returned
+/// a non-nullable `Widget`; that shape cannot satisfy the row's own acceptance
+/// criterion — "replace ONE nav item without touching the other items" —
+/// because the default renderer is private. The nullable return is the minimal
+/// change that makes per-item replacement expressible. See TRD 23-06 SUMMARY.)
+///
+/// The `eden-nav-<id>` semantics identifier is applied by the layout OUTSIDE
+/// this builder's result, so a consumer cannot drop it and the E2E tooling in
+/// aodex and eden-biz keeps working whatever is returned here.
+typedef EdenNavItemBuilder = Widget? Function(
+  BuildContext context,
+  EdenNavItem item,
+  EdenNavItemState state,
+);
+
+/// Renders a non-interactive rail section — an [EdenNavItem] with
+/// `isCaption: true` or `isDivider: true` — in place of the built-in
+/// treatment. Return `null` to fall back to the default for that section.
+typedef EdenNavSectionBuilder = Widget? Function(
+  BuildContext context,
+  EdenNavItem item,
+);

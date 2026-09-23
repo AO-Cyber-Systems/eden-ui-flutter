@@ -68,7 +68,30 @@ class EdenDesktopLayout extends StatefulWidget {
     this.sidebarFooter,
     this.supportPanel,
     this.selectableBody = false,
+    this.itemBuilder,
+    this.sectionBuilder,
   });
+
+  /// Renders one nav row in place of the built-in renderer; return `null` for
+  /// a row to keep the default treatment.
+  ///
+  /// Composition over flags: every behaviour added to [EdenNavItem] so far
+  /// (`expandable`, `caption`, `isDivider`, `badge`) was a library change plus
+  /// a pin bump in two apps. Those flags still work — they render THROUGH the
+  /// default renderer — but the next consumer need is a consumer change.
+  ///
+  /// The `eden-nav-<id>` semantics identifier, the `button`/`label`/`selected`
+  /// annotations and the row's tap action are applied by the layout OUTSIDE
+  /// this builder's result, uniformly for the default renderer and for a
+  /// consumer widget alike — exactly one semantics node per row either way. A
+  /// consumer therefore cannot drop the identifier the aodex and eden-biz E2E
+  /// flows key off.
+  final EdenNavItemBuilder? itemBuilder;
+
+  /// Renders a caption or divider row in place of the built-in treatment;
+  /// return `null` to keep the default. Sections are non-interactive and carry
+  /// no semantics identifier, in either path.
+  final EdenNavSectionBuilder? sectionBuilder;
 
   final List<EdenNavItem> navItems;
   final String selectedId;
@@ -138,6 +161,79 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
         for (final item in items)
           if (item.expandable) item.id: item.initiallyExpanded,
       };
+
+  // -------------------------------------------------------------------------
+  // The single point at which a rail row is emitted (TRD 23-06 Task 1)
+  // -------------------------------------------------------------------------
+
+  /// Emits ONE rail row.
+  ///
+  /// This is the only place in the desktop layout that produces a nav row, and
+  /// therefore the only place that publishes a row's semantics. The
+  /// `Semantics` wrapper is applied UNIFORMLY here — the same node for the
+  /// built-in renderer's result and for a consumer [EdenDesktopLayout
+  /// .itemBuilder]'s result — which is why [_NavTile] and
+  /// [_ExpandableNavHeader] no longer annotate anything themselves. Exactly
+  /// one semantics node per row, whoever rendered it.
+  ///
+  /// (Annotating in both places would nest two `Semantics` widgets, and a
+  /// nested `Semantics` without `container: true` is not published at all on
+  /// Flutter 3.41 — its annotations merge upward and the parent's identifier
+  /// wins. Stripping the private renderers is what keeps the identifier
+  /// addressable.)
+  Widget _navRow({
+    required BuildContext context,
+    required EdenNavItem item,
+    required EdenNavItemState state,
+    required Widget Function() defaultRenderer,
+    String? semanticsLabel,
+    bool? expanded,
+    VoidCallback? onTap,
+    bool excludeChildSemantics = false,
+  }) {
+    // One path, with a default builder — never a branch on whether a consumer
+    // supplied one. A builder that returns null declines THIS row and the
+    // default renders it.
+    final EdenNavItemBuilder build =
+        widget.itemBuilder ?? (_, __, ___) => null;
+    final child = build(context, item, state) ?? defaultRenderer();
+    return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
+      button: true,
+      label: semanticsLabel ?? item.label,
+      selected: state.isSelected,
+      expanded: expanded,
+      onTap: onTap,
+      child: excludeChildSemantics ? ExcludeSemantics(child: child) : child,
+    );
+  }
+
+  /// Emits one non-interactive section row (caption or divider). Sections
+  /// carry no identifier and no button semantics in either path — same as
+  /// today.
+  /// (`EdenNavItem.widgetKey` stays on the DEFAULT treatment, where it is
+  /// today. A consumer-rendered section keys its own widget.)
+  Widget _navSection({
+    required BuildContext context,
+    required EdenNavItem item,
+    required Widget Function() defaultRenderer,
+  }) {
+    final EdenNavSectionBuilder build =
+        widget.sectionBuilder ?? (_, __) => null;
+    return build(context, item) ?? defaultRenderer();
+  }
+
+  /// The stand-in row a group collapses to in the 72px rail: the parent's icon
+  /// and label, but the FIRST CHILD's id, because that is what a tap navigates
+  /// to. Unchanged behaviour — extracted only so the emission point and the
+  /// default renderer are handed the same item.
+  EdenNavItem _collapsedGroupRailItem(EdenNavItem item) => EdenNavItem(
+        id: item.children.first.id,
+        label: item.label,
+        icon: item.icon,
+        activeIcon: item.activeIcon ?? item.children.first.activeIcon,
+        badge: item.children.first.badge,
+      );
 
   @override
   void initState() {
@@ -237,23 +333,69 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                         // column is noise (D5 — the collapsed rail is icons).
                         if (item.isDivider) ...[
                           if (!_collapsed)
-                            Padding(
-                              key: item.widgetKey,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: EdenSpacing.space2,
-                              ),
-                              child: Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: theme.colorScheme.outlineVariant,
+                            _navSection(
+                              context: context,
+                              item: item,
+                              defaultRenderer: () => Padding(
+                                key: item.widgetKey,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: EdenSpacing.space2,
+                                ),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
                               ),
                             ),
                         ] else if (item.isCaption) ...[
                           if (!_collapsed)
-                            _NavSectionLabel(key: item.widgetKey, label: item.label),
+                            _navSection(
+                              context: context,
+                              item: item,
+                              defaultRenderer: () => _NavSectionLabel(
+                                  key: item.widgetKey, label: item.label),
+                            ),
                         ] else if (item.children.isNotEmpty) ...[
                           if (!_collapsed && item.expandable) ...[
-                            _ExpandableNavHeader(
+                            _navRow(
+                              context: context,
+                              item: item,
+                              state: EdenNavItemState(
+                                isSelected: item.id == widget.selectedId ||
+                                    (!_expandedGroupIds.contains(item.id) &&
+                                        item.children.any((c) =>
+                                            c.id == widget.selectedId)),
+                                isExpanded:
+                                    _expandedGroupIds.contains(item.id),
+                                isCollapsedRail: _collapsed,
+                              ),
+                              expanded: _expandedGroupIds.contains(item.id),
+                              semanticsLabel: item.badge == null
+                                  ? item.label
+                                  : '${item.label}, ${item.badge}',
+                              // The tap action has to live on the row's node,
+                              // not on the GestureDetector: the child subtree
+                              // is excluded (so chevron, icon, label and badge
+                              // do not split into competing nodes) and that
+                              // drops the detector's SemanticsAction.tap with
+                              // it. Without this the node announces
+                              // `button: true`, a reader double-taps, and
+                              // nothing happens.
+                              onTap: () {
+                                final willExpand =
+                                    !_expandedGroupIds.contains(item.id);
+                                setState(() {
+                                  if (willExpand) {
+                                    _expandedGroupIds.add(item.id);
+                                  } else {
+                                    _expandedGroupIds.remove(item.id);
+                                  }
+                                });
+                                if (willExpand) widget.onNavChanged(item.id);
+                              },
+                              excludeChildSemantics: true,
+                              defaultRenderer: () => _ExpandableNavHeader(
                               key: item.widgetKey,
                               item: item,
                               expanded: _expandedGroupIds.contains(item.id),
@@ -293,53 +435,80 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                 if (willExpand) widget.onNavChanged(item.id);
                               },
                             ),
+                            ),
                             if (_expandedGroupIds.contains(item.id))
                               _DisclosedChildren(
                                 groupId: item.id,
                                 children: [
                                   for (final child in item.children)
-                                    _NavTile(
+                                    _navRow(
+                                      context: context,
                                       item: child,
-                                      isSelected:
-                                          child.id == widget.selectedId,
-                                      collapsed: _collapsed,
-                                      onTap: () =>
-                                          widget.onNavChanged(child.id),
+                                      state: EdenNavItemState(
+                                        isSelected:
+                                            child.id == widget.selectedId,
+                                        isCollapsedRail: _collapsed,
+                                        depth: 1,
+                                      ),
+                                      defaultRenderer: () => _NavTile(
+                                        item: child,
+                                        isSelected:
+                                            child.id == widget.selectedId,
+                                        collapsed: _collapsed,
+                                        onTap: () =>
+                                            widget.onNavChanged(child.id),
+                                      ),
                                     ),
                                 ],
                               ),
                           ] else ...[
                             if (!_collapsed)
-                              Padding(
-                                key: item.widgetKey,
-                                padding: _kNavSectionLabelPadding,
-                                child: Text(
-                                  item.label.toUpperCase(),
-                                  style: _navSectionLabelStyle(theme),
+                              _navSection(
+                                context: context,
+                                item: item,
+                                defaultRenderer: () => Padding(
+                                  key: item.widgetKey,
+                                  padding: _kNavSectionLabelPadding,
+                                  child: Text(
+                                    item.label.toUpperCase(),
+                                    style: _navSectionLabelStyle(theme),
+                                  ),
                                 ),
                               ),
                             if (!_collapsed)
                               for (final child in item.children)
-                                _NavTile(
+                                _navRow(
+                                  context: context,
                                   item: child,
-                                  isSelected: child.id == widget.selectedId,
-                                  collapsed: _collapsed,
-                                  onTap: () => widget.onNavChanged(child.id),
+                                  state: EdenNavItemState(
+                                    isSelected: child.id == widget.selectedId,
+                                    isCollapsedRail: _collapsed,
+                                  ),
+                                  defaultRenderer: () => _NavTile(
+                                    item: child,
+                                    isSelected: child.id == widget.selectedId,
+                                    collapsed: _collapsed,
+                                    onTap: () =>
+                                        widget.onNavChanged(child.id),
+                                  ),
                                 )
                             else
                               // Collapsed: render parent icon but use first child's
                               // ID for navigation and selection matching.
-                              _NavTile(
-                                item: EdenNavItem(
-                                  id: item.children.first.id,
-                                  label: item.label,
-                                  icon: item.icon,
-                                  activeIcon: item.activeIcon ?? item.children.first.activeIcon,
-                                  badge: item.children.first.badge,
+                              _navRow(
+                                context: context,
+                                item: _collapsedGroupRailItem(item),
+                                state: EdenNavItemState(
+                                  isSelected: item.children
+                                      .any((c) => c.id == widget.selectedId),
+                                  isCollapsedRail: _collapsed,
                                 ),
-                                isSelected: item.children.any((c) => c.id == widget.selectedId),
-                                collapsed: _collapsed,
-                                onTap: () => widget.onNavChanged(item.children.first.id),
+                                defaultRenderer: () => _NavTile(
+                                  item: _collapsedGroupRailItem(item),
+                                  isSelected: item.children.any((c) => c.id == widget.selectedId),
+                                  collapsed: _collapsed,
+                                  onTap: () => widget.onNavChanged(item.children.first.id),
+                                ),
                               ),
                           ],
                         ] else
@@ -348,11 +517,19 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                           // the chevron is ABSENT rather than inert and the item
                           // renders exactly as it does today. aodex's PROJECTS
                           // on a fresh account lands here (BCP-R8).
-                          _NavTile(
+                          _navRow(
+                            context: context,
                             item: item,
-                            isSelected: item.id == widget.selectedId,
-                            collapsed: _collapsed,
-                            onTap: () => widget.onNavChanged(item.id),
+                            state: EdenNavItemState(
+                              isSelected: item.id == widget.selectedId,
+                              isCollapsedRail: _collapsed,
+                            ),
+                            defaultRenderer: () => _NavTile(
+                              item: item,
+                              isSelected: item.id == widget.selectedId,
+                              collapsed: _collapsed,
+                              onTap: () => widget.onNavChanged(item.id),
+                            ),
                           ),
                       ],
                     ],
@@ -553,25 +730,12 @@ class _ExpandableNavHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final fg = isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
 
-    // One semantics node for the whole header: `expanded` is the property the
-    // screen reader and the E2E tooling key on, and a competing label from the
-    // child Text would split it into two nodes. The chevron, icon and badge are
-    // decorative here — the count is folded into the label instead.
-    return Semantics(
-      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-      button: true,
-      expanded: expanded,
-      selected: isSelected,
-      label: item.badge == null ? item.label : '${item.label}, ${item.badge}',
-      // The action has to live HERE, not on the GestureDetector: the
-      // ExcludeSemantics below deliberately drops the child subtree (so the
-      // chevron, icon, label and badge do not split into competing nodes), and
-      // it drops the GestureDetector's SemanticsAction.tap with them. Without
-      // this the node announces `button: true`, a reader double-taps, and
-      // nothing happens — the children become permanently unreachable.
-      onTap: onTap,
-      child: ExcludeSemantics(
-        child: GestureDetector(
+    // No Semantics here: the layout publishes exactly one node per row at the
+    // emission point (_EdenDesktopLayoutState._navRow), which is what lets a
+    // consumer's itemBuilder result carry the same identifier, label and tap
+    // action as this one. The chevron, icon, label and badge below are
+    // decorative — the row's subtree semantics are excluded there.
+    return GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
@@ -615,8 +779,6 @@ class _ExpandableNavHeader extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -692,12 +854,7 @@ class _NavTile extends StatelessWidget {
     );
 
     if (collapsed) {
-      return Semantics(
-        identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-        button: true,
-        label: item.label,
-        selected: isSelected,
-        child: Tooltip(
+      return Tooltip(
           message: item.label,
           preferBelow: false,
           child: GestureDetector(
@@ -724,19 +881,13 @@ class _NavTile extends StatelessWidget {
               ),
             ),
           ),
-        ),
       );
     }
 
-    return Semantics(
-      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-      button: true,
-      label: item.label,
-      selected: isSelected,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 40,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
           margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
           padding: const EdgeInsets.symmetric(
             horizontal: _kNavTileHorizontalPadding,
@@ -763,7 +914,6 @@ class _NavTile extends StatelessWidget {
               if (item.badge != null) _Badge(text: item.badge!),
             ],
           ),
-        ),
       ),
     );
   }
