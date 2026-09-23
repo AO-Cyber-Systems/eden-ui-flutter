@@ -138,6 +138,29 @@ class EdenMobileLayout extends StatelessWidget {
   /// Flutter 3.41 — its annotations merge upward and the parent's identifier
   /// wins. Stripping the private renderers is what keeps the identifier
   /// addressable.)
+  ///
+  /// Stripping their `Semantics` was not enough on its own, though. A row's
+  /// renderer is a `GestureDetector(onTap:)` — [_BottomItem], [_DrawerTile],
+  /// the "More" sheet's `ListTile`, or whatever a consumer [itemBuilder]
+  /// returns — and a GestureDetector contributes `SemanticsAction.tap`
+  /// IMPLICITLY, with no `Semantics` widget anywhere. The row therefore
+  /// published two tap routes: this node's, plus an unidentified descendant's.
+  /// On web the semantics node is what receives the click
+  /// (memory: flutter-web-semantics-node-is-the-click-target), so that is two
+  /// stacked click targets on one row, and `expectUiSane` fails it.
+  ///
+  /// So when the row owns the tap action, the child subtree is excluded from
+  /// the semantics tree — the same remedy, for the same reason, as
+  /// `EdenDesktopLayout._navRow`'s `excludeChildSemantics`. The rule is tied
+  /// to [onTap] rather than to a flag because that IS the invariant: exactly
+  /// the rows that put a tap action on their own node must stop the renderer
+  /// publishing a competing one, and a row with no tap action has nothing to
+  /// compete with (desktop's leaf rows are that case today).
+  ///
+  /// [ExcludeSemantics] touches the SEMANTICS tree only — it does not change
+  /// hit testing, so the renderer's `GestureDetector` still takes a real
+  /// pointer tap and fires the route exactly once. Assistive-tech activation
+  /// goes through this node's [onTap], which is the same callback.
   Widget _navRow({
     required BuildContext context,
     required EdenNavItem item,
@@ -156,7 +179,7 @@ class EdenMobileLayout extends StatelessWidget {
       label: item.label,
       selected: state.isSelected,
       onTap: onTap,
-      child: child,
+      child: onTap == null ? child : ExcludeSemantics(child: child),
     );
   }
 
