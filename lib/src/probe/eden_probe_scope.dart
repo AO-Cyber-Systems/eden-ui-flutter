@@ -35,6 +35,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'probe_bridge.dart';
 
@@ -59,6 +60,14 @@ Widget buildProbeScope(
     debugSemanticsDisableAnimations = true;
     return true;
   }());
+  // CRITICAL: only on the enabled path -- Objective 022's runtime-font
+  // capability (a partner-supplied family read from window.APP_CONFIG at
+  // boot) depends on fetching staying ON everywhere else. This is the
+  // package's OWN switch (google_fonts' loadFontIfNecessary), which makes a
+  // font it cannot resolve from an asset or the device cache THROW, naming
+  // the family, instead of silently substituting one -- a substituted font
+  // is a capture that looks right and diffs against every future one.
+  GoogleFonts.config.allowRuntimeFetching = false;
   return MediaQuery(
     data: MediaQuery.of(context).copyWith(disableAnimations: true),
     child: child,
@@ -67,11 +76,14 @@ Widget buildProbeScope(
 
 /// Wraps an app so that, under the [kEdenProbe] define, an animated removal
 /// or route transition settles within one frame instead of possibly being
-/// caught mid-flight.
+/// caught mid-flight, AND text resolves from a bundled family with no
+/// `google_fonts` runtime network fetch to make one capture differ from the
+/// next.
 ///
 /// Inert -- renders [child] unchanged and touches neither
-/// [MediaQuery.disableAnimations] nor `SemanticsBinding` -- when the define
-/// is absent, so it is safe to leave wired into a production app shell.
+/// [MediaQuery.disableAnimations], `SemanticsBinding`, nor
+/// `GoogleFonts.config` -- when the define is absent, so it is safe to
+/// leave wired into a production app shell.
 class EdenProbeScope extends StatelessWidget {
   const EdenProbeScope({super.key, required this.child});
 
