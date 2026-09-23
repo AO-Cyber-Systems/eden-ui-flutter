@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      update_goldens:
+        description: >-
+          Regenerate the story golden baselines on this Linux runner and upload
+          them as an artifact. This is the ONLY path in the repo that writes
+          goldens -- see the `stories` job comment.
+        type: boolean
+        default: false
 
 jobs:
   analyze:
@@ -107,3 +116,79 @@ jobs:
       # continue-on-error: a non-blocking gate is the exact failure mode this
       # job exists to avoid.
       - run: dart run custom_lint
+
+  stories:
+    name: Stories (goldens + expectUiSane)
+    runs-on: ubuntu-latest
+    # GOLDEN POLICY -- this job is where goldens live, and nowhere else.
+    #
+    # Story goldens are generated and compared HERE, on Linux, at the same
+    # pinned 3.47.4 the other jobs use. A workstation checkout runs 3.41.9 and
+    # bundles no fonts, so the emitted golden expectations carry
+    # `skip: kGoldenSkipReason`, which is non-null off Linux -- they SKIP on a
+    # macOS `flutter test` and are reported as skips, not as passes. The
+    # `expectUiSane` half of every story test is NOT skipped and runs on every
+    # platform, so a local run still proves the catalogue's a11y and geometry.
+    #
+    # Blessing a baseline on a workstation is exactly eden-ui-flutter#32:
+    # different engines rasterise text differently, and chat_screen_test's
+    # 390pt overflow assertion already passes here and fails locally by 8.5px.
+    # Do NOT run `flutter test --update-goldens` outside this job.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # PINNED to the version CI was already resolving `stable` to, so this
+          # changes nothing about what runs today -- it stops the toolchain
+          # moving under the repo tomorrow.
+          #
+          # Why this matters here specifically: correctness in this tree is
+          # SDK-dependent. On 3.47.4 ReorderableListView.onReorder is nullable,
+          # so `rlv.onReorder!(...)` in eden_route_stop_list_test.dart is
+          # REQUIRED; on the older 3.41.4 that same `!` is an
+          # unnecessary_non_null_assertion warning. dfe1698 removed it on the
+          # strength of a local warning and 30cb437 had to restore it after CI
+          # failed with unchecked_use_of_nullable_value. An unpinned channel
+          # means a future stable can flip that again through nobody's commit.
+          #
+          # Do NOT lower this pin without changing that source in the same
+          # commit -- they are one decision, not two.
+          flutter-version: '3.47.4'
+          cache: true
+
+      - run: flutter pub get
+
+      # The two drift gates. Each has been observed to exit non-zero against a
+      # deliberately broken tree (see 23-03-SUMMARY.md) -- they are gates, not
+      # decoration.
+      - name: Registry + generated-test freshness
+        run: flutter test test/stories/registry_drift_test.dart test/stories/generated_freshness_test.dart
+
+      - name: Story assertions (goldens compared at tolerance 0 on Linux)
+        run: flutter test test/stories/
+
+      # The ONLY golden-writing path in the repo, and it runs on Linux.
+      - name: Regenerate golden baselines (manual dispatch only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        run: flutter test test/stories/ --update-goldens
+
+      - name: Upload regenerated goldens
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-goldens
+          path: test/stories/**/goldens/
+          if-no-files-found: ignore
+
+      # flutter_test writes *_masterImage.png / *_testImage.png under
+      # failures/ on a golden mismatch; uploading it is what makes a CI golden
+      # failure diagnosable instead of just red.
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: test/stories/**/failures/
+          if-no-files-found: ignore
