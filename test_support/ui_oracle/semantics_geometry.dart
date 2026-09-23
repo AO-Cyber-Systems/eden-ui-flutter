@@ -146,6 +146,15 @@ Rect globalRectOf(WidgetTester tester, String identifier) {
   );
 }
 
+/// True when [a] and [b] share any area.
+///
+/// Touching edges do not count as overlapping: two 40-wide controls laid out
+/// side by side with no gap are adjacent, not overlapping.
+bool rectsOverlap(Rect a, Rect b) {
+  final Rect intersection = a.intersect(b);
+  return intersection.width > 0 && intersection.height > 0;
+}
+
 // -----------------------------------------------------------------------------
 // Internals
 // -----------------------------------------------------------------------------
