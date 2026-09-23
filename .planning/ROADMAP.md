@@ -438,7 +438,7 @@ story, `expectUiSane` shipped for 600+ consumer screen tests, a web probe bridge
 block, and a shell API consumers compose instead of flag (folding in issue #33).
 
 **Depends on:** Objective 22
-**Jobs:** 12 jobs (TRDs 23-01 … 23-12) across 6 waves
+**Jobs:** 3/12 jobs executed
 
 Jobs:
 - [x] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1) — COMPLETE 2026-09-22 (7 cases green, container:true bug pinned)
@@ -450,6 +450,6 @@ Jobs:
 - [x] 23-07-TRD.md — Probe bridge: window.__edenProbe behind EDEN_PROBE + bundle guard (wave 1) — COMPLETE 2026-09-22 (12 cases green; real release build measured production 0 / probe 1)
 - [ ] 23-08-TRD.md — EdenProbeScope: deterministic captures, animations and fonts pinned (wave 2)
 - [ ] 23-09-TRD.md — Ten design patterns + closed must_not vocabulary (wave 5)
-- [ ] 23-10-TRD.md — DESIGN.md token block generated from lib/src/tokens/ and CI-diffed (wave 1)
+- [x] 23-10-TRD.md — DESIGN.md token block generated from lib/src/tokens/ and CI-diffed (wave 1) — COMPLETE 2026-09-22 (9/9 cases green; staleness gate proven to fail from both directions — edited markdown and an added Dart token)
 - [ ] 23-11-TRD.md — custom_lint: no_raw_color, text_style_needs_family, no_magic_spacing (wave 1)
 - [ ] 23-12-TRD.md — Release v2.2.0: CHANGELOG, additive-only contract, composed-tree gate (wave 6)
