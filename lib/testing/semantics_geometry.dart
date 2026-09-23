@@ -161,8 +161,11 @@ List<SemanticsGeometryNode> _collect(WidgetTester tester) {
 /// The global rect of the node carrying [identifier].
 ///
 /// Throws a named [StateError] when no such node exists, listing the
-/// identifiers that were found — an absent identifier is almost always a
-/// missing `container: true`, not a missing widget.
+/// identifiers that were found. An absent identifier usually means the control
+/// is not there, or that an `ExcludeSemantics` above it removed its node — on
+/// Flutter 3.41.9 a missing `container: true` was the commonest
+/// cause, but on the pinned 3.47.4 a nested annotation publishes its own node
+/// without it (`test/ui_oracle/semantics_geometry_test.dart` case 7).
 Rect globalRectOf(WidgetTester tester, String identifier) {
   final List<SemanticsGeometryNode> nodes = identifiedNodes(tester);
   for (final SemanticsGeometryNode node in nodes) {
@@ -193,8 +196,12 @@ bool rectsOverlap(Rect a, Rect b) {
 /// Composes [ancestors] (root-first, excluding [node]) and then [node]'s own
 /// transform, and applies the result to [node]'s OWN rect.
 ///
-/// CRITICAL: `node.rect` is transformed, never an ancestor's rect. That is the
-/// single property that makes the `container: true` omission observable.
+/// CRITICAL: `node.rect` is transformed, never an ancestor's rect. A walk that
+/// stops at the nearest container ancestor answers the PARENT's box for a
+/// nested control — a green assertion against the wrong rect. (On Flutter
+/// 3.41.9 it was also what made a missing `container: true` observable, the
+/// nested node not being published at all then; on the pinned 3.47.4 that node
+/// IS published with its own rect — `semantics_geometry_test.dart` case 7.)
 Rect _globalRectOfNode(SemanticsNode node, List<SemanticsNode> ancestors) {
   // GOTCHA: SemanticsNode.transform is null when it is the identity.
   Matrix4 composed = Matrix4.identity();

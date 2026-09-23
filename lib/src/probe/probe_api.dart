@@ -349,8 +349,13 @@ List<_ProbeSemanticsNode> _identifiedSemanticsNodes() {
 /// Composes [ancestors] (root-first, excluding [node]) then [node]'s own
 /// transform, and applies the result to [node]'s OWN rect.
 ///
-/// CRITICAL: never an ancestor's rect — that is the single property that makes
-/// a missing `container: true` observable from outside the app.
+/// CRITICAL: never an ancestor's rect. A root-down shortcut that stops at the
+/// nearest container ancestor answers the PARENT's box for a nested control,
+/// which is the difference between a probe a driver can click and a green
+/// assertion against the wrong rect. (It is also what made a missing
+/// `container: true` observable on Flutter 3.41.9, where the nested node was
+/// not published at all; on the pinned 3.47.4 it is published with its own
+/// rect — see `semantics_geometry_test.dart` case 7.)
 Rect _globalRectOfNode(SemanticsNode node, List<SemanticsNode> ancestors) {
   // GOTCHA: SemanticsNode.transform is null when it is the identity.
   Matrix4 composed = Matrix4.identity();

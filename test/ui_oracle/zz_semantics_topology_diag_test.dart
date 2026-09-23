@@ -143,6 +143,40 @@ void main() {
     print('===DIAG-OVERPUBLISHED END===');
     handle.dispose();
   });
+
+  // The shape `_navRow`'s doc comment reasons about: the row's own annotated,
+  // IDENTIFIED node over a renderer that also annotates an IDENTIFIED node.
+  // Does the inner identifier survive on the pinned SDK?
+  testWidgets('DIAG two nested identified annotations', (
+    WidgetTester tester,
+  ) async {
+    await wrap(
+      tester,
+      Center(
+        child: Semantics(
+          identifier: 'fx-row',
+          button: true,
+          label: 'Home',
+          onTap: () {},
+          child: Semantics(
+            identifier: 'fx-renderer',
+            button: true,
+            label: 'Home inner',
+            child: const SizedBox(width: 80, height: 48),
+          ),
+        ),
+      ),
+      width: 360,
+    );
+    final SemanticsHandle handle = tester.ensureSemantics();
+    await tester.pumpAndSettle();
+    // ignore: avoid_print
+    print('===DIAG-DOUBLE BEGIN===');
+    _dump(rootSemanticsNodeOf(tester), 0, Matrix4.identity());
+    // ignore: avoid_print
+    print('===DIAG-DOUBLE END===');
+    handle.dispose();
+  });
 }
 
 void _dump(SemanticsNode node, int depth, Matrix4 inherited) {

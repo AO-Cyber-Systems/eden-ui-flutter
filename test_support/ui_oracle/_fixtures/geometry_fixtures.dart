@@ -73,17 +73,28 @@ Widget get twoSiblingControls => SizedBox(
 /// A 200x200 identified container whose 40x40 identified child DELIBERATELY
 /// omits `container: true`.
 ///
-/// This fixture encodes a known Flutter behaviour and MUST NOT be "fixed" by
-/// adding `container: true` to the inner [Semantics]. A nested `Semantics`
-/// without `container: true` does not form its own semantics boundary; its
-/// annotations are merged into the enclosing node, so the accessibility tree
-/// publishes the PARENT's 200x200 rect for it, not its own 40x40.
+/// This fixture encodes an SDK-VERSION-DEPENDENT Flutter behaviour and MUST
+/// NOT be "fixed" by adding `container: true` to the inner [Semantics]:
+/// the omission IS the measurement.
+///
+/// What it measures, on the two SDKs this repo has run it on:
+///
+/// * Flutter 3.41.9 — the inner annotation formed no boundary. It merged
+///   UPWARD into the parent: one node only, the parent's, carrying the
+///   parent's 200x200 rect and the child's `button: true` flag, and the inner
+///   identifier was not published at all.
+/// * Flutter 3.47.4 (the version CI pins) — the inner annotation publishes
+///   its OWN node, a child of the parent's, with the control's own 40x40 rect
+///   and the button flag on it. The parent keeps its identifier and rect.
+///
+/// The stable release that changed this was not narrowed; both ends were
+/// measured with this fixture (CI run 35898905034).
 ///
 /// On web the semantics node — not the widget — is the click target
-/// (memory note `flutter-web-semantics-node-is-the-click-target`), so a
-/// geometry assertion built on this node is asserting the wrong box. 23-02's
-/// `expectUiSane` turns this into a hard failure; this fixture is the tripwire
-/// that keeps the behaviour observable in the meantime.
+/// (memory note `flutter-web-semantics-node-is-the-click-target`), which is
+/// why the rect a nested control publishes is worth pinning either way:
+/// `test/ui_oracle/semantics_geometry_test.dart` case 7 asserts the 3.47.4
+/// topology and fails loudly if a future SDK moves it again.
 Widget get nestedSemanticsWithoutContainer => Center(
   // The Center matters: wrap() lays its child out at a TIGHT width, which
   // would stretch the 200x200 parent. Centering hands the parent loose

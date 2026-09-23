@@ -116,11 +116,16 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 /// A surface with no identified controls is not a failure — it has nothing to
 /// check. `expectUiSane` must be adoptable without a triage backlog.
 ///
-/// Note on `container: true`: a nested `Semantics` WITHOUT `container: true` is
-/// not published as its own node at all (Flutter 3.41.9; pinned by TRD 23-01
-/// case 7). Its identifier vanishes and the enclosing node's identifier wins,
-/// so this oracle cannot see it. Give every control you want checked
-/// `container: true`.
+/// Note on `container: true`: give every control you want checked
+/// `container: true`. The penalty for omitting it is SDK-dependent, and both
+/// ends are measured by `test/ui_oracle/semantics_geometry_test.dart` case 7:
+/// on Flutter 3.41.9 a nested `Semantics` without it published no node at all
+/// — its identifier vanished into the enclosing node and this oracle could
+/// not see the control; on 3.47.4, which CI pins, it publishes its own node
+/// with its own rect and the oracle DOES see it. The rule stands either way,
+/// because this package's declared SDK floor still spans versions with the
+/// old behaviour and because `container: true` states the boundary rather
+/// than inheriting whichever one a consumer's SDK gives it.
 Future<void> expectUiSane(
   WidgetTester tester, {
   EdenInputModality inputModality = EdenInputModality.touch,
