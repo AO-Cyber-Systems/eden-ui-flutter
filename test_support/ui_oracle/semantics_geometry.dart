@@ -20,7 +20,6 @@
 library;
 
 import 'package:flutter/rendering.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// One semantics node, with the rect the accessibility tree publishes for it
@@ -71,8 +70,13 @@ List<SemanticsGeometryNode> identifiedNodes(WidgetTester tester) {
 }
 
 List<SemanticsGeometryNode> _collect(WidgetTester tester) {
-  final SemanticsNode? root =
-      tester.binding.pipelineOwner.semanticsOwner?.rootSemanticsNode;
+  // `PipelineOwner.semanticsOwner` is deprecated in favour of the
+  // SemanticsBinding, but the binding exposes no root SemanticsNode, and the
+  // root PipelineOwner does not own semantics (its per-view children do). This
+  // is the only reachable handle on the root node at the declared SDK floor.
+  // ignore: deprecated_member_use
+  final SemanticsOwner? owner = tester.binding.pipelineOwner.semanticsOwner;
+  final SemanticsNode? root = owner?.rootSemanticsNode;
   if (root == null) {
     throw StateError(
       'SemanticsGeometry: no root semantics node. Pump a widget (e.g. via '
