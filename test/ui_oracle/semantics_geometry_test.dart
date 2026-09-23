@@ -42,15 +42,56 @@ void main() {
       expect(b.width, 40);
     });
 
-    testWidgets('case 7 (naive expectation): nested Semantics reports 40x40', (
-      WidgetTester tester,
-    ) async {
-      await wrap(tester, nestedSemanticsWithoutContainer, width: 360);
+    // ------------------------------------------------------------------
+    // CASE 7 — PINNED BUG. DO NOT "FIX" THIS TEST OR ITS FIXTURE.
+    //
+    // Memory note: `flutter-web-semantics-node-is-the-click-target`. On web the
+    // DOM semantics node receives the click, not the widget. A nested
+    // `Semantics(identifier: ...)` declared WITHOUT `container: true` does not
+    // form its own semantics boundary: its annotations are merged into the
+    // enclosing node, so the accessibility tree publishes the PARENT's 200x200
+    // rect for that control and the inner identifier is not published at all.
+    //
+    // This test asserts the BUGGY values on purpose. It is the tripwire that
+    // tells 23-02 (`expectUiSane`) and 23-07 (the probe bridge's `tree()`) why
+    // they must REQUIRE `container: true`: without it a geometry assertion is
+    // silently made against the wrong box, and a lookup by the inner
+    // identifier throws instead of returning a 40x40 rect.
+    //
+    // Observed on Flutter 3.41.9 (local) — see the SUMMARY's deviation note:
+    // the plan predicted the inner identifier would be REPORTED with the
+    // parent's rect; what actually happens is that the inner identifier is
+    // DROPPED and only the parent's node exists, carrying the parent's rect.
+    // Same defect, one step more severe.
+    // ------------------------------------------------------------------
+    testWidgets(
+      'case 7 (pinned bug): nested Semantics without container:true is '
+      'swallowed by the parent node, which carries the parent rect',
+      (WidgetTester tester) async {
+        await wrap(tester, nestedSemanticsWithoutContainer, width: 360);
 
-      final Rect nested = globalRectOf(tester, kFxNestedNoContainer);
+        final List<SemanticsGeometryNode> nodes = identifiedNodes(tester);
+        final List<String?> identifiers = nodes
+            .map((SemanticsGeometryNode n) => n.identifier)
+            .toList();
 
-      expect(nested.width, 40);
-      expect(nested.height, 40);
-    });
+        // BUGGY, ON PURPOSE: the inner 40x40 control publishes no node of its
+        // own. Only the 200x200 parent is in the accessibility tree.
+        expect(identifiers, <String>[kFxParent]);
+        expect(identifiers, isNot(contains(kFxNestedNoContainer)));
+
+        // BUGGY, ON PURPOSE: the rect a click on the nested control lands in
+        // is the PARENT's 200x200 box, not the control's own 40x40.
+        final Rect parentRect = globalRectOf(tester, kFxParent);
+        expect(parentRect.width, 200);
+        expect(parentRect.height, 200);
+
+        // And the lookup a caller would naturally write throws.
+        expect(
+          () => globalRectOf(tester, kFxNestedNoContainer),
+          throwsStateError,
+        );
+      },
+    );
   });
 }

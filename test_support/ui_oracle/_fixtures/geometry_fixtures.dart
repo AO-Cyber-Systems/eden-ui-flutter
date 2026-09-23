@@ -84,17 +84,22 @@ Widget get twoSiblingControls => SizedBox(
 /// geometry assertion built on this node is asserting the wrong box. 23-02's
 /// `expectUiSane` turns this into a hard failure; this fixture is the tripwire
 /// that keeps the behaviour observable in the meantime.
-Widget get nestedSemanticsWithoutContainer => Semantics(
-  container: true,
-  identifier: kFxParent,
-  child: SizedBox(
-    width: 200,
-    height: 200,
-    child: Center(
-      child: Semantics(
-        identifier: kFxNestedNoContainer,
-        button: true,
-        child: const SizedBox(width: 40, height: 40),
+Widget get nestedSemanticsWithoutContainer => Center(
+  // The Center matters: wrap() lays its child out at a TIGHT width, which
+  // would stretch the 200x200 parent. Centering hands the parent loose
+  // constraints so it keeps the size this fixture declares.
+  child: Semantics(
+    container: true,
+    identifier: kFxParent,
+    child: SizedBox(
+      width: 200,
+      height: 200,
+      child: Center(
+        child: Semantics(
+          identifier: kFxNestedNoContainer,
+          button: true,
+          child: const SizedBox(width: 40, height: 40),
+        ),
       ),
     ),
   ),
