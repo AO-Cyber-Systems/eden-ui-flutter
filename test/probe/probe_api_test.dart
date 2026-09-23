@@ -185,4 +185,29 @@ void main() {
       EdenProbeApi.inFlightRequests = 0;
     });
   });
+
+  group('EdenProbeApi.state', () {
+    testWidgets('reports route, theme brightness, viewport and semantics flag',
+        (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.dark),
+          home: Scaffold(body: probeKeyedBoxSurface()),
+        ),
+      );
+
+      final Map<String, Object?> state = EdenProbeApi.state();
+
+      expect(state['route'], '/');
+      expect(state['theme'], 'dark');
+      expect(state['semantics'], isTrue);
+
+      final Map<String, Object?> viewport =
+          state['viewport']! as Map<String, Object?>;
+      expect(viewport['w'], tester.view.physicalSize.width / tester.view.devicePixelRatio);
+      expect(viewport['h'], tester.view.physicalSize.height / tester.view.devicePixelRatio);
+      handle.dispose();
+    });
+  });
 }
