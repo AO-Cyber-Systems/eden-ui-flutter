@@ -21,16 +21,79 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'semantics_geometry.dart';
 
+/// What a surface is DRIVEN WITH. Selects the tap-target floor, and nothing
+/// else.
+///
+/// WHY THIS EXISTS. The 48dp Material floor
+/// (`androidTapTargetGuideline`) and the 44pt iOS HIG floor
+/// (`iOSTapTargetGuideline`) are TOUCH guidance — they size a control for a
+/// fingertip. For pointer-driven UI the applicable standard is WCAG 2.5.8
+/// Target Size (Minimum), which is 24x24 CSS px at AA; 2.5.5 Target Size
+/// (Enhanced), 44x44, is AAA. Asserting a touch floor on a pointer surface is
+/// therefore not a STRICTER standard, it is the WRONG standard — and the only
+/// pressure it can create is to weaken the oracle, which is how oracles rot.
+///
+/// This is NOT a suppression or exception mechanism. There is deliberately no
+/// way to waive the tap-target rule for a surface; there is only a way to
+/// declare, honestly, what input that surface takes. It is the same
+/// state-conditional shape the Surface Spec uses for `behaviors[]`/`when`: the
+/// rule that applies is a function of declared state, and every path still
+/// asserts a real floor (compare case 7 and case 8 in
+/// `test/testing/expect_ui_sane_test.dart` — the pointer floor rejects 20x20
+/// and accepts 40px, so it is neither vacuous nor the touch rule in disguise).
+///
+/// A surface that ships to BOTH is [touch]: the stricter floor is the honest
+/// answer when a fingertip can reach the control at all. [touch] is also the
+/// default of [expectUiSane], so an author who says nothing gets the stricter
+/// rule rather than the looser one.
+enum EdenInputModality {
+  /// Mouse, trackpad, stylus or keyboard-driven. Asserts WCAG 2.5.8 Target
+  /// Size (Minimum): 24x24.
+  ///
+  /// The worked example is the Eden desktop rail: 40px nav rows on a 42px
+  /// pitch (`eden_desktop_layout.dart`). 40px clears 24x24 comfortably, and
+  /// it is not reachable by a fingertip on the surfaces that use it.
+  pointer,
+
+  /// Finger-driven, or reachable by a finger on any surface this ships to.
+  /// Asserts BOTH `androidTapTargetGuideline` (48dp) and
+  /// `iOSTapTargetGuideline` (44pt).
+  ///
+  /// Both floors are checked, deliberately — a 46px target is a real defect on
+  /// Android, and tuning a fixture to sit between the two would hide it.
+  touch,
+}
+
+/// WCAG 2.5.8 Target Size (Minimum), AA: 24x24 CSS px.
+///
+/// Built from `flutter_test`'s own public [MinimumTapTargetGuideline] rather
+/// than a hand-rolled traversal, so the pointer path inherits every exemption
+/// the stock guidelines already encode (merged nodes, nodes at a scrollable's
+/// boundary, device-pixel-ratio scaling) and the failure message reads
+/// identically to the touch path's.
+const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
+    MinimumTapTargetGuideline(
+  size: Size(24, 24),
+  link: 'https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html',
+);
+
 /// Asserts that the surface currently pumped into [tester] is not visibly
 /// broken, and fails NAMING the offending widget when it is.
 ///
-/// Add one line after the final pump of an existing screen test:
+/// Add one line after the final pump of an existing screen test, declaring
+/// what the surface is driven with:
 ///
 /// ```dart
 /// await tester.pumpWidget(const MyScreen());
 /// await tester.pumpAndSettle();
-/// await expectUiSane(tester);
+/// await expectUiSane(tester, inputModality: EdenInputModality.touch);
 /// ```
+///
+/// [inputModality] defaults to [EdenInputModality.touch] — the stricter floor —
+/// so that omitting it can only ever be safe. Pass it explicitly anyway: the
+/// standard a surface is held to should be readable at the assertion, not
+/// inherited from a default. See [EdenInputModality] for why the floor is
+/// conditional at all.
 ///
 /// Checks, in order:
 ///
@@ -49,10 +112,12 @@ import 'semantics_geometry.dart';
 ///    consumer screens possible without editing the screens.
 /// 4. **One tap action per control.** A control that declares `tap` on its own
 ///    node AND again on a non-identified descendant fires twice.
-/// 5. **Accessibility guidelines.** `androidTapTargetGuideline` (48px),
-///    `iOSTapTargetGuideline` (44px), `labeledTapTargetGuideline` and
-///    `textContrastGuideline`. Each failure is folded into the same aggregated
-///    report, prefixed with the guideline's name.
+/// 5. **Accessibility guidelines.** `labeledTapTargetGuideline`,
+///    `textContrastGuideline`, and a tap-target floor chosen by
+///    [inputModality]: WCAG 2.5.8's 24x24 for [EdenInputModality.pointer],
+///    `androidTapTargetGuideline` (48px) + `iOSTapTargetGuideline` (44px) for
+///    [EdenInputModality.touch]. Each failure is folded into the same
+///    aggregated report, prefixed with the guideline's name.
 ///
 /// Violations are AGGREGATED: one run lists everything wrong with the surface,
 /// so a consumer fixing a screen does not play whack-a-mole.
@@ -67,6 +132,7 @@ import 'semantics_geometry.dart';
 /// `container: true`.
 Future<void> expectUiSane(
   WidgetTester tester, {
+  EdenInputModality inputModality = EdenInputModality.touch,
   Set<String> allowOverlap = const <String>{},
 }) async {
   final List<String> violations = <String>[];
@@ -87,7 +153,7 @@ Future<void> expectUiSane(
     violations.addAll(_viewportViolations(tester, nodes));
     violations.addAll(_overlapViolations(nodes, allowOverlap));
     violations.addAll(_tapRouteViolations(tester));
-    violations.addAll(await _guidelineViolations(tester));
+    violations.addAll(await _guidelineViolations(tester, inputModality));
   } finally {
     handle.dispose();
   }
@@ -151,27 +217,49 @@ List<String> _overflowingCreatorChains(WidgetTester tester) {
   return byRenderObject.values.toList();
 }
 
-/// The four flutter_test accessibility guidelines this oracle enforces.
-///
-/// GOTCHA: the Android floor is 48 and the iOS floor is 44. Both are checked,
-/// deliberately — a 46px target is a real defect on Android, and tuning a
-/// fixture to sit between the two floors would hide it.
+/// The guidelines that hold on EVERY surface, whatever drives it.
 ///
 /// GOTCHA: `textContrastGuideline` silently PASSES on a region it cannot
 /// resolve a background for (a transparent or single-colour area). A
 /// contrast fixture must use opaque colours or the check proves nothing.
-const List<AccessibilityGuideline> _guidelines = <AccessibilityGuideline>[
-  androidTapTargetGuideline,
-  iOSTapTargetGuideline,
+const List<AccessibilityGuideline> _modalityIndependentGuidelines =
+    <AccessibilityGuideline>[
   labeledTapTargetGuideline,
   textContrastGuideline,
 ];
 
+/// The tap-target floor for [modality]. There is exactly one arm per enum
+/// value and no default arm — a new modality is a compile error here, not a
+/// surface that silently gets no floor at all.
+///
+/// GOTCHA (touch): the Android floor is 48 and the iOS floor is 44. Both are
+/// checked, deliberately — a 46px target is a real defect on Android, and
+/// tuning a fixture to sit between the two floors would hide it.
+List<AccessibilityGuideline> _tapTargetGuidelinesFor(
+  EdenInputModality modality,
+) =>
+    switch (modality) {
+      EdenInputModality.pointer => const <AccessibilityGuideline>[
+          wcagMinimumTargetSizeGuideline,
+        ],
+      EdenInputModality.touch => const <AccessibilityGuideline>[
+          androidTapTargetGuideline,
+          iOSTapTargetGuideline,
+        ],
+    };
+
 /// Runs the guideline matchers and folds each failure into the SAME aggregated
 /// violation list as the geometry checks, prefixed with the guideline's name.
-Future<List<String>> _guidelineViolations(WidgetTester tester) async {
+Future<List<String>> _guidelineViolations(
+  WidgetTester tester,
+  EdenInputModality inputModality,
+) async {
   final List<String> out = <String>[];
-  for (final AccessibilityGuideline guideline in _guidelines) {
+  final List<AccessibilityGuideline> guidelines = <AccessibilityGuideline>[
+    ..._tapTargetGuidelinesFor(inputModality),
+    ..._modalityIndependentGuidelines,
+  ];
+  for (final AccessibilityGuideline guideline in guidelines) {
     try {
       await expectLater(tester, meetsGuideline(guideline));
     } on TestFailure catch (failure) {

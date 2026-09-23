@@ -7,6 +7,12 @@
 // the fixture was restored and the case wrapped in the matcher below. The
 // matcher asserts on message SUBSTRINGS that name the offending widget — never
 // merely that "something threw".
+//
+// MODALITY. Every case names its `inputModality` rather than leaning on the
+// default. Cases 1-6 declare `touch`: their fixtures are built at 48x48 — the
+// touch floor — so touch is the honest declaration AND the one that keeps
+// case 5's 48/44 message assertions meaningful. Cases 7-9 are the modality
+// rule itself.
 library;
 
 import 'package:eden_ui_flutter/testing.dart';
@@ -49,7 +55,7 @@ Future<void> pumpSurface(WidgetTester tester, Widget child) async {
 void main() {
   testWidgets('case 1: passes on a clean story', (WidgetTester tester) async {
     await pumpSurface(tester, cleanSurface());
-    await expectUiSane(tester);
+    await expectUiSane(tester, inputModality: EdenInputModality.touch);
   });
 
   testWidgets('case 2: RenderFlex overflow is named with its pixel count',
@@ -60,7 +66,7 @@ void main() {
     //     Row <- SizedBox <- ColoredBox <- Center <- SizedBox <- Center <- ...
     // GREEN (Text wrapped in Expanded + ellipsis): exit 0.
     await expectLater(
-      () => expectUiSane(tester),
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
       throwsA(
         isA<TestFailure>().having(
           (TestFailure f) => f.message,
@@ -82,7 +88,7 @@ void main() {
     //   Rect.fromLTRB(564.0, 350.0, 588.0, 398.0).
     // GREEN (fx-overlap-b moved to left: 96): exit 0.
     await expectLater(
-      () => expectUiSane(tester),
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
       throwsA(
         isA<TestFailure>().having(
           (TestFailure f) => f.message,
@@ -106,7 +112,7 @@ void main() {
     //   SemanticsAction.tap).
     // GREEN (ElevatedButton wrapped in ExcludeSemantics): exit 0.
     await expectLater(
-      () => expectUiSane(tester),
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
       throwsA(
         isA<TestFailure>().having(
           (TestFailure f) => f.message,
@@ -131,7 +137,7 @@ void main() {
     // (and the same again for the 44.0 iOS floor).
     // GREEN (SizedBox grown to 48x48): exit 0.
     await expectLater(
-      () => expectUiSane(tester),
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
       throwsA(
         isA<TestFailure>().having(
           (TestFailure f) => f.message,
@@ -155,7 +161,7 @@ void main() {
     //   ratio of at least 4.5 but found 1.16 for a font size of 16.0.
     // GREEN (text lightened to #F5F5F5): exit 0.
     await expectLater(
-      () => expectUiSane(tester),
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
       throwsA(
         isA<TestFailure>().having(
           (TestFailure f) => f.message,
