@@ -22,6 +22,9 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 /// silently changes the viewport of the NEXT test in the same file and turns
 /// its golden red.
 ///
+/// [themeMode] selects between `EdenTheme.light()` and `EdenTheme.dark()`;
+/// [theme] overrides the light theme when supplied.
+///
 /// GOTCHA: this calls `pumpAndSettle()`, which throws on an animation that
 /// never settles. A child with an infinite/repeating animation must be pumped
 /// by the caller instead — pump a fixed `Duration` after `wrap()` returns
@@ -31,6 +34,8 @@ Future<void> wrap(
   Widget child, {
   double width = 1280,
   double height = 800,
+  ThemeMode themeMode = ThemeMode.light,
+  ThemeData? theme,
 }) async {
   tester.view.devicePixelRatio = 1.0;
   tester.view.physicalSize = Size(width, height);
@@ -39,7 +44,9 @@ Future<void> wrap(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: EdenTheme.light(),
+      theme: theme ?? EdenTheme.light(),
+      darkTheme: EdenTheme.dark(),
+      themeMode: themeMode,
       home: Scaffold(
         body: Center(child: SizedBox(width: width, child: child)),
       ),
