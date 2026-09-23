@@ -53,6 +53,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -81,8 +82,46 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   _serveEdenTestFonts(binding.defaultBinaryMessenger);
+  await _warmEdenTypeFamilies();
 
   await testMain();
+}
+
+/// Completes every font load `EdenTheme` fires, BEFORE the first test renders.
+///
+/// WHY. `EdenTheme` builds its type scale from `GoogleFonts.outfit(...)` and
+/// `GoogleFonts.plusJakartaSans(...)`, and each of those fires an UNAWAITED
+/// load. A widget test's fake clock never lets that future run, so the first
+/// test in a file lays out and paints in the FALLBACK face; the first thing
+/// in a widget test that DOES let a real-async future complete is
+/// `tester.runAsync` -- which is what `expectUiSane`'s contrast phase uses to
+/// capture the frame. The load therefore landed during test #1 and every
+/// later test in the same file used the real face.
+///
+/// Measured on the desktop shell before this ran: the top bar's search pill
+/// was 863.1 logical pixels wide in the first test of a file and 904.7 in the
+/// second -- 41.6px of layout movement from nothing but position in the file.
+/// The oracle's GEOMETRY rules (tap target, overlap, containment, viewport)
+/// all read that layout, and a golden baseline blessed without this would
+/// bake in whichever face happened to have loaded. Pinned by
+/// `test/ui_oracle/font_warmup_order_test.dart`.
+///
+/// `testExecutable` is REAL async -- it runs before the test binding installs
+/// a fake clock -- so the awaits here actually complete.
+///
+/// CONSTRUCTING THE THEMES is the whole mechanism: `GoogleFonts.outfit()` and
+/// friends resolve a DIFFERENT engine font family per weight
+/// (`Outfit_w800`, `Outfit_w700`, ...), so only the exact set of calls
+/// `EdenTheme` makes warms the exact set of families it then renders with.
+/// Both brightnesses are built because each constructs its own type scale.
+///
+/// If a `google_fonts` upgrade resolves a variant that is not in
+/// `test_support/fonts/`, this throws HERE, at bootstrap, naming the missing
+/// file -- rather than silently leaving one weight cold.
+Future<void> _warmEdenTypeFamilies() async {
+  EdenTheme.light();
+  EdenTheme.dark();
+  await GoogleFonts.pendingFonts();
 }
 
 /// Publishes every `.ttf` in [kEdenTestFontSourceDir] into the asset bundle
