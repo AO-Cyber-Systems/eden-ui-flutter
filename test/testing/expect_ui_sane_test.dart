@@ -176,6 +176,38 @@ void main() {
     );
   });
 
+  testWidgets('case 6b: low-contrast text inside ExcludeSemantics is named',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, excludedBadgeText());
+    // THE INSTRUMENT'S OWN BLIND SPOT. `textContrastGuideline` resolves a
+    // node's text with `find.text(<the node's label>)`; a nav row publishes
+    // ONE node labelled with the ROW's label and the badge sits inside
+    // `ExcludeSemantics`, so the string "99" is the label of nothing and
+    // stock Flutter never looks it up. Colors.white on Eden gold is 2.20:1
+    // and the stock guideline is silent.
+    //
+    // RED (before the painted-text walk existed): exit 0 — expectUiSane
+    // threw NOTHING on a surface whose badge is 2.20:1.
+    // GREEN (walk added): exit 1, naming "99" and the measured ratio.
+    // DIFFERENTIAL (fixture FIX applied, badge ink #171717): exit 0 again,
+    // so the walk is reading the real pixels and not merely the presence of
+    // an excluded subtree.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"99"'),
+            contains('4.5'),
+            contains('2.20'),
+          ),
+        ),
+      ),
+    );
+  });
+
   // ---------------------------------------------------------------------
   // Input modality — the tap-target floor depends on what the surface is
   // driven WITH. See EdenInputModality in lib/testing/expect_ui_sane.dart.

@@ -409,3 +409,74 @@ Widget nonInteractiveIdentifiedControls() {
     ),
   );
 }
+
+/// DEFECT 6 — low-contrast text that the SEMANTICS TREE CANNOT SEE.
+///
+/// This is the mobile/desktop nav row's exact shape: ONE semantics node
+/// carrying the row's identifier, label, button flag and tap action, wrapping
+/// an [ExcludeSemantics] so the renderer's own `GestureDetector` cannot
+/// publish a second tap route (eden_mobile_layout.dart `_navRow`, commit
+/// d2af9d1). The badge `Text` lives inside that excluded subtree.
+///
+/// `textContrastGuideline` walks the SEMANTICS tree and resolves each node's
+/// text with `find.text(<the node's label>)`. The only label here is
+/// "Orders" — the row's. The string "99" is the label of nothing, so stock
+/// Flutter never looks it up and the badge is never contrast-checked, however
+/// illegible it is. `Colors.white` on `#D4A853` is 2.20:1 against a 4.5:1
+/// floor and the stock guideline is SILENT on it.
+///
+/// The row's own label is deliberately legible (near-black on white, ~18:1):
+/// the ONLY failing text on this surface is the one the semantics tree hides,
+/// so a green run means the blind spot, not a lucky pass.
+///
+/// Rule violated: the oracle's own painted-text contrast walk.
+Widget excludedBadgeText() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Semantics(
+        container: true,
+        identifier: 'fx-badge-row',
+        label: 'Orders',
+        button: true,
+        onTap: () {},
+        child: ExcludeSemantics(
+          child: SizedBox(
+            width: 240,
+            height: 48,
+            child: Row(
+              children: <Widget>[
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Orders',
+                    style: TextStyle(fontSize: 14, color: _legibleInk),
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD4A853),
+                    borderRadius: BorderRadius.all(Radius.circular(999)),
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    child: Text(
+                      '99',
+                      // FIX: change this to `Color(0xFF171717)`.
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFFFFFF),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
