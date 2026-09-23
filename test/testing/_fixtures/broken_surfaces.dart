@@ -8,7 +8,7 @@
 // Each fixture is pumped through `wrap()` (1280x800, light EdenTheme), whose
 // child slot is TIGHT at 1280 logical pixels. Every fixture therefore starts
 // with a `Center` so its inner `SizedBox` can actually shrink — a bare
-// `SizedBox(width: 185)` under a tight 1280 constraint is silently stretched
+// `SizedBox(width: 195)` under a tight 1280 constraint is silently stretched
 // back to 1280 and the defect disappears.
 //
 // `FIX:` comments mark the single edit that repairs each fixture. The RED
@@ -74,7 +74,7 @@ Widget cleanSurface() {
 /// A 40-character label at fontSize 10 measures 400 logical pixels in the
 /// flutter_test font (one em of advance per glyph). The `Row` hands its only
 /// child an UNBOUNDED width slot, so the Text lays out at its full 400 inside a
-/// 185-wide box: `A RenderFlex overflowed by 215 pixels on the right.`
+/// 195-wide box: `A RenderFlex overflowed by 215 pixels on the right.`
 ///
 /// Rule violated: "no exception escaped during layout/paint".
 Widget overflowingRow() {
@@ -82,7 +82,7 @@ Widget overflowingRow() {
     child: ColoredBox(
       color: _surface,
       child: SizedBox(
-        width: 185,
+        width: 195,
         height: 48,
         child: Row(
           children: <Widget>[
