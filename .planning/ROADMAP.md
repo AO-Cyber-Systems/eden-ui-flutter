@@ -447,7 +447,7 @@ Jobs:
 - [ ] 23-04-TRD.md — Story coverage ratchet: a floor that cannot fall (wave 4)
 - [ ] 23-05-TRD.md — Nav stories: ten shell states, the baseline 23-06 is proved against (wave 4)
 - [ ] 23-06-TRD.md — Shell API itemBuilder/sectionBuilder + issue #33 selectableBody opt-in (wave 5)
-- [ ] 23-07-TRD.md — Probe bridge: window.__edenProbe behind EDEN_PROBE + bundle guard (wave 1)
+- [x] 23-07-TRD.md — Probe bridge: window.__edenProbe behind EDEN_PROBE + bundle guard (wave 1) — COMPLETE 2026-09-22 (12 cases green; real release build measured production 0 / probe 1)
 - [ ] 23-08-TRD.md — EdenProbeScope: deterministic captures, animations and fonts pinned (wave 2)
 - [ ] 23-09-TRD.md — Ten design patterns + closed must_not vocabulary (wave 5)
 - [ ] 23-10-TRD.md — DESIGN.md token block generated from lib/src/tokens/ and CI-diffed (wave 1)
