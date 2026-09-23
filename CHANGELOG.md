@@ -11,6 +11,30 @@ and coupling it to a floor raise would make a bisect ambiguous. Whoever cuts the
 this heading and bumps the pubspec in the same commit. The deprecations below make it a minor,
 not a patch.
 
+### Changed
+
+- **`selectableBody` now defaults to `false`** on `EdenDesktopLayout` and `EdenMobileLayout`.
+  A `SelectionArea` over a subtree containing a Navigator asserts on deep-link to a nested route:
+  `_compareScreenOrder` calls `getTransformTo` on a covered page that has never been laid out
+  (flutter#151536; the fix, flutter#184900, is unmerged). Every go_router shell app has a
+  Navigator in `body`. Measured in aodex#611: six routing tests red, and aodex took the
+  `selectableBody: false` opt-out by hand — it can now drop that opt-out. eden-ui-flutter#33.
+
+  **Migration — apps that want the old behaviour pass `selectableBody: true`.** That is safe when
+  `body` is not a Navigator. When it is, wrap the specific text subtree in an
+  `EdenSelectableRegion` instead. The same caveat applies to the per-page
+  `EdenSelectableRegion`s and to the `MaterialApp.builder` recipe in
+  [docs/autofill-and-selection.md](docs/autofill-and-selection.md) §6 — both install a region
+  above a Navigator and share the exposure.
+
+  Regression test: `test/widgets/eden_layout_navigator_body_test.dart`. Two cases in
+  `test/widgets/eden_layout_selection_test.dart` inverted with the default, by design.
+
+- **`EdenMobileLayout`'s default app-bar menu button now carries a semantic label**
+  (`tooltip: 'Open navigation menu'`). It was a 56x56 tappable node with no label at all —
+  unreachable by name for a screen reader, and flagged by `expectUiSane`'s tappable-label
+  guideline the first time the mobile shell was pumped through the oracle.
+
 ### Added
 
 - **`EdenFieldPurpose`** — a 26-member semantic enum. One value resolves `autofillHints` (in
@@ -27,9 +51,10 @@ not a patch.
   `BrowserContextMenu.disableContextMenu()` on web. The package previously contained zero
   `SelectionArea`, zero `SelectableRegion` and zero `contextMenuBuilder`: rendered text could not
   be selected anywhere.
-- **`selectableBody`** (default `true`) on `EdenDesktopLayout` and `EdenMobileLayout`, and a
-  region baked into all 10 library pages — selection is ON by default, opt out with
-  `selectableBody: false` or `SelectionContainer.disabled` for a subtree.
+- **`selectableBody`** on `EdenDesktopLayout` and `EdenMobileLayout`, and a region baked into all
+  10 library pages. **It defaults to `false` — see `### Changed` below; it shipped as `true` and
+  was flipped before release.** Opt in with `selectableBody: true`, and use
+  `SelectionContainer.disabled` to exclude a subtree.
 - **TSV copy** — `edenCopyTsv`, `edenRowsToTsv`, `edenTsvRow`, `edenTsvCell`,
   `edenExtractWidgetText`, plus `copyable` (default `false`) on `EdenDataTable`, `EdenDataGrid`,
   `EdenKeyValueTable`, `EdenProjectTable` and `EdenLabResultTable`. Drag-selection alone cannot
