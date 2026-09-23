@@ -154,4 +154,35 @@ void main() {
       handle.dispose();
     });
   });
+
+  group('EdenProbeApi.settled', () {
+    testWidgets('is false while an AnimationController runs and true once it stops',
+        (WidgetTester tester) async {
+      final AnimationController controller = AnimationController(
+        vsync: tester,
+        duration: const Duration(milliseconds: 300),
+      );
+      addTearDown(controller.dispose);
+
+      await _pumpSurface(tester, ProbeAnimatingSurface(controller: controller));
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.settled(), isTrue,
+          reason: 'a static surface is settled');
+
+      controller.forward();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(EdenProbeApi.settled(), isFalse,
+          reason: 'a running ticker means a driver must keep waiting');
+
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.settled(), isTrue);
+
+      // The opt-in HTTP hook: a consumer that says a request is in flight is
+      // not settled even with no frame scheduled.
+      EdenProbeApi.inFlightRequests = 1;
+      expect(EdenProbeApi.settled(), isFalse);
+      EdenProbeApi.inFlightRequests = 0;
+    });
+  });
 }
