@@ -157,7 +157,7 @@ const String kInheritedMarker = '*(inherited)*';
 /// `design/patterns.json` first learns it is generated before they edit it.
 const String kCatalogueNote =
     'GENERATED FILE — do not edit by hand. The machine twin of design/patterns/, '
-    'built from the `- `must_not: <term>`` rule lines in the BODY of those docs by '
+    'built from the `must_not:` rule lines in the BODY of those docs by '
     'tool/gen_pattern_catalogue.dart and locked against those bodies by '
     'test/design/pattern_catalogue_fresh_test.dart. '
     'Consumed by DevFlow as `df-tools ui spec validate <spec> --patterns design/patterns.json` '
@@ -195,7 +195,7 @@ class PatternFrontMatterError implements Exception {
   String toString() => 'PatternFrontMatterError: $message';
 }
 
-/// One `- `must_not: <term>`` line, with where it was stated and how it was
+/// One `must_not:` rule line, with where it was stated and how it was
 /// classified.
 class PatternRule {
   /// The vocabulary term, e.g. `fire twice per activation`.
