@@ -55,5 +55,21 @@ void main() {
       final Rect goodbye = tester.getRect(find.text('Goodbye'));
       expect(hits.map((EdenProbeHit h) => h.rect), isNot(contains(goodbye)));
     });
+
+    testWidgets('find({text:}) also matches the same string inside a Text.rich span',
+        (WidgetTester tester) async {
+      await _pumpSurface(tester, probeTextSurface());
+
+      final List<EdenProbeHit> hits = EdenProbeApi.find(text: 'Hello');
+
+      // A Text widget's runtime tree IS a RichText, so a probe reading only
+      // Text.data misses every composed string a user reads.
+      final Rect rich = tester.getRect(
+        find.byWidgetPredicate(
+          (Widget w) => w is Text && w.data == null && w.textSpan != null,
+        ),
+      );
+      expect(hits.map((EdenProbeHit h) => h.rect), contains(rich));
+    });
   });
 }
