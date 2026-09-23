@@ -94,4 +94,64 @@ void main() {
       expect(EdenProbeApi.find(), isEmpty);
     });
   });
+
+  group('EdenProbeApi.tree', () {
+    testWidgets('lists every identified node with rect and actions, and shows BOTH tap routes of a double-declared control',
+        (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pumpSurface(tester, probeSemanticsSurface());
+
+      final Map<String, Object?> tree = EdenProbeApi.tree();
+
+      expect(tree['route'], '/');
+
+      final List<Object?> nodes = tree['nodes']! as List<Object?>;
+      final Map<String, Map<String, Object?>> byIdentifier =
+          <String, Map<String, Object?>>{
+        for (final Object? n in nodes)
+          (n! as Map<String, Object?>)['identifier']! as String:
+              n as Map<String, Object?>,
+      };
+
+      expect(
+        byIdentifier.keys,
+        containsAll(<String>[
+          'eden-nav-home',
+          'fx-probe-double-tap',
+          'fx-probe-double-tap-inner',
+        ]),
+      );
+
+      // Every node carries a real rect, not a placeholder.
+      final Map<String, Object?> home = byIdentifier['eden-nav-home']!;
+      final Map<String, Object?> homeRect =
+          home['rect']! as Map<String, Object?>;
+      expect(homeRect['w'], 100.0);
+      expect(homeRect['h'], 48.0);
+      expect(home['actions'], contains('tap'));
+
+      // The double-fire, visible from OUTSIDE the app: two overlapping nodes
+      // that BOTH advertise tap.
+      final Map<String, Object?> outer = byIdentifier['fx-probe-double-tap']!;
+      final Map<String, Object?> inner =
+          byIdentifier['fx-probe-double-tap-inner']!;
+      expect(outer['actions'], contains('tap'));
+      expect(inner['actions'], contains('tap'));
+
+      Rect asRect(Map<String, Object?> node) {
+        final Map<String, Object?> r = node['rect']! as Map<String, Object?>;
+        return Rect.fromLTWH(
+          r['x']! as double,
+          r['y']! as double,
+          r['w']! as double,
+          r['h']! as double,
+        );
+      }
+
+      final Rect intersection = asRect(outer).intersect(asRect(inner));
+      expect(intersection.width, greaterThan(0));
+      expect(intersection.height, greaterThan(0));
+      handle.dispose();
+    });
+  });
 }
