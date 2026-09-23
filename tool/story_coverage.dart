@@ -225,9 +225,16 @@ void main() {
     final barrelLines = File(kBarrelPath).readAsLinesSync();
     final exported = exportedWidgets(barrelLines);
 
+    // clear() is @visibleForTesting; this file is test-only support reached
+    // by the flutter test runner (see the header), but it lives outside
+    // test/ so the analyzer cannot see that. Scoped ignore with the reason
+    // rather than widening the registry's API (matches
+    // tool/gen_story_tests.dart's coLocatedStories()).
+    // ignore: invalid_use_of_visible_for_testing_member
     StoryRegistry.instance.clear();
     registerAllStories();
     final covered = widgetsWithStory(StoryRegistry.instance.all());
+    // ignore: invalid_use_of_visible_for_testing_member
     StoryRegistry.instance.clear();
 
     final report = computeCoverage(exported: exported, covered: covered);
