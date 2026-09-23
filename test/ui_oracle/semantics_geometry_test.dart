@@ -41,5 +41,16 @@ void main() {
       expect(a.width, 40);
       expect(b.width, 40);
     });
+
+    testWidgets('case 7 (naive expectation): nested Semantics reports 40x40', (
+      WidgetTester tester,
+    ) async {
+      await wrap(tester, nestedSemanticsWithoutContainer, width: 360);
+
+      final Rect nested = globalRectOf(tester, kFxNestedNoContainer);
+
+      expect(nested.width, 40);
+      expect(nested.height, 40);
+    });
   });
 }
