@@ -171,11 +171,10 @@ Color _dominantColour(
 /// What the field's own box paints at its top edge, and what it paints
 /// inside, measured from ONE frame.
 Future<({Color edge, Color interior, Rect rect})> _edgeAndInterior(
-  WidgetTester tester, {
-  int decorator = 0,
-}) async {
+  WidgetTester tester,
+) async {
   final RenderBox box = tester.renderObject<RenderBox>(
-    find.byType(InputDecorator).at(decorator),
+    find.byType(InputDecorator).first,
   );
   final Rect rect = MatrixUtils.transformRect(
     box.getTransformTo(null),
@@ -224,7 +223,6 @@ class _Case {
     this.chrome,
     this.chromeName,
     this.size = const Size(900, 700),
-    this.decorator = 0,
     this.after,
     required this.parent,
   });
@@ -243,7 +241,6 @@ class _Case {
   final String parent;
 
   final Size size;
-  final int decorator;
   final Future<void> Function(WidgetTester tester)? after;
 
   String get name => '$widget (${mode == ThemeMode.light ? 'light' : 'dark'})';
@@ -391,7 +388,7 @@ void main() {
         await c.after?.call(tester);
 
         final ({Color edge, Color interior, Rect rect}) m =
-            await _edgeAndInterior(tester, decorator: c.decorator);
+            await _edgeAndInterior(tester);
 
         expect(
           m.edge,

@@ -17,6 +17,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'dart:io' show File;
 
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/spacing.dart';
 import 'eden_field_purpose.dart';
 
@@ -257,34 +258,45 @@ class _EdenPhotoCapturePageState extends State<EdenPhotoCapturePage> {
             // describing what was photographed. An observation about the
             // subject of the photo, never an identity belonging to the device
             // user, so it claims no autofill hint.
-            child: TextField(
-              controller: _annotationController,
-              style: const TextStyle(color: Colors.white),
-              maxLines: 2,
-              autofillHints: caption.autofillHints,
-              keyboardType: caption.keyboardType,
-              obscureText: caption.obscureText,
-              textInputAction: caption.textInputAction,
-              textCapitalization: caption.textCapitalization,
-              autocorrect: caption.autocorrect,
-              enableSuggestions: caption.enableSuggestions,
-              decoration: const InputDecoration(
-                hintText: 'Add a note (optional)',
-                hintStyle: TextStyle(color: Colors.white70),
-                // THE SCRIM IS THE FILL. Without this the field inherits
-                // EdenTheme's inputDecorationTheme (`filled: true`,
-                // `fillColor` white in light / neutral[800] in dark) and
-                // paints an OPAQUE rectangle over the
-                // `Colors.black.withValues(alpha: 0.55)` scrim the Container
-                // above draws on the photo. In the light theme that box is
-                // WHITE, and this caption's ink is `Colors.white` with a
-                // `Colors.white70` hint: both rendered at 1.00:1 — not
-                // low-contrast, invisible. On the scrim they are 21.00:1 and
-                // 9.90:1. Pinned by
-                // test/ui_oracle/field_fill_overpaint_test.dart.
-                filled: false,
-                border: InputBorder.none,
-                isDense: true,
+            child: EdenBareFieldTheme(
+              // THE SCRIM IS THE CHROME. The caption sits on
+              // `Container(color: Colors.black.withValues(alpha: 0.55))` over
+              // the photo. Without this wrapper EdenTheme's
+              // inputDecorationTheme painted TWO things on that scrim: an
+              // opaque `fillColor` rectangle — WHITE in the light theme, and
+              // this caption's ink is `Colors.white` with a `Colors.white70`
+              // hint, so both rendered at 1.00:1, not low-contrast but
+              // INVISIBLE (on the scrim they are 21.00:1 and 9.90:1) — and an
+              // `enabledBorder` ring in colorScheme.outline, a #d4d4d8 rounded
+              // rectangle drawn across the photograph. Pinned by
+              // field_fill_overpaint_test.dart and
+              // field_border_overpaint_test.dart.
+              child: TextField(
+                controller: _annotationController,
+                style: const TextStyle(color: Colors.white),
+                maxLines: 2,
+                autofillHints: caption.autofillHints,
+                keyboardType: caption.keyboardType,
+                obscureText: caption.obscureText,
+                textInputAction: caption.textInputAction,
+                textCapitalization: caption.textCapitalization,
+                autocorrect: caption.autocorrect,
+                enableSuggestions: caption.enableSuggestions,
+                decoration: const InputDecoration(
+                  hintText: 'Add a note (optional)',
+                  hintStyle: TextStyle(color: Colors.white70),
+                  isDense: true,
+                  // The 16x12 this field used to inherit from
+                  // `EdenTheme.inputDecorationTheme.contentPadding`, now that
+                  // the wrapper supplies EdgeInsets.zero instead. Declared so
+                  // that killing the theme leak moves no pixel of the
+                  // caption's geometry: the decorator is 876x76 before and
+                  // after.
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
               ),
             ),
           ),

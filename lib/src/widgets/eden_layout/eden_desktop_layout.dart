@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/eden_bare_field_theme.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
@@ -1147,64 +1148,61 @@ class _TopBar extends StatelessWidget {
                         // of it.
                         child: SizedBox(
                           height: _kTopBarSearchHeight,
-                          child: TextField(
-                            autofillHints:
-                                searchPurpose.semantics.autofillHints,
-                            keyboardType: searchPurpose.semantics.keyboardType,
-                            obscureText: searchPurpose.semantics.obscureText,
-                            textInputAction:
-                                searchPurpose.semantics.textInputAction,
-                            textCapitalization:
-                                searchPurpose.semantics.textCapitalization,
-                            autocorrect: searchPurpose.semantics.autocorrect,
-                            enableSuggestions:
-                                searchPurpose.semantics.enableSuggestions,
-                            decoration: InputDecoration(
-                              hintText: config.searchHint,
-                              // THE PILL IS THE FILL. Without this the field
-                              // inherits EdenTheme's inputDecorationTheme
-                              // (`filled: true`, `fillColor` white in light /
-                              // neutral[800] in dark) and paints an OPAQUE
-                              // rectangle on top of the pill the Container
-                              // above draws. `_RenderDecoration` sizes that
-                              // fill from the decorator's CONTENT height (the
-                              // ~20px line box) and not from the 36px the
-                              // SizedBox forces on it, so in the light theme
-                              // the captured frame showed white for y=11..28
-                              // and the pill's own #e4e4e7 only for y=30..44
-                              // — the "~16px band below the text" that made
-                              // the hint measure 4.83:1 against `surface`
-                              // where its token pair against the pill is
-                              // 3.81:1. The pill is 36px and paints 36px; it
-                              // was the overpaint that was short. Pinned by
-                              // test/ui_oracle/topbar_search_pill_paint_test
-                              // .dart case 1.
-                              filled: false,
-                              // `secondary`, not `onSurfaceVariant`: the ink
-                              // now sits on the pill's
-                              // `surfaceContainerHighest` fill, and
-                              // onSurfaceVariant on that is 3.81:1 at 13px —
-                              // under 1.4.3's 4.5:1 floor. The failure was
-                              // real all along; it was masked for as long as
-                              // the glyph was painted on the white overpaint
-                              // (4.83:1 against white). In BOTH Eden themes
-                              // `secondary` is this palette's muted neutral
-                              // (neutral[600] light, neutral[400] dark) and is
-                              // the only ColorScheme role that clears the
-                              // floor on that fill while still reading as a
-                              // hint rather than as entered text: 6.09:1
-                              // light, 5.81:1 dark. The DARK value does not
-                              // move — dark `secondary` and dark
-                              // `onSurfaceVariant` are the same neutral[400].
-                              hintStyle: TextStyle(
-                                  fontSize: 13,
-                                  color: theme.colorScheme.secondary),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
+                          child: EdenBareFieldTheme(
+                            // THE PILL IS THE CHROME. Without this wrapper the
+                            // field inherits EdenTheme's inputDecorationTheme
+                            // and paints TWO things over the pill the Container
+                            // above draws: an opaque `fillColor` rectangle
+                            // (white in light, neutral[800] in dark), sized
+                            // from the decorator's ~20px CONTENT height rather
+                            // than the 36px the SizedBox forces — which is why
+                            // the captured frame showed white for y=11..28 and
+                            // the pill's own #e4e4e7 only for y=30..44, and why
+                            // the hint measured 4.83:1 against `surface` where
+                            // its token pair against the pill is 3.81:1 — and
+                            // an `enabledBorder` ring in colorScheme.outline,
+                            // which `border: InputBorder.none` does NOT turn
+                            // off and which read #dcdcdf along the pill's top
+                            // edge. Pinned by topbar_search_pill_paint_test
+                            // .dart case 1 and field_border_overpaint_test.dart.
+                            child: TextField(
+                              autofillHints:
+                                  searchPurpose.semantics.autofillHints,
+                              keyboardType: searchPurpose.semantics.keyboardType,
+                              obscureText: searchPurpose.semantics.obscureText,
+                              textInputAction:
+                                  searchPurpose.semantics.textInputAction,
+                              textCapitalization:
+                                  searchPurpose.semantics.textCapitalization,
+                              autocorrect: searchPurpose.semantics.autocorrect,
+                              enableSuggestions:
+                                  searchPurpose.semantics.enableSuggestions,
+                              decoration: InputDecoration(
+                                hintText: config.searchHint,
+                                // `secondary`, not `onSurfaceVariant`: the ink
+                                // now sits on the pill's
+                                // `surfaceContainerHighest` fill, and
+                                // onSurfaceVariant on that is 3.81:1 at 13px —
+                                // under 1.4.3's 4.5:1 floor. The failure was
+                                // real all along; it was masked for as long as
+                                // the glyph was painted on the white overpaint
+                                // (4.83:1 against white). In BOTH Eden themes
+                                // `secondary` is this palette's muted neutral
+                                // (neutral[600] light, neutral[400] dark) and is
+                                // the only ColorScheme role that clears the
+                                // floor on that fill while still reading as a
+                                // hint rather than as entered text: 6.09:1
+                                // light, 5.81:1 dark. The DARK value does not
+                                // move — dark `secondary` and dark
+                                // `onSurfaceVariant` are the same neutral[400].
+                                hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.secondary),
+                                isDense: true,
+                              ),
+                              style: const TextStyle(fontSize: 13),
+                              onChanged: config.onSearch,
                             ),
-                            style: const TextStyle(fontSize: 13),
-                            onChanged: config.onSearch,
                           ),
                         ),
                       ),

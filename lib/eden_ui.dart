@@ -18,6 +18,11 @@ export 'src/tokens/typography.dart';
 
 // Theme
 export 'src/theme/eden_theme.dart';
+// The opt-out from the theme above, for a field whose PARENT owns the chrome.
+// Ships beside the theme rather than with the widgets because it is the
+// theme's own escape hatch, and a consumer building a card with a field in it
+// needs it as much as this library does.
+export 'src/theme/eden_bare_field_theme.dart';
 
 // Widgets
 export 'src/widgets/eden_button.dart';
