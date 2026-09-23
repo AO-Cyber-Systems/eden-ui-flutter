@@ -23,5 +23,23 @@ void main() {
       final Size size = tester.getSize(find.byKey(const ValueKey<String>('probe')));
       expect(size.width, 360);
     });
+
+    testWidgets('case 2: themeMode.dark resolves a dark Theme', (
+      WidgetTester tester,
+    ) async {
+      late Brightness resolved;
+      await wrap(
+        tester,
+        Builder(
+          builder: (BuildContext context) {
+            resolved = Theme.of(context).brightness;
+            return const SizedBox(height: 40);
+          },
+        ),
+        themeMode: ThemeMode.dark,
+      );
+
+      expect(resolved, Brightness.dark);
+    });
   });
 }
