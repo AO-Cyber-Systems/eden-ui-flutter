@@ -28,6 +28,7 @@ key-files:
     - test/tool/gen_story_tests_test.dart (expectation follows the fix)
     - test/dev_app/registry/registry_complete_test.dart (49 -> 60)
     - test/tool/emit_flutter_manifest_test.dart (49 -> 60 — a THIRD count site nobody had listed)
+    - test/stories/generated_freshness_test.dart (matcher followed the golden test-name change)
 
 requirements-completed: []
 status: BLOCKED — see "Stop condition"
@@ -113,6 +114,18 @@ Fix (commit `398633c`), keeping the reason VISIBLE rather than dropping it:
 `.github/workflows/ci.yml` was NOT touched; its comment at line 128 still refers to
 `skip: kGoldenSkipReason` and should be reworded by whoever next edits that file.
 
+**Knock-on (Rule 3).** 23-03's freshness gate matched the literal
+`'<id> — light — golden'`, so the renamed golden test made it report all 11 stories uncovered —
+caught only by the FULL suite, not by the focused `test/stories/` run I had been iterating on. The
+matcher now checks the golden name PREFIX **and** requires the `expectUiSane` twin, i.e. it is
+strictly stronger than before (commit `db86201`).
+
+### Differential control on the repaired freshness gate
+Deleted `test/stories/_generated/mobile_layout_stories_test.dart`, ran the gate → **exit 1**:
+`STORY TEST FRESHNESS: no generated test covers mobile-layout/default. Regenerate and commit
+test/stories/_generated: flutter test tool/gen_story_tests.dart`. Restored with
+`git checkout --` (never `git stash`).
+
 ## Goldens: still never executed anywhere
 
 22 golden tests now exist (11 stories × light/dark) and **all 22 skip locally**, with the
@@ -168,8 +181,15 @@ flutter test tool/gen_stories.dart
 
 - `flutter analyze --no-fatal-infos` → **0 errors, 2 warnings** (both pre-existing, at
   `test/widgets/eden_route_stop_list_test.dart:221,244`), **369 issues** — identical to baseline.
-- `flutter test` → **RED**: 22 generated `expectUiSane` failures, all three root causes above.
-  Skip count rises from 5 to 27 (+22) — the 22 new golden tests, skipped off Linux by policy.
+- `flutter test` → **RED, by exactly the 22 generated `expectUiSane` tests and nothing else.**
+  Run history, all three literal: `+4667 ~27 -24` (freshness gate + an over-escaped generator-test
+  expectation still broken), `+4668 ~27 -23` (freshness repaired, commit `db86201`), and after
+  `176ca14` the remaining 23rd — `test/tool/gen_story_tests_test.dart` case 6 — is green
+  (`flutter test test/tool/gen_story_tests_test.dart ... → +14 All tests passed!`). Baseline was
+  `+4669 ~5 -0`. **Skip count rises 5 → 27 (+22)** — the 22 new golden tests (11 stories x
+  light/dark), skipped off Linux by the 23-03 policy, each printing its reason in the test name.
+  A final full-suite run after `176ca14` was NOT completed inside the wall-clock ceiling; the three
+  affected files were re-run individually and pass.
 - Nothing was weakened, exempted or blessed to reach a green.
 
 ## Files NOT touched
