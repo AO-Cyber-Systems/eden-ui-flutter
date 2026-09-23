@@ -21,22 +21,34 @@ import 'layout_data.dart';
 ///
 /// Overflow nav items (beyond 5) go into a "More" drawer.
 ///
-/// ## Text selection
+/// ## Text selection — OPT-IN since eden-ui-flutter#33
 ///
-/// [body] is wrapped in an [EdenSelectableRegion] by default, so its text is
-/// drag-selectable and copyable with no per-widget change. Only [body] is
-/// wrapped: sidebar, top bar, nav items and the bottom bar are chrome, not
-/// data, so a drag-select cannot pick up navigation labels. Opt out with
-/// `selectableBody: false`, or wrap one subtree in `SelectionContainer.disabled`.
+/// [body] is NOT wrapped in an [EdenSelectableRegion] unless you pass
+/// `selectableBody: true`. The default used to be `true`; it was flipped
+/// because a `SelectionArea` over a subtree containing a Navigator asserts on
+/// deep-link to a nested route (flutter#151536, fix flutter#184900 unmerged),
+/// and every go_router shell app has a Navigator in [body]. See the
+/// [selectableBody] dartdoc for the full reason.
 ///
-/// Not using an Eden layout? Install one region app-wide with
-/// `MaterialApp.builder`:
+/// When you do opt in, only [body] is wrapped: sidebar, top bar, nav items and
+/// the bottom bar are chrome, not data, so a drag-select cannot pick up
+/// navigation labels.
+///
+/// Not using an Eden layout? You can install one region app-wide with
+/// `MaterialApp.builder` — but **only if the app has no Navigator under it**,
+/// which for a `MaterialApp` is almost never true. This recipe carries exactly
+/// the same flutter#151536 exposure as `selectableBody: true`, so prefer
+/// wrapping the specific text subtree instead:
 /// ```dart
-/// MaterialApp(
-///   builder: (context, child) =>
-///       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
-///   home: MyHomePage(),
-/// )
+/// // Safe: scoped to content that is not a Navigator.
+/// EdenSelectableRegion(child: MyArticleBody())
+///
+/// // Exposed to flutter#151536 — a Navigator lives under `child`:
+/// // MaterialApp(
+/// //   builder: (context, child) =>
+/// //       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
+/// //   home: MyHomePage(),
+/// // )
 /// ```
 class EdenMobileLayout extends StatelessWidget {
   const EdenMobileLayout({
@@ -50,7 +62,7 @@ class EdenMobileLayout extends StatelessWidget {
     this.logo,
     this.floatingAction,
     this.maxBottomItems = 5,
-    this.selectableBody = true,
+    this.selectableBody = false,
   });
 
   final List<EdenNavItem> navItems;
@@ -63,16 +75,24 @@ class EdenMobileLayout extends StatelessWidget {
   final Widget? floatingAction;
   final int maxBottomItems;
 
-  /// Makes the [body] content drag-selectable and copyable by wrapping it in an
-  /// [EdenSelectableRegion]. Default TRUE - this is the carrier that delivers
-  /// universal copy/paste to apps built on the Eden layouts.
+  /// Wraps [body] in an [EdenSelectableRegion] so its text is drag-selectable
+  /// and copyable.
   ///
-  /// Only [body] is wrapped. Sidebar, top bar, nav items and the bottom bar are
-  /// chrome, not data, and stay outside the region so a drag-select cannot pick
-  /// up navigation labels.
+  /// **Defaults to `false` — opt in.** A `SelectionArea` over a subtree
+  /// containing a Navigator asserts when a nested route is deep-linked:
+  /// `SelectionArea`'s `_compareScreenOrder` calls `getTransformTo` on a
+  /// covered page that has never been laid out (flutter#151536; the fix,
+  /// flutter#184900, is unmerged). Every go_router shell app has a Navigator
+  /// in [body]. Measured in aodex#611: six routing tests red, and aodex took
+  /// the `selectableBody: false` opt-out by hand. eden-ui-flutter#33.
   ///
-  /// Set false for a surface that must not be selectable, or wrap an individual
-  /// subtree in `SelectionContainer.disabled` for a finer-grained opt-out.
+  /// Opt in with `selectableBody: true` on surfaces whose [body] is NOT a
+  /// Navigator, or wrap the specific text subtree in an [EdenSelectableRegion]
+  /// yourself.
+  ///
+  /// Only [body] is ever wrapped. Sidebar, top bar, nav items and the bottom
+  /// bar are chrome, not data, and stay outside the region so a drag-select
+  /// cannot pick up navigation labels.
   final bool selectableBody;
 
   /// Flatten grouped nav items into the list of real DESTINATIONS.
