@@ -1,3 +1,6 @@
+---
+id: bulk-action-bar
+---
 # Bulk action bar
 
 ## Intent

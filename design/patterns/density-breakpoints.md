@@ -1,3 +1,6 @@
+---
+id: density-breakpoints
+---
 # Density and breakpoints
 
 ## Intent

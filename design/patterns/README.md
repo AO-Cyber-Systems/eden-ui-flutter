@@ -40,3 +40,45 @@ Six of the ten cite registered stories. Four cite none, because wave 1's story s
 widgets and no registered story exercises their behaviour: `list-detail`,
 `state-empty-error-outage-loading`, `bulk-action-bar` and `studio-three-pane`. Those four say so in
 their own files. Absence is allowed; a dangling reference is not.
+
+## The machine twin
+
+`design/patterns.json` is the machine catalogue of this directory — the file DevFlow reads as
+`df-tools ui spec validate <spec> --patterns design/patterns.json`, which is how Surface Spec §4.5
+invariant I5 resolves a referenced pattern and inherits its `must_not` defaults. Without it I5 cannot
+run and reports `PAT000 … UNCHECKED` on every spec. It sits in `design/` rather than in here because
+`design/` is already this package's published machine-interface directory (W1b mirrors
+`design/must_not_vocabulary.json` from it); a JSON file inside `design/patterns/` would read as an
+eleventh pattern.
+
+It is **generated, never hand-edited**. The machine half of each pattern is carried in YAML front
+matter at the top of that pattern's own doc, so the prose stays the source of truth and the two cannot
+drift:
+
+```yaml
+---
+id: navigation/disclosure-group
+kind: disclosure-header
+must_not: ["fire twice per activation", "cover sibling hit rects"]
+must_not_scoped: ["navigate on close", "lose selection", ...]
+---
+```
+
+* **`id`** is the catalogue id — slash-namespaced where the file name already carries a group prefix
+  (`navigation-*`), otherwise the file stem. It is locked to the file name.
+* **`kind`** is a Surface Spec control kind, and it is present only where the pattern governs **one**
+  control of exactly that kind. A kind is a blast radius: every control of that kind in every spec
+  inherits this pattern's `must_not`. Nine of the ten patterns govern a composition (a shell, a
+  list–detail, a studio, a bar, a dialog) or a non-interactive element (a caption) and therefore
+  declare no kind and inherit nothing onto anybody.
+* **`must_not` and `must_not_scoped` partition every `must_not:` term in the doc.** `must_not` holds
+  the rules the pattern states *unconditionally* under `## Interaction rules` — the ones that match the
+  schema's own definition of a control-level `must_not`, "applies to EVERY behaviour of this control".
+  `must_not_scoped` holds everything else the doc states: rules stated under a condition ("collapsing a
+  group…"), which a spec declares per behaviour, and rules under `## Accessibility` / `## Breakpoints`,
+  which a spec carries in `a11y` and `hit_rect` instead.
+
+Regenerate with `flutter test tool/gen_pattern_catalogue.dart`.
+`test/design/pattern_catalogue_fresh_test.dart` fails in **both** directions — a doc edited without
+regenerating, and a JSON edited by hand — and, one level down, refuses a front-matter term the prose
+never states and a prose rule the front matter never classifies.

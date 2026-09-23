@@ -1,3 +1,6 @@
+---
+id: dialog-confirm-destructive
+---
 # Destructive confirm dialog
 
 ## Intent

@@ -1,3 +1,6 @@
+---
+id: navigation/shell
+---
 # Navigation shell
 
 ## Intent

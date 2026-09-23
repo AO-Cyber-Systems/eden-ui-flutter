@@ -1,3 +1,6 @@
+---
+id: state-empty-error-outage-loading
+---
 # Empty, error, outage and loading states
 
 ## Intent

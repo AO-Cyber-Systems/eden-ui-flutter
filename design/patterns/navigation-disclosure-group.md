@@ -1,3 +1,14 @@
+---
+id: navigation/disclosure-group
+kind: disclosure-header
+must_not: ["fire twice per activation", "cover sibling hit rects"]
+must_not_scoped: [
+  "navigate on close",
+  "lose selection",
+  "render below the tap target floor",
+  "nest semantics without a container"
+]
+---
 # Navigation disclosure group
 
 ## Intent

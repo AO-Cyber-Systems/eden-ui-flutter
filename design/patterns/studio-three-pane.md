@@ -1,3 +1,6 @@
+---
+id: studio-three-pane
+---
 # Studio three-pane
 
 ## Intent

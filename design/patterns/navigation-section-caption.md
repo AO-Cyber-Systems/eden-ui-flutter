@@ -1,3 +1,6 @@
+---
+id: navigation/section-caption
+---
 # Navigation section caption
 
 ## Intent

@@ -1,3 +1,6 @@
+---
+id: list-detail
+---
 # List–detail
 
 ## Intent
