@@ -107,6 +107,15 @@ highest existing tag. The deprecations below make this a minor, not a patch.
   - The **sidebar user tile's initials** were brand gold on a 15%-primary circle — **1.98:1
     light**. Now `onSurface`: **15.89:1 / 12.45:1**. The person-glyph fallback moves with them; at
     1.98:1 it also failed 1.4.11's 3:1 for a meaningful icon.
+- **The top-bar search field no longer paints over its own pill.** `_TopBar`'s `TextField`
+  inherited `EdenTheme`'s `inputDecorationTheme` (`filled: true`, white in light / `neutral[800]`
+  in dark) and drew an opaque rectangle on top of the `surfaceContainerHighest` pill the enclosing
+  `Container` draws — and, because `_RenderDecoration` sizes that fill from the decorator's
+  content height rather than from the 36px it is constrained to, the pill showed only as a ~16px
+  band below the text. `filled: false` now. With the overpaint gone the hint sits on the pill's
+  own fill, where `onSurfaceVariant` is **3.81:1** at 13px, so the hint moves to
+  `colorScheme.secondary`: **6.09:1 light, 5.81:1 dark** (dark is unchanged — both roles are
+  `neutral[400]` there). See known issue 6 for the pixel measurements.
 - **One definition for the ink that sits on a coloured nav fill**
   (`lib/src/widgets/eden_layout/nav_ink.dart`, library-private). The bar, the drawer, the "More"
   sheet and the rail are four renderings of one nav row and had four separate `Colors.white`
@@ -251,7 +260,7 @@ Full list, including what is untested rather than broken:
 ### Known issues — not yet release-ready
 
 **This release is not shippable as-is, and this section is the reason** — but the reason is no
-longer the test run. `flutter test` on this tree is **4785 tests / 27 skipped**, and every
+longer the test run. `flutter test` on this tree is **4790 tests / 27 skipped**, and every
 oracle, story and layout test is green. The one red in the last full run was
 `scheduler_performance_test.dart`'s "500 events layout completes within 200ms" — a wall-clock
 budget that measured 571ms on a loaded machine and passes in isolation; the code it exercises
@@ -263,7 +272,9 @@ either fixed or reclassified. The rail-density question got its design ruling (i
 collapse toggle was fixed, the google_fonts fetch that made the accessibility gate unreachable was
 fixed in `test/flutter_test_config.dart` (item 3), and the contrast rule that could not see badge
 text was replaced (see Changed), which turned up four more shipped defects in the shells and
-closed them. Items 5 and 6 are new and are the ones that still want a decision.
+closed them. Items 5 and 6 were the two questions that had to be settled BEFORE golden baselines
+are generated — the typeface every test rasterises in, and whether the search pill really painted
+short — and both are now answered and fixed.
 
 1. **The rail-density question is RESOLVED — the tap-target floor is modality-conditional.**
    The desktop rail's 40px nav rows (42px pitch) are correct on a **pointer** surface: WCAG 2.5.8
@@ -283,8 +294,8 @@ closed them. Items 5 and 6 are new and are the ones that still want a decision.
      is now constrained to the pill's own `_kTopBarSearchHeight` (36), so the published node and
      the tappable region are the same rect; enlarging a WRAPPER instead would have made the node
      claim area it cannot receive taps in, which is pinned by
-     `test/ui_oracle/topbar_search_target_test.dart` case 2. See known issue 6 for what is still
-     unresolved about that pill.
+     `test/ui_oracle/topbar_search_target_test.dart` case 2. What was still open about that pill
+     — whether it really painted 16px tall — is settled in known issue 6.
 2. **Golden baselines have never been generated, anywhere.** 22 golden tests exist; all of them
    **skip locally** (goldens are Linux/CI-only — see Notes below), and the CI `stories` job owns
    generating them. **They must still NOT be blessed.** Item 1's collapse-toggle fix moved the
@@ -319,33 +330,61 @@ closed them. Items 5 and 6 are new and are the ones that still want a decision.
    floor therefore holds, but it is not yet measuring what it claims to measure. Fixing it needs
    `_exports.dart` resolution, which will also move `exported_widgets` off 364.
 
-5. **The first test in every file rasterises in a different typeface from the rest.** `EdenTheme`
-   fires its google_fonts loads UNAWAITED at theme-construction time, and the first thing in a
-   widget test that lets such a future run is `runAsync` — which lives inside `expectUiSane`'s
-   contrast phase. So the first test in a file lays out and paints with the FALLBACK face, the
-   load completes during it, and every later test in the same file uses the real one. Measured: it
-   moved the desktop shell's search pill 42 logical pixels between the first test and the second,
-   and it flipped the stock contrast guideline's verdict on the mobile bar's 11px label from
-   6.91:1 (its actual colour pair) to a 3.99:1 reading — green when that test ran first, red once
-   a sibling had warmed the cache. **Nothing in the current gate depends on it**: the oracle's
-   contrast rule reads its ink from the `TextStyle` and is font-independent by construction, and
-   the suite is green either way. It is recorded because the GEOMETRY rules do read those pixels'
-   layout, and because it is the same rasterisation question item 2 has to settle before goldens
-   are blessed. Awaiting `GoogleFonts.pendingFonts()` in `test/flutter_test_config.dart` fixes it
-   in about five lines and makes every test render what CI renders — it was written, measured, and
-   held back from this change because it re-rasterises all 4785 tests, which is a decision that
-   belongs with the golden baselines rather than with a contrast fix.
+5. **FIXED — the first test in every file rasterised in a different typeface from the rest.**
+   `EdenTheme` fires its google_fonts loads UNAWAITED at theme-construction time, and the first
+   thing in a widget test that lets such a future run is `runAsync` — which lives inside
+   `expectUiSane`'s contrast phase. So the first test in a file laid out and painted with the
+   FALLBACK face, the load completed during it, and every later test in the same file used the
+   real one. Measured on the desktop shell: the top bar's search pill was **863.1** logical pixels
+   wide in the first test of a file and **904.7** in the second — **41.6px** of layout movement
+   caused by nothing but position in the file. `test/flutter_test_config.dart` now constructs both
+   `EdenTheme` themes and awaits `GoogleFonts.pendingFonts()` in the per-file bootstrap, which is
+   real async and therefore actually completes; every test now renders in the same face, and it is
+   the face CI renders in. Pinned by `test/ui_oracle/font_warmup_order_test.dart` (case 1: no font
+   load may still be pending when a test starts; case 2: the second test in a file lays the shell
+   out identically to the first).
+   - **It changed no verdict anywhere.** The full suite was re-run before and after: 4785 passed /
+     27 skipped / 0 failed → 4787 (the two new cases) passed / 27 skipped / 0 failed. No geometry
+     measurement crossed a threshold. The contrast rule was never exposed to it — it reads its ink
+     from the `TextStyle` — but the GEOMETRY rules were, and they are now reading one layout
+     rather than two.
+   - **This is one more reason item 2's baselines must be generated after this work, not before**:
+     a baseline blessed earlier would have baked in whichever face happened to have loaded.
+   - The other symptom recorded here — the stock contrast guideline flipping the mobile bar's 11px
+     label from 6.91:1 to 3.99:1 by test order — is no longer reproducible, because that guideline
+     is no longer in the oracle (see Changed).
 
-6. **The top bar's search hint measures differently as a token pair than as pixels.** As tokens it
-   is `onSurfaceVariant` on the pill's `surfaceContainerHighest` fill — **3.81:1** at fontSize 13,
-   below 1.4.3's 4.5:1. As pixels the oracle measures **4.83:1**, because the captured frame shows
-   the hint's paragraph sitting on the top bar's white surface while the pill's fill appears as a
-   ~16px band that does not reach it — even though the field's LAYOUT rect is the pill's full 36px
-   (`_kTopBarSearchHeight`). One of those two readings is wrong and the difference is a
-   pill/text alignment question in `_TopBar`, not a colour question, so no colour was changed. It
-   is also a recorded limit of the contrast rule: it takes the background from the dominant colour
-   inside the paragraph's own box, which is the wrong surface when a paragraph does not actually
-   sit on the component it belongs to.
+6. **FIXED — the top bar's search field painted an opaque box over its own pill.** The question
+   recorded here was whether the pill really painted ~16px tall or whether the oracle's 4.83:1
+   pixel reading was a capture artifact. It was **neither**: the pill is 36px and paints 36px, and
+   the thing that is short is a white rectangle drawn **on top of** it. `_TopBar`'s `TextField`
+   set `border: InputBorder.none`, `isDense: true` and `contentPadding: EdgeInsets.zero` but never
+   turned the FILL off, so it inherited `EdenTheme`'s `inputDecorationTheme` — `filled: true`,
+   `fillColor: Colors.white` in light, `neutral[800]` in dark — and `_RenderDecoration` sizes that
+   fill from the decorator's CONTENT height (the ~20px line box) rather than from the 36px the
+   enclosing `SizedBox` forces on it. Measured from the captured frame at 1280x800, light, dpr 1:
+
+   | x | what is under it | pixels |
+   |---|---|---|
+   | 410 | the search icon — no decorator above the pill | `#e4e4e7` for y = 9..44 (the full 36px) |
+   | 813 | the hint paragraph | `#ffffff` for y = 11..28, then `#e4e4e7` for y = 30..44 |
+
+   The "~16px band below the text" is the part of the pill the overpaint did not reach. Fixed with
+   `filled: false` — the pill IS the fill. **Light theme only as a visual defect**: in dark,
+   `inputDecorationTheme.fillColor` and `surfaceContainerHighest` are both `neutral[800]`, so the
+   overpaint is the same colour as what it covers.
+   - **It was masking a real WCAG 1.4.3 failure.** With the overpaint gone the hint sits on the
+     pill's own fill, and `onSurfaceVariant` on `surfaceContainerHighest` is **3.81:1** at
+     fontSize 13 — which is exactly the token pair recorded here, now agreeing with the pixels.
+     `desktop-layout/default` and `desktop-layout/narrow` both went red in the light theme naming
+     it. The hint now takes `colorScheme.secondary` — this palette's muted neutral, `neutral[600]`
+     light and `neutral[400]` dark — for **6.09:1 light, 5.81:1 dark**. The dark value does not
+     move: dark `secondary` and dark `onSurfaceVariant` are the same `neutral[400]`.
+   - The recorded limit of the contrast rule stands as written (it takes the background from the
+     dominant colour inside the paragraph's own box), but this surface is no longer an instance of
+     it: the rule was reporting the white it was genuinely painted on.
+   - Both baselines are invalidated again by this — the pill's appearance changes materially in
+     the light theme.
 
 ### Notes
 

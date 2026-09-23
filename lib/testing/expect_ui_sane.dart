@@ -662,14 +662,20 @@ const double _epsilon = 0.01;
 // node's rect.
 //
 // KNOWN LIMIT, recorded rather than fixed: the background is the dominant
-// colour inside the paragraph's OWN box, which is the wrong surface when a
-// paragraph does not actually sit on the component it belongs to. The desktop
-// top bar's search hint is exactly that case — its field's layout rect is the
-// pill's full 36px, but in the captured frame the paragraph sits on the bar's
-// white surface with the pill's fill as a band below it, so the rule measures
-// 4.83:1 where the token pair is 3.81:1. It reports the pixels, which is the
-// honest answer for a rule that reads pixels; the discrepancy is a layout
-// question, and it is recorded in the CHANGELOG as one.
+// colour inside the paragraph's OWN box, so a paragraph that does not sit on
+// the component it visually belongs to is measured against whatever it does
+// sit on.
+//
+// THE ONE CANDIDATE INSTANCE TURNED OUT TO BE A REAL DEFECT, NOT A LIMIT.
+// The desktop top bar's search hint was reported at 4.83:1 where its token
+// pair against the pill is 3.81:1, and that was recorded here as this limit
+// biting. It was not: the field was inheriting `filled: true` from
+// `EdenTheme`'s `inputDecorationTheme` and painting an opaque white rectangle
+// over the pill, so white WAS the surface the glyph was painted on and the
+// rule was right. Fixed in `_TopBar`; pinned by
+// `test/ui_oracle/topbar_search_pill_paint_test.dart`. When this rule and a
+// token pair disagree, the frame is the thing to go and look at — the
+// disagreement is evidence about the widget, not only about the rule.
 //
 // KNOWN LIMIT, recorded rather than fixed: a `Text` whose ink cannot be
 // resolved from its style — `TextStyle.color` null with no `DefaultTextStyle`
