@@ -331,4 +331,92 @@ void main() {
       )),
     );
   });
+  // ── Case 12: THE SOURCE-TO-ARTIFACT LOCK ────────────────────────────────
+  // Cases 2 and 6-8 lock the catalogue to the GENERATOR and the generator to
+  // the FRONT MATTER. Neither reads the prose, so a rule stated only in a doc
+  // body — which is how nine of the ten docs state every rule they have — can
+  // be absent from `design/patterns.json` with every test green. That is the
+  // defect class this branch exists to remove, so this case compares the
+  // COMMITTED JSON against the DOC BODIES and nothing in between: no front
+  // matter, no generator, no regeneration.
+  test(
+      'case 12: the committed catalogue carries every `must_not:` rule the '
+      'doc bodies state', () {
+    final root = _repoRoot();
+    final decoded =
+        jsonDecode(File('$root/$kCataloguePath').readAsStringSync()) as Map;
+    final entries =
+        (decoded['patterns']! as List).cast<Map<String, Object?>>();
+
+    final complaints = <String>[];
+    var stated = 0;
+    var carried = 0;
+
+    for (final file in patternFiles(root)) {
+      final fileName = file.uri.pathSegments.last;
+      final stem = fileName.substring(0, fileName.length - 3);
+      final source = file.readAsStringSync();
+      final split = splitFrontMatter(source);
+      final body = split == null ? source : split.$2;
+
+      // The id is locked to the file stem (`id.replaceAll('/', '-') == stem`),
+      // so the entry can be found without reading the front matter at all.
+      final matches = entries
+          .where((e) => (e['id']! as String).replaceAll('/', '-') == stem)
+          .toList();
+      if (matches.length != 1) {
+        complaints.add('$fileName: ${matches.length} catalogue entries whose '
+            'id flattens to "$stem" — expected exactly one.');
+        continue;
+      }
+      final entry = matches.single;
+
+      final bodyTerms = mustNotTermsIn(body).toSet();
+      final inCatalogue = <String>{
+        for (final key in const <String>['must_not', 'must_not_scoped'])
+          ...((entry[key] as List?) ?? const <Object?>[]).cast<String>(),
+      };
+      stated += bodyTerms.length;
+      carried += inCatalogue.intersection(bodyTerms).length;
+
+      final dropped = bodyTerms.difference(inCatalogue);
+      if (dropped.isNotEmpty) {
+        complaints.add('$fileName states ${dropped.length} rule(s) the '
+            'catalogue drops: ${(dropped.toList()..sort()).map(jsonEncode).join(", ")}');
+      }
+      final phantom = inCatalogue.difference(bodyTerms);
+      if (phantom.isNotEmpty) {
+        complaints.add('$fileName: the catalogue carries '
+            '${(phantom.toList()..sort()).map(jsonEncode).join(", ")}, which the '
+            'doc body never states as `must_not: <term>`');
+      }
+    }
+
+    if (complaints.isNotEmpty) {
+      fail('$kCataloguePath is LOSSY against design/patterns/: it carries '
+          '$carried of the $stated `must_not:` rules the doc bodies state.\n'
+          '  ${complaints.join("\n  ")}\n'
+          'The prose is the single source of truth. Regenerate with: '
+          '$kRegenerateCommand');
+    }
+  });
+
+  // ── Case 13: a rule the docs state is a rule some pattern INHERITS ───────
+  // Case 12 alone is satisfiable by a catalogue that files every rule as
+  // scoped. The partition has to keep meaning something, so at least one
+  // pattern must still carry an unconditional `must_not`.
+  test('case 13: the partition is not collapsed — some pattern still inherits',
+      () {
+    final root = _repoRoot();
+    final decoded =
+        jsonDecode(File('$root/$kCataloguePath').readAsStringSync()) as Map;
+    final entries =
+        (decoded['patterns']! as List).cast<Map<String, Object?>>();
+    expect(
+      entries.any((e) => ((e['must_not'] as List?) ?? const []).isNotEmpty),
+      isTrue,
+      reason: 'every rule in the catalogue is filed as condition-scoped, so '
+          'no control inherits anything and PAT002 can never fire.',
+    );
+  });
 }
