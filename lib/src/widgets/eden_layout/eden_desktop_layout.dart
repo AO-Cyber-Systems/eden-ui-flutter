@@ -577,6 +577,17 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
 // Sidebar header
 // ---------------------------------------------------------------------------
 
+/// Hit area of the sidebar collapse/expand toggle.
+///
+/// The GLYPH stays 20px; this is the box around it that actually receives the
+/// click. A bare `Icon(size: 20)` inside a `GestureDetector` gives a 20x20 hit
+/// target — under even WCAG 2.5.8 Target Size (Minimum)'s 24x24 pointer floor,
+/// so it is undersized on a mouse-driven rail, not only under touch guidance.
+///
+/// 44 rather than 24: the header is already 56px tall, so the larger box costs
+/// no layout at all, and it clears WCAG 2.5.5 Target Size (Enhanced) as well.
+const double _kSidebarToggleHitSize = 44;
+
 class _SidebarHeader extends StatelessWidget {
   const _SidebarHeader({
     this.logo,
@@ -628,8 +639,18 @@ class _SidebarHeader extends StatelessWidget {
               button: true,
               label: 'Collapse sidebar',
               child: GestureDetector(
+                // Without `opaque` the 44x44 box is decoration: the padding
+                // around the glyph is transparent, does not hit-test, and the
+                // real target stays 20x20 while the semantics rect claims 44.
+                // The collapsed variant above already carries this; the
+                // expanded one did not.
+                behavior: HitTestBehavior.opaque,
                 onTap: onToggle,
-                child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                child: SizedBox(
+                  width: _kSidebarToggleHitSize,
+                  height: _kSidebarToggleHitSize,
+                  child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                ),
               ),
             ),
           ],
