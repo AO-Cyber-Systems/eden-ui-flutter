@@ -49,6 +49,10 @@ import 'semantics_geometry.dart';
 ///    consumer screens possible without editing the screens.
 /// 4. **One tap action per control.** A control that declares `tap` on its own
 ///    node AND again on a non-identified descendant fires twice.
+/// 5. **Accessibility guidelines.** `androidTapTargetGuideline` (48px),
+///    `iOSTapTargetGuideline` (44px), `labeledTapTargetGuideline` and
+///    `textContrastGuideline`. Each failure is folded into the same aggregated
+///    report, prefixed with the guideline's name.
 ///
 /// Violations are AGGREGATED: one run lists everything wrong with the surface,
 /// so a consumer fixing a screen does not play whack-a-mole.
@@ -83,6 +87,7 @@ Future<void> expectUiSane(
     violations.addAll(_viewportViolations(tester, nodes));
     violations.addAll(_overlapViolations(nodes, allowOverlap));
     violations.addAll(_tapRouteViolations(tester));
+    violations.addAll(await _guidelineViolations(tester));
   } finally {
     handle.dispose();
   }
@@ -144,6 +149,64 @@ List<String> _overflowingCreatorChains(WidgetTester tester) {
 
   tester.binding.rootElement?.visitChildren(visit);
   return byRenderObject.values.toList();
+}
+
+/// The four flutter_test accessibility guidelines this oracle enforces.
+///
+/// GOTCHA: the Android floor is 48 and the iOS floor is 44. Both are checked,
+/// deliberately — a 46px target is a real defect on Android, and tuning a
+/// fixture to sit between the two floors would hide it.
+///
+/// GOTCHA: `textContrastGuideline` silently PASSES on a region it cannot
+/// resolve a background for (a transparent or single-colour area). A
+/// contrast fixture must use opaque colours or the check proves nothing.
+const List<AccessibilityGuideline> _guidelines = <AccessibilityGuideline>[
+  androidTapTargetGuideline,
+  iOSTapTargetGuideline,
+  labeledTapTargetGuideline,
+  textContrastGuideline,
+];
+
+/// Runs the guideline matchers and folds each failure into the SAME aggregated
+/// violation list as the geometry checks, prefixed with the guideline's name.
+Future<List<String>> _guidelineViolations(WidgetTester tester) async {
+  final List<String> out = <String>[];
+  for (final AccessibilityGuideline guideline in _guidelines) {
+    try {
+      await expectLater(tester, meetsGuideline(guideline));
+    } on TestFailure catch (failure) {
+      out.add('${guideline.description}: ${failure.message}');
+    }
+  }
+
+  // KNOWN LIMITATION — see 23-02-SUMMARY.md "Issues Encountered".
+  // `textContrastGuideline` captures the rendered image through
+  // `tester.runAsync`, which lets futures that were ALREADY PENDING before
+  // expectUiSane was called finally run. `EdenTheme` resolves its type scale
+  // through google_fonts, which fires an HTTP fetch at theme-construction
+  // time; in a widget test that request can never succeed, and the resulting
+  // UNCAUGHT ASYNC error completes the test with an error directly — it never
+  // reaches `tester.takeException()`, so this helper cannot swallow it.
+  //
+  // Consequence: on a surface pumped with EdenTheme in an environment where
+  // the Outfit font is not bundled as an asset, expectUiSane fails with a
+  // gstatic.com fetch error rather than a verdict about the surface. The fix
+  // belongs in the test environment (bundle the font, or stub the fetch in
+  // `test/flutter_test_config.dart`), not here. Everything below the exception
+  // check still works; only the guideline phase is affected.
+  //
+  // Anything the guideline phase DID route through the pending-exception
+  // channel is reported here rather than discarded.
+  Object? provoked = tester.takeException();
+  while (provoked != null) {
+    out.add(
+      'an exception escaped while evaluating accessibility guidelines: '
+      '$provoked',
+    );
+    provoked = tester.takeException();
+  }
+
+  return out;
 }
 
 List<String> _viewportViolations(
