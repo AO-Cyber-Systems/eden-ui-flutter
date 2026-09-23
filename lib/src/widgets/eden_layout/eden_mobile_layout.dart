@@ -363,12 +363,22 @@ class EdenMobileLayout extends StatelessWidget {
                     const SizedBox(height: EdenSpacing.space4),
                     Row(
                       children: [
+                        // MEASURED. `primary` at 15% over the drawer's
+                        // surface composites to #F4EEE1, and the gold
+                        // initials on it are 1.91:1 at fontSize 13 — a third
+                        // instance of the same gold-on-near-white defect,
+                        // found the moment the drawer was first rendered
+                        // under the oracle. `primaryContainer` /
+                        // `onPrimaryContainer` is the token PAIR that already
+                        // exists for exactly this job: 6.40:1, and it is
+                        // 6.40:1 in the dark theme too because the pair
+                        // inverts together.
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                          backgroundColor: theme.colorScheme.primaryContainer,
                           child: user!.initials != null
-                              ? Text(user!.initials!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.colorScheme.primary))
-                              : Icon(Icons.person, size: 20, color: theme.colorScheme.primary),
+                              ? Text(user!.initials!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.colorScheme.onPrimaryContainer))
+                              : Icon(Icons.person, size: 20, color: theme.colorScheme.onPrimaryContainer),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -505,16 +515,48 @@ class EdenMobileLayout extends StatelessWidget {
                     Navigator.pop(ctx);
                     onNavChanged(item.id);
                   },
+                  // THE SAME SELECTED STATE AS THE BAR AND THE DRAWER.
+                  //
+                  // The selected row's title and glyph were
+                  // `colorScheme.primary` — the brand gold — on the sheet's
+                  // own surface (Material 3's `surfaceContainerLow`,
+                  // neutral[50] #FAFAFA light): 2.11:1 at the ListTile's
+                  // fontSize 16, against 4.5:1. The same defect as the bar's
+                  // 2.20:1 label, in the same file, and equally invisible —
+                  // nothing in the suite had ever opened this sheet.
+                  //
+                  //   light  title gold #D4A853 on the sheet  2.11:1  FAILED
+                  //          title onSurface neutral[900]    16.97:1
+                  //          pill fill gold on the sheet      2.11:1  alone
+                  //          pill rim onPrimaryContainer      7.14:1  clears
+                  //          icon neutral[900] on the fill    8.04:1
+                  //   dark   title gold[400] on the sheet     7.61:1  passed
+                  //          title onSurface neutral[100]    16.12:1
+                  //          pill rim onPrimaryContainer     15.21:1
+                  //
+                  // The title colour is set EXPLICITLY in both states rather
+                  // than left null for ListTile to inherit: a colour that is
+                  // not written down cannot be held to a floor by a test.
                   defaultRenderer: () => ListTile(
-                    leading: Icon(
-                      item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
-                      color: item.id == selectedId ? theme.colorScheme.primary : null,
+                    // Insets: 8 horizontal / 4 vertical makes the pill 40x32
+                    // around ListTile's 24px glyph — inside the 40px leading
+                    // slot, and 24px clear of the title.
+                    leading: _NavSelectionIndicator(
+                      isSelected: item.id == selectedId,
+                      inset:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      child: Icon(
+                        item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
+                        color: item.id == selectedId
+                            ? _NavSelectionIndicator.selectedGlyph
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     title: Text(
                       item.label,
                       style: TextStyle(
                         fontWeight: item.id == selectedId ? FontWeight.w600 : FontWeight.w500,
-                        color: item.id == selectedId ? theme.colorScheme.primary : null,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     trailing: item.badge != null
@@ -524,7 +566,15 @@ class EdenMobileLayout extends StatelessWidget {
                               color: theme.colorScheme.primary,
                               borderRadius: EdenRadii.borderRadiusFull,
                             ),
-                            child: Text(item.badge!, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+                            // Colors.white on gold was 2.20:1 light / 2.33:1
+                            // dark at fontSize 11. Same near-black glyph as
+                            // the indicator: 8.04:1 and 7.61:1.
+                            child: Text(item.badge!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: _NavSelectionIndicator.selectedGlyph,
+                                )),
                           )
                         : null,
                     onTap: () {
@@ -613,7 +663,8 @@ class _BottomItem extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                // The indicator is POSITIONED, so it paints around the glyph
+                // The indicator is POSITIONED inside
+                // [_NavSelectionIndicator], so it paints around the glyph
                 // without taking part in layout.
                 //
                 // MEASURED, not stylistic: the bar is a fixed 60px and the
@@ -630,29 +681,16 @@ class _BottomItem extends StatelessWidget {
                 // Insets: 3 vertical keeps the pill 1px clear of the label's
                 // box across the 4px gap; 13 horizontal makes it 48 wide,
                 // which fits five tabs on a 320px viewport.
-                if (isSelected)
-                  Positioned(
-                    left: -13,
-                    right: -13,
-                    top: -3,
-                    bottom: -3,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        border: Border.all(
-                          color: theme.colorScheme.onPrimaryContainer,
-                          width: 1.5,
-                        ),
-                        borderRadius: EdenRadii.borderRadiusFull,
-                      ),
-                    ),
+                _NavSelectionIndicator(
+                  isSelected: isSelected,
+                  inset: const EdgeInsets.symmetric(horizontal: 13, vertical: 3),
+                  child: Icon(
+                    isSelected ? (item.activeIcon ?? item.icon) : item.icon,
+                    size: 22,
+                    color: isSelected
+                        ? _NavSelectionIndicator.selectedGlyph
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
-                Icon(
-                  isSelected ? (item.activeIcon ?? item.icon) : item.icon,
-                  size: 22,
-                  color: isSelected
-                      ? EdenColors.neutral[900]
-                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 if (item.badge != null)
                   Positioned(
@@ -701,22 +739,66 @@ class _DrawerTile extends StatelessWidget {
     // No Semantics here — see the note in _BottomItem. The identifier, the
     // button/label/selected annotations and the tap action are published once
     // by EdenMobileLayout._navRow, outside whatever rendered this row.
+    //
+    // THE SAME SELECTED STATE AS THE BAR, for the same measured reason.
+    //
+    // This tile used to say "selected" with `colorScheme.primary` on BOTH the
+    // glyph and the label, over a `primary.withValues(alpha: 0.1)` band. On
+    // the drawer's own surface (Material 3's `surfaceContainerLow`,
+    // neutral[50] #FAFAFA in the light theme) that band composites to
+    // #F6F2E9, and the gold label on it measures 1.97:1 at fontSize 14
+    // against WCAG 1.4.3's 4.5:1 floor — the identical failure the bottom bar
+    // had at 2.20:1, in the same widget, unchanged when the bar was fixed.
+    //
+    // No test could see it: `mobile-layout/default` pumps with the drawer
+    // CLOSED, so the oracle never rendered this row. That hole is closed by
+    // test/ui_oracle/mobile_shell_open_surfaces_test.dart, which opens the
+    // drawer before asserting.
+    //
+    //   light  label gold #D4A853 on the band  1.97:1  FAILED 1.4.3
+    //          label onSurface neutral[900]   15.86:1  (no band: 16.97:1)
+    //          pill fill gold on drawer        2.11:1  fails alone
+    //          pill rim onPrimaryContainer     7.14:1  clears 1.4.11
+    //          icon neutral[900] on the fill   8.04:1
+    //   dark   label gold[400] on the band     6.49:1  (passed already)
+    //          label onSurface neutral[100]   16.12:1
+    //          pill fill gold[400] on drawer   7.61:1
+    //          pill rim onPrimaryContainer    15.21:1
+    //          icon neutral[900] on the fill   7.61:1
+    //
+    // THE BAND IS GONE, deliberately. At 1.07:1 against the drawer it was
+    // never perceivable, and it is the brand at 10% — which is exactly the
+    // dilution the bar's ruling rejected. The state is carried by the same
+    // indicator the bar uses, at full saturation, with the rim that makes it
+    // conformant. One selection language, three surfaces.
+    //
+    // HEIGHT 48, not 44. Once the drawer was actually rendered under the
+    // oracle, every row failed `androidTapTargetGuideline` at 288x46 (44 plus
+    // the 2px margin) against the 48x48 floor the mobile shell declares by
+    // being a TOUCH surface. 48 + 2 margin = 50.
     return GestureDetector(
         onTap: onTap,
         child: Container(
-          height: 44,
+          height: 48,
           margin: const EdgeInsets.only(bottom: 2),
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
-            borderRadius: EdenRadii.borderRadiusMd,
-          ),
           child: Row(
           children: [
-            Icon(
-              isSelected ? (item.activeIcon ?? item.icon) : item.icon,
-              size: 20,
-              color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+            // Insets: 10 horizontal / 5 vertical makes the pill 40x30 around
+            // the 20px glyph. It stays 4px clear of the tile's padding box on
+            // the left and 4px clear of the label across the 14px gap, and
+            // 9px clear of the row above and below — so it cannot collide
+            // with an adjacent row's target.
+            _NavSelectionIndicator(
+              isSelected: isSelected,
+              inset: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Icon(
+                isSelected ? (item.activeIcon ?? item.icon) : item.icon,
+                size: 20,
+                color: isSelected
+                    ? _NavSelectionIndicator.selectedGlyph
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -725,7 +807,7 @@ class _DrawerTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ),
@@ -736,11 +818,108 @@ class _DrawerTile extends StatelessWidget {
                   color: theme.colorScheme.primary,
                   borderRadius: EdenRadii.borderRadiusFull,
                 ),
-                child: Text(item.badge!, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                // Was Colors.white on the gold fill: 2.20:1 light, 2.33:1
+                // dark, both failing 1.4.3 at fontSize 10. The badge takes the
+                // same near-black glyph the indicator does — 8.04:1 and
+                // 7.61:1 — because it is the same problem: text on brand gold.
+                child: Text(item.badge!,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _NavSelectionIndicator.selectedGlyph,
+                    )),
               ),
           ],
         ),
       ),
       );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Selected-state indicator — ONE definition, three surfaces
+// ---------------------------------------------------------------------------
+
+/// Paints the mobile shell's "this row is selected" indicator behind [child].
+///
+/// WHY THIS IS ONE WIDGET AND NOT THREE COPIES. The bottom bar, the drawer and
+/// the "More" sheet are three renderings of the same nav row, and for a while
+/// they DISAGREED about what selected looks like: the bar was fixed to move
+/// the brand gold off the label and onto an indicator (c828c87) while
+/// `_DrawerTile` and the sheet's `ListTile` kept the gold on the text at
+/// 1.97:1 and 2.11:1. Two selection languages in one app, and the second one
+/// unobservable because no test ever opened those surfaces. A single widget is
+/// what stops them drifting apart again: a change to the indicator is a change
+/// everywhere, and a surface that opts out has to say so at its call site.
+///
+/// The pill is [Positioned] with NEGATIVE insets inside a [Clip.none] stack,
+/// so it paints around the glyph without taking part in layout. That is
+/// measured, not stylistic — an indicator that sized the bottom bar's column
+/// overflowed the bar's fixed 60px by 7px (see `_BottomItem`). [inset] is how
+/// far the pill extends beyond the glyph on each side, so each surface sizes
+/// it to its own glyph without duplicating the mechanism.
+///
+/// The rim is load-bearing. WCAG 1.4.11 asks 3:1 for the visual information
+/// that identifies a component's state, against the ADJACENT colour, and in
+/// the light theme the gold fill never clears it (2.11:1 on the drawer,
+/// 2.20:1 on the bar). `onPrimaryContainer` does, for every EdenColors preset
+/// and in both themes — gold 7.14, blue 8.88, emerald 8.53, purple 9.28, red
+/// 8.46, slate 15.21 on the light drawer; 12.5-13.8 across the dark one.
+class _NavSelectionIndicator extends StatelessWidget {
+  const _NavSelectionIndicator({
+    required this.isSelected,
+    required this.inset,
+    required this.child,
+  });
+
+  /// Whether to paint the indicator at all. An indicator on every row
+  /// indicates nothing, so this is never defaulted.
+  final bool isSelected;
+
+  /// How far the pill extends BEYOND [child] on each side, in logical pixels.
+  final EdgeInsets inset;
+
+  /// The glyph the indicator sits behind. Sizes the stack; the pill does not.
+  final Widget child;
+
+  /// The colour a glyph takes when it sits ON the indicator's fill.
+  ///
+  /// `EdenColors.neutral[900]` and NOT `colorScheme.onSurface`: onSurface
+  /// inverts with the theme, and neutral[100] on gold[400] is 2.12:1 — the
+  /// dark theme would gain a new failure. A near-black glyph clears 3:1 on
+  /// every preset's fill (worst case slate at 3.72:1) and 4.5:1 as text on
+  /// the badge (worst case slate, still above the floor).
+  ///
+  /// One getter rather than a literal at each site: the bar, the drawer tile,
+  /// the sheet row and both badges must move together or they are back to
+  /// disagreeing.
+  static Color get selectedGlyph => EdenColors.neutral[900]!;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        if (isSelected)
+          Positioned(
+            left: -inset.left,
+            right: -inset.right,
+            top: -inset.top,
+            bottom: -inset.bottom,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                border: Border.all(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  width: 1.5,
+                ),
+                borderRadius: EdenRadii.borderRadiusFull,
+              ),
+            ),
+          ),
+        child,
+      ],
+    );
   }
 }
