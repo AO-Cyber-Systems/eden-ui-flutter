@@ -438,13 +438,13 @@ story, `expectUiSane` shipped for 600+ consumer screen tests, a web probe bridge
 block, and a shell API consumers compose instead of flag (folding in issue #33).
 
 **Depends on:** Objective 22
-**Jobs:** 7/12 jobs executed
+**Jobs:** 8/12 jobs executed
 
 Jobs:
 - [x] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1) — COMPLETE 2026-09-22 (7 cases green, container:true bug pinned)
 - [ ] 23-02-TRD.md — expectUiSane at package:eden_ui_flutter/testing.dart, five broken fixtures (wave 2)
 - [ ] 23-03-TRD.md — Story harness: registry + test generators, goldens in CI only (wave 3)
-- [ ] 23-04-TRD.md — Story coverage ratchet: a floor that cannot fall (wave 4)
+- [x] 23-04-TRD.md — Story coverage ratchet: a floor that cannot fall (wave 4) — COMPLETE 2026-09-22 (10 cases green; committed floor 11/364; differential control watched floor+1 to exit 1 naming uncovered exports, restored)
 - [ ] 23-05-TRD.md — Nav stories: ten shell states, the baseline 23-06 is proved against (wave 4)
 - [ ] 23-06-TRD.md — Shell API itemBuilder/sectionBuilder + issue #33 selectableBody opt-in (wave 5)
 - [x] 23-07-TRD.md — Probe bridge: window.__edenProbe behind EDEN_PROBE + bundle guard (wave 1) — COMPLETE 2026-09-22 (12 cases green; real release build measured production 0 / probe 1)
