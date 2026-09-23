@@ -1,15 +1,55 @@
 # Changelog
 
-## Unreleased
+## 2.2.0
 
-Password-manager autofill and universal copy/paste. Consumer setup guide:
+Password-manager autofill and universal copy/paste, plus a UI correctness oracle, a co-located
+story catalogue and a web runtime probe. Consumer setup guide for the first half:
 [docs/autofill-and-selection.md](docs/autofill-and-selection.md).
 
-No version number is claimed here. `release.yml` tags from `pubspec.yaml`'s `version:` field,
-which this change deliberately leaves at `2.0.0` — picking the next number is a release decision,
-and coupling it to a floor raise would make a bisect ambiguous. Whoever cuts the release renames
-this heading and bumps the pubspec in the same commit. The deprecations below make it a minor,
-not a patch.
+**2.2.0, not 2.1.0.** `pubspec.yaml` read `2.0.0` up to this commit, but the tag `v2.1.0` already
+exists (at `e719691`, whose pubspec also reads `2.0.0` — so `release.yml`, which derives the tag
+from that field, cannot have cut it). `2.2.0` is the next value that is monotonic against the
+highest existing tag. The deprecations below make this a minor, not a patch.
+
+> **⚠️ Read "Known issues — not yet release-ready" at the end of this section before pinning.**
+> The accessibility oracle added here currently fails on the shell this package ships, and those
+> failures are real defects, not test noise.
+
+### Added — UI correctness oracle, story catalogue, probe
+
+- **`package:eden_ui_flutter/testing.dart`** — `Future<void> expectUiSane(WidgetTester tester,
+  {Set<String> allowOverlap})`. One `await` after a screen test's final pump checks: escaped
+  exceptions (including overflow), viewport containment, sibling semantics-rect disjointness, one
+  tap action per control, and the Material accessibility guidelines (tap-target size, tappable
+  label). Also exports `SemanticsGeometryNode`, `globalRectOf`, `identifiedNodes`, `rectsOverlap`.
+  Deliberately **not** exported from `eden_ui.dart` — it imports `package:flutter_test`, so it must
+  never reach a consumer's production graph. Import it from `test/` only.
+- **`package:eden_ui_flutter/probe.dart`** — `EdenProbe`, `kEdenProbe`, `EdenProbeScope`. A web
+  JS-interop bridge exposing `window.__edenProbe.{find,tree,settled,state}`. Compiled in ONLY under
+  `--dart-define=EDEN_PROBE=true`; tree-shaken out otherwise, enforced by the `probe-guard` CI job
+  (`tool/probe_guard.sh`). Also not exported from `eden_ui.dart`, so `dart:js_interop` never reaches
+  a consumer that does not ask for it.
+- **Composition slots on the layout shells** — `itemBuilder` and `sectionBuilder` on both
+  `EdenDesktopLayout` and `EdenMobileLayout`, with the typedefs `EdenNavItemBuilder`,
+  `EdenNavSectionBuilder` and the value type `EdenNavItemState`. Both are
+  `Widget? Function(...)`: **returning `null` declines the row**, and the built-in renderer runs
+  instead. That is what makes them additive — a consumer passing no builders gets byte-identical
+  rendering, and the existing layout tests pass unmodified. Existing flags (`expandable`,
+  `isCaption`, `isDivider`, `badge`) still render through the default builder.
+- **Story catalogue as a contract** — co-located `<widget>.stories.dart` files, a generated registry
+  (`tool/gen_stories.dart`) with a drift test that fails when a story is added without
+  regenerating, generated per-story golden (light + dark) and `expectUiSane` tests
+  (`tool/gen_story_tests.dart`), and a coverage floor (`tool/story_coverage.dart`,
+  `.story-coverage.json`).
+- **`design/patterns/`** — ten interaction-pattern documents (navigation shell, disclosure group,
+  section caption, list-detail, studio three-pane, density breakpoints, bulk-action bar,
+  confirm-destructive dialog, form validation, empty/error/outage/loading states), each with seven
+  fixed headings, against a closed `must_not` vocabulary at `design/must_not_vocabulary.json`.
+- **`DESIGN.md`** — token tables generated from `lib/src/tokens/` by `tool/gen_design_md.dart` and
+  CI-diffed, so the document cannot drift from the tokens.
+- **`custom_lint` rules** (`lints/`) — `no_raw_color`, `text_style_needs_family`,
+  `no_magic_spacing`. Shipped **scoped to `lib/src/widgets/eden_layout/**`**; the unscoped
+  repo-wide debt is measured by `lints/bin/measure_debt.dart` and is not yet enforced.
 
 ### Changed
 
@@ -140,6 +180,51 @@ consumer app. Android autofill requires API 26+.
 
 Full list, including what is untested rather than broken:
 [docs/autofill-and-selection.md](docs/autofill-and-selection.md) section 8.
+
+### Known issues — not yet release-ready
+
+**This release is not shippable as-is, and this section is the reason.** `flutter test` on this
+tree is **4687 passed / 27 skipped / 22 FAILED**. The 22 failures are not flakes and must not be
+suppressed — the oracle that produces them is the point of this work, and it is reporting real
+defects in the shell this package ships.
+
+1. **22 generated `expectUiSane` tests fail on the shipped shell.** The accessibility oracle found
+   genuine defects in `EdenDesktopLayout`:
+   - The desktop rail's nav rows are **42px tall**, below both the Android **48dp** and the iOS
+     **44pt** tap-target floors (`expected tap target size of at least Size(48.0, 48.0), but found
+     Size(235.0, 42.0)`). This is **not** fixable by enlarging the hit area alone: at a 42px row
+     pitch a 48px tap rect makes adjacent rows' semantics rects overlap, which the oracle's
+     disjointness rule then flags instead. **Rail density versus touch-target compliance is a real
+     design decision, and it affects two shipped apps (eden-biz and aodex).** It needs a design
+     ruling before it needs code.
+   - The **"Collapse sidebar" control is 20x20** (`found Size(20.0, 20.0)`) — a bare sized `Icon`
+     inside a `GestureDetector` with no enlarged hit target.
+2. **Golden baselines have never been generated, anywhere.** 22 golden tests exist; all of them
+   **skip locally** (goldens are Linux/CI-only — see Notes below), and the CI `stories` job owns
+   generating them. **They must NOT be blessed until item 1 is resolved**, or the baselines bake
+   the broken geometry in as the expected appearance and the defect becomes permanent.
+3. **`EdenMobileLayout` has no working accessibility gate.** Its `expectUiSane` tests die before
+   any assertion runs: constructing an `EdenTheme` makes `google_fonts` start a network fetch for
+   `Outfit-ExtraBold`, and the uncaught async error completes the test directly — it never reaches
+   `takeException()`, so it cannot be drained. `GoogleFonts.config.allowRuntimeFetching = false`
+   does not help (the font is not bundled as an asset either). The same root cause makes
+   `textContrastGuideline` — and any image-based check — **unusable on every `EdenTheme` surface**.
+   This is documented as a KNOWN LIMITATION in `expectUiSane`'s dartdoc. Geometry and structure
+   checks are unaffected and do work.
+4. **The story coverage ratchet is currently blind to co-located stories.** Eleven real stories
+   were added in this release and `.story-coverage.json` did not move off `{exported_widgets: 364,
+   with_story: 11}`. The line-based export derivation collapses the whole `eden_layout` group to a
+   single synthetic `EdenLayoutExports` name, so those stories bought zero measured coverage. The
+   floor therefore holds, but it is not yet measuring what it claims to measure. Fixing it needs
+   `_exports.dart` resolution, which will also move `exported_widgets` off 364.
+
+### Notes
+
+- Goldens are generated and compared in **CI (Linux) only**. Never run `--update-goldens` from a
+  workstation — local Flutter here is 3.41.9 while CI pins 3.47.4, so a locally blessed baseline is
+  pure churn. eden-ui-flutter#32.
+- `testWidgets` takes `bool? skip`, not a reason string. The golden skip policy is `kGoldenSkip`
+  (a bool) plus `kGoldenSkipSuffix` appended to the test **name** so the reason still prints.
 
 ## 2.0.0
 

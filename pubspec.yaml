@@ -1,6 +1,6 @@
 name: eden_ui_flutter
 description: Eden UI component library for Flutter — ported from the Eden UI Rails framework.
-version: 2.0.0
+version: 2.2.0
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
