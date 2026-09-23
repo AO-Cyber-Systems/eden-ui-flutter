@@ -1,6 +1,4 @@
-// The two nav surfaces whose text the oracle could not see until the
-// painted-text contrast walk landed: the BOTTOM BAR's badge and the DESKTOP
-// RAIL.
+// The DESKTOP RAIL, held to the oracle for the first time.
 //
 // WHY THIS FILE EXISTS. `textContrastGuideline` resolves a node's text with
 // `find.text(<the node's label>)`. A nav row publishes ONE node carrying the
@@ -9,19 +7,36 @@
 // this library. Three badge defects on this branch were found by hand for
 // exactly that reason.
 //
-// The two surfaces below are the ones that were still carrying the failure
-// when the instrument was fixed:
+// The rail is the FOURTH rendering of the nav row — bar, drawer, "More"
+// sheet, rail — and the first three all carried the gold-on-white failure. It
+// had never been audited. It was carrying three defects, every one of them
+// green on a suite of 4778 tests:
 //
-//   bottom bar  badge "3"  Colors.white on colorScheme.error   3.76:1  (9px)
-//   rail        badge "3"  Colors.white on colorScheme.primary 2.20:1  (10px)
-//   rail        selected label, brand gold on the 10% band     2.05:1  (13px)
-//
-// Every one of them is BELOW WCAG 1.4.3's 4.5:1 floor, and every one of them
-// went green on a suite of 4778 tests.
+//   rail        badge "3"  Colors.white on colorScheme.primary 2.20:1 light
+//                                                              1.85:1 dark
+//   rail        selected label, brand gold on the 10% band     2.05:1 light
+//   rail footer user initials "AL", gold on a 15% gold circle  1.98:1 light
 //
 // These are ORACLE assertions, not computed cases: the point of the branch is
 // that a badge whose text fails contrast is named by `expectUiSane` on a real
 // surface, with no per-case arithmetic to keep in sync.
+//
+// THE BOTTOM BAR IS NOT RE-PUMPED HERE. Its badge — Colors.white on
+// colorScheme.error, 3.76:1 at 9px in both themes — is held by the generated
+// `mobile-layout/default` story, which pumps the real shell at 390px in both
+// themes and is where the oracle named it. A hand-built four-item bar was
+// tried here first and dropped: it trips a PRE-EXISTING artifact of the STOCK
+// `textContrastGuideline` that has nothing to do with badges. That guideline
+// partitions a region's pixels at their mean HSL lightness and takes the MODE
+// of each half, and for an 11px light-grey label on the dark theme's
+// near-black bar the antialiased stroke shades outnumber the glyph's core
+// pixels — so the "light" mode comes back as a blend (#77777E) and the label
+// reports 3.99:1 where its colour pair is 6.91:1. It is order-dependent
+// (green when that test runs first, red once a sibling test has warmed
+// google_fonts and the real Eden face is in use), it reproduces with this
+// file's product changes reverted, and it is a property of stock Flutter's
+// algorithm on thin small text, not of the bar. Recorded rather than tuned
+// around.
 library;
 
 import 'package:eden_ui_flutter/eden_ui.dart';
@@ -30,20 +45,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../test_support/ui_oracle/wrap.dart';
-
-/// Four destinations, so nothing overflows into a "More" sheet and the badged
-/// row is rendered by the BOTTOM BAR itself — the surface under assertion.
-const List<EdenNavItem> _barItems = <EdenNavItem>[
-  EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
-  EdenNavItem(
-      id: 'orders',
-      label: 'Orders',
-      icon: Icons.receipt_long_outlined,
-      badge: '3'),
-  EdenNavItem(
-      id: 'reports', label: 'Reports', icon: Icons.insert_chart_outlined),
-  EdenNavItem(id: 'settings', label: 'Settings', icon: Icons.settings_outlined),
-];
 
 /// The rail's own set: the SELECTED row also carries the badge, so the
 /// selected-state colours and the badge colours are both on screen at once.
@@ -65,28 +66,6 @@ void main() {
     ('light', ThemeMode.light),
     ('dark', ThemeMode.dark),
   ]) {
-    testWidgets('the bottom bar\'s BADGE is sane ($mode)',
-        (WidgetTester tester) async {
-      await wrap(
-        tester,
-        EdenMobileLayout(
-          navItems: _barItems,
-          selectedId: 'home',
-          onNavChanged: (_) {},
-          topBar: const EdenTopBarConfig(title: 'Orders'),
-          user: _user,
-          body: const SizedBox.shrink(),
-        ),
-        width: 390,
-        themeMode: themeMode,
-      );
-      expect(find.text('3'), findsOneWidget,
-          reason: 'the badge must actually be rendered — an assertion against '
-              'a bar with no badge is the hole this file closes.');
-
-      await expectUiSane(tester, inputModality: EdenInputModality.touch);
-    });
-
     testWidgets('the desktop RAIL is sane ($mode)',
         (WidgetTester tester) async {
       await wrap(
