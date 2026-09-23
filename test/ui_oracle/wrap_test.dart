@@ -41,5 +41,23 @@ void main() {
 
       expect(resolved, Brightness.dark);
     });
+
+    testWidgets('case 3: themeMode.light resolves a light Theme', (
+      WidgetTester tester,
+    ) async {
+      late Brightness resolved;
+      await wrap(
+        tester,
+        Builder(
+          builder: (BuildContext context) {
+            resolved = Theme.of(context).brightness;
+            return const SizedBox(height: 40);
+          },
+        ),
+        themeMode: ThemeMode.light,
+      );
+
+      expect(resolved, Brightness.light);
+    });
   });
 }
