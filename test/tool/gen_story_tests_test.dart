@@ -32,8 +32,10 @@ void main() {
       for (final id in ['buttons/all', 'buttons/interactive']) {
         for (final theme in ['light', 'dark']) {
           expect(source, contains("testWidgets('$id — $theme — expectUiSane'"));
-          expect(source,
-              contains("testWidgets('\$id — \$theme — golden\\\$kGoldenSkipSuffix'"));
+          expect(
+              source,
+              contains(
+                  "testWidgets('$id — $theme — golden\$kGoldenSkipSuffix',"));
         }
       }
 
