@@ -172,8 +172,15 @@ class EdenMobileLayout extends StatelessWidget {
     return AppBar(
       leading: topBar!.leading ??
           Builder(
+            // `tooltip` is the semantic LABEL here, not decoration: without it
+            // this is a 56x56 tappable node with no name at all — a screen
+            // reader announces "button" and nothing else, and the drawer is
+            // the only route to every overflow destination. Caught by
+            // expectUiSane's tappable-label guideline the first time the
+            // mobile shell was pumped through the oracle (TRD 23-05 defect 3).
             builder: (ctx) => IconButton(
               icon: const Icon(Icons.menu),
+              tooltip: 'Open navigation menu',
               onPressed: () => Scaffold.of(ctx).openDrawer(),
             ),
           ),
