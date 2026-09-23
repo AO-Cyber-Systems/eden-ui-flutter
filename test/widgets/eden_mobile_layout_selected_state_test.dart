@@ -36,7 +36,11 @@ import '../../test_support/ui_oracle/wcag_contrast.dart';
 
 const List<EdenNavItem> _navItems = <EdenNavItem>[
   EdenNavItem(id: 'home', label: 'Home', icon: Icons.home),
-  EdenNavItem(id: 'orders', label: 'Orders', icon: Icons.receipt_long),
+  // Badged, so case 7 has a bar badge to measure. The bar's badge is the
+  // ERROR-token one — a different pair from the gold badges the drawer and
+  // the sheet carry.
+  EdenNavItem(
+      id: 'orders', label: 'Orders', icon: Icons.receipt_long, badge: '3'),
   EdenNavItem(id: 'reports', label: 'Reports', icon: Icons.bar_chart),
 ];
 
@@ -212,6 +216,70 @@ void main() {
           reason: 'the glyph sits ON the pill now, not on the bar. A near-'
               'white icon on gold[400] measures 2.12:1 in the dark theme, so '
               'inheriting onSurface here would have been a new failure.',
+        );
+      },
+    );
+
+    testWidgets(
+      'case 7 ($mode): the bar badge text clears 4.5:1 on its own fill',
+      (WidgetTester tester) async {
+        await _pump(tester, theme);
+        // The badge is the last decorated Container inside the selected tab's
+        // column — the indicator pill is the other one, and it comes first.
+        final Finder column = find
+            .ancestor(of: find.text(_selected), matching: find.byType(Column))
+            .first;
+        final Container badge = tester
+            .widgetList<Container>(
+              find.descendant(of: column, matching: find.byType(Container)),
+            )
+            .lastWhere((Container c) =>
+                c.decoration is BoxDecoration &&
+                (c.decoration! as BoxDecoration).color != null);
+        final Text text = tester.widget<Text>(
+          find.descendant(of: column, matching: find.text('3')),
+        );
+        expect(
+          wcagContrastRatio(
+            text.style!.color!,
+            (badge.decoration! as BoxDecoration).color!,
+          ),
+          greaterThanOrEqualTo(4.5),
+          reason: 'the bar badge was Colors.white on colorScheme.error — '
+              '3.76:1 in BOTH themes at fontSize 9, since #EF4444 is the error '
+              'token in each. A DIFFERENT token pair from the gold defect the '
+              'drawer and the sheet carried, and unreportable for the same '
+              'reason: the badge sits inside the row\'s ExcludeSemantics.',
+        );
+      },
+    );
+
+    testWidgets(
+      'case 7b ($mode): the bar badge FILL stays identifiable on the bar',
+      (WidgetTester tester) async {
+        await _pump(tester, theme);
+        final Finder column = find
+            .ancestor(of: find.text(_selected), matching: find.byType(Column))
+            .first;
+        final Container badge = tester
+            .widgetList<Container>(
+              find.descendant(of: column, matching: find.byType(Container)),
+            )
+            .lastWhere((Container c) =>
+                c.decoration is BoxDecoration &&
+                (c.decoration! as BoxDecoration).color != null);
+        // THE DIFFERENTIAL CONTROL for case 7. Fixing the text by darkening
+        // the FILL instead — red[700] #B91C1C would give white 6.47:1 — also
+        // satisfies case 7 and quietly breaks the badge's own 1.4.11 contrast
+        // against the dark theme's bar: 2.74:1 against neutral[900], where
+        // colorScheme.error is 4.71:1. This case is what stops that "fix",
+        // and it is why the remedy was the glyph and not the token.
+        expect(
+          wcagContrastRatio((badge.decoration! as BoxDecoration).color!, bar),
+          greaterThanOrEqualTo(3.0),
+          reason: 'a count nobody can find on the bar is not a count. '
+              'colorScheme.error measures 3.76:1 on the white bar and 4.71:1 '
+              'on the dark one.',
         );
       },
     );

@@ -5,6 +5,7 @@ import '../../tokens/spacing.dart';
 import '../eden_field_purpose.dart';
 import '../eden_selectable_region.dart';
 import 'layout_data.dart';
+import 'nav_ink.dart';
 
 /// Standard desktop/web layout with collapsible sidebar, top bar, and content area.
 ///
@@ -749,7 +750,13 @@ class _ExpandableNavHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fg = isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
+    // NOT colorScheme.primary when selected. The brand gold on the selected
+    // row's 10%-primary band measures 2.05:1 at fontSize 13 in the light
+    // theme — the same class of failure the bottom bar (2.20:1) and the
+    // drawer (1.97:1) were fixed for, unchanged here because nothing had
+    // audited the rail. Same ruling as those two: the brand moves OFF the
+    // text. onSurface on the band is 16.49:1 light, 13.72:1 dark.
+    final fg = theme.colorScheme.onSurface;
 
     // No Semantics here: the layout publishes exactly one node per row at the
     // emission point (_EdenDesktopLayoutState._navRow), which is what lets a
@@ -927,7 +934,11 @@ class _NavTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                    // See _ExpandableHeader: the selected label was brand gold
+                    // on the 10% band at 2.05:1 in the light theme. The state
+                    // is carried by the weight, the band and the brand-
+                    // coloured glyph; it is not carried by unreadable text.
+                    color: theme.colorScheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -957,9 +968,19 @@ class _Badge extends StatelessWidget {
         color: theme.colorScheme.primary,
         borderRadius: EdenRadii.borderRadiusFull,
       ),
+      // Was Colors.white on colorScheme.primary: 2.20:1 light, 2.33:1 dark,
+      // at fontSize 10 against WCAG 1.4.3's 4.5:1. The IDENTICAL defect the
+      // mobile drawer and the "More" sheet carried, in the FOURTH rendering
+      // of the same nav row — and the rail had never been audited, because
+      // until expectUiSane learned to measure painted text no instrument in
+      // the suite could see a badge at all. The same near-black ink the other
+      // three take: 8.04:1 and 7.61:1.
       child: Text(
         text,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+        style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: edenNavOnFillInk),
       ),
     );
   }
@@ -981,16 +1002,23 @@ class _UserTile extends StatelessWidget {
     final avatar = CircleAvatar(
       radius: collapsed ? 16 : 18,
       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+      // The initials were colorScheme.primary on this 15%-primary circle:
+      // 1.98:1 in the light theme at fontSize 12, against a 4.5:1 floor. The
+      // circle keeps the brand tint; the text does not, which is the same
+      // ruling the bar, the drawer and the sheet were given. onSurface on the
+      // tint is 15.89:1 light and 12.45:1 dark. The person glyph moves with
+      // it — at 1.98:1 it also failed 1.4.11's 3:1 for a meaningful icon.
       child: user.initials != null
           ? Text(
               user.initials!,
               style: TextStyle(
                 fontSize: collapsed ? 11 : 12,
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
+                color: theme.colorScheme.onSurface,
               ),
             )
-          : Icon(Icons.person, size: collapsed ? 16 : 18, color: theme.colorScheme.primary),
+          : Icon(Icons.person,
+              size: collapsed ? 16 : 18, color: theme.colorScheme.onSurface),
     );
 
     return Semantics(
@@ -1133,6 +1161,21 @@ class _TopBar extends StatelessWidget {
                                 searchPurpose.semantics.enableSuggestions,
                             decoration: InputDecoration(
                               hintText: config.searchHint,
+                              // OPEN QUESTION, recorded rather than changed.
+                              // As a TOKEN PAIR this hint is 3.81:1 —
+                              // onSurfaceVariant (neutral[500]) on the pill's
+                              // surfaceContainerHighest fill — which is below
+                              // 1.4.3's 4.5:1 at fontSize 13. As PIXELS it is
+                              // 4.83:1, because the frame the oracle captures
+                              // shows this paragraph sitting on the top bar's
+                              // white surface and the pill's fill as a ~16px
+                              // band that does not reach it, even though the
+                              // field's layout rect is the pill's full 36px.
+                              // Darkening the hint on the strength of the
+                              // token pair alone would be changing a colour
+                              // to satisfy arithmetic that the rendered frame
+                              // contradicts. The pill/text alignment is the
+                              // thing to settle first.
                               hintStyle: TextStyle(
                                   fontSize: 13,
                                   color: theme.colorScheme.onSurfaceVariant),

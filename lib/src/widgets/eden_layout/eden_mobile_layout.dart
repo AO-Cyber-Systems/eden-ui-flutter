@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_selectable_region.dart';
 import 'layout_data.dart';
+import 'nav_ink.dart';
 
 /// Standard mobile layout with app bar, bottom navigation, and drawer.
 ///
@@ -702,7 +702,27 @@ class _BottomItem extends StatelessWidget {
                         color: theme.colorScheme.error,
                         borderRadius: EdenRadii.borderRadiusFull,
                       ),
-                      child: Text(item.badge!, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                      // Was Colors.white on colorScheme.error: 3.76:1 in BOTH
+                      // themes (error is #EF4444 in each), below 1.4.3's
+                      // 4.5:1 at fontSize 9. A DIFFERENT token pair from the
+                      // gold defect the drawer and the sheet carried, and
+                      // invisible for the same reason: the badge sits inside
+                      // the row's ExcludeSemantics, so until expectUiSane
+                      // learned to measure painted text rather than labelled
+                      // semantics nodes, nothing in the suite could report it.
+                      //
+                      // The same near-black glyph the other two badges take.
+                      // The FILL is deliberately left alone: darkening it to
+                      // red[700] would clear 1.4.3 for white text and then
+                      // fail 1.4.11 against the dark theme's bar (2.74:1
+                      // against neutral[900], where #EF4444 is 4.71:1), and
+                      // colorScheme.error is a semantic token two apps read.
+                      child: Text(item.badge!,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: _NavSelectionIndicator.selectedGlyph,
+                          )),
                     ),
                   ),
               ],
@@ -891,9 +911,11 @@ class _NavSelectionIndicator extends StatelessWidget {
   /// the badge (worst case slate, still above the floor).
   ///
   /// One getter rather than a literal at each site: the bar, the drawer tile,
-  /// the sheet row and both badges must move together or they are back to
-  /// disagreeing.
-  static Color get selectedGlyph => EdenColors.neutral[900]!;
+  /// the sheet row and all three badges must move together or they are back to
+  /// disagreeing. The definition moved to `nav_ink.dart` when the DESKTOP
+  /// RAIL turned out to be the fourth surface carrying the same defect — a
+  /// getter in a private widget of the mobile layout could not reach it.
+  static Color get selectedGlyph => edenNavOnFillInk;
 
   @override
   Widget build(BuildContext context) {
