@@ -69,7 +69,68 @@ abstract final class EdenProbeApi {
     String? type,
     String? identifier,
   }) {
-    return const <EdenProbeHit>[];
+    // A driver bug must not crash the app under test: no criteria means no
+    // hits, never a full-tree dump and never a throw.
+    if (key == null && text == null && type == null && identifier == null) {
+      return const <EdenProbeHit>[];
+    }
+
+    final List<EdenProbeHit> hits = <EdenProbeHit>[];
+
+    for (final Element element in _elements()) {
+      if (key != null && !_matchesKey(element, key)) {
+        continue;
+      }
+      final Rect? rect = _globalRect(element);
+      if (rect == null) {
+        continue;
+      }
+      hits.add(EdenProbeHit(
+        id: 'hit-${hits.length}',
+        rect: rect,
+        actions: const <String>[],
+      ));
+    }
+
+    return hits;
+  }
+
+  /// Every element in the live tree, root first.
+  static List<Element> _elements() {
+    final Element? root = WidgetsBinding.instance.rootElement;
+    if (root == null) {
+      return const <Element>[];
+    }
+    final List<Element> out = <Element>[];
+    void visit(Element element) {
+      out.add(element);
+      element.visitChildren(visit);
+    }
+
+    visit(root);
+    return out;
+  }
+
+  /// Keys are matched by their `toString()` carrying the requested string:
+  /// `ValueKey<String>('probe-target')` prints as `[<'probe-target'>]`, and a
+  /// driver knows the string it put in the source, not Flutter's rendering of
+  /// the wrapper type.
+  static bool _matchesKey(Element element, String key) {
+    final Key? k = element.widget.key;
+    return k != null && k.toString().contains(key);
+  }
+
+  /// The element's OWN render box, in global coordinates.
+  ///
+  /// CRITICAL: never an ancestor's. A probe that walked up to the nearest
+  /// sized ancestor would report a 360x200 parent for a 120x40 control and
+  /// every downstream geometry assertion would be green and meaningless.
+  static Rect? _globalRect(Element element) {
+    final RenderObject? object = element.renderObject;
+    if (object is! RenderBox || !object.attached || !object.hasSize) {
+      return null;
+    }
+    return object.localToGlobal(Offset.zero) & object.size;
   }
 
   static Map<String, Object?> tree() => const <String, Object?>{};
