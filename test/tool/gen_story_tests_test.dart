@@ -32,12 +32,15 @@ void main() {
       for (final id in ['buttons/all', 'buttons/interactive']) {
         for (final theme in ['light', 'dark']) {
           expect(source, contains("testWidgets('$id — $theme — expectUiSane'"));
-          expect(source, contains("testWidgets('$id — $theme — golden'"));
+          expect(source,
+              contains("testWidgets('\$id — \$theme — golden\\\$kGoldenSkipSuffix'"));
         }
       }
 
       // The golden expectations carry the platform skip; expectUiSane must NOT.
-      expect(source, contains('}, skip: kGoldenSkipReason);'));
+      // `testWidgets` takes `bool? skip`, not a reason String (23-05 finding):
+      // the bool gates the skip, the suffix keeps the reason in the test name.
+      expect(source, contains('}, skip: kGoldenSkip);'));
       final saneIndex = source.indexOf("— light — expectUiSane'");
       final saneBodyEnd = source.indexOf('});', saneIndex);
       expect(saneIndex, isNonNegative);

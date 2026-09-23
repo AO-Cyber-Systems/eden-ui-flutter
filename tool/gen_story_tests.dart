@@ -71,10 +71,12 @@ String generateStoryTestSource(String component, List<EdenStory> stories) {
         ..writeln('        themeMode: ThemeMode.$theme);')
         ..writeln('  });')
         ..writeln()
-        ..writeln("  testWidgets('${s.id} — $theme — golden', (tester) async {")
+        ..writeln(
+            "  testWidgets('${s.id} — $theme — golden\$kGoldenSkipSuffix',")
+        ..writeln('      (tester) async {')
         ..writeln("    await expectStoryGolden(tester, storyById('${s.id}'),")
         ..writeln('        themeMode: ThemeMode.$theme);')
-        ..writeln('  }, skip: kGoldenSkipReason);');
+        ..writeln('  }, skip: kGoldenSkip);');
     }
   }
 

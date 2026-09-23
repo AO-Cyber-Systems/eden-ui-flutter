@@ -40,6 +40,23 @@ final String? kGoldenSkipReason = Platform.isLinux
     ? null
     : 'goldens are generated and compared in CI (Linux) only — eden-ui-flutter#32';
 
+/// Whether golden expectations skip on THIS platform.
+///
+/// WHY A SEPARATE BOOL (found by TRD 23-05, the first TRD to actually generate
+/// a golden test): `testWidgets` declares `bool? skip` — unlike plain `test()`,
+/// which takes a `dynamic skip` and accepts a reason String. Passing
+/// [kGoldenSkipReason] straight into `testWidgets(skip:)` is a COMPILE error
+/// (`The argument type 'String?' can't be assigned to the parameter type
+/// 'bool?'`), so 23-03's generated-golden shape could never have compiled. It
+/// was invisible until now only because the co-located story set was empty.
+final bool kGoldenSkip = kGoldenSkipReason != null;
+
+/// Appended to a skipped golden test's NAME, so the reason is still printed by
+/// `flutter test` even though `testWidgets` cannot carry it in `skip:`. Empty
+/// on Linux, where the goldens actually run.
+final String kGoldenSkipSuffix =
+    kGoldenSkipReason == null ? '' : ' [skipped: $kGoldenSkipReason]';
+
 /// Directory (relative to the generated test file) holding the CI baselines.
 /// `ci/` is the Alchemist-style platform tag, expressed as a directory rather
 /// than a package dependency — see the TRD's no-new-deps gotcha.
