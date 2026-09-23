@@ -15,12 +15,11 @@ library;
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
 
 /// A stand-in for a compiled bundle. Hand-built, not generated: the only thing
 /// the guard reads out of a 3MB `main.dart.js` is whether the token is there.
 File _bundle(Directory dir, String name, {required bool withProbe}) {
-  final File file = File(p.join(dir.path, name));
+  final File file = File('${dir.path}/$name');
   file.writeAsStringSync(
     withProbe
         ? 'var a=1;window.__edenProbe={find:b,tree:c};var d=2;\n'
@@ -34,11 +33,9 @@ ProcessResult _runGuard(String script, File prod, File probe) {
 }
 
 void main() {
-  final String script = p.join(
-    Directory.current.path,
-    'tool',
-    'probe_guard_assert.sh',
-  );
+  // bash is the shell under test; POSIX separators are correct on the only
+  // two platforms this runs on (macOS locally, ubuntu-latest in CI).
+  final String script = '${Directory.current.path}/tool/probe_guard_assert.sh';
 
   late Directory dir;
 
@@ -90,7 +87,7 @@ void main() {
 
   test('FAILS when a build produced no bundle at all', () {
     final File prod = _bundle(dir, 'production.js', withProbe: false);
-    final File missing = File(p.join(dir.path, 'never-built.js'));
+    final File missing = File('${dir.path}/never-built.js');
 
     final ProcessResult result = _runGuard(script, prod, missing);
 
