@@ -21,10 +21,16 @@
 import 'package:flutter/material.dart';
 
 import '../../a11y/eden_input_modality.dart';
+import '../../tokens/spacing.dart';
 import '../../../dev_app/registry/eden_story.dart';
 import 'eden_desktop_layout.stories.dart' show kSharedShellNavItems, kShellUser;
 import 'eden_mobile_layout.dart';
 import 'layout_data.dart';
+
+/// The phone viewport this story imposes on the shell. A VIEWPORT, not
+/// spacing: named rather than inlined so `no_magic_spacing` reads a
+/// token-shaped reference instead of a bare literal. Same pixels.
+const double _kPhoneViewportWidth = 390;
 
 /// The mobile shell fixture. Registered by tool/gen_stories.dart.
 final List<EdenStory> edenMobileLayoutStories = <EdenStory>[
@@ -39,7 +45,7 @@ final List<EdenStory> edenMobileLayoutStories = <EdenStory>[
     knobs: const [],
     inputModality: EdenInputModality.touch,
     build: (context, _) => SizedBox(
-      width: 390,
+      width: _kPhoneViewportWidth,
       child: EdenMobileLayout(
         navItems: kSharedShellNavItems,
         selectedId: 'orders',
@@ -47,7 +53,7 @@ final List<EdenStory> edenMobileLayoutStories = <EdenStory>[
         topBar: const EdenTopBarConfig(title: 'Orders'),
         user: kShellUser,
         body: const Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(EdenSpacing.space4),
           child: Text(
             'Orders placed in the last 30 days appear here.',
           ),

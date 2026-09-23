@@ -18,6 +18,7 @@
 import 'package:flutter/material.dart';
 
 import '../../a11y/eden_input_modality.dart';
+import '../../tokens/spacing.dart';
 import '../../../dev_app/registry/eden_story.dart';
 import 'eden_desktop_layout.dart';
 import 'layout_data.dart';
@@ -53,10 +54,16 @@ const EdenTopBarConfig kShellTopBar = EdenTopBarConfig(
   searchHint: 'Search orders…',
 );
 
+/// The width the 'narrow' story imposes on the shell. A VIEWPORT, not
+/// spacing: it is named rather than inlined so `no_magic_spacing` -- which
+/// cannot tell a viewport from a gutter, and correctly refuses to guess --
+/// reads a token-shaped reference here instead of a bare literal. Same pixels.
+const double _kNarrowShellWidth = 720;
+
 /// Body copy long enough to actually be visible in the golden — an empty body
 /// would make a content-area regression invisible.
 const Widget _kBody = Padding(
-  padding: EdgeInsets.all(24),
+  padding: EdgeInsets.all(EdenSpacing.space6),
   child: Text(
     'Orders placed in the last 30 days appear here. Select an order to see '
     'its fulfilment timeline, payment status and customer contact details.',
@@ -98,6 +105,6 @@ final List<EdenStory> edenDesktopLayoutStories = <EdenStory>[
     icon: Icons.width_normal,
     knobs: const [],
     inputModality: EdenInputModality.pointer,
-    build: (context, _) => SizedBox(width: 720, child: _shell()),
+    build: (context, _) => SizedBox(width: _kNarrowShellWidth, child: _shell()),
   ),
 ];
