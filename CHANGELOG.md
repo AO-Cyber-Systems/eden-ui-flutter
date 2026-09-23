@@ -260,7 +260,7 @@ Full list, including what is untested rather than broken:
 ### Known issues — not yet release-ready
 
 **This release is not shippable as-is, and this section is the reason** — but the reason is no
-longer the test run. `flutter test` on this tree is **4790 tests / 27 skipped**, and every
+longer the test run. `flutter test` on this tree is **4840 tests / 27 skipped**, and every
 oracle, story and layout test is green. The one red in the last full run was
 `scheduler_performance_test.dart`'s "500 events layout completes within 200ms" — a wall-clock
 budget that measured 571ms on a loaded machine and passes in isolation; the code it exercises
@@ -311,6 +311,15 @@ short — and both are now answered and fixed.
      both overlays need a TAP between the pump and the assertion — which is why
      `test/ui_oracle/mobile_shell_open_surfaces_test.dart` exists instead. They belong in the same
      change that regenerates the mobile-layout baselines.
+   - **Item 7 invalidates them once more, and is the last thing that does.** The ring is gone
+     from seven widgets and four interiors changed colour; a baseline blessed before item 7 would
+     bake a `colorScheme.outline` ring, drawn over its parent's chrome, in as the expected
+     appearance. With item 7 landed, no known paint defect of this class remains in the ten
+     widgets that carry a bare field, and the two checks that used to be hand-measurements are
+     now guards that fail on their own. **Baselines are safe to generate from this tree**; item 8
+     lists what stays open, and none of it is a paint defect the goldens would freeze incorrectly
+     — the hint-contrast item is real, but it is an INK defect that the goldens will simply record
+     and that the contrast rule already reports independently of any baseline.
 3. **FIXED — the accessibility gate could not run on any `EdenTheme` surface.** Constructing an
    `EdenTheme` made `google_fonts` start a network fetch (Outfit, Plus Jakarta Sans); the oracle's
    `runAsync` image capture was the first thing in a widget test that actually awaited it, and the
@@ -385,6 +394,73 @@ short — and both are now answered and fixed.
      it: the rule was reporting the white it was genuinely painted on.
    - Both baselines are invalidated again by this — the pill's appearance changes materially in
      the light theme.
+
+7. **FIXED — the CLASS behind items 6 and the fill fixes: `EdenBareFieldTheme`.** Turning the
+   fill off in five widgets did not close anything. `border: InputBorder.none` does not stop
+   `InputDecorationTheme.enabledBorder` resolving, so a `colorScheme.outline` ring was still being
+   painted INSIDE the decorator's own box, over the parent's chrome, in **seven** widgets —
+   `#dcdcdf` along the search pill's top edge where the pill is `#e4e4e7`; a `#d4d4d8` rounded
+   rectangle drawn across the photograph in `EdenPhotoCapturePage`; a ring per cell per row in
+   `EdenEnvEditor` and `EdenLineItemEditor`; a doubled border in `EdenMessageInput`, whose
+   composer draws its own; a 1px frame rendered 2px thick in `EdenMarkdownEditor`; and a ring
+   inside `EdenMapView`'s floating search card. `InputDecoration.applyDefaults` resolves **31**
+   properties from the theme independently, so `focusedBorder`, `disabledBorder`, `errorBorder`,
+   `focusedErrorBorder`, `contentPadding`, `hintStyle`, `constraints` and twenty more were all
+   waiting behind the same door: a third round was guaranteed.
+   - **`EdenBareFieldTheme`** (exported from `eden_ui.dart`) replaces the ambient
+     `InputDecorationTheme` for its subtree with one built from scratch, so nothing `EdenTheme`
+     declares can reach a field inside it — not the properties that leaked, and not one a future
+     edit adds. `InputDecoration.collapsed` was **checked, not assumed**, and does not cover the
+     set: it sets `filled = false` and `border = InputBorder.none` and nothing else
+     (`input_decorator.dart:2872`), leaving `enabledBorder` — the slot that actually paints while
+     a field sits there enabled — to the theme, and it has no `prefixIcon`/`suffixIcon`/`label`,
+     which three of the ten sites need. A shared `const InputDecoration` cannot express "nothing"
+     at all: null means "take the theme's".
+   - **Adopted at all ten sites** that mean it, including `EdenRichTextEditor` and
+     `EdenSecretField` (which had nulled four and three border slots by hand and still inherited
+     the error/disabled ones) and `EdenCommandPalette` (three by hand). Each site's local
+     `filled: false` / `border: InputBorder.none` opt-outs are gone; what a widget genuinely wants
+     it still declares at the site, which still wins — `EdenSecretField` keeps its own
+     `OutlineInputBorder`, and `EdenPhotoCapturePage` now declares the 16x12 padding it used to
+     inherit so its caption's geometry does not move.
+   - **No decorator rect moved.** Every `InputDecorator`'s box is identical before and after; the
+     content inside it shifts by the 1px the phantom border used to reserve.
+   - **Four interiors DID change**, because those widgets never declared a surface and were
+     relying on the theme's fill for one: `EdenMessageInput` `#ffffff` -> `#fafafa` in light
+     (1.04:1, dark unchanged); `EdenMarkdownEditor`'s edit pane and `EdenLineItemEditor`'s cells
+     and `EdenCommandPalette`'s query row now take the host's surface — which is the surface the
+     preview pane, the read-only cells and the results list beside them already took. Three
+     seams closed; **all four are baseline changes**, see item 2.
+   - **Guarded three ways** (`test/ui_oracle/bare_field_theme_guard_test.dart`, 28 cases): the
+     mechanism, property-name driven from the theme's own diagnostics so a property added to
+     `EdenTheme` tomorrow is covered without editing the test; the ten surfaces, where every
+     `InputDecorator` must be inside the wrapper and resolve none of Eden's chrome; and a source
+     census over `lib/` that fails when a NEW file declares a field bare without reaching for it.
+     Differential controls, one edit each: making the wrapper a pass-through turns 34 cases red;
+     making its `filled` true turns 22 red.
+
+8. **Recorded, not fixed — what this pass measured and deliberately left.** Each of these is out
+   of the leak class above, or out of reach of the suite, and none is a regression from it.
+   - **The hint ink fails WCAG 1.4.3 in the bare fields, in both themes.** `neutral[400]` on a
+     light card is **2.46:1** (`EdenEnvEditor`, `EdenMessageInput`, `EdenMarkdownEditor`,
+     `EdenBarcodeScanner` — one ink, four widgets), and `neutral[500]` on a dark one is
+     **4.10:1**. Pre-existing and NOT caused by the overpaint: the fix moved the light pairs from
+     2.56:1 to 2.46:1 (both sides of the floor are the same side) and the dark markdown hint from
+     3.08:1 to 4.10:1. It wants the same treatment `_TopBar`'s hint got — a `ColorScheme` role
+     that clears the floor on the surface the glyph is actually painted on — across four widgets,
+     which is its own pass.
+   - **`EdenLineItemEditor`'s five cells** carry issues beyond the ring (their own pass, out of
+     this class).
+   - **`EdenDataGrid`'s filter input paints ~26px in a 30px slot.** Cosmetic; no contrast or
+     target-size consequence.
+   - **The `EdenProfileFonts` / `EdenAdaptiveTheme` second font path cannot reach the golden
+     suite** — the generated story tests rasterise through `EdenTheme` only, so nothing in CI
+     renders that path. It is untested rather than broken, and giving it coverage means giving it
+     stories.
+   - **`EdenMarkdownEditor` and `EdenCommandPalette` declare no surface of their own.** That is
+     why their interiors changed above. If the library later wants either to be a self-contained
+     surface, the fill belongs on the parent container — the pattern `EdenRichTextEditor` already
+     uses — never back on the field.
 
 ### Notes
 
