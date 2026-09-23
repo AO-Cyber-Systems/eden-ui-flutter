@@ -239,4 +239,102 @@ void main() {
       ),
     );
   });
+
+  // ---------------------------------------------------------------------
+  // Liveness — a control that ANNOUNCES an affordance must have one, and it
+  // must work. The tap-action rule used to be an upper bound only (`> 1`),
+  // so a surface whose controls were all dead reported FEWER violations than
+  // a working one: the oracle went green on dead UI. See the "inert" section
+  // of expect_ui_sane.dart.
+  // ---------------------------------------------------------------------
+
+  testWidgets('case 10: a button with NO tap action is named as inert',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, inertButton());
+    // RED (broken fixture): exit 1 —
+    //   control "fx-inert-button" announces itself as a button but has no tap
+    //   action - it is inert.
+    // GREEN (`onTap: () {}` added to the Semantics): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-inert-button"'),
+            contains('announces itself as a button but has no tap action'),
+            contains('it is inert'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets(
+      'case 11: a button whose one tap action no pointer can reach is named',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, unreachableButton());
+    // THE FALSE-GREEN CASE. The route COUNT is a healthy 1 here — IgnorePointer
+    // blocks the inner GestureDetector's implicit route — so neither the `> 1`
+    // arm nor the zero arm fires. Only the reachability arm does.
+    //
+    // RED (broken fixture): exit 1 —
+    //   control "fx-unreachable-button" announces itself as a button and
+    //   declares a tap action, but a pointer dropped in the middle of the rect
+    //   it publishes never reaches it - it is inert to a real tap.
+    // GREEN (IgnorePointer -> ExcludeSemantics): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-unreachable-button"'),
+            contains('never reaches it'),
+            contains('inert to a real tap'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('case 12: a link with NO tap action is named as inert',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, inertLink());
+    // The rule keys on the AFFORDANCE a node advertises, not on the word
+    // "button". `link: true` is unused in lib/src today; the case exists so
+    // the second arm of the predicate is executed rather than asserted.
+    //
+    // RED (broken fixture): exit 1 —
+    //   control "fx-inert-link" announces itself as a link but has no tap
+    //   action - it is inert.
+    // GREEN (`onTap: () {}` added): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-inert-link"'),
+            contains('announces itself as a link but has no tap action'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets(
+      'case 13: identified NON-interactive controls stay green (the exemption)',
+      (WidgetTester tester) async {
+    // The differential control for the predicate. A caption band carries an
+    // identifier and no affordance flag; the top-bar search carries
+    // `textField: true`, not `button: true`. Neither has — or should have — a
+    // tap action. Widen the predicate from `button || link` to "any identified
+    // node" and this case goes red, which is how the scope is pinned.
+    await pumpSurface(tester, nonInteractiveIdentifiedControls());
+    await expectUiSane(tester, inputModality: EdenInputModality.touch);
+  });
 }

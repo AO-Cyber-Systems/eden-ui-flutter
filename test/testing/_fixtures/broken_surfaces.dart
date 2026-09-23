@@ -240,3 +240,172 @@ Widget railRow() {
     ),
   );
 }
+
+/// DEFECT 6 — a control that announces `button: true` and has NO tap action.
+///
+/// The node identifies itself, a screen reader announces "Retry sync, button",
+/// and nothing is wired to it in either tree: no `onTap` on the node, no
+/// gesture recogniser under it. Activating it — by pointer or by assistive
+/// tech — does nothing at all.
+///
+/// Before the zero arm existed, `_tapRouteViolations` only fired on MORE than
+/// one route, so this surface passed the oracle in silence.
+///
+/// Rule violated: "a control that announces an affordance must have exactly
+/// one tap route" (zero arm).
+Widget inertButton() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      // FIX: add `onTap: () {},` below — the node then has exactly one tap
+      // route, and the glyph under it takes the pointer.
+      child: Semantics(
+        container: true,
+        identifier: 'fx-inert-button',
+        label: 'Retry sync',
+        button: true,
+        child: const SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: Text('R', style: TextStyle(fontSize: 20, color: _legibleInk)),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 7 — a control that announces `button: true`, declares exactly ONE
+/// tap action, and still cannot be tapped.
+///
+/// This is the shape that produced the false green on the real mobile shell.
+/// [IgnorePointer] sets `isBlockingUserActions` on the subtree (so the inner
+/// `GestureDetector`'s implicit tap route disappears and the count reads a
+/// healthy 1) AND returns false from `hitTest` (so no pointer ever reaches the
+/// row). The node advertises a button with a tap action; a real finger gets
+/// nothing.
+///
+/// Rule violated: "a control that announces an affordance must have exactly
+/// one tap route" (unreachable arm).
+Widget unreachableButton() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Semantics(
+        container: true,
+        identifier: 'fx-unreachable-button',
+        label: 'Confirm order',
+        button: true,
+        onTap: () {},
+        // FIX: change `IgnorePointer` to `ExcludeSemantics`. Both stop the
+        // inner GestureDetector publishing a second tap route; only
+        // ExcludeSemantics leaves it able to take the pointer.
+        child: IgnorePointer(
+          child: GestureDetector(
+            onTap: () {},
+            behavior: HitTestBehavior.opaque,
+            child: const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child:
+                    Text('C', style: TextStyle(fontSize: 20, color: _legibleInk)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 8 — a control that announces `link: true` and has no tap action.
+///
+/// The same class as [inertButton], through the other affordance flag. It is
+/// here because the rule keys on the AFFORDANCE the node advertises, not on
+/// the word "button": a link that announces itself and goes nowhere is the
+/// same lie.
+///
+/// Rule violated: "a control that announces an affordance must have exactly
+/// one tap route" (zero arm, link).
+Widget inertLink() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      // FIX: add `onTap: () {},` below.
+      child: Semantics(
+        container: true,
+        identifier: 'fx-inert-link',
+        label: 'Open the invoice',
+        link: true,
+        child: const SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: Text('L', style: TextStyle(fontSize: 20, color: _legibleInk)),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// NOT A DEFECT — identified nodes that are deliberately NON-interactive.
+///
+/// The exemption the affordance rule has to keep. Both shapes are real and
+/// both are correct as written:
+///
+///  * a caption band (`EdenMobileLayout._navSection`'s analogue): identified
+///    and labelled, no `button`, no tap action, nothing to activate;
+///  * a text field (`EdenDesktopLayout`'s top-bar search publishes
+///    `identifier: 'eden-topbar-search', textField: true`): it announces a
+///    TEXT FIELD, not a button, and a text field's affordance is focus, not
+///    tap.
+///
+/// There is no `FIX:` line — a rule that reddens either of these is the wrong
+/// rule. This fixture is the differential control for the predicate: widen it
+/// from `button || link` to "any identified node" and this case goes red.
+Widget nonInteractiveIdentifiedControls() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: SizedBox(
+        width: 400,
+        height: 160,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            Semantics(
+              container: true,
+              identifier: 'fx-caption',
+              label: 'Reports',
+              child: const SizedBox(
+                width: 200,
+                height: 48,
+                child: Center(
+                  child: Text('Reports',
+                      style: TextStyle(fontSize: 16, color: _legibleInk)),
+                ),
+              ),
+            ),
+            Semantics(
+              container: true,
+              identifier: 'fx-textfield',
+              textField: true,
+              label: 'Search',
+              child: const SizedBox(
+                width: 200,
+                height: 48,
+                child: Center(
+                  child: Text('Search',
+                      style: TextStyle(fontSize: 16, color: _legibleInk)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
