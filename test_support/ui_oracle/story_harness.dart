@@ -124,10 +124,14 @@ Future<void> _pump(
 /// tap-target floor (WCAG 2.5.8's 24x24 for pointer; 48dp/44pt for touch) and
 /// waives nothing — see `EdenInputModality`.
 ///
-/// KNOWN LIMITATION (23-02): the contrast rule inside `expectUiSane` cannot run
-/// on an `EdenTheme` surface, because `google_fonts` fires a network fetch at
-/// theme-construction time and the image capture is the first thing that awaits
-/// it. Geometry, overlap, overflow and target-size rules are unaffected.
+/// FONT PRECONDITION: the contrast rule inside `expectUiSane` captures the
+/// rendered image through `runAsync`, which is the first thing in a widget
+/// test that lets `EdenTheme`'s pending google_fonts load run. That load is
+/// made to succeed offline by `test/flutter_test_config.dart`
+/// (`test_support/fonts/`); without it every story here fails with a font
+/// error instead of a verdict. It also means these stories are rasterised in
+/// the REAL Eden type families, which is what the CI goldens must be blessed
+/// against.
 Future<void> expectStorySane(
   WidgetTester tester,
   EdenStory story, {

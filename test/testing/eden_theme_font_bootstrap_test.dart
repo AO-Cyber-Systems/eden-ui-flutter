@@ -62,8 +62,17 @@ void main() {
             'carries a family name',
       );
 
-      // Let the font load that EdenTheme() queued actually complete.
       await tester.pumpWidget(MaterialApp(theme: theme, home: const SizedBox()));
+      await tester.pumpAndSettle();
+
+      // The load EdenTheme() queued is REAL async, so it does not advance
+      // under the fake clock a plain `pump` drives -- it needs a `runAsync`
+      // window. That is not a workaround: it is precisely the window
+      // `textContrastGuideline` opens to capture the rendered image, which is
+      // why the oracle was the only caller that ever reached this code path.
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
       await tester.pumpAndSettle();
 
       // DIFFERENTIAL CONTROL, built in. A family that is not registered with

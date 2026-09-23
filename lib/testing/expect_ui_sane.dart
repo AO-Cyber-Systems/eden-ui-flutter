@@ -232,21 +232,25 @@ Future<List<String>> _guidelineViolations(
     }
   }
 
-  // KNOWN LIMITATION — see 23-02-SUMMARY.md "Issues Encountered".
+  // WHY THE GUIDELINE PHASE NEEDS A FONT-CLEAN TEST ENVIRONMENT (was a KNOWN
+  // LIMITATION; fixed by `test/flutter_test_config.dart`).
+  //
   // `textContrastGuideline` captures the rendered image through
   // `tester.runAsync`, which lets futures that were ALREADY PENDING before
   // expectUiSane was called finally run. `EdenTheme` resolves its type scale
-  // through google_fonts, which fires an HTTP fetch at theme-construction
-  // time; in a widget test that request can never succeed, and the resulting
-  // UNCAUGHT ASYNC error completes the test with an error directly — it never
-  // reaches `tester.takeException()`, so this helper cannot swallow it.
+  // through google_fonts, which fires an unawaited font load at
+  // theme-construction time; in a widget test that load cannot succeed on its
+  // own, and google_fonts rethrows the failure down that unawaited future.
+  // The resulting UNCAUGHT ASYNC error ends the test directly — it never
+  // reaches `tester.takeException()`, so this helper cannot swallow it, and
+  // flutter_test reinstalls `FlutterError.onError` per test so nothing else
+  // can either.
   //
-  // Consequence: on a surface pumped with EdenTheme in an environment where
-  // the Outfit font is not bundled as an asset, expectUiSane fails with a
-  // gstatic.com fetch error rather than a verdict about the surface. The fix
-  // belongs in the test environment (bundle the font, or stub the fetch in
-  // `test/flutter_test_config.dart`), not here. Everything below the exception
-  // check still works; only the guideline phase is affected.
+  // That is why a consumer repo MUST make the font load succeed offline
+  // before this phase means anything. This package does it in
+  // `test/flutter_test_config.dart`, which serves the Eden type families to
+  // google_fonts from `test_support/fonts/`. Without an equivalent, an
+  // EdenTheme surface fails here with a font error instead of a verdict.
   //
   // Anything the guideline phase DID route through the pending-exception
   // channel is reported here rather than discarded.

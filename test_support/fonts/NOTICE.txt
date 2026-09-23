@@ -1,0 +1,40 @@
+Test-only font fixtures for the Eden UI Oracle.
+===============================================
+
+WHAT THESE ARE
+--------------
+The exact .ttf files `google_fonts` 6.3.3 would fetch from fonts.gstatic.com
+for the variants EdenTheme's type scale resolves to. They are here so that
+`flutter test` can resolve that type scale OFFLINE: flutter_test answers every
+HTTP request with 400, and google_fonts rethrows the failure into an uncaught
+async error that ends the test before the UI Oracle reaches a verdict. See the
+header of test/flutter_test_config.dart for the full mechanism.
+
+They are TEST FIXTURES. They are deliberately NOT listed in pubspec.yaml's
+`flutter: assets:` — nothing here ships to a consumer app, and production font
+delivery is unchanged (google_fonts still fetches at runtime outside tests).
+
+FILES
+-----
+  Outfit-SemiBold.ttf             Outfit w600
+  Outfit-Bold.ttf                 Outfit w700
+  Outfit-ExtraBold.ttf            Outfit w800
+  PlusJakartaSans-Regular.ttf     Plus Jakarta Sans w400
+  PlusJakartaSans-Medium.ttf      Plus Jakarta Sans w500
+  PlusJakartaSans-SemiBold.ttf    Plus Jakarta Sans w600
+
+Adding a weight to EdenTheme that is not in this list makes the oracle tests
+fail loudly with google_fonts' own message naming the missing file. Add the
+matching .ttf here and this NOTICE entry; do not silence the failure.
+
+LICENSING
+---------
+Both families are licensed under the SIL Open Font License, Version 1.1.
+SPDX-License-Identifier: OFL-1.1
+
+  Outfit             Copyright (c) Smartsheet Inc.
+                     https://fonts.google.com/specimen/Outfit
+  Plus Jakarta Sans  Copyright (c) Tokotype
+                     https://fonts.google.com/specimen/Plus+Jakarta+Sans
+
+Full licence text: https://openfontlicense.org/open-font-license-official-text/
