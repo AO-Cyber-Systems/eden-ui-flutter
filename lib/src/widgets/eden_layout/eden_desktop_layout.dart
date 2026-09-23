@@ -1038,6 +1038,23 @@ class _UserTile extends StatelessWidget {
 // Top bar
 // ---------------------------------------------------------------------------
 
+/// Height of the top bar's search pill — the rounded fill a user sees and
+/// clicks.
+///
+/// LOAD-BEARING, and shared by the pill and the field inside it on purpose.
+/// The `TextField` carries `isDense: true` and `contentPadding: EdgeInsets
+/// .zero`, so left to its intrinsic height it is the ~21px text line box: the
+/// `Semantics(identifier: 'eden-topbar-search')` node collapsed to that,
+/// under-reporting a 36px affordance and failing the UI Oracle's 24x24 WCAG
+/// 2.5.8 pointer floor. Constraining the field to this height makes the
+/// field — the real hit target, since `InputDecorator`'s box is what takes
+/// the tap — fill the pill, so the published node and the tappable region are
+/// the same rect. Do NOT fix this by enlarging a wrapper around the field: a
+/// rect that claims area it cannot receive taps in defeats the oracle instead
+/// of satisfying it (pinned by test/ui_oracle/topbar_search_target_test.dart
+/// case 2).
+const double _kTopBarSearchHeight = 36;
+
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.config, this.onMenuTap});
   final EdenTopBarConfig config;
@@ -1081,7 +1098,7 @@ class _TopBar extends StatelessWidget {
             const SizedBox(width: EdenSpacing.space4),
             Flexible(
               child: Container(
-                height: 36,
+                height: _kTopBarSearchHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest,
@@ -1095,25 +1112,37 @@ class _TopBar extends StatelessWidget {
                       child: Semantics(
                         identifier: 'eden-topbar-search',
                         textField: true,
-                        child: TextField(
-                          autofillHints: searchPurpose.semantics.autofillHints,
-                          keyboardType: searchPurpose.semantics.keyboardType,
-                          obscureText: searchPurpose.semantics.obscureText,
-                          textInputAction: searchPurpose.semantics.textInputAction,
-                          textCapitalization:
-                              searchPurpose.semantics.textCapitalization,
-                          autocorrect: searchPurpose.semantics.autocorrect,
-                          enableSuggestions:
-                              searchPurpose.semantics.enableSuggestions,
-                          decoration: InputDecoration(
-                            hintText: config.searchHint,
-                            hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
+                        // A TIGHT height constraint, not a decorative box: the
+                        // TextField itself grows to fill the pill, so the
+                        // region that takes the tap grows with the semantics
+                        // rect instead of staying a 21px line in the middle
+                        // of it.
+                        child: SizedBox(
+                          height: _kTopBarSearchHeight,
+                          child: TextField(
+                            autofillHints:
+                                searchPurpose.semantics.autofillHints,
+                            keyboardType: searchPurpose.semantics.keyboardType,
+                            obscureText: searchPurpose.semantics.obscureText,
+                            textInputAction:
+                                searchPurpose.semantics.textInputAction,
+                            textCapitalization:
+                                searchPurpose.semantics.textCapitalization,
+                            autocorrect: searchPurpose.semantics.autocorrect,
+                            enableSuggestions:
+                                searchPurpose.semantics.enableSuggestions,
+                            decoration: InputDecoration(
+                              hintText: config.searchHint,
+                              hintStyle: TextStyle(
+                                  fontSize: 13,
+                                  color: theme.colorScheme.onSurfaceVariant),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            style: const TextStyle(fontSize: 13),
+                            onChanged: config.onSearch,
                           ),
-                          style: const TextStyle(fontSize: 13),
-                          onChanged: config.onSearch,
                         ),
                       ),
                     ),
