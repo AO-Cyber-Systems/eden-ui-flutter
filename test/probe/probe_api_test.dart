@@ -38,5 +38,22 @@ void main() {
         expect(hits.single.rect, isNot(parent));
       },
     );
+
+    testWidgets('find({text:}) matches a Text(\'Hello\')',
+        (WidgetTester tester) async {
+      await _pumpSurface(tester, probeTextSurface());
+
+      final List<EdenProbeHit> hits = EdenProbeApi.find(text: 'Hello');
+
+      expect(hits, isNotEmpty);
+      final Rect expected = tester.getRect(find.text('Hello'));
+      expect(
+        hits.map((EdenProbeHit h) => h.rect),
+        contains(expected),
+      );
+      // 'Goodbye' is on the same surface and must not be swept in.
+      final Rect goodbye = tester.getRect(find.text('Goodbye'));
+      expect(hits.map((EdenProbeHit h) => h.rect), isNot(contains(goodbye)));
+    });
   });
 }
