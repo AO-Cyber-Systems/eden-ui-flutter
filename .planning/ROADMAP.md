@@ -428,3 +428,28 @@ See `STATE.md` § "Quick Tasks Completed" + commit log on `main` for shipped fix
 | Net-new widget component with design + a11y + tests | `/devflow:plan-objective <N>` |
 
 When in doubt, start with `/devflow:quick`; promote to a full objective only if scope clearly spans it.
+
+### Objective 23: UI Oracle Loop W1a — Catalog as contract: patterns, story harness, expectUiSane, probe bridge, shell API
+
+**Goal:** The library can describe, render, assert and probe its own widgets — co-located stories with
+a generated registry and a coverage floor, a harness asserting golden + a11y + semantics geometry per
+story, `expectUiSane` shipped for 600+ consumer screen tests, a web probe bridge compiled in only under
+`EDEN_PROBE`, ten interaction patterns in a closed `must_not` vocabulary, a generated `DESIGN.md` token
+block, and a shell API consumers compose instead of flag (folding in issue #33).
+
+**Depends on:** Objective 22
+**Jobs:** 12 jobs (TRDs 23-01 … 23-12) across 6 waves
+
+Jobs:
+- [ ] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1)
+- [ ] 23-02-TRD.md — expectUiSane at package:eden_ui_flutter/testing.dart, five broken fixtures (wave 2)
+- [ ] 23-03-TRD.md — Story harness: registry + test generators, goldens in CI only (wave 3)
+- [ ] 23-04-TRD.md — Story coverage ratchet: a floor that cannot fall (wave 4)
+- [ ] 23-05-TRD.md — Nav stories: ten shell states, the baseline 23-06 is proved against (wave 4)
+- [ ] 23-06-TRD.md — Shell API itemBuilder/sectionBuilder + issue #33 selectableBody opt-in (wave 5)
+- [ ] 23-07-TRD.md — Probe bridge: window.__edenProbe behind EDEN_PROBE + bundle guard (wave 1)
+- [ ] 23-08-TRD.md — EdenProbeScope: deterministic captures, animations and fonts pinned (wave 2)
+- [ ] 23-09-TRD.md — Ten design patterns + closed must_not vocabulary (wave 5)
+- [ ] 23-10-TRD.md — DESIGN.md token block generated from lib/src/tokens/ and CI-diffed (wave 1)
+- [ ] 23-11-TRD.md — custom_lint: no_raw_color, text_style_needs_family, no_magic_spacing (wave 1)
+- [ ] 23-12-TRD.md — Release v2.2.0: CHANGELOG, additive-only contract, composed-tree gate (wave 6)
