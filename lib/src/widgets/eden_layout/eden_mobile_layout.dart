@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_selectable_region.dart';
@@ -559,6 +560,50 @@ class _BottomItem extends StatelessWidget {
     // call site), uniformly for this default renderer and for a consumer
     // itemBuilder's result alike. Annotating here too would nest two
     // Semantics widgets and the identifier would not be published at all.
+    // WHERE THE BRAND COLOUR LIVES IN THE SELECTED STATE.
+    //
+    // The selected label used to be `colorScheme.primary` — EdenColors.gold
+    // #D4A853 — at fontSize 11 on the bar's `colorScheme.surface`, which is
+    // Colors.white in the light theme. That measures 2.20:1 against WCAG
+    // 1.4.3's 4.5:1 floor for normal-size text. A real failure, caught by
+    // expectUiSane on mobile-layout/default — light.
+    //
+    // The ruling: the gold does not change and is not darkened. It moves OFF
+    // the text. The selected state is carried by the INDICATOR below — a
+    // filled pill behind the icon, in the brand colour at full saturation —
+    // and the label takes the ordinary dark text colour. The brand stays
+    // where it is visible and leaves the one role it cannot hold.
+    //
+    // MEASURED, because "non-text UI components only need 3:1" does not
+    // rescue the fill either — gold on white is 2.20:1, which clears neither
+    // floor, and the bar really is white (`colorScheme.surface`):
+    //
+    //   light  fill gold #D4A853  vs white bar        2.20:1  FAILS 1.4.11
+    //          rim  onPrimaryContainer gold[900]      7.45:1  clears it
+    //          icon neutral[900] on the gold fill     8.04:1
+    //          label onSurface neutral[900] on bar   17.72:1
+    //   dark   fill gold[400] vs neutral[900] bar     7.61:1  clears it alone
+    //          rim  onPrimaryContainer gold[100]     15.21:1
+    //          icon neutral[900] on the gold fill     7.61:1
+    //          label onSurface neutral[100] on bar   16.12:1
+    //
+    // So the pill's BOUNDARY is load-bearing, not decoration: WCAG 1.4.11 is
+    // met by an indicator whose boundary is identifiable against the adjacent
+    // colour, and in the light theme the fill alone never can be. The rim is
+    // `onPrimaryContainer`, which is brand-derived (it clears 3:1 on the bar
+    // for every EdenColors preset — gold 7.45, blue 10.36, emerald 9.72,
+    // purple 10.88, red 10.02, slate 17.85) rather than a gold literal, so a
+    // consumer that swaps `EdenTheme.brandColor` keeps a conformant bar.
+    //
+    // The icon is `EdenColors.neutral[900]` and NOT `onSurface`: onSurface
+    // inverts with the theme, and neutral[100] on gold[400] is 2.12:1 — the
+    // dark theme would have gained a new failure. A near-black glyph reads as
+    // cut out of the bar, and clears 3:1 on every preset's fill (worst case
+    // slate at 3.72:1).
+    final Color labelColour = isSelected
+        ? theme.colorScheme.onSurface
+        : theme.colorScheme.onSurfaceVariant;
+
     return GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
@@ -568,10 +613,46 @@ class _BottomItem extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
+                // The indicator is POSITIONED, so it paints around the glyph
+                // without taking part in layout.
+                //
+                // MEASURED, not stylistic: the bar is a fixed 60px and the
+                // row already uses 58 of it under the stock Material text
+                // theme (22 icon + 4 gap + 32 label). An indicator that sized
+                // the Column overflowed it by 7px — three
+                // eden_mobile_layout_test cases went red on
+                // `A RenderFlex overflowed by 7.0 pixels on the bottom`, which
+                // is exactly the defect expectUiSane exists to catch, so it
+                // could not be waved through. Positioned with negative insets
+                // is the same device the badge below already uses, under the
+                // same `clipBehavior: Clip.none`.
+                //
+                // Insets: 3 vertical keeps the pill 1px clear of the label's
+                // box across the 4px gap; 13 horizontal makes it 48 wide,
+                // which fits five tabs on a 320px viewport.
+                if (isSelected)
+                  Positioned(
+                    left: -13,
+                    right: -13,
+                    top: -3,
+                    bottom: -3,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        border: Border.all(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          width: 1.5,
+                        ),
+                        borderRadius: EdenRadii.borderRadiusFull,
+                      ),
+                    ),
+                  ),
                 Icon(
                   isSelected ? (item.activeIcon ?? item.icon) : item.icon,
                   size: 22,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? EdenColors.neutral[900]
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 if (item.badge != null)
                   Positioned(
@@ -594,7 +675,7 @@ class _BottomItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                color: labelColour,
               ),
             ),
           ],
