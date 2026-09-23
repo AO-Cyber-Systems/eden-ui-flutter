@@ -175,7 +175,50 @@ abstract final class EdenProbeApi {
     return object.localToGlobal(Offset.zero) & object.size;
   }
 
-  static Map<String, Object?> tree() => const <String, Object?>{};
+  /// Every identified semantics node, with its own rect and the actions it
+  /// declares.
+  ///
+  /// This is what makes a double-declared tap visible from OUTSIDE the app:
+  /// two overlapping nodes that both advertise `tap` are reported as two
+  /// nodes, not silently merged into one.
+  static Map<String, Object?> tree() {
+    return <String, Object?>{
+      'route': _currentRoute(),
+      'nodes': <Map<String, Object?>>[
+        for (final _ProbeSemanticsNode node in _identifiedSemanticsNodes())
+          <String, Object?>{
+            'id': node.id,
+            'identifier': node.identifier,
+            'rect': <String, Object?>{
+              'x': node.globalRect.left,
+              'y': node.globalRect.top,
+              'w': node.globalRect.width,
+              'h': node.globalRect.height,
+            },
+            'actions': node.actions,
+          },
+      ],
+    };
+  }
+
+  /// The name of the route currently on top.
+  ///
+  /// GOTCHA: there is no binding-level "current route" in Flutter. The deepest
+  /// element that sits under a [ModalRoute] is the one on top, so the walk
+  /// keeps the LAST non-null answer.
+  static String? _currentRoute() {
+    String? name;
+    for (final Element element in _elements()) {
+      if (!element.mounted) {
+        continue;
+      }
+      final ModalRoute<Object?>? route = ModalRoute.of(element);
+      if (route != null) {
+        name = route.settings.name ?? name;
+      }
+    }
+    return name;
+  }
 
   static bool settled() => false;
 
