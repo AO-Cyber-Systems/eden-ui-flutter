@@ -166,7 +166,13 @@ jobs:
       - name: Registry + generated-test freshness
         run: flutter test test/stories/registry_drift_test.dart test/stories/generated_freshness_test.dart
 
+      # SKIPPED on an update_goldens dispatch. A failing step ends the job, and
+      # this step fails by definition whenever baselines need regenerating --
+      # which is the only reason anyone dispatches update_goldens. Leaving it
+      # unconditional made the regeneration path reachable only when it was not
+      # needed: two dispatches produced no artifact at all before this was found.
       - name: Story assertions (goldens compared at tolerance 0 on Linux)
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.update_goldens) }}
         run: flutter test test/stories/
 
       # The ONLY golden-writing path in the repo, and it runs on Linux.
