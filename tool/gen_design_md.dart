@@ -210,7 +210,7 @@ List<TokenEntry> extractTokens(
               final height = bodyMatch.group(4)!;
               entries.add(TokenEntry(
                   name: startMatch.group(1)!,
-                  value: '${size}px, w$weight, line-height $height '
+                  value: '${size}px, $weight, line-height $height '
                       '(${_capitalize(font)})',
                   group: group));
               i += 2;
