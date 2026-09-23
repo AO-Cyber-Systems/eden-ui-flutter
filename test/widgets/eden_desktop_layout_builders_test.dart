@@ -134,9 +134,10 @@ void main() {
       );
       expect(node.identifier, 'eden-nav-home');
       expect(node.label, 'Home\nHome');
-      expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
-      expect(node.hasFlag(SemanticsFlag.isSelected), isTrue);
-      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      final data = node.getSemanticsData();
+      expect(data.flagsCollection.isButton, isTrue);
+      expect(data.flagsCollection.isSelected.name, 'isTrue');
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
       handle.dispose();
     });
   });
