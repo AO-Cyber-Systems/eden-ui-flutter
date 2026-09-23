@@ -438,7 +438,7 @@ story, `expectUiSane` shipped for 600+ consumer screen tests, a web probe bridge
 block, and a shell API consumers compose instead of flag (folding in issue #33).
 
 **Depends on:** Objective 22
-**Jobs:** 11/12 jobs executed
+**Jobs:** 12/12 jobs complete
 
 Jobs:
 - [x] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1) — COMPLETE 2026-09-22 (7 cases green, container:true bug pinned)
