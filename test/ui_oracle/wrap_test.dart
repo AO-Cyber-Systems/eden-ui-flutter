@@ -59,5 +59,17 @@ void main() {
 
       expect(resolved, Brightness.light);
     });
+
+    testWidgets('case 4: leaves takeException null for a well-behaved child', (
+      WidgetTester tester,
+    ) async {
+      // The harness must not be the thing that throws. A bare `Text` needs an
+      // ambient Directionality and a Material ancestor for its default style —
+      // wrap() supplies both, so nothing is thrown and takeException() is null.
+      await wrap(tester, const Text('well-behaved'), width: 360);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('well-behaved'), findsOneWidget);
+    });
   });
 }
