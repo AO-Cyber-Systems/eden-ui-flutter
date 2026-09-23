@@ -77,11 +77,33 @@ abstract final class EdenProbeApi {
 
     final List<EdenProbeHit> hits = <EdenProbeHit>[];
 
+    // `identifier:` is a SEMANTICS question, not a widget-tree one: it is the
+    // accessibility node that receives the click on web, and its rect can
+    // disagree with the render box's.
+    if (identifier != null) {
+      for (final _ProbeSemanticsNode node in _identifiedSemanticsNodes()) {
+        if (node.identifier != identifier) {
+          continue;
+        }
+        hits.add(EdenProbeHit(
+          id: 'hit-${hits.length}',
+          rect: node.globalRect,
+          identifier: node.identifier,
+          actions: node.actions,
+        ));
+      }
+      return hits;
+    }
+
     for (final Element element in _elements()) {
       if (key != null && !_matchesKey(element, key)) {
         continue;
       }
       if (text != null && !_matchesText(element, text)) {
+        continue;
+      }
+      if (type != null &&
+          element.widget.runtimeType.toString() != type) {
         continue;
       }
       final Rect? rect = _globalRect(element);
@@ -158,4 +180,131 @@ abstract final class EdenProbeApi {
   static bool settled() => false;
 
   static Map<String, Object?> state() => const <String, Object?>{};
+}
+
+// -----------------------------------------------------------------------------
+// Semantics walk
+// -----------------------------------------------------------------------------
+
+/// One identified semantics node, with its OWN rect resolved to global
+/// coordinates.
+class _ProbeSemanticsNode {
+  const _ProbeSemanticsNode({
+    required this.id,
+    required this.identifier,
+    required this.globalRect,
+    required this.actions,
+  });
+
+  final int id;
+  final String identifier;
+  final Rect globalRect;
+  final List<String> actions;
+}
+
+/// Every semantics node carrying a non-empty identifier, sorted by
+/// `(top, left, identifier)` — `visitChildren` order is an implementation
+/// detail and must never leak into a driver's expectations.
+List<_ProbeSemanticsNode> _identifiedSemanticsNodes() {
+  // `PipelineOwner.semanticsOwner` is deprecated in favour of the
+  // SemanticsBinding, but the binding exposes no root SemanticsNode. This is
+  // the only reachable handle on the root node at the declared SDK floor.
+  // ignore: deprecated_member_use
+  final SemanticsOwner? owner = WidgetsBinding.instance.pipelineOwner.semanticsOwner;
+  final SemanticsNode? root = owner?.rootSemanticsNode;
+  if (root == null) {
+    return const <_ProbeSemanticsNode>[];
+  }
+
+  final List<_ProbeSemanticsNode> found = <_ProbeSemanticsNode>[];
+
+  void visit(SemanticsNode node, List<SemanticsNode> ancestors) {
+    final SemanticsData data = node.getSemanticsData();
+    if (data.identifier.isNotEmpty) {
+      found.add(_ProbeSemanticsNode(
+        id: node.id,
+        identifier: data.identifier,
+        globalRect: _globalRectOfNode(node, ancestors),
+        actions: _actionNames(data),
+      ));
+    }
+
+    final List<SemanticsNode> children = <SemanticsNode>[];
+    node.visitChildren((SemanticsNode child) {
+      children.add(child);
+      return true;
+    });
+    final List<SemanticsNode> next = <SemanticsNode>[...ancestors, node];
+    for (final SemanticsNode child in children) {
+      visit(child, next);
+    }
+  }
+
+  visit(root, const <SemanticsNode>[]);
+
+  found.sort((_ProbeSemanticsNode a, _ProbeSemanticsNode b) {
+    final int byTop = a.globalRect.top.compareTo(b.globalRect.top);
+    if (byTop != 0) {
+      return byTop;
+    }
+    final int byLeft = a.globalRect.left.compareTo(b.globalRect.left);
+    if (byLeft != 0) {
+      return byLeft;
+    }
+    return a.identifier.compareTo(b.identifier);
+  });
+
+  return found;
+}
+
+/// Composes [ancestors] (root-first, excluding [node]) then [node]'s own
+/// transform, and applies the result to [node]'s OWN rect.
+///
+/// CRITICAL: never an ancestor's rect — that is the single property that makes
+/// a missing `container: true` observable from outside the app.
+Rect _globalRectOfNode(SemanticsNode node, List<SemanticsNode> ancestors) {
+  // GOTCHA: SemanticsNode.transform is null when it is the identity.
+  Matrix4 composed = Matrix4.identity();
+  for (final SemanticsNode ancestor in ancestors) {
+    final Matrix4? transform = ancestor.transform;
+    if (transform != null) {
+      composed = composed.multiplied(transform);
+    }
+  }
+  final Matrix4? own = node.transform;
+  if (own != null) {
+    composed = composed.multiplied(own);
+  }
+  final Rect physical = MatrixUtils.transformRect(composed, node.rect);
+
+  // GOTCHA: the ROOT semantics node's transform is the view's devicePixelRatio
+  // scale, so a raw composition returns PHYSICAL pixels -- a 100x48 control
+  // reads as 300x144 at dpr 3. Every other rect this probe returns is a render
+  // box's LOGICAL rect, and a driver compares the two. Normalise here so the
+  // two answers are in one coordinate system; on web, logical pixels are CSS
+  // pixels, which is what a CDP driver works in.
+  final double dpr =
+      WidgetsBinding.instance.platformDispatcher.implicitView?.devicePixelRatio ??
+          1.0;
+  if (dpr == 1.0) {
+    return physical;
+  }
+  return Rect.fromLTRB(
+    physical.left / dpr,
+    physical.top / dpr,
+    physical.right / dpr,
+    physical.bottom / dpr,
+  );
+}
+
+/// Action names as plain strings ('tap', 'scrollLeft', ...) so the shim can
+/// hand them to JS without a mapping table on the far side.
+List<String> _actionNames(SemanticsData data) {
+  final List<String> names = <String>[];
+  for (final SemanticsAction action in SemanticsAction.values) {
+    if (data.hasAction(action)) {
+      names.add(action.toString().replaceFirst('SemanticsAction.', ''));
+    }
+  }
+  return names;
 }
