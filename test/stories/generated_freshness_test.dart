@@ -36,7 +36,14 @@ void main() {
     for (final s in stories) {
       final name = storyTestFileName(s.component);
       final source = onDisk[name];
-      if (source == null || !source.contains("'${s.id} — light — golden'")) {
+      // The golden test's NAME carries a runtime suffix naming the skip reason
+      // (kGoldenSkipSuffix — see story_harness.dart; `testWidgets` takes
+      // `bool? skip`, so the reason cannot ride in `skip:`). Match the name
+      // PREFIX, and require the expectUiSane test too: a story is only covered
+      // when BOTH assertions were generated for it.
+      if (source == null ||
+          !source.contains("'${s.id} — light — golden") ||
+          !source.contains("'${s.id} — light — expectUiSane'")) {
         uncovered.add(s.id);
       }
     }
