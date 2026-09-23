@@ -127,7 +127,15 @@ abstract final class EdenProbeApi {
   static bool _matchesText(Element element, String text) {
     final Widget widget = element.widget;
     if (widget is Text) {
-      return widget.data != null && widget.data!.contains(text);
+      final String? data = widget.data;
+      if (data != null) {
+        return data.contains(text);
+      }
+      final InlineSpan? span = widget.textSpan;
+      return span != null && span.toPlainText().contains(text);
+    }
+    if (widget is RichText) {
+      return widget.text.toPlainText().contains(text);
     }
     return false;
   }
