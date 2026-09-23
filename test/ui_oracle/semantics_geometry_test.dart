@@ -26,5 +26,20 @@ void main() {
         expect(rect.height, 40);
       },
     );
+
+    testWidgets('case 6: two sibling controls report disjoint rects', (
+      WidgetTester tester,
+    ) async {
+      await wrap(tester, twoSiblingControls, width: 360);
+
+      final Rect a = globalRectOf(tester, kFxSiblingA);
+      final Rect b = globalRectOf(tester, kFxSiblingB);
+
+      // The caller never writes matrix code: the helper answers directly.
+      expect(rectsOverlap(a, b), isFalse);
+      expect(rectsOverlap(b, a), isFalse);
+      expect(a.width, 40);
+      expect(b.width, 40);
+    });
   });
 }
