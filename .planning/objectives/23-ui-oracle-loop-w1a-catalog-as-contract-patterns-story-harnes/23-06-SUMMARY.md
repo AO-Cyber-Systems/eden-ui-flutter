@@ -7,6 +7,7 @@ tags: [flutter, eden-layout, a11y, selection, issue-33, back-compat]
 requires: ["23-05"]
 provides:
   - "EdenDesktopLayout.itemBuilder / .sectionBuilder — composition slots, additive"
+  - "EdenMobileLayout.itemBuilder / .sectionBuilder — the same slots, additive (cases 10-11)"
   - "EdenNavItemState / EdenNavItemBuilder / EdenNavSectionBuilder on the public surface"
   - "exactly ONE semantics node per rail row, published at a single emission point"
   - "selectableBody defaults to FALSE on both Eden layouts — the eden-ui-flutter#33 fix"
@@ -19,6 +20,7 @@ key-files:
   created:
     - test/widgets/eden_layout_navigator_body_test.dart
     - test/widgets/eden_desktop_layout_builders_test.dart
+    - test/widgets/eden_mobile_layout_builders_test.dart
   modified:
     - lib/src/widgets/eden_layout/layout_data.dart
     - lib/src/widgets/eden_layout/eden_desktop_layout.dart
@@ -32,22 +34,24 @@ key-files:
 
 requirements-completed: [ISSUE-33, W1A-1a-06]
 requirements-incomplete: []
-status: COMPLETE — Tasks 1, 2 and 3 done (Task 1 landed in a follow-up executor run)
-duration: ~25min (run 1: Tasks 2-3) + ~20min (run 2: Task 1)
+status: COMPLETE — Tasks 1 (desktop AND mobile), 2 and 3 done; all TRD cases 1-19 landed
+duration: ~25min (run 1: Tasks 2-3) + ~20min (run 2: Task 1 desktop) + ~15min (run 3: cases 10-11)
 completed: 2026-09-22
 ---
 
 # Objective 23 — TRD 23-06 Summary
 
-**The production bug is fixed and proved. The composition API is now built too.**
+**TRD 23-06 is COMPLETE. The production bug is fixed and proved, and the composition API is built
+on BOTH layouts — all 19 TRD cases landed.**
 
 `selectableBody` now defaults to `false` on both Eden layouts, the Navigator-body regression test
 was seen to fail with the real upstream assertion before the flip, and
 `test/widgets/eden_desktop_layout_test.dart` is byte-unmodified and green. Task 1 — the
 `itemBuilder`/`sectionBuilder` slots — landed in a second executor run after the controller ruled
-on the semantics tension recorded below; see **Task 1 — built, and how the ruling was applied**.
+on the semantics tension recorded below (desktop; see **Task 1 — built, and how the ruling was
+applied**) and a third run (mobile, TRD cases 10-11; see **Task 1, mobile half**).
 
-## Task 1 — built, and how the ruling was applied
+## Task 1, desktop half — built, and how the ruling was applied
 
 `EdenDesktopLayout` now takes `itemBuilder` and `sectionBuilder` (both nullable, both defaulted to
 null, both appended after the existing optionals — additive, no positional contract moved). The
@@ -78,9 +82,85 @@ row it did not want to change. The typedef ships as `Widget? Function(...)`, whe
 `_navRow`, and the default builder is the fallback. The deviation is recorded in the typedef's own
 dartdoc so it is not rediscovered.
 
-**Mobile slots are NOT built.** TRD cases 10-11 (`EdenMobileLayout` builders plus the caption/divider
-exclusion under a consumer builder) were not reached inside the second run's ceiling.
-`EdenMobileLayout`'s constructor is untouched, so nothing partial shipped there.
+## Task 1, mobile half — cases 10-11 (run 3)
+
+`EdenMobileLayout` now takes the same two slots, on the same shape, appended after the existing
+optionals: `itemBuilder` and `sectionBuilder`, both nullable, both defaulting to null, both reusing
+the `EdenNavItemBuilder` / `EdenNavSectionBuilder` / `EdenNavItemState` types already published by
+`layout_data.dart` for the desktop half. No new public types.
+
+**The desktop ruling was copied, not reinvented.** `EdenMobileLayout._navRow` is now the ONLY place
+the mobile layout produces a nav row. It resolves `itemBuilder ?? (a builder that declines)`, takes
+the result or the default renderer's, and wraps it in a single
+`Semantics(identifier: 'eden-nav-<id>', button:, label:, selected:, onTap:)`. The annotations were
+**stripped out of `_BottomItem` and `_DrawerTile`** so there is no nested pair (F5: a nested
+`Semantics` without `container: true` is not published at all). `_navSection` does the same for the
+drawer's captions, dividers and group bands, which carry no identifier in either path — exactly as
+today.
+
+Four call sites were rerouted through those helpers: the bottom-bar tabs, the "More" overflow tab,
+the drawer's tiles (group children at `depth: 1`, and leaves), and the "More" sheet's rows. The
+drawer's decorations go through `_navSection`. `_BottomItem` also gave up its own `Expanded`, which
+moved to the call site so the `Row` still sees a flex child directly — render-tree shape unchanged,
+only the `Semantics` and the private renderer swapped order. The overflow tab's inline
+`const EdenNavItem(id: '__more__', …)` was extracted to `_moreItem` so the emission point and the
+default renderer are handed the same object (the desktop `_collapsedGroupRailItem` pattern).
+
+**The exclusion is the layout's rule, and it sits BEFORE the emission point.** `_flatItems` already
+drops every caption and divider, so `bottomItems` never contains one and a consumer `itemBuilder` is
+never even offered one. That is what case 11 pins: the bar cannot be made to render a decoration by
+supplying a builder, because the builder is downstream of the filter.
+
+**One finding, corrected in the open.** Case 11's first draft asserted
+`offeredIds == ['home', 'reports']`. It failed: `['home', 'reports', 'home', 'reports']`. The
+Scaffold builds its `drawer:` widget eagerly even while the drawer is closed, so the drawer's tiles
+go through the same emission point as the bar's tabs — each id is offered twice. That is the
+intended "one path" behaviour, not a defect, so the assertion was changed to a SET (the count is not
+load-bearing) plus two explicit `isNot(contains('__caption__'/'__divider__'))` checks. The weakening
+is narrow and named rather than silent: the decoration assertions are the load-bearing half and they
+were made STRONGER, not weaker.
+
+### Cases 10-11 TDD evidence, literal
+
+| Phase | Command | Exit | Result |
+|---|---|---|---|
+| RED | `flutter test test/widgets/eden_mobile_layout_builders_test.dart` | **1** | `Error: No named parameter with the name 'itemBuilder'.` at `test/widgets/eden_mobile_layout_builders_test.dart:85:9` |
+| GREEN | same | **0** | `00:00 +2: All tests passed!` |
+| Pre-existing layout suites | `flutter test .../eden_mobile_layout_test.dart .../eden_layout_selection_test.dart .../eden_layout_navigator_body_test.dart .../eden_desktop_layout_test.dart .../eden_desktop_layout_builders_test.dart` | **0** | `00:00 +29: All tests passed!` |
+
+### The differential control for cases 10-11 (F1 — a gate never seen to fail is not a gate)
+
+The guarded thing is the `_flatItems` exclusion. It was removed in place — the line
+`if (item.isDivider || item.isCaption) continue;` deleted — and the pair re-run:
+
+```
+DIFFERENTIAL CONTROL exit: 1
+Expected: no matching candidates
+  Actual: _TextWidgetFinder:<Found 1 widget with text "Workspace": [
+Expected: Set:['home', 'reports']
+  Actual: Set:['home', 'reports', '__caption__', '__divider__']
+00:00 +0 -2: Some tests failed.
+```
+
+Both cases went red — case 10 on the caption reaching the bar, case 11 on the caption and the
+divider reaching the consumer builder. Restored with `git checkout -- <path>` (never `git stash`),
+re-run green: `00:00 +2: All tests passed!`.
+
+### Back-compat gate for the mobile half
+
+Every pre-existing file that constructs an `EdenMobileLayout` is byte-unmodified:
+
+```
+$ git diff --stat test/widgets/eden_mobile_layout_test.dart \
+    test/widgets/eden_layout_navigator_body_test.dart \
+    test/widgets/eden_layout_selection_test.dart \
+    test/widgets/eden_desktop_layout_test.dart
+$                                    # empty — all four unmodified, all green
+```
+
+(`grep -rln EdenMobileLayout test/` finds exactly three: `eden_mobile_layout_test.dart`,
+`eden_layout_navigator_body_test.dart`, `eden_layout_selection_test.dart`. The desktop spine file is
+quoted alongside them because it is the TRD's non-negotiable gate.)
 
 ### Task 1 TDD evidence, literal
 
@@ -145,7 +225,7 @@ code**, found while reading the call sites and recorded here so it is not redisc
 | Task | Status | Evidence |
 |---|---|---|
 | 1 — `itemBuilder`/`sectionBuilder` slots (desktop) | **DONE** | RED exit 1 -> GREEN 4/4; spine 5/5 unmodified |
-| 1b — the same slots on `EdenMobileLayout` (cases 10-11) | **NOT BUILT** | run-2 ceiling; constructor untouched |
+| 1b — the same slots on `EdenMobileLayout` (cases 10-11) | **DONE** | RED exit 1 -> GREEN 2/2; differential control exit 1 then restored |
 | 2 — issue #33, flip `selectableBody` to opt-in | **DONE** | RED exit 1 → GREEN 9/9 |
 | 3 — invert the selection defaults, CHANGELOG + guide | **DONE** | 8/8 green, grep sweep clean |
 | (23-05 defect 3) — unlabelled mobile button | **DONE** | additive `tooltip:` on the default leading |
@@ -232,7 +312,16 @@ weakened, no tolerance knob was added, no golden was blessed.
 ## Generated-story failure count: 22 → 22 (unchanged)
 
 `flutter test test/stories/_generated/` before: `+0 ~22 -22`. After: `+0 ~22 -22`. Nothing grew.
-Nav-item rendering was not changed by this TRD (Task 1, which would have, was not started).
+Measured again at the end of run 3, after the mobile layout's semantics were restructured: still
+`+0 ~22 -22`.
+
+**Do NOT read that unchanged count as confirmation of the mobile work.** Per F2, the
+`mobile-layout/*` `expectUiSane` tests die on a `google_fonts` network fetch for `Outfit-ExtraBold`
+BEFORE any guideline assertion runs, so they cannot confirm or deny a change to the mobile shell's
+semantics either way. The mobile evidence that IS real is in-suite: case 10 and case 11 assert
+`find.bySemanticsIdentifier('eden-nav-<id>')` `findsOneWidget` per destination — one node per row,
+not a nested pair — and the 29 pre-existing layout-test cases stayed green byte-unmodified.
+`expectUiSane` was not weakened and no tolerance or disable knob was added.
 
 ## Consumer impact — neither repo edited from here
 
@@ -273,6 +362,8 @@ was flipped because…"*. They are the record of the change, not a stale claim.
 | `7b1a04e` | `feat(23-06): EdenDesktopLayout composition slots, one semantics node per row` |
 | `1d5954f` | `test(23-06): cases 7-9 — the identifier survives any consumer builder` |
 | `4c6cc2d` | `refactor(23-06): read case 9's flags off SemanticsData, not deprecated hasFlag` |
+| `8d48d06` | `test(23-06): RED — EdenMobileLayout has no itemBuilder slot (cases 10-11)` |
+| `7d0aa6e` | `feat(23-06): EdenMobileLayout composition slots, one semantics node per row` |
 
 ### Gate tallies after Task 1
 
@@ -283,13 +374,28 @@ was flipped because…"*. They are the record of the change, not a stale claim.
 | `flutter analyze` | 0 errors, 2 warnings, 369 issues | **0 errors, 2 warnings, 369 issues** |
 | `git diff --stat test/widgets/eden_desktop_layout_test.dart` | empty | **empty** |
 
+### Gate tallies after the mobile half (run 3)
+
+The run-3 baseline is higher than the run-2 "after" column because 23-09 landed in between.
+
+| Gate | Before (run-3 baseline) | After |
+|---|---|---|
+| `flutter test` | 4685 passed / 27 skipped / **22 failed** | **4687 passed / 27 skipped / 22 failed** (+2 = cases 10-11) |
+| `flutter test test/stories/_generated/` | `+0 ~22 -22` | `+0 ~22 -22` |
+| `flutter analyze --no-fatal-infos` | 0 errors, 2 warnings, 369 issues | **0 errors, 2 warnings, 369 issues** |
+| `git diff --stat` on all 3 pre-existing `EdenMobileLayout` test files + the desktop spine | empty | **empty** |
+| differential control (delete the `_flatItems` exclusion) | — | **exit 1**, both cases red, restored |
+
+The 2 warnings are the pre-existing `unnecessary_non_null_assertion` pair at
+`test/widgets/eden_route_stop_list_test.dart:221` and `:244` — not touched. The 22 failures are the
+same F6 set (42px nav rows, the 20x20 collapse control, the F2 `google_fonts` pair); defects 1 and 2
+remain the controller's rail-density decision and were not touched here.
+
 ## Follow-ups for the controller
 
-1. **Task 1 desktop slots are built; the MOBILE half (TRD cases 10-11) is not.** `EdenMobileLayout`
-   needs the same `itemBuilder`/`sectionBuilder` pair plus the two cases pinning that the bottom bar
-   renders neither captions nor dividers *even when a consumer builder is supplied* — the exclusion
-   is the layout's rule, not the renderer's. Small and self-contained now that the desktop emission
-   point exists to copy.
+1. ~~Task 1 desktop slots are built; the MOBILE half (TRD cases 10-11) is not.~~ **RESOLVED in run
+   3** — `EdenMobileLayout` has the same `itemBuilder`/`sectionBuilder` pair, the same single
+   emission point, and cases 10-11 green with a differential control. TRD 23-06 is fully complete.
 1b. **The builder typedef is `Widget? Function(...)`, not the TRD's `Widget Function(...)`** — the
    nullable return is what makes per-item replacement expressible at all. Worth carrying back into
    IMPLEMENTATION-PLAN row 1a-06 so the two do not disagree.
