@@ -8,9 +8,13 @@ const String kTextStyleNeedsFamily = 'text_style_needs_family';
 
 /// The detector. Returns the problem message, or null when [call] is fine.
 ///
-/// STUB -- not implemented yet (RED).
+/// Only the unnamed constructor: `TextStyle.lerp` interpolates two styles that
+/// were each already subject to this rule.
 String? textStyleNeedsFamilyMessage(CtorCall call) {
-  return null;
+  if (call.typeName != 'TextStyle' || !call.isUnnamed) return null;
+  if (namedArg(call.arguments, 'fontFamily') != null) return null;
+  return 'TextStyle without a fontFamily outside lib/src/tokens/ -- name the '
+      'family or build it from EdenTypography.';
 }
 
 class TextStyleNeedsFamily extends DartLintRule {
