@@ -204,3 +204,39 @@ Widget darkOnDark() {
     ),
   );
 }
+
+/// MODALITY-CONDITIONAL — a rail-shaped nav row: 235 wide, 40 tall.
+///
+/// This is the desktop rail's real geometry (eden_desktop_layout.dart's
+/// `_NavTile`: a 40px row on a 42px pitch). It is NOT "broken": 40px clears
+/// WCAG 2.5.8 Target Size (Minimum)'s 24x24 pointer floor with room to spare,
+/// and fails the Material 48dp / iOS 44pt TOUCH floors.
+///
+/// It exists so the two modality paths can be told apart by a test rather than
+/// by reading the implementation: `EdenInputModality.pointer` must PASS this
+/// surface and `EdenInputModality.touch` must FAIL it. There is no `FIX:` line
+/// — what changes here is the declared modality, never the geometry.
+Widget railRow() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Semantics(
+        container: true,
+        identifier: 'fx-rail-row',
+        label: 'Reports',
+        button: true,
+        onTap: () {},
+        child: const SizedBox(
+          width: 235,
+          height: 40,
+          child: Center(
+            child: Text(
+              'Reports',
+              style: TextStyle(fontSize: 13, color: _legibleInk),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}

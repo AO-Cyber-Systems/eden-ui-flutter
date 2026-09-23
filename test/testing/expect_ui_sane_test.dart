@@ -169,4 +169,68 @@ void main() {
       ),
     );
   });
+
+  // ---------------------------------------------------------------------
+  // Input modality — the tap-target floor depends on what the surface is
+  // driven WITH. See EdenInputModality in lib/testing/expect_ui_sane.dart.
+  // ---------------------------------------------------------------------
+
+  testWidgets('case 7: the pointer path still rejects a 20x20 target',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, tinyTapTarget());
+    // The pointer floor is a REAL floor, not an absent one. 20x20 is under
+    // WCAG 2.5.8's 24x24 minimum, so relaxing 48/44 to 24 must not let this
+    // through.
+    // RED (before EdenInputModality existed): compile error — no such named
+    // parameter `inputModality`.
+    // RED (parameter present, pointer path wired to the 48/44 guidelines):
+    // the message names Size(48.0, 48.0) and this expectation fails.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.pointer),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-tiny-tap"'),
+            contains('Size(24.0, 24.0)'),
+            contains('found Size(20.0, 20.0)'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('case 8: the pointer path accepts a 40px rail row',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, railRow());
+    // The ruling itself: 40px is correct on a pointer surface. 24x24 is WCAG
+    // 2.5.8 AA; 44x44 (2.5.5) is AAA and 48dp is Material TOUCH guidance.
+    // Asserting a touch floor here would not be a stricter standard, it would
+    // be the wrong one.
+    await expectUiSane(tester, inputModality: EdenInputModality.pointer);
+  });
+
+  testWidgets('case 9: the touch path still rejects the same 40px row',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, railRow());
+    // The same geometry, declared as a touch surface, is still a defect — the
+    // modality parameter selects the standard, it does not waive one. Both
+    // floors are named so a fixture tuned to 46px could not slip between them.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-rail-row"'),
+            contains('Size(48.0, 48.0)'),
+            contains('Size(44.0, 44.0)'),
+            contains('found Size(235.0, 40.0)'),
+          ),
+        ),
+      ),
+    );
+  });
 }
