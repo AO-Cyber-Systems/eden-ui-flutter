@@ -278,16 +278,37 @@ Future<List<String>> _guidelineViolations(
   return out;
 }
 
+/// UNITS: this check has TWO coordinate systems in it and they are not the
+/// same one.
+///
+/// `SemanticsGeometryNode.globalRect` composes the root semantics transform,
+/// which carries the device-pixel-ratio scale, so it is in PHYSICAL pixels —
+/// the same fact `_pointerReaches` below already has to divide out.
+/// `tester.view.physicalSize / tester.view.devicePixelRatio` is LOGICAL. This
+/// function used to compare the two directly.
+///
+/// That was correct only by accident of the harness: `wrap()` pins
+/// `devicePixelRatio` to 1, where the two numbers coincide. At any other
+/// ratio EVERY control on EVERY surface fails — a control at logical x=680 on
+/// a dpr-2 device publishes a rect at 1360, and a 1280-wide viewport rejects
+/// it. The oracle would have cried wolf on the whole app the first time
+/// someone pumped at a real device ratio, and a check that fires on
+/// everything gets switched off, which is how an oracle dies.
+///
+/// The rect is converted to LOGICAL rather than the viewport to physical
+/// because the violation message quotes both, and logical pixels are the unit
+/// the reader's layout code is written in. Pinned by
+/// `expect_ui_sane_dpr_test.dart` at ratios 2 and 3.
 List<String> _viewportViolations(
   WidgetTester tester,
   List<SemanticsGeometryNode> nodes,
 ) {
-  final Size viewport =
-      tester.view.physicalSize / tester.view.devicePixelRatio;
+  final double ratio = tester.view.devicePixelRatio;
+  final Size viewport = tester.view.physicalSize / ratio;
   final Rect viewportRect = Offset.zero & viewport;
   final List<String> out = <String>[];
   for (final SemanticsGeometryNode node in nodes) {
-    final Rect r = node.globalRect;
+    final Rect r = _toLogical(node.globalRect, ratio);
     final bool inside = r.left >= viewportRect.left - _epsilon &&
         r.top >= viewportRect.top - _epsilon &&
         r.right <= viewportRect.right + _epsilon &&
@@ -302,6 +323,17 @@ List<String> _viewportViolations(
   return out;
 }
 
+/// UNITS (audited alongside `_viewportViolations`' physical/logical bug, and
+/// clean): this rule compares node rects only to EACH OTHER, and every rect
+/// comes out of the same physical-pixel transform, so the ratio cancels and
+/// the verdict is identical at every device pixel ratio. `_pointerReaches` is
+/// the third rect consumer and already divides the ratio out explicitly.
+/// Those three are all of them — no other check in this file reads a rect.
+///
+/// The rects QUOTED in the message below are therefore physical while
+/// `_viewportViolations`' are logical. Cosmetic, not a correctness defect, and
+/// left alone on purpose: normalising them would mean converting rects the
+/// rule itself does not need converted.
 List<String> _overlapViolations(
   List<SemanticsGeometryNode> nodes,
   Set<String> allowOverlap,
@@ -372,6 +404,13 @@ List<String> _overlapViolations(
 // a legitimately read-only checked row. `link: true` IS in scope: it has no
 // site in `lib/src` today, but it is the same lie through the other flag, and
 // it is executed by a fixture rather than merely asserted.
+//
+// KNOWN LIMIT, recorded rather than fixed: the walk only inspects nodes that
+// carry an IDENTIFIER, so a `button: true` node with NO identifier is never
+// checked for liveness — it can be inert and this rule stays silent. Left as
+// is because the identifier is what lets a violation NAME the offending
+// control, and an unnamed "some button somewhere is dead" is not actionable;
+// the repo's convention is that a control worth checking carries one.
 
 List<String> _tapRouteViolations(
   WidgetTester tester,
@@ -529,6 +568,19 @@ int _countTapRoutes(SemanticsNode node, {required bool isOwner}) {
   return count;
 }
 
-/// Sub-pixel slack for the viewport containment check: a control laid out flush
-/// against the right edge can land at 1280.0000000001 after a matrix compose.
+/// [physical] expressed in LOGICAL pixels.
+///
+/// The root semantics transform is a uniform scale by the device pixel ratio,
+/// so dividing every edge by [ratio] is the whole conversion. `Rect` has no
+/// division operator, which is the only reason this is a function.
+Rect _toLogical(Rect physical, double ratio) => Rect.fromLTRB(
+      physical.left / ratio,
+      physical.top / ratio,
+      physical.right / ratio,
+      physical.bottom / ratio,
+    );
+
+/// Sub-pixel slack for the viewport containment check, in LOGICAL pixels: a
+/// control laid out flush against the right edge can land at 1280.0000000001
+/// after a matrix compose.
 const double _epsilon = 0.01;
