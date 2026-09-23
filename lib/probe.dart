@@ -12,4 +12,5 @@
 ///     }
 library;
 
+export 'src/probe/eden_probe_scope.dart' show EdenProbeScope;
 export 'src/probe/probe_bridge.dart' show EdenProbe, kEdenProbe;

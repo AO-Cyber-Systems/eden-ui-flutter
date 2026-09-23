@@ -16,11 +16,29 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '_fixtures/animated_surfaces.dart';
 
-/// One frame at 60fps: short enough that a full-duration (200ms) FAB exit or
-/// route push is nowhere near complete, long enough that a 5%-scaled
-/// (~10ms) one is -- see `_animateTo` in
-/// package:flutter/src/animation/animation_controller.dart.
-const Duration _oneFrame = Duration(milliseconds: 16);
+/// The single timed pump this TRD's "settles in one frame" claim is
+/// measured over: comfortably longer than a scaled (~5% of 200-450ms, so
+/// 10-25ms) FAB/route duration, comfortably shorter than the real
+/// (200-450ms) one.
+const Duration _settleWindow = Duration(milliseconds: 50);
+
+/// Advances past an interaction (FAB removal / route push) far enough to
+/// observe whether it settled.
+///
+/// The two leading zero-duration `pump()`s are a MECHANICAL fact of
+/// Flutter's own frame scheduling, identical with or without the scope: a
+/// freshly-`.reverse()`d / freshly-pushed `AnimationController`'s ticker
+/// reports NO elapsed progress until the frame after the one that started
+/// it (proven empirically -- a single `pump(duration)` call, however long,
+/// leaves a just-started controller at its initial value), and
+/// `Navigator.push` mounts the new route's subtree one frame after that.
+/// Only the FINAL, time-advancing pump is where the scope's
+/// `disableAnimations` knob changes the outcome.
+Future<void> _pumpPastInteraction(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump();
+  await tester.pump(_settleWindow);
+}
 
 /// Wraps [child] in the testable [buildProbeScope] via a [Builder], since
 /// [EdenProbeScope] itself always calls it with the compile-time
@@ -53,13 +71,13 @@ void main() {
         expect(find.byKey(fabRemovalFabKey), findsOneWidget);
 
         stateKey.currentState!.removeFab();
-        await tester.pump(_oneFrame);
+        await _pumpPastInteraction(tester);
 
         expect(
           find.byKey(fabRemovalFabKey),
           findsOneWidget,
-          reason: 'the FAB exit animation is 200ms; one 16ms frame should '
-              'not have completed it -- this is the '
+          reason: 'the FAB exit animation is 200ms; a 50ms settle window '
+              'should not have completed it -- this is the '
               'scaffold-fab-exit-animation-widget-test trap, asserted here '
               'as the control',
         );
@@ -77,7 +95,7 @@ void main() {
         expect(find.byKey(fabRemovalFabKey), findsOneWidget);
 
         stateKey.currentState!.removeFab();
-        await tester.pump(_oneFrame);
+        await _pumpPastInteraction(tester);
 
         expect(find.byKey(fabRemovalFabKey), findsNothing);
       },
@@ -90,8 +108,7 @@ void main() {
       (WidgetTester tester) async {
         await tester.pumpWidget(const MaterialApp(home: PushedRouteSurface()));
         await tester.tap(find.byKey(pushedRouteButtonKey));
-        await tester.pump();
-        await tester.pump(_oneFrame);
+        await _pumpPastInteraction(tester);
 
         final BuildContext pushed =
             tester.element(find.byKey(pushedRouteMarkerKey));
@@ -112,8 +129,7 @@ void main() {
           home: _scoped(const PushedRouteSurface(), enabled: true),
         ));
         await tester.tap(find.byKey(pushedRouteButtonKey));
-        await tester.pump();
-        await tester.pump(_oneFrame);
+        await _pumpPastInteraction(tester);
 
         final BuildContext pushed =
             tester.element(find.byKey(pushedRouteMarkerKey));
