@@ -43,30 +43,53 @@ void main() {
     });
 
     // ------------------------------------------------------------------
-    // CASE 7 — PINNED BUG. DO NOT "FIX" THIS TEST OR ITS FIXTURE.
+    // CASE 7 — AN SDK BEHAVIOUR CHANGE, MEASURED AT BOTH ENDS.
     //
-    // Memory note: `flutter-web-semantics-node-is-the-click-target`. On web the
-    // DOM semantics node receives the click, not the widget. A nested
-    // `Semantics(identifier: ...)` declared WITHOUT `container: true` does not
-    // form its own semantics boundary: its annotations are merged into the
-    // enclosing node, so the accessibility tree publishes the PARENT's 200x200
-    // rect for that control and the inner identifier is not published at all.
+    // This case used to pin a BUG. On Flutter 3.41.9 a nested
+    // `Semantics(identifier: ...)` declared WITHOUT `container: true` formed no
+    // semantics boundary of its own: its annotations merged UPWARD into the
+    // enclosing node, the inner identifier was never published, and the only
+    // node in the tree was the 200x200 parent — carrying the inner control's
+    // `button: true` flag on the parent's box.
     //
-    // This test asserts the BUGGY values on purpose. It is the tripwire that
-    // tells 23-02 (`expectUiSane`) and 23-07 (the probe bridge's `tree()`) why
-    // they must REQUIRE `container: true`: without it a geometry assertion is
-    // silently made against the wrong box, and a lookup by the inner
-    // identifier throws instead of returning a 40x40 rect.
+    // On the SDK this repo's CI pins, 3.47.4, that is no longer true. The
+    // nested annotation publishes its OWN node, as a child of the parent's,
+    // with the control's own 40x40 rect, and the button flag stays on it. The
+    // parent keeps its identifier and its 200x200 rect and is no longer a
+    // button.
     //
-    // Observed on Flutter 3.41.9 (local) — see the SUMMARY's deviation note:
-    // the plan predicted the inner identifier would be REPORTED with the
-    // parent's rect; what actually happens is that the inner identifier is
-    // DROPPED and only the parent's node exists, carrying the parent's rect.
-    // Same defect, one step more severe.
+    // MEASURED, not inferred, on both SDKs with the same fixture:
+    //
+    //   Flutter 3.41.9 (workstation)   #4 "fx-parent" 200x200 isButton=true
+    //                                     (no node for the inner control)
+    //   Flutter 3.47.4 (CI run         #4 "fx-parent" 200x200 isButton=false
+    //   35898905034, Test job)           #5 "fx-nested-no-container" 40x40
+    //                                        isButton=true, child of #4
+    //
+    // The exact stable release that changed it was NOT narrowed: all this
+    // asserts is that 3.41.9 behaved one way and 3.47.4 behaves the other.
+    //
+    // WHAT THIS MEANS FOR CALLERS. Omitting `container: true` no longer makes
+    // a control unaddressable on the pinned SDK — `globalRectOf` returns its
+    // own 40x40 box instead of throwing. It is still the house rule to pass
+    // it, for two reasons that survive the fix: the repo's declared SDK floor
+    // (pubspec `flutter: ">=3.27.0"`) still includes versions with the old
+    // merging behaviour, and `container: true` states the boundary explicitly
+    // instead of depending on which SDK a consumer resolves. `expectUiSane`
+    // and the probe bridge keep REQUIRING it; what has changed is the penalty
+    // for omitting it, not the rule.
+    //
+    // NOTE FOR WORKSTATIONS. This case is written against the SDK CI pins.
+    // A checkout running the older 3.41.9 fails it, and that is deliberate —
+    // memory note `local-flutter-is-months-behind-ci`. The gate is CI.
+    //
+    // Memory note: `flutter-web-semantics-node-is-the-click-target` — on web
+    // the DOM semantics node receives the click, not the widget. That is why
+    // this case asserts rects and nesting, not just presence.
     // ------------------------------------------------------------------
     testWidgets(
-      'case 7 (pinned bug): nested Semantics without container:true is '
-      'swallowed by the parent node, which carries the parent rect',
+      'case 7 (SDK behaviour change): on 3.47.4 a nested Semantics without '
+      'container:true publishes its own node with its own 40x40 rect',
       (WidgetTester tester) async {
         await wrap(tester, nestedSemanticsWithoutContainer, width: 360);
 
@@ -75,22 +98,40 @@ void main() {
             .map((SemanticsGeometryNode n) => n.identifier)
             .toList();
 
-        // BUGGY, ON PURPOSE: the inner 40x40 control publishes no node of its
-        // own. Only the 200x200 parent is in the accessibility tree.
-        expect(identifiers, <String>[kFxParent]);
-        expect(identifiers, isNot(contains(kFxNestedNoContainer)));
+        // BOTH are published now. `identifiedNodes` sorts by (top, left,
+        // identifier), so the 200x200 parent (top 300) precedes the nested
+        // 40x40 control (top 380) — this is not visit order.
+        expect(identifiers, <String>[kFxParent, kFxNestedNoContainer]);
 
-        // BUGGY, ON PURPOSE: the rect a click on the nested control lands in
-        // is the PARENT's 200x200 box, not the control's own 40x40.
+        // The parent is unchanged: same identifier, same 200x200 box.
         final Rect parentRect = globalRectOf(tester, kFxParent);
         expect(parentRect.width, 200);
         expect(parentRect.height, 200);
 
-        // And the lookup a caller would naturally write throws.
-        expect(
-          () => globalRectOf(tester, kFxNestedNoContainer),
-          throwsStateError,
-        );
+        // The lookup that THREW on 3.41.9 now answers, and it answers with the
+        // control's OWN box, not the parent's. This is the whole behaviour
+        // change in one assertion.
+        final Rect nestedRect = globalRectOf(tester, kFxNestedNoContainer);
+        expect(nestedRect.width, 40);
+        expect(nestedRect.height, 40);
+
+        // And it is nested INSIDE the parent's box rather than replacing it:
+        // the accessibility tree now has two stacked rects over this control.
+        expect(parentRect.contains(nestedRect.topLeft), isTrue);
+        expect(parentRect.contains(nestedRect.bottomRight - const Offset(1, 1)),
+            isTrue);
+        expect(rectsOverlap(parentRect, nestedRect), isTrue);
+
+        // A click at the inner control's centre is inside both rects; the
+        // smaller, innermost published node is the one a browser's DOM
+        // semantics node resolves it to, and on 3.47.4 that node is the
+        // control's own 40x40 — on 3.41.9 the only candidate was the parent's
+        // 200x200.
+        final Offset centre = nestedRect.center;
+        expect(nestedRect.contains(centre), isTrue);
+        expect(parentRect.contains(centre), isTrue);
+        expect(nestedRect.width * nestedRect.height,
+            lessThan(parentRect.width * parentRect.height));
       },
     );
   });

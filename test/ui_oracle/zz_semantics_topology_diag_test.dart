@@ -77,6 +77,72 @@ void main() {
     // ignore: avoid_print
     print('===DIAG-LOOKUP=== $lookup');
   });
+
+  // The _navRow shape: an identified Semantics(onTap:) over a renderer that is
+  // a bare GestureDetector(onTap:). Printed BOTH ways — with and without the
+  // ExcludeSemantics that d2af9d1 added — so "is the exclusion still doing
+  // something on 3.47.4?" is answered by measurement, not by reading the SDK.
+  testWidgets('DIAG navRow shape with and without ExcludeSemantics', (
+    WidgetTester tester,
+  ) async {
+    for (final bool exclude in <bool>[false, true]) {
+      final Widget renderer = GestureDetector(
+        onTap: () {},
+        child: const SizedBox(width: 80, height: 48),
+      );
+      await wrap(
+        tester,
+        Center(
+          child: Semantics(
+            identifier: 'fx-navrow',
+            button: true,
+            label: 'Home',
+            onTap: () {},
+            child: exclude ? ExcludeSemantics(child: renderer) : renderer,
+          ),
+        ),
+        width: 360,
+      );
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpAndSettle();
+      final SemanticsNode root = rootSemanticsNodeOf(tester);
+      // ignore: avoid_print
+      print('===DIAG-NAVROW exclude=$exclude BEGIN===');
+      _dump(root, 0, Matrix4.identity());
+      // ignore: avoid_print
+      print('===DIAG-NAVROW exclude=$exclude END===');
+      handle.dispose();
+    }
+  });
+
+  // The OTHER shape the house rule is about: an identifier annotation whose
+  // child ALREADY publishes semantics of its own (a real button). Does the
+  // identifier get its own node, or does it land on the child's node?
+  testWidgets('DIAG annotation over a child that already publishes', (
+    WidgetTester tester,
+  ) async {
+    await wrap(
+      tester,
+      Center(
+        child: Semantics(
+          identifier: 'fx-over-published',
+          child: ElevatedButton(
+            onPressed: () {},
+            child: const Text('Go'),
+          ),
+        ),
+      ),
+      width: 360,
+    );
+    final SemanticsHandle handle = tester.ensureSemantics();
+    await tester.pumpAndSettle();
+    // ignore: avoid_print
+    print('===DIAG-OVERPUBLISHED BEGIN===');
+    _dump(rootSemanticsNodeOf(tester), 0, Matrix4.identity());
+    // ignore: avoid_print
+    print('===DIAG-OVERPUBLISHED END===');
+    handle.dispose();
+  });
 }
 
 void _dump(SemanticsNode node, int depth, Matrix4 inherited) {
