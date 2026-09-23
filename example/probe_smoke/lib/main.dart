@@ -18,14 +18,14 @@ class ProbeSmokeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Probe Smoke',
       home: Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              SizedBox(
+              const SizedBox(
                 key: ValueKey<String>('probe-target'),
                 width: 120,
                 height: 40,
@@ -35,7 +35,7 @@ class ProbeSmokeApp extends StatelessWidget {
                 identifier: 'eden-nav-home',
                 container: true,
                 label: 'Home',
-                child: SizedBox(width: 100, height: 48),
+                child: const SizedBox(width: 100, height: 48),
               ),
             ],
           ),

@@ -12,27 +12,18 @@
 set -euo pipefail
 
 APP_DIR="${1:-example/probe_smoke}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$APP_DIR"
 
 BUNDLE="build/web/main.dart.js"
+OUT="$(mktemp -d)"
+trap 'rm -rf "$OUT"' EXIT
 
 flutter build web --release
-# GOTCHA: `grep -c` exits 1 on ZERO matches, and zero is the answer we WANT
-# here. Without `|| true` this script fails for the right answer under `set -e`.
-PROD_HITS=$(grep -c __edenProbe "$BUNDLE" || true)
+cp "$BUNDLE" "$OUT/production.js"
 
 flutter build web --release --dart-define=EDEN_PROBE=true
-PROBE_HITS=$(grep -c __edenProbe "$BUNDLE" || true)
+cp "$BUNDLE" "$OUT/probe.js"
 
-echo "production bundle: $PROD_HITS   probe bundle: $PROBE_HITS"
-
-[ "$PROD_HITS" -eq 0 ] || {
-  echo "FAIL: __edenProbe found in a production bundle"
-  exit 1
-}
-[ "$PROBE_HITS" -gt 0 ] || {
-  echo "FAIL: __edenProbe absent even WITH the define -- the guard is inert"
-  exit 1
-}
-
-echo "OK: bridge present under the define, absent without it"
+# Every decision lives in the assert script, which has its own tests.
+bash "$REPO_ROOT/tool/probe_guard_assert.sh" "$OUT/production.js" "$OUT/probe.js"
