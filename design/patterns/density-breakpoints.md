@@ -53,8 +53,10 @@ last things to go, and in practice they never go.
   because the label the sighted user lost to a tooltip is the same label the screen reader needs. An
   icon-only rail item must still publish its name.
 - `must_not: nest semantics without a container` — density wrappers that add a `Semantics` around an
-  existing control must pass `container: true`, or the control's own identifier disappears into the
-  wrapper's node.
+  existing control must pass `container: true`. On Flutter 3.41.9 omitting it could drop the inner
+  identifier into the enclosing node entirely; on 3.47.4 the nested annotation publishes its own node
+  instead. The rule stands across that range: `container: true` declares the boundary rather than
+  inheriting whichever behaviour a consumer's SDK gives it.
 - Text scaling is a density input the user controls. A surface that is correct at the declared
   breakpoints and broken at 200% text scale has not satisfied this pattern; the overflow state must be
   captured at increased text scale as well as at a narrow viewport.

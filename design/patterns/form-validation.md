@@ -55,7 +55,8 @@ field before submit, not discovered by submitting.
   inside a field (clear, reveal password, date picker) meet 48dp/44pt. A 20×20 icon button inside a
   text field is the same defect as the shell's 20×20 collapse control.
 - `must_not: nest semantics without a container` — a field's inner affordance addressed by
-  `identifier` needs `container: true`, or its annotation merges into the field's node and the
-  identifier is not published.
+  `identifier` needs `container: true`. On Flutter 3.41.9 its annotation merged into the enclosing
+  node and the identifier was not published; on 3.47.4 it publishes its own node. Pass it either way:
+  the boundary should be declared, not inherited from whichever SDK a consumer resolves.
 - Error text is associated with its field so it is announced on focus, not only rendered near it. Error
   state is never communicated by colour alone.

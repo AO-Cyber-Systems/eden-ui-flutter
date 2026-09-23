@@ -63,7 +63,9 @@ cause of edits landing on the wrong object.
 - `must_not: render below the tap target floor` — splitters, canvas node handles and inspector steppers
   meet 48dp/44pt. Handles are the smallest controls in the product and fail this most often.
 - `must_not: nest semantics without a container` — canvas nodes are addressed by `identifier` by both
-  tests and drivers; a node's `Semantics` inside another `Semantics` without `container: true` is not
-  published at all on Flutter 3.41.9, so the node becomes unaddressable.
+  tests and drivers. A node's `Semantics` inside another `Semantics` without `container: true` was not
+  published at all on Flutter 3.41.9, which made the node unaddressable; on 3.47.4 it publishes its
+  own node. Pass `container: true` regardless — it declares the boundary across the whole SDK range
+  eden-ui-flutter supports.
 - Each pane is a landmark region so a screen-reader user can move between navigator, canvas and
   inspector directly rather than traversing the whole canvas to reach the inspector.

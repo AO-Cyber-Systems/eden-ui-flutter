@@ -49,9 +49,14 @@ testWidgets('dashboard renders sanely', (tester) async {
 
 Two things to know before adopting it:
 
-- A control is only checked if it is addressable. A nested `Semantics` **without
-  `container: true`** is not published as its own node at all — its identifier vanishes and the
-  enclosing node's wins. Give every control you want checked `container: true`.
+- A control is only checked if it is addressable, so give every control you want checked
+  **`container: true`**. What omitting it costs is SDK-dependent, and both ends are measured by
+  `test/ui_oracle/semantics_geometry_test.dart` case 7: on Flutter 3.41.9 a nested `Semantics`
+  without it published no node at all — its identifier vanished into the enclosing node — while on
+  3.47.4, which this package's CI pins, it publishes its own node with its own rect. The rule holds
+  either way: the declared floor (`flutter: ">=3.27.0"`) still spans versions with the old
+  behaviour, and `container: true` states the boundary instead of inheriting whichever one a
+  consumer's SDK gives it.
 - **Contrast and other image-based checks do not currently work on any `EdenTheme` surface.**
   Constructing the theme starts a `google_fonts` network fetch, and the resulting uncaught async
   error completes the test before the check can run. Geometry and structure checks are unaffected.

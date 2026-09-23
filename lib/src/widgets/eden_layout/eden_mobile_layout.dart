@@ -134,11 +134,22 @@ class EdenMobileLayout extends StatelessWidget {
   /// which is why [_BottomItem] and [_DrawerTile] no longer annotate anything
   /// themselves. Exactly one semantics node per row, whoever rendered it.
   ///
-  /// (Annotating in both places would nest two `Semantics` widgets, and a
-  /// nested `Semantics` without `container: true` is not published at all on
-  /// Flutter 3.41 — its annotations merge upward and the parent's identifier
-  /// wins. Stripping the private renderers is what keeps the identifier
-  /// addressable.)
+  /// (Annotating in both places would nest two `Semantics` widgets, which is
+  /// the defect this avoids — but NOT for the reason this comment used to
+  /// give. It said a nested `Semantics` without `container: true` "is not
+  /// published at all on Flutter 3.41". Measured, that describes a NARROWER
+  /// shape — an annotation carrying no semantics of its own, directly inside a
+  /// `container: true` boundary (`test/ui_oracle/semantics_geometry_test.dart`
+  /// case 7) — and only on 3.41.9: on the 3.47.4 CI pins, even that shape
+  /// publishes its own node with its own rect.
+  ///
+  /// The shape a second annotation HERE would create is two nested IDENTIFIED
+  /// annotations, and that publishes TWO nodes on BOTH SDKs — measured on
+  /// 3.41.9 locally and on 3.47.4 in CI run 35901104815 — with identical
+  /// rects: two addressable nodes stacked on one row, both carrying the row's
+  /// label. So one emission point is still exactly right; it is the REASON
+  /// that was version-specific, not the rule.
+  /// `test/ui_oracle/nav_row_tap_routes_test.dart` is the gate.)
   ///
   /// Stripping their `Semantics` was not enough on its own, though. A row's
   /// renderer is a `GestureDetector(onTap:)` — [_BottomItem], [_DrawerTile],
@@ -157,6 +168,15 @@ class EdenMobileLayout extends StatelessWidget {
   /// the rows that put a tap action on their own node must stop the renderer
   /// publishing a competing one, and a row with no tap action has nothing to
   /// compete with (desktop's leaf rows are that case today).
+  ///
+  /// STILL LOAD-BEARING ON 3.47.4, measured rather than assumed: the same
+  /// `Semantics(onTap:)`-over-`GestureDetector(onTap:)` shape was dumped both
+  /// ways on the pinned SDK (CI run 35900038272). Without [ExcludeSemantics]
+  /// the tree carries the identified node PLUS an unidentified child node
+  /// advertising `SemanticsAction.tap`; with it, only the identified node.
+  /// Identical on 3.41.9. Nothing in the 3.47.4 nested-`Semantics` change
+  /// retires this — an implicit GestureDetector tap node was never the
+  /// merged-annotation case.
   ///
   /// [ExcludeSemantics] touches the SEMANTICS tree only — it does not change
   /// hit testing, so the renderer's `GestureDetector` still takes a real

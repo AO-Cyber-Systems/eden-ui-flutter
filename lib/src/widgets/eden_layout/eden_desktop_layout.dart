@@ -178,11 +178,18 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
   /// [_ExpandableNavHeader] no longer annotate anything themselves. Exactly
   /// one semantics node per row, whoever rendered it.
   ///
-  /// (Annotating in both places would nest two `Semantics` widgets, and a
-  /// nested `Semantics` without `container: true` is not published at all on
-  /// Flutter 3.41 — its annotations merge upward and the parent's identifier
-  /// wins. Stripping the private renderers is what keeps the identifier
-  /// addressable.)
+  /// (Annotating in both places would nest two `Semantics` widgets. The
+  /// version-specific claim this comment used to carry — "a nested
+  /// `Semantics` without `container: true` is not published at all on Flutter
+  /// 3.41" — has been measured and corrected: it describes an annotation
+  /// carrying no semantics of its own directly inside a `container: true`
+  /// boundary, and only on 3.41.9; on the 3.47.4 CI pins it publishes its own
+  /// node. Two nested IDENTIFIED annotations, the shape at issue here, publish
+  /// TWO nodes with identical rects on BOTH SDKs (CI run 35901104815) — two
+  /// addressable nodes stacked on one rail row, each carrying the row's label.
+  /// One emission point remains the fix; see [EdenMobileLayout] `._navRow` and
+  /// `test/ui_oracle/semantics_geometry_test.dart` case 7 for the
+  /// measurements.)
   Widget _navRow({
     required BuildContext context,
     required EdenNavItem item,

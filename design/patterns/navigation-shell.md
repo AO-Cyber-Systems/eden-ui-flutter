@@ -60,5 +60,8 @@ Badges carry counts, never prose.
 - `must_not: cover sibling hit rects` — adjacent rows' semantics rects stay disjoint. Growing a hit
   rect past the row pitch to satisfy the tap-target floor trades one accessibility failure for another.
 - `must_not: nest semantics without a container` — controls addressed by `identifier` need
-  `container: true`; without it the annotation merges into the parent node and the identifier is not
-  published at all.
+  `container: true`. Without it the annotation merged into the parent node on Flutter 3.41.9 and the
+  identifier was not published at all; on 3.47.4 it publishes its own node. Declare the boundary
+  rather than depending on the SDK a consumer resolves. Separately, and on every SDK measured: a row
+  must publish exactly ONE identified node and one tap action, so a row that annotates its own node
+  wraps its renderer in `ExcludeSemantics`.

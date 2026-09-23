@@ -53,8 +53,10 @@ labelled as destinations. A group with exactly one child is a mistake — render
   (iOS). The shipped rail row is 42px and currently fails both floors; this is a known, tracked defect
   of the shell, not a licence to lower the rule.
 - `must_not: nest semantics without a container` — the expand/collapse affordance is addressed by
-  `identifier`, and on Flutter 3.41.9 a nested `Semantics` without `container: true` merges into the
-  enclosing node and the nested identifier is not published at all. Any inner `Semantics` on the header
-  row must pass `container: true` or it does not exist to a test or a screen reader.
+  `identifier`. On Flutter 3.41.9 a nested `Semantics` without `container: true` merged into the
+  enclosing node and the nested identifier was not published at all; on 3.47.4 it publishes its own
+  node with its own rect. Any inner `Semantics` on the header row must still pass `container: true`:
+  that is what makes the boundary explicit across the SDK range eden-ui-flutter declares, and a header
+  row is addressed by identifier by tests, drivers and screen readers alike.
 - The header exposes its expanded/collapsed state to assistive technology; a collapsed group hiding the
   selected child must still announce that it contains the current destination.

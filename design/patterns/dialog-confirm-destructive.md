@@ -55,8 +55,9 @@ whether it can be recovered. The confirm button repeats the verb — "Delete inv
 - `must_not: render below the tap target floor` — dialog buttons and the corner close control meet
   48dp/44pt. A 20×20 close glyph is the shell's collapse-control defect in a new place.
 - `must_not: nest semantics without a container` — the confirm and cancel controls are addressed by
-  `identifier` in tests and drivers; without `container: true` those identifiers are not published at
-  all on Flutter 3.41.9.
+  `identifier` in tests and drivers. Without `container: true` those identifiers were not published at
+  all on Flutter 3.41.9; on 3.47.4 they are published as their own nodes. Pass it either way — it is
+  the only spelling that holds across the SDK range eden-ui-flutter declares.
 - Focus is trapped inside the dialog while it is open, and the surface beneath is made inert to both
   pointer and assistive technology — an "inert" backdrop that only blocks taps still lets a screen
   reader wander into the content behind the dialog.

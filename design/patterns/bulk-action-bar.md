@@ -58,6 +58,9 @@ selection affordance is always present and always says what it clears.
 - `must_not: render below the tap target floor` — bar actions and per-row checkboxes meet 48dp/44pt.
   Row checkboxes are the densest controls on the surface and the most likely to fail this.
 - `must_not: nest semantics without a container` — actions addressed by `identifier` inside the bar
-  need `container: true`.
+  need `container: true`. The penalty is SDK-dependent — on Flutter 3.41.9 the nested identifier was
+  dropped outright, on 3.47.4 it publishes its own node — so `container: true` is what makes the
+  boundary explicit across the range eden-ui-flutter declares (`flutter: ">=3.27.0"`) instead of
+  SDK-dependent.
 - The appearance of the bar and any change in the selection count is announced, so a screen-reader user
   knows the action set changed and what it now applies to.
