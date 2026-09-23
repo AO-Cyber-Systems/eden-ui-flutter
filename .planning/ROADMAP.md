@@ -438,7 +438,7 @@ story, `expectUiSane` shipped for 600+ consumer screen tests, a web probe bridge
 block, and a shell API consumers compose instead of flag (folding in issue #33).
 
 **Depends on:** Objective 22
-**Jobs:** 5/12 jobs executed
+**Jobs:** 6/12 jobs executed
 
 Jobs:
 - [x] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1) — COMPLETE 2026-09-22 (7 cases green, container:true bug pinned)
@@ -448,7 +448,7 @@ Jobs:
 - [ ] 23-05-TRD.md — Nav stories: ten shell states, the baseline 23-06 is proved against (wave 4)
 - [ ] 23-06-TRD.md — Shell API itemBuilder/sectionBuilder + issue #33 selectableBody opt-in (wave 5)
 - [x] 23-07-TRD.md — Probe bridge: window.__edenProbe behind EDEN_PROBE + bundle guard (wave 1) — COMPLETE 2026-09-22 (12 cases green; real release build measured production 0 / probe 1)
-- [ ] 23-08-TRD.md — EdenProbeScope: deterministic captures, animations and fonts pinned (wave 2)
+- [x] 23-08-TRD.md — EdenProbeScope: deterministic captures, animations and fonts pinned (wave 2) — COMPLETE 2026-09-22 (8 cases green with controls; release-mode animation-settling gap documented for W1c; font-fetch differential control run)
 - [ ] 23-09-TRD.md — Ten design patterns + closed must_not vocabulary (wave 5)
 - [x] 23-10-TRD.md — DESIGN.md token block generated from lib/src/tokens/ and CI-diffed (wave 1) — COMPLETE 2026-09-22 (9/9 cases green; staleness gate proven to fail from both directions — edited markdown and an added Dart token)
 - [x] 23-11-TRD.md — custom_lint: no_raw_color, text_style_needs_family, no_magic_spacing (wave 1) — COMPLETE 2026-09-22 (12/12 cases green; differential control caught a FALSE GREEN in the TRD's own config shape, then proved exit 1 per rule; unscoped debt 426/772/1502)
