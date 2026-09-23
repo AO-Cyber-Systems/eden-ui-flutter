@@ -5,15 +5,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:eden_ui_flutter/dev_app/registry/eden_story.dart';
+import 'package:eden_ui_flutter/eden_ui.dart' show EdenInputModality;
 
 import '../../tool/gen_story_tests.dart';
 
-EdenStory _story(String component, String name) => EdenStory(
+EdenStory _story(
+  String component,
+  String name, {
+  EdenInputModality? inputModality,
+}) =>
+    EdenStory(
       id: '$component/$name',
       component: component,
       name: name,
       knobs: const [],
       build: (context, _) => const SizedBox.shrink(),
+      // Passing nothing exercises EdenStory's own default (touch), which the
+      // generator must still EMIT rather than leave implicit.
+      inputModality: inputModality ?? EdenInputModality.touch,
     );
 
 void main() {
@@ -52,6 +61,38 @@ void main() {
       expect(source,
           contains("import '../../../test_support/ui_oracle/story_harness.dart';"));
       expect(source, endsWith('\n'));
+    });
+
+    test(
+        'case 6b: the expectUiSane call names the story\'s declared input '
+        'modality', () {
+      final source = generateStoryTestSource('shells', [
+        _story('shells', 'rail', inputModality: EdenInputModality.pointer),
+        _story('shells', 'drawer', inputModality: EdenInputModality.touch),
+      ]);
+
+      // The standard a surface is held to must be readable AT THE ASSERTION,
+      // never inherited from a default several files away. One emitted
+      // `inputModality:` per (story, theme) — 2 stories x 2 themes.
+      expect('inputModality:'.allMatches(source).length, 4);
+      expect(source, contains('inputModality: EdenInputModality.pointer'));
+      expect(source, contains('inputModality: EdenInputModality.touch'));
+
+      // ...and it must be the modality THAT story declared, not whichever
+      // came first. Slice each story's emitted block and check in place.
+      final railBlock = source.substring(
+        source.indexOf("shells/rail — light — expectUiSane'"),
+        source.indexOf("shells/rail — light — golden"),
+      );
+      expect(railBlock, contains('EdenInputModality.pointer'));
+      expect(railBlock, isNot(contains('EdenInputModality.touch')));
+
+      final drawerBlock = source.substring(
+        source.indexOf("shells/drawer — light — expectUiSane'"),
+        source.indexOf("shells/drawer — light — golden"),
+      );
+      expect(drawerBlock, contains('EdenInputModality.touch'));
+      expect(drawerBlock, isNot(contains('EdenInputModality.pointer')));
     });
 
     test('case 7: emitted output is byte-stable and input-order independent',
