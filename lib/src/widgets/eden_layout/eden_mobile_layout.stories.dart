@@ -12,9 +12,15 @@
 // GOTCHA carried forward for 23-06: EdenMobileLayout still defaults
 // `selectableBody: true` today. This golden is taken BEFORE 23-06 flips it — if
 // the flip moves a pixel, 23-06 owes an explanation.
+//
+// INPUT MODALITY. The mobile shell is a TOUCH surface, so it declares
+// `EdenInputModality.touch` and is held to the 48dp Material / 44pt iOS HIG
+// floors — the strict ones. A bottom bar is reached with a fingertip; there is
+// no reading under which the pointer floor is the honest standard for it.
 
 import 'package:flutter/material.dart';
 
+import '../../a11y/eden_input_modality.dart';
 import '../../../dev_app/registry/eden_story.dart';
 import 'eden_desktop_layout.stories.dart' show kSharedShellNavItems, kShellUser;
 import 'eden_mobile_layout.dart';
@@ -31,6 +37,7 @@ final List<EdenStory> edenMobileLayoutStories = <EdenStory>[
     name: 'Default',
     icon: Icons.phone_iphone,
     knobs: const [],
+    inputModality: EdenInputModality.touch,
     build: (context, _) => SizedBox(
       width: 390,
       child: EdenMobileLayout(

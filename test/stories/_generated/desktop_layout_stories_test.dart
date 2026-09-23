@@ -4,6 +4,11 @@
 // One light golden, one dark golden and one expectUiSane per story in
 // the `desktop-layout` component. Goldens SKIP off Linux
 // (eden-ui-flutter#32); expectUiSane runs on every platform.
+//
+// Each expectUiSane call names the input modality its story DECLARES
+// (EdenStory.inputModality): pointer asserts WCAG 2.5.8 24x24, touch
+// asserts the 48dp/44pt floors. It selects the standard; it waives
+// nothing.
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,7 +19,8 @@ void main() {
 
   testWidgets('desktop-layout/default — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/default'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('desktop-layout/default — light — golden$kGoldenSkipSuffix',
@@ -25,7 +31,8 @@ void main() {
 
   testWidgets('desktop-layout/default — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/default'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('desktop-layout/default — dark — golden$kGoldenSkipSuffix',
@@ -36,7 +43,8 @@ void main() {
 
   testWidgets('desktop-layout/narrow — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/narrow'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('desktop-layout/narrow — light — golden$kGoldenSkipSuffix',
@@ -47,7 +55,8 @@ void main() {
 
   testWidgets('desktop-layout/narrow — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/narrow'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('desktop-layout/narrow — dark — golden$kGoldenSkipSuffix',

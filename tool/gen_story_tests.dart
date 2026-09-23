@@ -54,6 +54,11 @@ String generateStoryTestSource(String component, List<EdenStory> stories) {
     ..writeln('// One light golden, one dark golden and one expectUiSane per story in')
     ..writeln('// the `$component` component. Goldens SKIP off Linux')
     ..writeln('// (eden-ui-flutter#32); expectUiSane runs on every platform.')
+    ..writeln('//')
+    ..writeln('// Each expectUiSane call names the input modality its story DECLARES')
+    ..writeln('// (EdenStory.inputModality): pointer asserts WCAG 2.5.8 24x24, touch')
+    ..writeln('// asserts the 48dp/44pt floors. It selects the standard; it waives')
+    ..writeln('// nothing.')
     ..writeln()
     ..writeln("import 'package:flutter_test/flutter_test.dart';")
     ..writeln()
@@ -68,7 +73,11 @@ String generateStoryTestSource(String component, List<EdenStory> stories) {
         ..writeln()
         ..writeln("  testWidgets('${s.id} — $theme — expectUiSane', (tester) async {")
         ..writeln("    await expectStorySane(tester, storyById('${s.id}'),")
-        ..writeln('        themeMode: ThemeMode.$theme);')
+        ..writeln('        themeMode: ThemeMode.$theme,')
+        // Emitted VERBATIM from the story, never defaulted here. The tap-target
+        // floor a surface is held to must be readable at the assertion.
+        ..writeln(
+            '        inputModality: EdenInputModality.${s.inputModality.name});')
         ..writeln('  });')
         ..writeln()
         ..writeln(

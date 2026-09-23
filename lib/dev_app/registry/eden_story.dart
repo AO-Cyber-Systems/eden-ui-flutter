@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../src/a11y/eden_input_modality.dart';
 import 'knob_values.dart';
 
 /// A single explorable story in the Flutter component explorer.
@@ -24,6 +25,7 @@ class EdenStory {
     required this.knobs,
     required this.build,
     this.icon,
+    this.inputModality = EdenInputModality.touch,
   });
 
   /// Unique story identifier — format `<component>/<name>`, e.g.
@@ -44,6 +46,24 @@ class EdenStory {
 
   /// Optional icon shown in the sidebar navigation.
   final IconData? icon;
+
+  /// What this surface is DRIVEN WITH — the input modality the generated
+  /// story test holds it to.
+  ///
+  /// This is a declaration, not a waiver: `expectUiSane` asserts a real
+  /// tap-target floor on BOTH paths (WCAG 2.5.8's 24x24 for
+  /// [EdenInputModality.pointer]; 48dp/44pt for [EdenInputModality.touch]).
+  /// There is deliberately no third value that means "skip the check".
+  ///
+  /// Defaults to [EdenInputModality.touch], the stricter floor, so a story
+  /// author who says nothing gets the stricter rule. A surface that ships to
+  /// both is [EdenInputModality.touch] — a fingertip can reach it.
+  ///
+  /// It lives on the STORY because it is a fact about the surface, and a story
+  /// is the surface's declaration point. `tool/gen_story_tests.dart` emits it
+  /// verbatim into each generated test, so the standard a story is held to is
+  /// readable at the assertion rather than inherited from a default.
+  final EdenInputModality inputModality;
 
   /// Route name for deep-linking: `/story/<id>`.
   String get routeName => '/story/$id';

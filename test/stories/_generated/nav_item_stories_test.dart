@@ -4,6 +4,11 @@
 // One light golden, one dark golden and one expectUiSane per story in
 // the `nav-item` component. Goldens SKIP off Linux
 // (eden-ui-flutter#32); expectUiSane runs on every platform.
+//
+// Each expectUiSane call names the input modality its story DECLARES
+// (EdenStory.inputModality): pointer asserts WCAG 2.5.8 24x24, touch
+// asserts the 48dp/44pt floors. It selects the standard; it waives
+// nothing.
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,7 +19,8 @@ void main() {
 
   testWidgets('nav-item/badge — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/badge'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/badge — light — golden$kGoldenSkipSuffix',
@@ -25,7 +31,8 @@ void main() {
 
   testWidgets('nav-item/badge — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/badge'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/badge — dark — golden$kGoldenSkipSuffix',
@@ -36,7 +43,8 @@ void main() {
 
   testWidgets('nav-item/caption — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/caption'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/caption — light — golden$kGoldenSkipSuffix',
@@ -47,7 +55,8 @@ void main() {
 
   testWidgets('nav-item/caption — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/caption'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/caption — dark — golden$kGoldenSkipSuffix',
@@ -58,7 +67,8 @@ void main() {
 
   testWidgets('nav-item/default — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/default'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/default — light — golden$kGoldenSkipSuffix',
@@ -69,7 +79,8 @@ void main() {
 
   testWidgets('nav-item/default — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/default'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/default — dark — golden$kGoldenSkipSuffix',
@@ -80,7 +91,8 @@ void main() {
 
   testWidgets('nav-item/divider — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/divider'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/divider — light — golden$kGoldenSkipSuffix',
@@ -91,7 +103,8 @@ void main() {
 
   testWidgets('nav-item/divider — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/divider'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/divider — dark — golden$kGoldenSkipSuffix',
@@ -102,7 +115,8 @@ void main() {
 
   testWidgets('nav-item/expandable-collapsed — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/expandable-collapsed'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/expandable-collapsed — light — golden$kGoldenSkipSuffix',
@@ -113,7 +127,8 @@ void main() {
 
   testWidgets('nav-item/expandable-collapsed — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/expandable-collapsed'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/expandable-collapsed — dark — golden$kGoldenSkipSuffix',
@@ -124,7 +139,8 @@ void main() {
 
   testWidgets('nav-item/expandable-expanded — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/expandable-expanded'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/expandable-expanded — light — golden$kGoldenSkipSuffix',
@@ -135,7 +151,8 @@ void main() {
 
   testWidgets('nav-item/expandable-expanded — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/expandable-expanded'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/expandable-expanded — dark — golden$kGoldenSkipSuffix',
@@ -146,7 +163,8 @@ void main() {
 
   testWidgets('nav-item/long-label — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/long-label'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/long-label — light — golden$kGoldenSkipSuffix',
@@ -157,7 +175,8 @@ void main() {
 
   testWidgets('nav-item/long-label — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/long-label'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/long-label — dark — golden$kGoldenSkipSuffix',
@@ -168,7 +187,8 @@ void main() {
 
   testWidgets('nav-item/selected — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/selected'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/selected — light — golden$kGoldenSkipSuffix',
@@ -179,7 +199,8 @@ void main() {
 
   testWidgets('nav-item/selected — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/selected'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('nav-item/selected — dark — golden$kGoldenSkipSuffix',

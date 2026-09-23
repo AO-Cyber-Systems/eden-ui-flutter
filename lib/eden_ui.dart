@@ -1,6 +1,13 @@
 /// Eden UI for Flutter — a component library ported from the Eden UI Rails framework.
 library;
 
+// Accessibility contract
+// `EdenInputModality` is a property of a SURFACE (what input it takes), not of
+// the test framework, so it ships here rather than behind `testing.dart` —
+// which imports `package:flutter_test` and must never reach a release graph.
+// `testing.dart` re-exports it.
+export 'src/a11y/eden_input_modality.dart';
+
 // Tokens
 export 'src/tokens/colors.dart';
 export 'src/tokens/spacing.dart';

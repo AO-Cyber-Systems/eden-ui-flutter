@@ -14,9 +14,18 @@
 // Goldens for these stories are produced and compared by the CI `stories` job
 // on Linux only (eden-ui-flutter#32); locally they skip. `expectUiSane` runs
 // everywhere.
+//
+// INPUT MODALITY. Every story here renders a real [EdenDesktopLayout] rail,
+// which is a POINTER surface: mouse, trackpad and keyboard. Its rows are 40px
+// on a 42px pitch, which clears WCAG 2.5.8 Target Size (Minimum)'s 24x24 with
+// room to spare. 48dp (Material) and 44pt (iOS HIG) are TOUCH guidance and are
+// the wrong standard here — asserting them would not be stricter, it would be
+// incorrect, and the only pressure it could create is to weaken the oracle.
+// `EdenInputModality.pointer` declares that; it waives nothing.
 
 import 'package:flutter/material.dart';
 
+import '../../a11y/eden_input_modality.dart';
 import '../../../dev_app/registry/eden_story.dart';
 import 'eden_desktop_layout.dart';
 import 'layout_data.dart';
@@ -68,6 +77,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Default',
     icon: Icons.radio_button_unchecked,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(_kPlainItems, selectedId: 'nothing-selected'),
   ),
 
@@ -80,6 +90,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Selected',
     icon: Icons.radio_button_checked,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(_kPlainItems),
   ),
 
@@ -92,6 +103,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Expandable collapsed',
     icon: Icons.chevron_right,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(
       const <EdenNavItem>[
         EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
@@ -117,6 +129,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Expandable expanded',
     icon: Icons.expand_more,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(
       const <EdenNavItem>[
         EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
@@ -146,6 +159,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Caption',
     icon: Icons.label_outline,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(
       const <EdenNavItem>[
         EdenNavItem.caption('Workspace'),
@@ -162,6 +176,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Divider',
     icon: Icons.horizontal_rule,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(
       const <EdenNavItem>[
         EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
@@ -181,6 +196,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Long label',
     icon: Icons.short_text,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(
       const <EdenNavItem>[
         EdenNavItem(
@@ -203,6 +219,7 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     name: 'Badge',
     icon: Icons.circle_notifications_outlined,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(
       const <EdenNavItem>[
         EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),

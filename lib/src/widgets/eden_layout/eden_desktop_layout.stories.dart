@@ -9,9 +9,15 @@
 // and mobile goldens are directly comparable — that is what makes "captions and
 // dividers never reach the bottom bar" (nav commit 9e64517) VISIBLE in pixels
 // rather than only asserted in a widget test.
+//
+// INPUT MODALITY. The desktop shell is a POINTER surface (both stories, the
+// 720px 'narrow' one included — narrow still renders the rail, not the bottom
+// bar). See eden_nav_item.stories.dart for the reasoning; the declaration
+// selects WCAG 2.5.8's 24x24 floor and waives nothing.
 
 import 'package:flutter/material.dart';
 
+import '../../a11y/eden_input_modality.dart';
 import '../../../dev_app/registry/eden_story.dart';
 import 'eden_desktop_layout.dart';
 import 'layout_data.dart';
@@ -77,6 +83,7 @@ final List<EdenStory> edenDesktopLayoutStories = <EdenStory>[
     name: 'Default',
     icon: Icons.desktop_windows_outlined,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => _shell(),
   ),
 
@@ -90,6 +97,7 @@ final List<EdenStory> edenDesktopLayoutStories = <EdenStory>[
     name: 'Narrow',
     icon: Icons.width_normal,
     knobs: const [],
+    inputModality: EdenInputModality.pointer,
     build: (context, _) => SizedBox(width: 720, child: _shell()),
   ),
 ];

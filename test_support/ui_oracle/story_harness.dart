@@ -34,6 +34,10 @@ import 'wrap.dart';
 /// Re-exported so a generated test file needs exactly ONE relative import.
 export 'package:flutter/material.dart' show ThemeMode;
 
+/// Ditto — a generated test names the modality its story declared, so the
+/// enum has to be in scope through the same single import.
+export 'package:eden_ui_flutter/eden_ui.dart' show EdenInputModality;
+
 /// `null` on Linux (goldens run); a reason string everywhere else (goldens
 /// skip). Passed verbatim as `skip:` by every generated golden test.
 final String? kGoldenSkipReason = Platform.isLinux
@@ -114,6 +118,12 @@ Future<void> _pump(
 
 /// Pumps [story] and runs the Eden UI Oracle over it. Runs on EVERY platform.
 ///
+/// [inputModality] is REQUIRED here even though `expectUiSane` defaults it:
+/// the generator reads it off [EdenStory.inputModality] and emits it verbatim,
+/// so a generated test can never inherit a default silently. It selects the
+/// tap-target floor (WCAG 2.5.8's 24x24 for pointer; 48dp/44pt for touch) and
+/// waives nothing — see `EdenInputModality`.
+///
 /// KNOWN LIMITATION (23-02): the contrast rule inside `expectUiSane` cannot run
 /// on an `EdenTheme` surface, because `google_fonts` fires a network fetch at
 /// theme-construction time and the image capture is the first thing that awaits
@@ -122,10 +132,11 @@ Future<void> expectStorySane(
   WidgetTester tester,
   EdenStory story, {
   required ThemeMode themeMode,
+  required EdenInputModality inputModality,
   double width = 1280,
 }) async {
   await _pump(tester, story, themeMode: themeMode, width: width);
-  await expectUiSane(tester);
+  await expectUiSane(tester, inputModality: inputModality);
 }
 
 /// Pumps [story] and compares it to its CI baseline.
