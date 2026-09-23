@@ -1,0 +1,26 @@
+name: probe_smoke
+description: >-
+  The smallest app that exercises the eden_ui_flutter runtime probe bridge.
+  It exists so tool/probe_guard.sh can build a REAL release web bundle and grep
+  it: "the define is off so it is tree-shaken" is a claim, a grep over
+  build/web/main.dart.js is evidence.
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Path pin, not a version pin: the guard must build the bridge as it stands
+  # in THIS worktree, not as it stands on pub.
+  eden_ui_flutter:
+    path: ../..
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
