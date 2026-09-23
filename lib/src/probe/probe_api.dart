@@ -220,7 +220,17 @@ abstract final class EdenProbeApi {
     return name;
   }
 
-  static bool settled() => false;
+  /// True when nothing is animating and nothing the consumer declared is in
+  /// flight — so a driver can wait on truth instead of a sleep.
+  ///
+  /// `transientCallbackCount` is the ticker count: a running
+  /// [AnimationController] keeps it above zero even between scheduled frames.
+  static bool settled() {
+    final SchedulerBinding scheduler = SchedulerBinding.instance;
+    return !scheduler.hasScheduledFrame &&
+        scheduler.transientCallbackCount == 0 &&
+        inFlightRequests == 0;
+  }
 
   static Map<String, Object?> state() => const <String, Object?>{};
 }
