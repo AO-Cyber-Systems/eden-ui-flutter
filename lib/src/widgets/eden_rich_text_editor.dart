@@ -289,6 +289,18 @@ class _EdenRichTextEditorState extends State<EdenRichTextEditor> {
         decoration: InputDecoration(
           hintText: widget.placeholder,
           contentPadding: const EdgeInsets.all(EdenSpacing.space3),
+          // THE FRAME IS THE FILL. Every border below is already
+          // `InputBorder.none` — this field's chrome is the
+          // `Container(color: isDark ? neutral[900] : Colors.white)` that
+          // wraps the toolbar and the body together. Without `filled: false`
+          // the body also inherits EdenTheme's `inputDecorationTheme`
+          // (`filled: true`, `fillColor` neutral[800] in dark) and paints it
+          // over that frame: a 1.19:1 step in the dark theme, with the
+          // toolbar directly above keeping the frame colour and the body
+          // below not. Light is unaffected — the frame and the theme's light
+          // fill are both `Colors.white`. Pinned by
+          // test/ui_oracle/field_fill_overpaint_test.dart.
+          filled: false,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,

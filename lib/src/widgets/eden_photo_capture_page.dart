@@ -271,6 +271,18 @@ class _EdenPhotoCapturePageState extends State<EdenPhotoCapturePage> {
               decoration: const InputDecoration(
                 hintText: 'Add a note (optional)',
                 hintStyle: TextStyle(color: Colors.white70),
+                // THE SCRIM IS THE FILL. Without this the field inherits
+                // EdenTheme's inputDecorationTheme (`filled: true`,
+                // `fillColor` white in light / neutral[800] in dark) and
+                // paints an OPAQUE rectangle over the
+                // `Colors.black.withValues(alpha: 0.55)` scrim the Container
+                // above draws on the photo. In the light theme that box is
+                // WHITE, and this caption's ink is `Colors.white` with a
+                // `Colors.white70` hint: both rendered at 1.00:1 — not
+                // low-contrast, invisible. On the scrim they are 21.00:1 and
+                // 9.90:1. Pinned by
+                // test/ui_oracle/field_fill_overpaint_test.dart.
+                filled: false,
                 border: InputBorder.none,
                 isDense: true,
               ),

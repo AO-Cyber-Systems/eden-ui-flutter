@@ -225,6 +225,18 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
           fontFamilyFallback: const ['Courier New', 'Courier'],
         ),
         decoration: InputDecoration(
+          // THE CONTAINER IS THE FILL. The `Container(color: surfaceBg,
+          // borderRadius: md)` directly above holds nothing but this field
+          // and carries the same radius the borders below use: its fill IS
+          // this field's background. Without `filled: false` the field
+          // inherits EdenTheme's `inputDecorationTheme` (`filled: true`,
+          // `fillColor` white in light / neutral[800] in dark) and covers
+          // that fill completely — neutral[800] over neutral[900] in dark, a
+          // 1.19:1 step, so the secret's box reads a shade lighter than the
+          // read-only twin `_buildReadOnlyField` renders from the same
+          // `surfaceBg`. Pinned by
+          // test/ui_oracle/field_fill_overpaint_test.dart.
+          filled: false,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: EdenSpacing.space3,

@@ -253,6 +253,15 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
                 hintStyle: monoStyle?.copyWith(
                   color: EdenColors.neutral[400],
                 ),
+                // THE CARD IS THE FILL. `border: InputBorder.none` below says
+                // this cell is inline on the editor's `surfaceBg` card, not a
+                // boxed input. Without `filled: false` it still inherits
+                // EdenTheme's `inputDecorationTheme` (`filled: true`,
+                // `fillColor` white in light / neutral[800] in dark) and
+                // paints a box over the card anyway — neutral[800] over
+                // neutral[900] in dark, a 1.19:1 step, one per cell per row.
+                // Pinned by test/ui_oracle/field_fill_overpaint_test.dart.
+                filled: false,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: EdenSpacing.space2,
@@ -304,6 +313,8 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
                 hintStyle: monoStyle?.copyWith(
                   color: EdenColors.neutral[400],
                 ),
+                // Same as the KEY cell above: the card is the fill.
+                filled: false,
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: EdenSpacing.space2,
