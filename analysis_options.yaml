@@ -5,3 +5,63 @@ linter:
     prefer_const_constructors: true
     prefer_const_declarations: true
     avoid_print: false
+
+analyzer:
+  plugins:
+    - custom_lint
+  exclude:
+    # `lints/` is its own package with its own pubspec and its own `dart test`.
+    # Its fixtures are deliberately malformed-looking Dart (stub Color /
+    # TextStyle / EdgeInsets declarations) whose whole job is to be linted, not
+    # analyzed. Excluding it keeps `flutter analyze` on THIS package reporting
+    # exactly what it reported before this file changed.
+    - lints/**
+
+custom_lint:
+  rules:
+    # Enforced scope. Wave-1 scope is the shell widgets; the rules fire only
+    # here so the gate is GREEN the day it lands rather than drowning in 517
+    # files of existing debt (184 files reference EdenColors directly, 165
+    # reference EdenRadii -- measured in Objective 022).
+    #
+    # Measured unscoped backlog, `dart run lints/bin/measure_debt.dart 'lib/**'`
+    # on 2026-09-22 (515 files in scope, 374 of them with at least one finding):
+    #
+    #     no_raw_color             426
+    #     text_style_needs_family  772
+    #     no_magic_spacing        1502
+    #
+    # Widen by adding a glob here, in its own commit, after clearing the
+    # findings it exposes. A gate that is switched off is worth less than a
+    # narrow gate that holds.
+    #
+    # YAML SHAPE, read this before editing: custom_lint takes the FIRST key of
+    # each list item as the rule name and every SIBLING key as that rule's
+    # options. Indenting the options UNDER the rule name parses fine, produces
+    # an empty options map, and the rule then silently matches nothing --
+    # `dart run custom_lint` prints "No issues found!" either way. Keep
+    # `enforced_paths` at the same indentation as the rule name.
+    - no_raw_color:
+      enforced_paths:
+        - lib/src/widgets/eden_layout/**
+    - text_style_needs_family:
+      enforced_paths:
+        - lib/src/widgets/eden_layout/**
+      # LEGACY BASELINE, not an off switch. These two files carry 19
+      # pre-existing text_style_needs_family findings between them (measured
+      # 2026-09-22). Naming a TextStyle family changes rendered pixels under
+      # a golden suite, which is not this TRD's work -- but a NEW file in
+      # this directory is gated from its first commit, and the number above
+      # is what a follow-up budgets against. Delete a line here, clear that
+      # file, in one commit.
+      legacy_exemptions:
+        - lib/src/widgets/eden_layout/eden_desktop_layout.dart
+        - lib/src/widgets/eden_layout/eden_mobile_layout.dart
+    - no_magic_spacing:
+      enforced_paths:
+        - lib/src/widgets/eden_layout/**
+      # LEGACY BASELINE -- 13 pre-existing no_magic_spacing findings across
+      # these two files (measured 2026-09-22). Same terms as above.
+      legacy_exemptions:
+        - lib/src/widgets/eden_layout/eden_desktop_layout.dart
+        - lib/src/widgets/eden_layout/eden_mobile_layout.dart

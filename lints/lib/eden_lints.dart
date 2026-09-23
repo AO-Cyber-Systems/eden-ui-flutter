@@ -24,6 +24,14 @@ PluginBase createPlugin() => _EdenLintsPlugin();
 class _EdenLintsPlugin extends PluginBase {
   @override
   List<LintRule> getLintRules(CustomLintConfigs configs) {
+    // NOTE ON THE YAML SHAPE. custom_lint parses a rule entry as
+    // `item.keys.first` = the rule name and `item.entries.skip(1)` = its
+    // options, so the options are SIBLING keys of the rule name inside the
+    // same list item -- NOT nested under it. Nesting them parses cleanly,
+    // yields an empty options map, and every path is then silently skipped:
+    // `dart run custom_lint` reports "No issues found!" whether or not the
+    // rules work. That false green is what the differential control in this
+    // TRD caught; see analysis_options.yaml for the shape that works.
     List<String> pathsFor(String rule) =>
         enforcedPathsFrom(configs.rules[rule]?.json);
     List<String> legacyFor(String rule) =>

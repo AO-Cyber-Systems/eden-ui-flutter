@@ -69,3 +69,41 @@ jobs:
       - run: flutter pub get
 
       - run: flutter test
+
+  lint:
+    name: Lint (design rules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # PINNED to the version CI was already resolving `stable` to, so this
+          # changes nothing about what runs today -- it stops the toolchain
+          # moving under the repo tomorrow.
+          #
+          # Why this matters here specifically: correctness in this tree is
+          # SDK-dependent. On 3.47.4 ReorderableListView.onReorder is nullable,
+          # so `rlv.onReorder!(...)` in eden_route_stop_list_test.dart is
+          # REQUIRED; on the older 3.41.4 that same `!` is an
+          # unnecessary_non_null_assertion warning. dfe1698 removed it on the
+          # strength of a local warning and 30cb437 had to restore it after CI
+          # failed with unchecked_use_of_nullable_value. An unpinned channel
+          # means a future stable can flip that again through nobody's commit.
+          #
+          # Do NOT lower this pin without changing that source in the same
+          # commit -- they are one decision, not two.
+          flutter-version: '3.47.4'
+          cache: true
+
+      - run: flutter pub get
+
+      # `lints/` is a separate package; custom_lint needs it resolved too.
+      - run: dart pub get --directory=lints
+
+      # THE GATE. Non-zero when any of the three design rules fires inside the
+      # enforced scope declared in analysis_options.yaml. Deliberately NOT
+      # continue-on-error: a non-blocking gate is the exact failure mode this
+      # job exists to avoid.
+      - run: dart run custom_lint
