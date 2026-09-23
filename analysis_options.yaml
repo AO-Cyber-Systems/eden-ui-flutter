@@ -7,6 +7,37 @@ linter:
     avoid_print: false
 
 analyzer:
+  errors:
+    # NOT a way to keep a legacy plugin forever -- a deliberate, narrow
+    # suppression of ONE options-file diagnostic, so that `flutter analyze
+    # --no-fatal-infos` keeps failing on every real warning.
+    #
+    # Dart 3.13 (Flutter 3.47.4) reports `analysis_options_deprecated_plugins`
+    # as a WARNING against the `plugins:` key below, and `--no-fatal-infos`
+    # does not suppress warnings -- so the Analyze job went red on the
+    # registration itself (CI run 35891331608).
+    #
+    # The key cannot simply be deleted. custom_lint's CLI decides whether a
+    # context root is linted by reading exactly this list:
+    # `CustomLintWorkspace._isCustomLintEnabled` (custom_lint 0.8.1,
+    # lib/src/workspace.dart) returns false unless
+    # `analyzer: plugins:` contains `custom_lint`, and a disabled workspace
+    # prints "No issues found!" and exits 0. Removing the key would turn the
+    # Lint gate into a permanent false green -- the exact failure this
+    # objective's differential control was built to catch.
+    #
+    # Nor can it be migrated today: the replacement system
+    # (https://dart.dev/tools/analyzer-plugins, Dart 3.10+, top-level
+    # `plugins:` + package:analysis_server_plugin) is a different plugin
+    # protocol. custom_lint has published nothing against it -- 0.8.1
+    # (2025-09-09) is still the latest release -- so migrating means
+    # rewriting all three rules against analysis_server_plugin. That is a
+    # separate objective; it is tracked, not smuggled into a CI fix.
+    #
+    # DELETE THIS LINE the day the rules move to the new plugin system, or
+    # the day the deprecation becomes an error and the suppression stops
+    # working.
+    analysis_options_deprecated_plugins: ignore
   plugins:
     - custom_lint
   exclude:

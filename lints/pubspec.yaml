@@ -7,8 +7,14 @@ environment:
   sdk: ">=3.6.0 <4.0.0"
 
 dependencies:
-  analyzer: ">=6.0.0 <9.0.0"
-  custom_lint_builder: ">=0.6.0 <0.8.0"
+  # UPPER BOUNDS WIDENED for Flutter 3.47.4 / Dart 3.13. custom_lint on
+  # analyzer 7.x crashes while LINKING the Flutter SDK itself:
+  # AstBinaryWriter (a ThrowingAstVisitor) gained
+  # visitDotShorthandPropertyAccess only in analyzer 8.0.0, and the
+  # 3.47.4 framework sources use dot-shorthand default parameter values.
+  # See CI run 35891331608, Lint job.
+  analyzer: ">=6.0.0 <10.0.0"
+  custom_lint_builder: ">=0.6.0 <0.9.0"
 
 dev_dependencies:
   test: ^1.24.0

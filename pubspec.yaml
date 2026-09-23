@@ -38,7 +38,7 @@ dev_dependencies:
   # path/git; anything under `dependencies:` would enter THEIR production
   # resolve. custom_lint and the local `lints/` package are build-time design
   # enforcement and must never leave this repo's dev graph.
-  custom_lint: ^0.7.6
+  custom_lint: ^0.8.1
   eden_lints:
     path: lints
 
