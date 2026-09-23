@@ -8,9 +8,13 @@ const String kNoRawColor = 'no_raw_color';
 
 /// The detector. Returns the problem message, or null when [call] is fine.
 ///
-/// STUB -- not implemented yet (RED).
+/// Every `Color` constructor counts, named ones included: `Color.fromARGB`
+/// hardcodes a brand exactly as firmly as `Color(0xFF...)` does.
 String? noRawColorMessage(CtorCall call) {
-  return null;
+  if (call.typeName != 'Color') return null;
+  final ctor = call.isUnnamed ? 'Color(...)' : 'Color.${call.constructorName}(...)';
+  return 'Raw $ctor outside lib/src/tokens/ -- use an EdenColors token, or '
+      'this colour will not respond to a brand change.';
 }
 
 class NoRawColor extends DartLintRule {
