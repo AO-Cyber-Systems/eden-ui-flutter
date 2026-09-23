@@ -7,6 +7,8 @@
 // and does nothing but convert their plain maps to `JSAny`.
 library;
 
+import 'dart:ui' show FlutterView;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
@@ -232,7 +234,42 @@ abstract final class EdenProbeApi {
         inFlightRequests == 0;
   }
 
-  static Map<String, Object?> state() => const <String, Object?>{};
+  /// The ambient facts a driver needs to interpret everything else: which
+  /// route it is looking at, which theme, how big the viewport is, and whether
+  /// semantics are on (without semantics, `tree()` is empty and that is a
+  /// configuration fact, not a bug in the app).
+  static Map<String, Object?> state() {
+    final FlutterView? view =
+        WidgetsBinding.instance.platformDispatcher.implicitView;
+    final double dpr = view?.devicePixelRatio ?? 1.0;
+    final Size physical = view?.physicalSize ?? Size.zero;
+
+    return <String, Object?>{
+      'route': _currentRoute(),
+      'theme': _currentBrightness()?.name,
+      'viewport': <String, Object?>{
+        'w': physical.width / dpr,
+        'h': physical.height / dpr,
+      },
+      'semantics': SemanticsBinding.instance.semanticsEnabled,
+    };
+  }
+
+  /// The brightness of the DEEPEST [Theme] in the tree.
+  ///
+  /// Read off the Theme widget rather than via `Theme.of(context)` so the
+  /// probe never registers itself as an inherited-widget dependent and never
+  /// perturbs the app it is observing.
+  static Brightness? _currentBrightness() {
+    Brightness? brightness;
+    for (final Element element in _elements()) {
+      final Widget widget = element.widget;
+      if (widget is Theme) {
+        brightness = widget.data.brightness;
+      }
+    }
+    return brightness;
+  }
 }
 
 // -----------------------------------------------------------------------------
