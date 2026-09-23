@@ -9,6 +9,7 @@
 // stay byte-unmodified.
 import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // --- hand-built fixtures (no generated data) -------------------------------
@@ -46,6 +47,97 @@ void main() {
       // icon and all.
       expect(find.text('Home'), findsOneWidget);
       expect(find.byIcon(Icons.home), findsOneWidget);
+    });
+
+    testWidgets(
+        'case 7: a builder that returns a bare Text still carries the '
+        'eden-nav-<id> identifier — the builder cannot bypass it',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(_host(EdenDesktopLayout(
+        navItems: _twoLeaves(),
+        selectedId: 'home',
+        onNavChanged: (_) {},
+        body: const Text('Body'),
+        itemBuilder: (context, item, state) => item.id == 'settings'
+            // Deliberately naked: no Semantics, no button, no identifier.
+            ? const Text('bare')
+            : null,
+      )));
+      await tester.pumpAndSettle();
+
+      // The E2E tooling in aodex and eden-biz keys off exactly this string.
+      expect(
+        find.bySemanticsIdentifier('eden-nav-settings'),
+        findsOneWidget,
+        reason: 'the layout applies the identifier OUTSIDE the builder result',
+      );
+      // ...and the default path publishes exactly one too — same wrapper.
+      expect(find.bySemanticsIdentifier('eden-nav-home'), findsOneWidget);
+      handle.dispose();
+    });
+
+    testWidgets(
+        'case 8: sectionBuilder replaces a caption while isDivider still '
+        'renders the default divider', (tester) async {
+      await tester.pumpWidget(_host(EdenDesktopLayout(
+        navItems: const [
+          EdenNavItem.caption('Workspace'),
+          EdenNavItem.divider(),
+          _home,
+        ],
+        selectedId: 'home',
+        onNavChanged: (_) {},
+        body: const Text('Body'),
+        sectionBuilder: (context, item) =>
+            item.isCaption ? const Text('CUSTOM CAPTION') : null,
+      )));
+      await tester.pumpAndSettle();
+
+      expect(find.text('CUSTOM CAPTION'), findsOneWidget);
+      expect(find.text('WORKSPACE'), findsNothing);
+      // The divider flag still renders through the DEFAULT section renderer.
+      expect(find.byType(Divider), findsWidgets);
+      // And an ordinary item is untouched by a sectionBuilder.
+      expect(find.text('Home'), findsOneWidget);
+    });
+
+    testWidgets(
+        'case 9: with NO builders supplied, every rail row publishes exactly '
+        'one semantics node carrying its identifier', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(_host(EdenDesktopLayout(
+        navItems: _twoLeaves(),
+        selectedId: 'home',
+        onNavChanged: (_) {},
+        body: const Text('Body'),
+      )));
+      await tester.pumpAndSettle();
+
+      for (final id in const ['home', 'settings']) {
+        expect(
+          find.bySemanticsIdentifier('eden-nav-$id'),
+          findsOneWidget,
+          reason: 'one node per row — never a nested pair (finding F5)',
+        );
+      }
+      // The row is still announced as a selectable, tappable button carrying
+      // its label — the annotations that used to live inside _NavTile, now
+      // published once at the emission point.
+      //
+      // (The label reads 'Home\nHome': the wrapper's own label plus the child
+      // Text merging up. That is PRE-EXISTING — the old tree was the same
+      // Semantics-over-GestureDetector-over-Text shape — and is asserted here
+      // rather than tidied, so a future change that alters it is visible.)
+      final node = tester.getSemantics(
+        find.bySemanticsIdentifier('eden-nav-home'),
+      );
+      expect(node.identifier, 'eden-nav-home');
+      expect(node.label, 'Home\nHome');
+      expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+      expect(node.hasFlag(SemanticsFlag.isSelected), isTrue);
+      expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+      handle.dispose();
     });
   });
 }
