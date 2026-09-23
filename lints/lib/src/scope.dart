@@ -56,13 +56,39 @@ RegExp _globRegExp(String glob) {
 
 const String _needsEscape = r'\^$.|?+()[]{}';
 
+/// True when [path] is a DATED, COUNTED legacy exemption.
+///
+/// Not a way to switch the rule off. The scope ruling puts the rules on the
+/// shell widgets, and two shell files carry pre-existing findings that cannot
+/// be cleared inside this TRD without moving rendered pixels under a golden
+/// suite. Listing them by name, with their counts, in `analysis_options.yaml`
+/// is a ratchet baseline: every NEW file in the enforced scope is gated from
+/// day one, and the debt has a number somebody can budget against. A blanket
+/// `continue-on-error` job, by contrast, records nothing and is dead within a
+/// week.
+bool isLegacyExempt(String path, List<String> legacyExemptions) =>
+    isEnforced(path, legacyExemptions);
+
 /// True when a rule should look at [path] at all.
-bool shouldLint(String path, List<String> enforcedPaths) =>
-    isEnforced(path, enforcedPaths) && !isTokenPath(path);
+bool shouldLint(
+  String path,
+  List<String> enforcedPaths, {
+  List<String> legacyExemptions = const <String>[],
+}) =>
+    isEnforced(path, enforcedPaths) &&
+    !isTokenPath(path) &&
+    !isLegacyExempt(path, legacyExemptions);
 
 /// Reads an `enforced_paths:` list out of a rule's custom_lint options map.
-List<String> enforcedPathsFrom(Map<String, Object?>? json) {
-  final raw = json?['enforced_paths'];
+List<String> enforcedPathsFrom(Map<String, Object?>? json) =>
+    _stringList(json, 'enforced_paths');
+
+/// Reads a `legacy_exemptions:` list out of a rule's custom_lint options map.
+List<String> legacyExemptionsFrom(Map<String, Object?>? json) =>
+    _stringList(json, 'legacy_exemptions');
+
+List<String> _stringList(Map<String, Object?>? json, String key) {
+  final raw = json?[key];
   if (raw is! List) return const <String>[];
   return raw.map((e) => '$e').toList(growable: false);
 }

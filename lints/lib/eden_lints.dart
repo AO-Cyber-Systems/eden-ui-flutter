@@ -26,11 +26,22 @@ class _EdenLintsPlugin extends PluginBase {
   List<LintRule> getLintRules(CustomLintConfigs configs) {
     List<String> pathsFor(String rule) =>
         enforcedPathsFrom(configs.rules[rule]?.json);
+    List<String> legacyFor(String rule) =>
+        legacyExemptionsFrom(configs.rules[rule]?.json);
 
     return <LintRule>[
-      NoRawColor(enforcedPaths: pathsFor(kNoRawColor)),
-      TextStyleNeedsFamily(enforcedPaths: pathsFor(kTextStyleNeedsFamily)),
-      NoMagicSpacing(enforcedPaths: pathsFor(kNoMagicSpacing)),
+      NoRawColor(
+        enforcedPaths: pathsFor(kNoRawColor),
+        legacyExemptions: legacyFor(kNoRawColor),
+      ),
+      TextStyleNeedsFamily(
+        enforcedPaths: pathsFor(kTextStyleNeedsFamily),
+        legacyExemptions: legacyFor(kTextStyleNeedsFamily),
+      ),
+      NoMagicSpacing(
+        enforcedPaths: pathsFor(kNoMagicSpacing),
+        legacyExemptions: legacyFor(kNoMagicSpacing),
+      ),
     ];
   }
 }

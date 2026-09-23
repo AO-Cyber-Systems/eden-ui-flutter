@@ -42,9 +42,12 @@ List<EdenLintHit> scanSource({
   required String source,
   required String path,
   required List<String> enforcedPaths,
+  List<String> legacyExemptions = const <String>[],
   Set<String>? rules,
 }) {
-  if (!shouldLint(path, enforcedPaths)) return const <EdenLintHit>[];
+  if (!shouldLint(path, enforcedPaths, legacyExemptions: legacyExemptions)) {
+    return const <EdenLintHit>[];
+  }
   final parsed = parseString(content: source, throwIfDiagnostics: false);
   final visitor = _ScanVisitor(parsed.lineInfo, rules);
   parsed.unit.accept(visitor);

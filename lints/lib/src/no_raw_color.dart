@@ -18,9 +18,15 @@ String? noRawColorMessage(CtorCall call) {
 }
 
 class NoRawColor extends DartLintRule {
-  const NoRawColor({this.enforcedPaths = const <String>[]}) : super(code: _code);
+  const NoRawColor({
+    this.enforcedPaths = const <String>[],
+    this.legacyExemptions = const <String>[],
+  }) : super(code: _code);
 
   final List<String> enforcedPaths;
+
+  /// Dated, counted pre-existing offenders. See [isLegacyExempt].
+  final List<String> legacyExemptions;
 
   static const LintCode _code = LintCode(
     name: kNoRawColor,
@@ -36,7 +42,10 @@ class NoRawColor extends DartLintRule {
     ErrorReporter reporter,
     CustomLintContext context,
   ) {
-    if (!shouldLint(resolver.path, enforcedPaths)) return;
+    if (!shouldLint(resolver.path, enforcedPaths,
+        legacyExemptions: legacyExemptions)) {
+      return;
+    }
     void check(node) {
       final call = ctorOf(node);
       if (call == null) return;

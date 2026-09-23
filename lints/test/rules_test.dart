@@ -113,6 +113,34 @@ void main() {
     });
   });
 
+  group('legacy baseline', () {
+    const legacy = <String>[
+      'lib/src/widgets/eden_layout/eden_desktop_layout.dart',
+    ];
+
+    test('case 11a: a DATED, COUNTED legacy file stays quiet', () {
+      final hits = scanSource(
+        source: fixture('magic_spacing_fires.dart'),
+        path: 'lib/src/widgets/eden_layout/eden_desktop_layout.dart',
+        enforcedPaths: kShellScope,
+        legacyExemptions: legacy,
+      );
+      expect(hits, isEmpty, reason: hits.join('\n'));
+    });
+
+    test('case 11b: a NEW file in the same enforced scope still fires -- the '
+        'baseline is a ratchet, not an off switch', () {
+      final hits = scanSource(
+        source: fixture('magic_spacing_fires.dart'),
+        path: 'lib/src/widgets/eden_layout/eden_tablet_layout.dart',
+        enforcedPaths: kShellScope,
+        legacyExemptions: legacy,
+      );
+      expect(hits, isNotEmpty);
+      expect(hits.every((h) => h.rule == kNoMagicSpacing), isTrue);
+    });
+  });
+
   group('no_magic_spacing', () {
     test('case 8: fires on EdgeInsets.all(13) and SizedBox(height: 13) under '
         'an enforced path', () {

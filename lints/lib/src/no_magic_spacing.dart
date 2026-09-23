@@ -36,10 +36,16 @@ String? noMagicSpacingMessage(CtorCall call) {
 }
 
 class NoMagicSpacing extends DartLintRule {
-  const NoMagicSpacing({this.enforcedPaths = const <String>[]})
+  const NoMagicSpacing({
+    this.enforcedPaths = const <String>[],
+    this.legacyExemptions = const <String>[],
+  })
       : super(code: _code);
 
   final List<String> enforcedPaths;
+
+  /// Dated, counted pre-existing offenders. See [isLegacyExempt].
+  final List<String> legacyExemptions;
 
   static const LintCode _code = LintCode(
     name: kNoMagicSpacing,
@@ -55,7 +61,10 @@ class NoMagicSpacing extends DartLintRule {
     ErrorReporter reporter,
     CustomLintContext context,
   ) {
-    if (!shouldLint(resolver.path, enforcedPaths)) return;
+    if (!shouldLint(resolver.path, enforcedPaths,
+        legacyExemptions: legacyExemptions)) {
+      return;
+    }
     void check(node) {
       final call = ctorOf(node);
       if (call == null) return;
