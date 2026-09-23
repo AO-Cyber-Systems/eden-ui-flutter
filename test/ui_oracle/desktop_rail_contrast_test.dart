@@ -13,7 +13,7 @@
 // green on a suite of 4778 tests:
 //
 //   rail        badge "3"  Colors.white on colorScheme.primary 2.20:1 light
-//                                                              1.85:1 dark
+//                                                              2.33:1 dark
 //   rail        selected label, brand gold on the 10% band     2.05:1 light
 //   rail footer user initials "AL", gold on a 15% gold circle  1.98:1 light
 //
@@ -24,19 +24,20 @@
 // THE BOTTOM BAR IS NOT RE-PUMPED HERE. Its badge — Colors.white on
 // colorScheme.error, 3.76:1 at 9px in both themes — is held by the generated
 // `mobile-layout/default` story, which pumps the real shell at 390px in both
-// themes and is where the oracle named it. A hand-built four-item bar was
-// tried here first and dropped: it trips a PRE-EXISTING artifact of the STOCK
-// `textContrastGuideline` that has nothing to do with badges. That guideline
-// partitions a region's pixels at their mean HSL lightness and takes the MODE
-// of each half, and for an 11px light-grey label on the dark theme's
-// near-black bar the antialiased stroke shades outnumber the glyph's core
-// pixels — so the "light" mode comes back as a blend (#77777E) and the label
-// reports 3.99:1 where its colour pair is 6.91:1. It is order-dependent
-// (green when that test runs first, red once a sibling test has warmed
-// google_fonts and the real Eden face is in use), it reproduces with this
-// file's product changes reverted, and it is a property of stock Flutter's
-// algorithm on thin small text, not of the bar. Recorded rather than tuned
-// around.
+// themes and is where the oracle named it.
+//
+// A hand-built four-item bar WAS tried here first, and what it turned up is
+// why the stock `textContrastGuideline` is no longer in the oracle at all.
+// That guideline partitions a region's pixels at their mean HSL lightness and
+// takes the MODE of each half; for an 11px light-grey label on the dark
+// theme's near-black bar the antialiased stroke shades outnumber the glyph's
+// core pixels, so the "light" mode came back as a blend (#77777E) and the
+// label reported 3.99:1 where its colour pair is 6.91:1. It was
+// order-dependent — green when that test ran first, red once a sibling had
+// warmed google_fonts and the real Eden face was in use — and it reproduced
+// with every product change on this branch reverted. The oracle's own
+// painted-text rule reads its ink from the resolved TextStyle instead and is
+// not subject to it.
 library;
 
 import 'package:eden_ui_flutter/eden_ui.dart';

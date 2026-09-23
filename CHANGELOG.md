@@ -20,8 +20,9 @@ highest existing tag. The deprecations below make this a minor, not a patch.
 - **`package:eden_ui_flutter/testing.dart`** — `Future<void> expectUiSane(WidgetTester tester,
   {EdenInputModality inputModality, Set<String> allowOverlap})`. One `await` after a screen test's
   final pump checks: escaped exceptions (including overflow), viewport containment, sibling
-  semantics-rect disjointness, one tap action per control, and the accessibility guidelines
-  (tap-target size, tappable label, text contrast). Also exports `SemanticsGeometryNode`,
+  semantics-rect disjointness, one tap action per control, the accessibility guidelines
+  (tap-target size, tappable label) and **painted-text contrast** (WCAG 1.4.3 — see Changed).
+  Also exports `SemanticsGeometryNode`,
   `globalRectOf`, `identifiedNodes`, `rectsOverlap`. Deliberately **not** exported from
   `eden_ui.dart` — it imports `package:flutter_test`, so it must never reach a consumer's
   production graph. Import it from `test/` only.
@@ -68,6 +69,49 @@ highest existing tag. The deprecations below make this a minor, not a patch.
 
 ### Changed
 
+- **Contrast is measured from the widget tree, not the semantics tree.** `expectUiSane` no longer
+  runs Flutter's `textContrastGuideline`; it measures every `Text` and `EditableText` itself,
+  taking the INK from the resolved `TextStyle` and the SURFACE from the rendered pixels. The stock
+  rule was replaced for two independent reasons, both measured on this package's own shell:
+  - **It cannot see badge text at all.** It resolves a node's text with
+    `find.text(<the node's label>)`, so a nav badge — which sits inside the row's
+    `ExcludeSemantics` and is therefore nobody's label — was never contrast-checked anywhere in
+    this library. Three badge defects on this shell were found by hand for exactly that reason.
+    Publishing badge text into the semantics tree is not an alternative: `ExcludeSemantics` does
+    not descend, a sibling node would put two click targets on one row, and folding the badge into
+    the row's label makes the guideline look for a string no `Text` carries.
+  - **It misreads small text.** It derives BOTH colours from a pixel histogram, and a 10px badge
+    digit or an 11px nav label rasterises to antialiased stroke shades with no full-coverage core,
+    so it reports a blend as the ink: the mobile bar's labels came back at 2.20–4.38:1 against a
+    colour pair of 4.83:1, and the rail's badge at 2.52:1 against 8.04:1.
+
+  The replacement computes the identical 1.16:1 on the oracle's own dark-on-dark fixture, which is
+  what pins the two rules against each other. Text behind a modal barrier (`BlockSemantics` — an
+  open drawer or a modal sheet) and text inside a disabled control are exempt, as they were under
+  the stock rule and as WCAG 1.4.3 allows. **Known limit:** `Text.rich` spans are not measured.
+- **Four WCAG 1.4.3 text-contrast defects fixed in the shells**, all of them shipped, all of them
+  green on a 4778-test suite because no instrument in the suite could see them:
+  - `EdenMobileLayout`'s **bottom-bar badge** was `Colors.white` on `colorScheme.error` at
+    fontSize 9 — **3.76:1 in both themes** (`error` is `#EF4444` in each). It now takes the same
+    near-black ink the drawer's and the sheet's badges take: **4.71:1**. The FILL is deliberately
+    unchanged — darkening it to `red[700]` would clear 1.4.3 for white text and then fail 1.4.11
+    against the dark theme's bar (2.74:1, where `colorScheme.error` is 4.71:1), and
+    `colorScheme.error` is a semantic token two apps read.
+  - `EdenDesktopLayout`'s **rail badge** was `Colors.white` on `colorScheme.primary` at fontSize
+    10 — **2.20:1 light, 2.33:1 dark**, the identical defect the mobile drawer and "More" sheet
+    carried. Now **8.04:1 / 7.61:1**.
+  - The **rail's selected row label** was brand gold on the selected row's 10%-primary band at
+    fontSize 13 — **2.05:1 in the light theme** (6.47:1 dark, which is why it survived a
+    dark-theme reading). The brand moves off the text, exactly as it did on the bar and in the
+    drawer: **16.49:1 / 13.72:1**.
+  - The **sidebar user tile's initials** were brand gold on a 15%-primary circle — **1.98:1
+    light**. Now `onSurface`: **15.89:1 / 12.45:1**. The person-glyph fallback moves with them; at
+    1.98:1 it also failed 1.4.11's 3:1 for a meaningful icon.
+- **One definition for the ink that sits on a coloured nav fill**
+  (`lib/src/widgets/eden_layout/nav_ink.dart`, library-private). The bar, the drawer, the "More"
+  sheet and the rail are four renderings of one nav row and had four separate `Colors.white`
+  literals on coloured pills. They now share one value, so the next change to it is a change
+  everywhere.
 - **The sidebar collapse toggle has a real 44x44 hit area.** `EdenDesktopLayout`'s "Collapse
   sidebar" control was a bare `Icon(Icons.menu_open, size: 20)` inside a `GestureDetector`, giving
   a **20x20 hit target** — under even WCAG 2.5.8 Target Size (Minimum)'s 24x24 pointer floor. The
@@ -206,14 +250,20 @@ Full list, including what is untested rather than broken:
 
 ### Known issues — not yet release-ready
 
-**This release is not shippable as-is, and this section is the reason.** `flutter test` on this
-tree is **4693 passed / 27 skipped / 22 FAILED**. The 22 failures are not flakes and must not be
-suppressed — the oracle that produces them is the point of this work.
+**This release is not shippable as-is, and this section is the reason** — but the reason is no
+longer the test run. `flutter test` on this tree is **4785 tests / 27 skipped**, and every
+oracle, story and layout test is green. The one red in the last full run was
+`scheduler_performance_test.dart`'s "500 events layout completes within 200ms" — a wall-clock
+budget that measured 571ms on a loaded machine and passes in isolation; the code it exercises
+(`EdenSchedulerEventLayer.layoutWithCache`) is untouched by every commit on this branch. What
+remains open is the 27 skipped goldens (item 2) and the questions below.
 
-**What changed since the first draft of this section.** The rail-density question below got its
-design ruling (see `EdenInputModality` under Added), and the collapse toggle got fixed. The same
-22 tests still fail, but the reason is now item 3 alone for 16 of them: the oracle's tap-target
-report went from 22 surfaces to 6.
+**What changed since the first draft of this section.** Every failure in the original 22 has been
+either fixed or reclassified. The rail-density question got its design ruling (item 1), the
+collapse toggle was fixed, the google_fonts fetch that made the accessibility gate unreachable was
+fixed in `test/flutter_test_config.dart` (item 3), and the contrast rule that could not see badge
+text was replaced (see Changed), which turned up four more shipped defects in the shells and
+closed them. Items 5 and 6 are new and are the ones that still want a decision.
 
 1. **The rail-density question is RESOLVED — the tap-target floor is modality-conditional.**
    The desktop rail's 40px nav rows (42px pitch) are correct on a **pointer** surface: WCAG 2.5.8
@@ -227,36 +277,75 @@ report went from 22 surfaces to 6.
      was a defect under every reading and the ruling does not excuse it. The glyph stays 20px; the
      hit area is now **44x44** with `HitTestBehavior.opaque` (without `opaque` the enlarged box is
      decoration — the semantics rect claims 44 while the real target stays 20).
-   - **STILL OPEN, and newly visible: the top bar's search field is 21px tall.** With the 48/44
-     report no longer drowning it out, `desktop-layout/default` and `desktop-layout/narrow` report
-     `SemanticsNode(... label: "Search orders…"): expected tap target size of at least
-     Size(24.0, 24.0), but found Size(813.1, 21.0)`. This is a real WCAG 2.5.8 failure on a
-     pointer surface, and it is a top-bar geometry decision that has not been made yet.
+   - **FIXED: the top bar's search field was 21px tall.** `desktop-layout/default` and
+     `desktop-layout/narrow` reported `expected tap target size of at least Size(24.0, 24.0), but
+     found Size(813.1, 21.0)` — a real WCAG 2.5.8 failure on a pointer surface. The `TextField`
+     is now constrained to the pill's own `_kTopBarSearchHeight` (36), so the published node and
+     the tappable region are the same rect; enlarging a WRAPPER instead would have made the node
+     claim area it cannot receive taps in, which is pinned by
+     `test/ui_oracle/topbar_search_target_test.dart` case 2. See known issue 6 for what is still
+     unresolved about that pill.
 2. **Golden baselines have never been generated, anywhere.** 22 golden tests exist; all of them
    **skip locally** (goldens are Linux/CI-only — see Notes below), and the CI `stories` job owns
    generating them. **They must still NOT be blessed.** Item 1's collapse-toggle fix moved the
-   sidebar header's geometry, the search-field question is still open, and item 3 will change
-   rasterisation when it is fixed. Blessing now bakes all three in as the expected appearance.
-3. **No `EdenTheme` surface has a working accessibility gate — this is what all 22 failures now
-   have in common.** Every generated `expectUiSane` test dies before its verdict is reported:
-   constructing an `EdenTheme` makes `google_fonts` start a network fetch (Outfit, Plus Jakarta
-   Sans), `textContrastGuideline`'s `runAsync` image capture is the first thing in a widget test
-   that actually awaits it, and the uncaught async error completes the test directly — it never
-   reaches `takeException()`, so it cannot be drained. 264 `Failed to load font` errors per full
-   run, unchanged by any work in this release. `GoogleFonts.config.allowRuntimeFetching = false`
-   does not help (the fonts are not bundled as assets either). The same root cause makes
-   `textContrastGuideline` — and any image-based check — **unusable on every `EdenTheme` surface**.
-   This is documented as a KNOWN LIMITATION in `expectUiSane`'s dartdoc. Geometry, structure and
-   tap-target checks are unaffected and do run — that is how the modality ruling above could be
-   measured at all. **The fix belongs in the test environment** (bundle the fonts, or stub the
-   fetch in `test/flutter_test_config.dart`), and it will change what CI rasterises, so it must
-   land before goldens are blessed, not after.
+   sidebar header's geometry, item 3's font fix changed what is rasterised, the search field was
+   grown to a real 36px control, and the contrast fixes under Changed recoloured a badge in the
+   mobile bar and three labels in the desktop rail. Blessing now bakes all of that in as the
+   expected appearance.
+   - **`mobile-layout/drawer-open` and `mobile-layout/more-sheet` are still NOT registered**, and
+     deliberately. `tool/gen_story_tests.dart` emits a light golden, a dark golden AND an
+     `expectUiSane` test for every story with no per-story opt-out, so registering them would
+     emit four golden expectations with no baseline behind them. They also could not be expressed
+     as stories today: `EdenStory.build` returns a widget and the harness only pumps it, while
+     both overlays need a TAP between the pump and the assertion — which is why
+     `test/ui_oracle/mobile_shell_open_surfaces_test.dart` exists instead. They belong in the same
+     change that regenerates the mobile-layout baselines.
+3. **FIXED — the accessibility gate could not run on any `EdenTheme` surface.** Constructing an
+   `EdenTheme` made `google_fonts` start a network fetch (Outfit, Plus Jakarta Sans); the oracle's
+   `runAsync` image capture was the first thing in a widget test that actually awaited it, and the
+   uncaught async error completed the test directly — it never reached `takeException()`, so no
+   helper could drain it. 264 `Failed to load font` errors per full run. `allowRuntimeFetching =
+   false` does not help on its own: the error text changes and the uncaught async error does not.
+   `test/flutter_test_config.dart` now serves the Eden type families to `google_fonts` as ordinary
+   assets from `test_support/fonts/`, through a mock handler on the `flutter/assets` channel that
+   delegates everything it does not own back to the real bundle — deliberately NOT via
+   `pubspec.yaml`'s `flutter: assets:`, which would ship the bytes in every consumer app. **This
+   changes what CI rasterises**, so it is one more reason item 2's baselines must be generated
+   after this release's work, not before it.
 4. **The story coverage ratchet is currently blind to co-located stories.** Eleven real stories
    were added in this release and `.story-coverage.json` did not move off `{exported_widgets: 364,
    with_story: 11}`. The line-based export derivation collapses the whole `eden_layout` group to a
    single synthetic `EdenLayoutExports` name, so those stories bought zero measured coverage. The
    floor therefore holds, but it is not yet measuring what it claims to measure. Fixing it needs
    `_exports.dart` resolution, which will also move `exported_widgets` off 364.
+
+5. **The first test in every file rasterises in a different typeface from the rest.** `EdenTheme`
+   fires its google_fonts loads UNAWAITED at theme-construction time, and the first thing in a
+   widget test that lets such a future run is `runAsync` — which lives inside `expectUiSane`'s
+   contrast phase. So the first test in a file lays out and paints with the FALLBACK face, the
+   load completes during it, and every later test in the same file uses the real one. Measured: it
+   moved the desktop shell's search pill 42 logical pixels between the first test and the second,
+   and it flipped the stock contrast guideline's verdict on the mobile bar's 11px label from
+   6.91:1 (its actual colour pair) to a 3.99:1 reading — green when that test ran first, red once
+   a sibling had warmed the cache. **Nothing in the current gate depends on it**: the oracle's
+   contrast rule reads its ink from the `TextStyle` and is font-independent by construction, and
+   the suite is green either way. It is recorded because the GEOMETRY rules do read those pixels'
+   layout, and because it is the same rasterisation question item 2 has to settle before goldens
+   are blessed. Awaiting `GoogleFonts.pendingFonts()` in `test/flutter_test_config.dart` fixes it
+   in about five lines and makes every test render what CI renders — it was written, measured, and
+   held back from this change because it re-rasterises all 4785 tests, which is a decision that
+   belongs with the golden baselines rather than with a contrast fix.
+
+6. **The top bar's search hint measures differently as a token pair than as pixels.** As tokens it
+   is `onSurfaceVariant` on the pill's `surfaceContainerHighest` fill — **3.81:1** at fontSize 13,
+   below 1.4.3's 4.5:1. As pixels the oracle measures **4.83:1**, because the captured frame shows
+   the hint's paragraph sitting on the top bar's white surface while the pill's fill appears as a
+   ~16px band that does not reach it — even though the field's LAYOUT rect is the pill's full 36px
+   (`_kTopBarSearchHeight`). One of those two readings is wrong and the difference is a
+   pill/text alignment question in `_TopBar`, not a colour question, so no colour was changed. It
+   is also a recorded limit of the contrast rule: it takes the background from the dominant colour
+   inside the paragraph's own box, which is the wrong surface when a paragraph does not actually
+   sit on the component it belongs to.
 
 ### Notes
 
