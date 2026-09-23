@@ -18,18 +18,18 @@ import 'package:flutter/material.dart';
 /// so a probe that walks up to the nearest container is caught (this is the
 /// 23-01 40-vs-360 lesson, asked from the other side).
 Widget probeKeyedBoxSurface() {
-  return Center(
+  return const Center(
     child: SizedBox(
-      key: const ValueKey<String>('probe-parent'),
+      key: ValueKey<String>('probe-parent'),
       width: 360,
       height: 200,
       child: Align(
         alignment: Alignment.topLeft,
         child: SizedBox(
-          key: const ValueKey<String>('probe-target'),
+          key: ValueKey<String>('probe-target'),
           width: 120,
           height: 40,
-          child: const ColoredBox(color: Color(0xFF2266CC)),
+          child: ColoredBox(color: Color(0xFF2266CC)),
         ),
       ),
     ),
@@ -42,11 +42,11 @@ Widget probeKeyedBoxSurface() {
 /// `Text` widget's runtime tree is a `RichText`, and a probe that only reads
 /// `Text.data` misses every styled/composed string in the app.
 Widget probeTextSurface() {
-  return Column(
+  return const Column(
     mainAxisAlignment: MainAxisAlignment.center,
     children: <Widget>[
-      const Text('Hello'),
-      const Text.rich(
+      Text('Hello'),
+      Text.rich(
         TextSpan(
           children: <InlineSpan>[
             TextSpan(text: 'Say '),
@@ -55,7 +55,7 @@ Widget probeTextSurface() {
           ],
         ),
       ),
-      const Text('Goodbye'),
+      Text('Goodbye'),
     ],
   );
 }

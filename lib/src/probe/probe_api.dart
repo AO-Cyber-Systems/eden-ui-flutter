@@ -12,7 +12,6 @@ import 'dart:ui' show FlutterView;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/semantics.dart';
 
 /// One probe hit: an element or semantics node the probe matched.
 class EdenProbeHit {

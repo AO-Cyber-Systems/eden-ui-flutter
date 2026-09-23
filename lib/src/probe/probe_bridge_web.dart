@@ -11,6 +11,10 @@
 library;
 
 import 'dart:js_interop';
+// `setProperty` lives in the _unsafe library: installing a property on
+// `window` by name is exactly the dynamic operation the typed API declines to
+// model, and it is the one thing this shim must do.
+import 'dart:js_interop_unsafe';
 
 import 'probe_api.dart';
 
