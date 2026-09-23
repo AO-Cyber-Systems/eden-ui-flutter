@@ -92,7 +92,22 @@ void main() {
       await tester.pumpAndSettle();
 
       // The builder saw the destinations and ONLY the destinations.
-      expect(offeredIds, const ['home', 'reports']);
+      //
+      // Each id appears TWICE: the Scaffold builds its drawer widget eagerly
+      // even while it is closed, so the drawer's tiles go through the same
+      // emission point as the bar's tabs. That is the point — one path — and
+      // it is asserted as a SET so the count is not load-bearing.
+      expect(offeredIds.toSet(), const {'home', 'reports'});
+      expect(
+        offeredIds,
+        isNot(contains('__caption__')),
+        reason: 'a caption never reaches the item builder — it is a section',
+      );
+      expect(
+        offeredIds,
+        isNot(contains('__divider__')),
+        reason: 'a divider never reaches the item builder — it is a section',
+      );
 
       // The consumer's widget really did render for both...
       expect(find.text('CUSTOM home'), findsOneWidget);

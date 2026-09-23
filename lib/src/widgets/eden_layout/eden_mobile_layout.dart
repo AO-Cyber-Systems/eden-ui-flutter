@@ -63,7 +63,33 @@ class EdenMobileLayout extends StatelessWidget {
     this.floatingAction,
     this.maxBottomItems = 5,
     this.selectableBody = false,
+    this.itemBuilder,
+    this.sectionBuilder,
   });
+
+  /// Renders one nav row in place of the built-in renderer; return `null` for
+  /// a row to keep the default treatment.
+  ///
+  /// The same slot as [EdenDesktopLayout.itemBuilder], with the same rules:
+  /// composition over flags, one path (the default renderer is the fallback,
+  /// never a branch), and the `eden-nav-<id>` semantics identifier plus the
+  /// `button`/`label`/`selected` annotations and the tap action applied by the
+  /// layout OUTSIDE this builder's result — exactly one semantics node per
+  /// row, whoever rendered it.
+  ///
+  /// It is consulted for bottom-bar tabs, drawer tiles and "More"-sheet rows.
+  /// It is NOT consulted for captions or dividers in the bottom bar, because
+  /// the bar never renders those at all (see [maxBottomItems] and
+  /// `_flatItems`) — the exclusion is the layout's rule, not the renderer's,
+  /// so a consumer builder cannot smuggle a decoration into the bar.
+  final EdenNavItemBuilder? itemBuilder;
+
+  /// Renders a caption or divider row in place of the built-in treatment;
+  /// return `null` to keep the default. Sections are non-interactive and carry
+  /// no semantics identifier, in either path.
+  ///
+  /// Only the DRAWER has sections — the bottom bar excludes them by design.
+  final EdenNavSectionBuilder? sectionBuilder;
 
   final List<EdenNavItem> navItems;
   final String selectedId;
@@ -94,6 +120,67 @@ class EdenMobileLayout extends StatelessWidget {
   /// bar are chrome, not data, and stay outside the region so a drag-select
   /// cannot pick up navigation labels.
   final bool selectableBody;
+
+  // -------------------------------------------------------------------------
+  // The single point at which a nav row is emitted (TRD 23-06 Task 1, mobile)
+  // -------------------------------------------------------------------------
+
+  /// Emits ONE nav row — bottom-bar tab, drawer tile or "More"-sheet row.
+  ///
+  /// This is the only place the mobile layout publishes a row's semantics. The
+  /// `Semantics` wrapper is applied UNIFORMLY here — the same node for the
+  /// built-in renderer's result and for a consumer [itemBuilder]'s result —
+  /// which is why [_BottomItem] and [_DrawerTile] no longer annotate anything
+  /// themselves. Exactly one semantics node per row, whoever rendered it.
+  ///
+  /// (Annotating in both places would nest two `Semantics` widgets, and a
+  /// nested `Semantics` without `container: true` is not published at all on
+  /// Flutter 3.41 — its annotations merge upward and the parent's identifier
+  /// wins. Stripping the private renderers is what keeps the identifier
+  /// addressable.)
+  Widget _navRow({
+    required BuildContext context,
+    required EdenNavItem item,
+    required EdenNavItemState state,
+    required Widget Function() defaultRenderer,
+    VoidCallback? onTap,
+  }) {
+    // One path, with a default builder — never a branch on whether a consumer
+    // supplied one. A builder that returns null declines THIS row and the
+    // default renders it.
+    final EdenNavItemBuilder build = itemBuilder ?? (_, __, ___) => null;
+    final child = build(context, item, state) ?? defaultRenderer();
+    return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
+      button: true,
+      label: item.label,
+      selected: state.isSelected,
+      onTap: onTap,
+      child: child,
+    );
+  }
+
+  /// Emits one non-interactive drawer section (caption, divider or a group's
+  /// uppercase band). Sections carry no identifier and no button semantics in
+  /// either path — same as today.
+  Widget _navSection({
+    required BuildContext context,
+    required EdenNavItem item,
+    required Widget Function() defaultRenderer,
+  }) {
+    final EdenNavSectionBuilder build = sectionBuilder ?? (_, __) => null;
+    return build(context, item) ?? defaultRenderer();
+  }
+
+  /// The overflow tab. Not a destination — tapping it opens the "More" sheet.
+  /// Extracted only so the emission point and the default renderer are handed
+  /// the same item; unchanged behaviour.
+  static const EdenNavItem _moreItem = EdenNavItem(
+    id: '__more__',
+    label: 'More',
+    icon: Icons.more_horiz,
+    semanticsIdentifier: 'eden-nav-more',
+  );
 
   /// Flatten grouped nav items into the list of real DESTINATIONS.
   ///
@@ -143,22 +230,40 @@ class EdenMobileLayout extends StatelessWidget {
             height: 60,
             child: Row(
               children: [
+                // bottomItems comes from _flatItems, which has ALREADY dropped
+                // every caption and divider. The exclusion therefore happens
+                // before the emission point, so a consumer itemBuilder is
+                // never even offered a decoration — the rule is the layout's,
+                // not the renderer's (TRD 23-06 cases 10-11).
                 for (final item in bottomItems)
-                  _BottomItem(
-                    item: item,
-                    isSelected: item.id == selectedId,
-                    onTap: () => onNavChanged(item.id),
+                  Expanded(
+                    child: _navRow(
+                      context: context,
+                      item: item,
+                      state: EdenNavItemState(isSelected: item.id == selectedId),
+                      onTap: () => onNavChanged(item.id),
+                      defaultRenderer: () => _BottomItem(
+                        item: item,
+                        isSelected: item.id == selectedId,
+                        onTap: () => onNavChanged(item.id),
+                      ),
+                    ),
                   ),
                 if (showMore)
-                  _BottomItem(
-                    item: const EdenNavItem(
-                      id: '__more__',
-                      label: 'More',
-                      icon: Icons.more_horiz,
-                      semanticsIdentifier: 'eden-nav-more',
+                  Expanded(
+                    child: _navRow(
+                      context: context,
+                      item: _moreItem,
+                      state: EdenNavItemState(isSelected: isOverflowSelected),
+                      onTap: () =>
+                          _showMoreSheet(context, theme, overflowItems),
+                      defaultRenderer: () => _BottomItem(
+                        item: _moreItem,
+                        isSelected: isOverflowSelected,
+                        onTap: () =>
+                            _showMoreSheet(context, theme, overflowItems),
+                      ),
                     ),
-                    isSelected: isOverflowSelected,
-                    onTap: () => _showMoreSheet(context, theme, overflowItems),
                   ),
               ],
             ),
@@ -269,37 +374,73 @@ class EdenMobileLayout extends StatelessWidget {
                     // stays the same uppercase band a group header already
                     // draws. Neither becomes a tappable row.
                     if (group.isDivider)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: EdenSpacing.space2,
-                        ),
-                        child: Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: theme.colorScheme.outlineVariant,
+                      _navSection(
+                        context: context,
+                        item: group,
+                        defaultRenderer: () => Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: EdenSpacing.space2,
+                          ),
+                          child: Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: theme.colorScheme.outlineVariant,
+                          ),
                         ),
                       )
                     else if (group.isCaption)
-                      _drawerSectionLabel(theme, group.label)
+                      _navSection(
+                        context: context,
+                        item: group,
+                        defaultRenderer: () =>
+                            _drawerSectionLabel(theme, group.label),
+                      )
                     else if (group.children.isNotEmpty) ...[
-                      _drawerSectionLabel(theme, group.label),
+                      _navSection(
+                        context: context,
+                        item: group,
+                        defaultRenderer: () =>
+                            _drawerSectionLabel(theme, group.label),
+                      ),
                       for (final child in group.children)
-                        _DrawerTile(
+                        _navRow(
+                          context: context,
                           item: child,
-                          isSelected: child.id == selectedId,
+                          state: EdenNavItemState(
+                            isSelected: child.id == selectedId,
+                            depth: 1,
+                          ),
                           onTap: () {
                             onNavChanged(child.id);
                             Navigator.pop(context);
                           },
+                          defaultRenderer: () => _DrawerTile(
+                            item: child,
+                            isSelected: child.id == selectedId,
+                            onTap: () {
+                              onNavChanged(child.id);
+                              Navigator.pop(context);
+                            },
+                          ),
                         ),
                     ] else
-                      _DrawerTile(
+                      _navRow(
+                        context: context,
                         item: group,
-                        isSelected: group.id == selectedId,
+                        state:
+                            EdenNavItemState(isSelected: group.id == selectedId),
                         onTap: () {
                           onNavChanged(group.id);
                           Navigator.pop(context);
                         },
+                        defaultRenderer: () => _DrawerTile(
+                          item: group,
+                          isSelected: group.id == selectedId,
+                          onTap: () {
+                            onNavChanged(group.id);
+                            Navigator.pop(context);
+                          },
+                        ),
                       ),
                 ],
               ),
@@ -332,12 +473,15 @@ class EdenMobileLayout extends StatelessWidget {
                 ),
               ),
               for (final item in items)
-                Semantics(
-                  identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-                  button: true,
-                  label: item.label,
-                  selected: item.id == selectedId,
-                  child: ListTile(
+                _navRow(
+                  context: ctx,
+                  item: item,
+                  state: EdenNavItemState(isSelected: item.id == selectedId),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    onNavChanged(item.id);
+                  },
+                  defaultRenderer: () => ListTile(
                     leading: Icon(
                       item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
                       color: item.id == selectedId ? theme.colorScheme.primary : null,
@@ -387,13 +531,12 @@ class _BottomItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Expanded(
-      child: Semantics(
-        identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-        button: true,
-        label: item.label,
-        selected: isSelected,
-        child: GestureDetector(
+    // No Semantics and no Expanded here: both are applied by the layout's
+    // single emission point (EdenMobileLayout._navRow and its Expanded at the
+    // call site), uniformly for this default renderer and for a consumer
+    // itemBuilder's result alike. Annotating here too would nest two
+    // Semantics widgets and the identifier would not be published at all.
+    return GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Column(
@@ -433,9 +576,7 @@ class _BottomItem extends StatelessWidget {
             ),
           ],
         ),
-      ),
-      ),
-    );
+      );
   }
 }
 
@@ -453,12 +594,10 @@ class _DrawerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Semantics(
-      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-      button: true,
-      label: item.label,
-      selected: isSelected,
-      child: GestureDetector(
+    // No Semantics here — see the note in _BottomItem. The identifier, the
+    // button/label/selected annotations and the tap action are published once
+    // by EdenMobileLayout._navRow, outside whatever rendered this row.
+    return GestureDetector(
         onTap: onTap,
         child: Container(
           height: 44,
@@ -498,7 +637,6 @@ class _DrawerTile extends StatelessWidget {
           ],
         ),
       ),
-      ),
-    );
+      );
   }
 }
