@@ -441,7 +441,7 @@ block, and a shell API consumers compose instead of flag (folding in issue #33).
 **Jobs:** 12 jobs (TRDs 23-01 … 23-12) across 6 waves
 
 Jobs:
-- [ ] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1)
+- [x] 23-01-TRD.md — UI-oracle fixtures: wrap() pump helper + SemanticsGeometry global rects (wave 1) — COMPLETE 2026-09-22 (7 cases green, container:true bug pinned)
 - [ ] 23-02-TRD.md — expectUiSane at package:eden_ui_flutter/testing.dart, five broken fixtures (wave 2)
 - [ ] 23-03-TRD.md — Story harness: registry + test generators, goldens in CI only (wave 3)
 - [ ] 23-04-TRD.md — Story coverage ratchet: a floor that cannot fall (wave 4)
