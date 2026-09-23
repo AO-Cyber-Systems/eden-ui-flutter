@@ -18,12 +18,27 @@ highest existing tag. The deprecations below make this a minor, not a patch.
 ### Added — UI correctness oracle, story catalogue, probe
 
 - **`package:eden_ui_flutter/testing.dart`** — `Future<void> expectUiSane(WidgetTester tester,
-  {Set<String> allowOverlap})`. One `await` after a screen test's final pump checks: escaped
-  exceptions (including overflow), viewport containment, sibling semantics-rect disjointness, one
-  tap action per control, and the Material accessibility guidelines (tap-target size, tappable
-  label). Also exports `SemanticsGeometryNode`, `globalRectOf`, `identifiedNodes`, `rectsOverlap`.
-  Deliberately **not** exported from `eden_ui.dart` — it imports `package:flutter_test`, so it must
-  never reach a consumer's production graph. Import it from `test/` only.
+  {EdenInputModality inputModality, Set<String> allowOverlap})`. One `await` after a screen test's
+  final pump checks: escaped exceptions (including overflow), viewport containment, sibling
+  semantics-rect disjointness, one tap action per control, and the accessibility guidelines
+  (tap-target size, tappable label, text contrast). Also exports `SemanticsGeometryNode`,
+  `globalRectOf`, `identifiedNodes`, `rectsOverlap`. Deliberately **not** exported from
+  `eden_ui.dart` — it imports `package:flutter_test`, so it must never reach a consumer's
+  production graph. Import it from `test/` only.
+- **`EdenInputModality`** (`pointer` / `touch`), exported from **`eden_ui.dart`** as well as
+  `testing.dart`, plus **`EdenStory.inputModality`**. The tap-target floor `expectUiSane` asserts
+  depends on what the surface is DRIVEN WITH: `pointer` asserts WCAG 2.5.8 Target Size (Minimum),
+  **24x24**; `touch` asserts `androidTapTargetGuideline` (48dp) **and** `iOSTapTargetGuideline`
+  (44pt). 48dp and 44pt are touch guidance — on a pointer surface they are not a stricter
+  standard, they are the wrong one, and the only pressure that creates is to weaken the oracle.
+  This is a **state-conditional rule, not a suppression mechanism**: there is no value that waives
+  the check, only a declaration of what input the surface takes, and both paths assert a real
+  floor. The parameter is **optional and defaults to `touch`** (the stricter floor, per this
+  package's additive-only contract), but every in-repo call site names it explicitly and
+  `tool/gen_story_tests.dart` emits each story's declared modality verbatim into the generated
+  test, so the standard a surface is held to is readable at the assertion. The enum lives in
+  `lib/src/a11y/` rather than `lib/testing/` precisely so production code can declare it without
+  dragging `package:flutter_test` into a release graph.
 - **`package:eden_ui_flutter/probe.dart`** — `EdenProbe`, `kEdenProbe`, `EdenProbeScope`. A web
   JS-interop bridge exposing `window.__edenProbe.{find,tree,settled,state}`. Compiled in ONLY under
   `--dart-define=EDEN_PROBE=true`; tree-shaken out otherwise, enforced by the `probe-guard` CI job
@@ -53,6 +68,14 @@ highest existing tag. The deprecations below make this a minor, not a patch.
 
 ### Changed
 
+- **The sidebar collapse toggle has a real 44x44 hit area.** `EdenDesktopLayout`'s "Collapse
+  sidebar" control was a bare `Icon(Icons.menu_open, size: 20)` inside a `GestureDetector`, giving
+  a **20x20 hit target** — under even WCAG 2.5.8 Target Size (Minimum)'s 24x24 pointer floor. The
+  glyph is unchanged at 20px; the box around it is now 44x44 with `HitTestBehavior.opaque` (the
+  collapsed variant of the same header already had `opaque`; the expanded one did not, and without
+  it the enlarged box is decoration — the semantics rect claims 44 while the real target stays 20).
+  **This moves the sidebar header's geometry**, which is one more reason the golden baselines must
+  not be blessed yet.
 - **`selectableBody` now defaults to `false`** on `EdenDesktopLayout` and `EdenMobileLayout`.
   A `SelectionArea` over a subtree containing a Navigator asserts on deep-link to a nested route:
   `_compareScreenOrder` calls `getTransformTo` on a covered page that has never been laid out
@@ -184,33 +207,50 @@ Full list, including what is untested rather than broken:
 ### Known issues — not yet release-ready
 
 **This release is not shippable as-is, and this section is the reason.** `flutter test` on this
-tree is **4687 passed / 27 skipped / 22 FAILED**. The 22 failures are not flakes and must not be
-suppressed — the oracle that produces them is the point of this work, and it is reporting real
-defects in the shell this package ships.
+tree is **4693 passed / 27 skipped / 22 FAILED**. The 22 failures are not flakes and must not be
+suppressed — the oracle that produces them is the point of this work.
 
-1. **22 generated `expectUiSane` tests fail on the shipped shell.** The accessibility oracle found
-   genuine defects in `EdenDesktopLayout`:
-   - The desktop rail's nav rows are **42px tall**, below both the Android **48dp** and the iOS
-     **44pt** tap-target floors (`expected tap target size of at least Size(48.0, 48.0), but found
-     Size(235.0, 42.0)`). This is **not** fixable by enlarging the hit area alone: at a 42px row
-     pitch a 48px tap rect makes adjacent rows' semantics rects overlap, which the oracle's
-     disjointness rule then flags instead. **Rail density versus touch-target compliance is a real
-     design decision, and it affects two shipped apps (eden-biz and aodex).** It needs a design
-     ruling before it needs code.
-   - The **"Collapse sidebar" control is 20x20** (`found Size(20.0, 20.0)`) — a bare sized `Icon`
-     inside a `GestureDetector` with no enlarged hit target.
+**What changed since the first draft of this section.** The rail-density question below got its
+design ruling (see `EdenInputModality` under Added), and the collapse toggle got fixed. The same
+22 tests still fail, but the reason is now item 3 alone for 16 of them: the oracle's tap-target
+report went from 22 surfaces to 6.
+
+1. **The rail-density question is RESOLVED — the tap-target floor is modality-conditional.**
+   The desktop rail's 40px nav rows (42px pitch) are correct on a **pointer** surface: WCAG 2.5.8
+   Target Size (Minimum) is 24x24 and 40px clears it comfortably. The earlier reading — that the
+   rail was in breach of Android 48dp / iOS 44pt — applied touch guidance to a pointer surface.
+   The rail therefore keeps 40px and declares `EdenInputModality.pointer`; a mobile drawer or
+   bottom bar declares `touch` and is still held to 48/44. Sixteen `nav-item` surfaces now report
+   **zero** oracle violations.
+   - **FIXED: the "Collapse sidebar" control was 20x20** (`found Size(20.0, 20.0)`) — a bare sized
+     `Icon` inside a `GestureDetector`. That is under even WCAG 2.5.8's 24x24 pointer floor, so it
+     was a defect under every reading and the ruling does not excuse it. The glyph stays 20px; the
+     hit area is now **44x44** with `HitTestBehavior.opaque` (without `opaque` the enlarged box is
+     decoration — the semantics rect claims 44 while the real target stays 20).
+   - **STILL OPEN, and newly visible: the top bar's search field is 21px tall.** With the 48/44
+     report no longer drowning it out, `desktop-layout/default` and `desktop-layout/narrow` report
+     `SemanticsNode(... label: "Search orders…"): expected tap target size of at least
+     Size(24.0, 24.0), but found Size(813.1, 21.0)`. This is a real WCAG 2.5.8 failure on a
+     pointer surface, and it is a top-bar geometry decision that has not been made yet.
 2. **Golden baselines have never been generated, anywhere.** 22 golden tests exist; all of them
    **skip locally** (goldens are Linux/CI-only — see Notes below), and the CI `stories` job owns
-   generating them. **They must NOT be blessed until item 1 is resolved**, or the baselines bake
-   the broken geometry in as the expected appearance and the defect becomes permanent.
-3. **`EdenMobileLayout` has no working accessibility gate.** Its `expectUiSane` tests die before
-   any assertion runs: constructing an `EdenTheme` makes `google_fonts` start a network fetch for
-   `Outfit-ExtraBold`, and the uncaught async error completes the test directly — it never reaches
-   `takeException()`, so it cannot be drained. `GoogleFonts.config.allowRuntimeFetching = false`
-   does not help (the font is not bundled as an asset either). The same root cause makes
+   generating them. **They must still NOT be blessed.** Item 1's collapse-toggle fix moved the
+   sidebar header's geometry, the search-field question is still open, and item 3 will change
+   rasterisation when it is fixed. Blessing now bakes all three in as the expected appearance.
+3. **No `EdenTheme` surface has a working accessibility gate — this is what all 22 failures now
+   have in common.** Every generated `expectUiSane` test dies before its verdict is reported:
+   constructing an `EdenTheme` makes `google_fonts` start a network fetch (Outfit, Plus Jakarta
+   Sans), `textContrastGuideline`'s `runAsync` image capture is the first thing in a widget test
+   that actually awaits it, and the uncaught async error completes the test directly — it never
+   reaches `takeException()`, so it cannot be drained. 264 `Failed to load font` errors per full
+   run, unchanged by any work in this release. `GoogleFonts.config.allowRuntimeFetching = false`
+   does not help (the fonts are not bundled as assets either). The same root cause makes
    `textContrastGuideline` — and any image-based check — **unusable on every `EdenTheme` surface**.
-   This is documented as a KNOWN LIMITATION in `expectUiSane`'s dartdoc. Geometry and structure
-   checks are unaffected and do work.
+   This is documented as a KNOWN LIMITATION in `expectUiSane`'s dartdoc. Geometry, structure and
+   tap-target checks are unaffected and do run — that is how the modality ruling above could be
+   measured at all. **The fix belongs in the test environment** (bundle the fonts, or stub the
+   fetch in `test/flutter_test_config.dart`), and it will change what CI rasterises, so it must
+   land before goldens are blessed, not after.
 4. **The story coverage ratchet is currently blind to co-located stories.** Eleven real stories
    were added in this release and `.story-coverage.json` did not move off `{exported_widgets: 364,
    with_story: 11}`. The line-based export derivation collapses the whole `eden_layout` group to a
