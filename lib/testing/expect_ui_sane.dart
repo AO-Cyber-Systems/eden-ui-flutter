@@ -75,8 +75,20 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 ///    identifiers permitted to intersect (a deliberate overlay, a badge sitting
 ///    on its host); it is the escape hatch that makes adoption across 600+
 ///    consumer screens possible without editing the screens.
-/// 4. **One tap action per control.** A control that declares `tap` on its own
-///    node AND again on a non-identified descendant fires twice.
+/// 4. **Exactly one WORKING tap action per control that announces one.** The
+///    rule is two-sided, and the lower bound is the one that matters: an
+///    oracle that is silent on zero goes GREEN on a surface whose controls are
+///    all dead, and reports FEWER violations the more broken the surface is.
+///    A control that declares `tap` on its own node AND again on a
+///    non-identified descendant fires twice; a control that announces
+///    `button: true` (or `link: true`) with NO tap route announces an
+///    affordance that does not exist; and a control whose single tap route no
+///    pointer can reach — `IgnorePointer` blocks the subtree's hit test while
+///    leaving the outer node's action in place — is inert to a real finger
+///    even though the count reads a healthy 1. Nodes that announce no
+///    affordance are exempt: a caption band carries an identifier and nothing
+///    to activate, and the top-bar search announces `textField: true`, whose
+///    affordance is focus, not tap.
 /// 5. **Accessibility guidelines.** `labeledTapTargetGuideline`,
 ///    `textContrastGuideline`, and a tap-target floor chosen by
 ///    [inputModality]: WCAG 2.5.8's 24x24 for [EdenInputModality.pointer],
@@ -117,7 +129,7 @@ Future<void> expectUiSane(
 
     violations.addAll(_viewportViolations(tester, nodes));
     violations.addAll(_overlapViolations(nodes, allowOverlap));
-    violations.addAll(_tapRouteViolations(tester));
+    violations.addAll(_tapRouteViolations(tester, nodes));
     violations.addAll(await _guidelineViolations(tester, inputModality));
   } finally {
     handle.dispose();
@@ -318,12 +330,63 @@ List<String> _overlapViolations(
   return out;
 }
 
-List<String> _tapRouteViolations(WidgetTester tester) {
+// -----------------------------------------------------------------------------
+// Tap routes: the rule is TWO-SIDED
+// -----------------------------------------------------------------------------
+//
+// WHY THE LOWER BOUND EXISTS. This check used to fire only on `routes > 1` and
+// was silent on zero. That made the instrument itself capable of a false
+// green: replacing `ExcludeSemantics` with `IgnorePointer` in
+// `EdenMobileLayout._navRow` killed all four bottom-nav buttons and the whole
+// mobile-layout story oracle went GREEN — the contrast violation vanished too,
+// because `textContrastGuideline` locates its paragraph by HIT TEST and a
+// surface that takes no pointer offers nothing to hit. The oracle reported
+// FEWER violations the more broken the surface was. An oracle that can go
+// green on dead UI is worse than no oracle, because it is trusted.
+//
+// The measured mechanism, pinned here because it is counter-intuitive and it
+// decides the shape of the rule (Flutter 3.41.9, `RenderIgnorePointer`):
+//
+//   * `hitTest` returns `!ignoring && super.hitTest(...)` — the subtree takes
+//     no pointer at all; and
+//   * `describeSemanticsConfiguration` sets `isBlockingUserActions`, which
+//     strips the inner `GestureDetector`'s IMPLICIT tap route from the
+//     published tree.
+//
+// So the outer `Semantics(onTap:)` survives and the route count reads exactly
+// 1. The zero arm alone does NOT catch that case; reachability is what does.
+// Both arms are kept because they are different defects: zero is "nothing was
+// ever wired up", unreachable is "it was wired up and something in between
+// eats the pointer".
+//
+// SCOPE — `button: true` or `link: true`, nothing else. Not every identified
+// node is interactive. `EdenMobileLayout._navSection` publishes no identifier
+// and no affordance flag by design, and `EdenDesktopLayout`'s top-bar search
+// publishes `identifier: 'eden-topbar-search', textField: true` — a text
+// field's affordance is focus, not tap, and reddening it would be the wrong
+// rule. `toggled:`/`checked:` are deliberately OUT of scope: they annotate
+// STATE rather than an affordance, every site in this library pairs them with
+// `button: true` (eden_reaction_bar, eden_label_picker) or hands the route to
+// an InkWell that owns it (eden_multi_select), and none of them publishes an
+// identifier — so including them would add no coverage today and would redden
+// a legitimately read-only checked row. `link: true` IS in scope: it has no
+// site in `lib/src` today, but it is the same lie through the other flag, and
+// it is executed by a fixture rather than merely asserted.
+
+List<String> _tapRouteViolations(
+  WidgetTester tester,
+  List<SemanticsGeometryNode> nodes,
+) {
   final SemanticsNode root = rootSemanticsNodeOf(tester);
+  final Map<int, Rect> rectById = <int, Rect>{
+    for (final SemanticsGeometryNode node in nodes) node.id: node.globalRect,
+  };
+  final Map<int, RenderObject> ownerById = _semanticsOwners(tester);
   final List<String> out = <String>[];
 
   void walk(SemanticsNode node) {
-    final String identifier = node.getSemanticsData().identifier;
+    final SemanticsData data = node.getSemanticsData();
+    final String identifier = data.identifier;
     if (identifier.isNotEmpty) {
       final int routes = _countTapRoutes(node, isOwner: true);
       if (routes > 1) {
@@ -334,6 +397,31 @@ List<String> _tapRouteViolations(WidgetTester tester) {
           'Wrap the inner widget in ExcludeSemantics, or drop the outer '
           'Semantics(onTap:).',
         );
+      } else if (_announcedAffordance(data) case final String affordance) {
+        if (routes == 0) {
+          out.add(
+            'control "$identifier" announces itself as $affordance but has no '
+            'tap action — it is inert. A screen reader offers it for '
+            'activation and nothing happens. Give the node an onTap, or drop '
+            'the ${affordance == 'a link' ? 'link' : 'button'} flag if it is '
+            'not interactive.',
+          );
+        } else if (!_pointerReaches(
+          tester,
+          ownerById[node.id],
+          rectById[node.id],
+        )) {
+          out.add(
+            'control "$identifier" announces itself as $affordance and '
+            'declares a tap action, but a pointer dropped in the middle of '
+            'the rect it publishes never reaches it — it is inert to a '
+            'real tap. Something between the node and its content refuses the '
+            'hit test (IgnorePointer/AbsorbPointer, a zero-size or offset '
+            'child, a sibling painted over it). ExcludeSemantics is the '
+            'wrapper that silences a duplicate route WITHOUT taking the '
+            'pointer away.',
+          );
+        }
       }
     }
     node.visitChildren((SemanticsNode child) {
@@ -344,6 +432,85 @@ List<String> _tapRouteViolations(WidgetTester tester) {
 
   walk(root);
   return out;
+}
+
+/// The affordance [data] advertises, phrased for a message, or null when it
+/// advertises none. Button wins when both flags are set — a node that is both
+/// is described by the stronger, more common word.
+String? _announcedAffordance(SemanticsData data) {
+  if (data.flagsCollection.isButton) {
+    return 'a button';
+  }
+  if (data.flagsCollection.isLink) {
+    return 'a link';
+  }
+  return null;
+}
+
+/// Every [RenderObject] that OWNS a semantics node, keyed by that node's id.
+///
+/// `RenderObject.debugSemantics` is non-null only on the render object the
+/// node was built from, which is exactly the mapping needed: it is that render
+/// object's presence in a hit-test path that says whether a pointer landing on
+/// the node's pixels reaches the control the node describes.
+///
+/// `putIfAbsent`, not `[]=`: `Element.renderObject` walks DOWN to the nearest
+/// descendant render object, so a whole stack of ancestor elements answers the
+/// same one. Keeping the first is keeping the shallowest element for a render
+/// object that is identical either way.
+Map<int, RenderObject> _semanticsOwners(WidgetTester tester) {
+  final Map<int, RenderObject> owners = <int, RenderObject>{};
+
+  void visit(Element element) {
+    final RenderObject? renderObject = element.renderObject;
+    if (renderObject != null) {
+      final SemanticsNode? semantics = renderObject.debugSemantics;
+      if (semantics != null) {
+        owners.putIfAbsent(semantics.id, () => renderObject);
+      }
+    }
+    element.visitChildren(visit);
+  }
+
+  tester.binding.rootElement?.visitChildren(visit);
+  return owners;
+}
+
+/// Whether a pointer landing in the middle of [globalRect] reaches [owner].
+///
+/// Returns true — "no accusation" — when either input is missing: a rule that
+/// cannot establish the fact must stay silent rather than name a control it
+/// did not measure.
+///
+/// COORDINATES. `SemanticsGeometryNode.globalRect` composes the root semantics
+/// transform, which carries the device-pixel-ratio scale, so it is in PHYSICAL
+/// pixels; `hitTestOnBinding` takes LOGICAL ones. The division is the whole
+/// conversion (the root transform is a uniform scale). Under `wrap()` the
+/// ratio is pinned to 1 and the two are the same number, which is why nothing
+/// else in this file has had to care.
+///
+/// A location outside the view is not probed: `_viewportViolations` has
+/// already named that control, and hit-testing off-view would add a second,
+/// less useful message about the same defect.
+bool _pointerReaches(
+  WidgetTester tester,
+  RenderObject? owner,
+  Rect? globalRect,
+) {
+  if (owner == null || globalRect == null) {
+    return true;
+  }
+  final double ratio = tester.view.devicePixelRatio;
+  final Offset location = globalRect.center / ratio;
+  final Size viewport = tester.view.physicalSize / ratio;
+  if (location.dx < 0 ||
+      location.dy < 0 ||
+      location.dx > viewport.width ||
+      location.dy > viewport.height) {
+    return true;
+  }
+  final HitTestResult result = tester.hitTestOnBinding(location);
+  return result.path.any((HitTestEntry e) => identical(e.target, owner));
 }
 
 /// Counts `SemanticsAction.tap` on [node] and on its descendants, stopping at
