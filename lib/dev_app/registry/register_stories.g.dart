@@ -6,6 +6,20 @@
 // untouched by this generator.
 // Drift between this file and a fresh generation fails test/stories/registry_drift_test.dart.
 
+import 'story_registry.dart';
+import '../../src/widgets/eden_layout/eden_desktop_layout.stories.dart';
+import '../../src/widgets/eden_layout/eden_mobile_layout.stories.dart';
+import '../../src/widgets/eden_layout/eden_nav_item.stories.dart';
+
 void registerGeneratedStories() {
-  // no co-located `<widget>.stories.dart` files discovered under lib/ yet.
+  final registry = StoryRegistry.instance;
+  for (final s in edenDesktopLayoutStories) {
+    registry.register(s);
+  }
+  for (final s in edenMobileLayoutStories) {
+    registry.register(s);
+  }
+  for (final s in edenNavItemStories) {
+    registry.register(s);
+  }
 }
