@@ -29,7 +29,7 @@ const String kFxNestedNoContainer = 'fx-nested-no-container';
 /// This is the 40-vs-360 case: a naive "read the rect off the nearest
 /// container" implementation answers 360 (the row), the correct answer is 40
 /// (the control). See `test/ui_oracle/semantics_geometry_test.dart` case 5.
-Widget get narrowChildInWideRow => const SizedBox(
+Widget get narrowChildInWideRow => SizedBox(
   width: 360,
   height: 60,
   child: Row(
@@ -38,7 +38,7 @@ Widget get narrowChildInWideRow => const SizedBox(
         container: true,
         identifier: kFxNarrowChild,
         button: true,
-        child: SizedBox(width: 40, height: 40),
+        child: const SizedBox(width: 40, height: 40),
       ),
     ],
   ),
@@ -48,7 +48,7 @@ Widget get narrowChildInWideRow => const SizedBox(
 ///
 /// Used to prove sibling rects are disjoint without the caller doing matrix
 /// maths. See `test/ui_oracle/semantics_geometry_test.dart` case 6.
-Widget get twoSiblingControls => const SizedBox(
+Widget get twoSiblingControls => SizedBox(
   width: 360,
   height: 60,
   child: Row(
@@ -57,14 +57,14 @@ Widget get twoSiblingControls => const SizedBox(
         container: true,
         identifier: kFxSiblingA,
         button: true,
-        child: SizedBox(width: 40, height: 40),
+        child: const SizedBox(width: 40, height: 40),
       ),
-      SizedBox(width: 24),
+      const SizedBox(width: 24),
       Semantics(
         container: true,
         identifier: kFxSiblingB,
         button: true,
-        child: SizedBox(width: 40, height: 40),
+        child: const SizedBox(width: 40, height: 40),
       ),
     ],
   ),
@@ -84,7 +84,7 @@ Widget get twoSiblingControls => const SizedBox(
 /// geometry assertion built on this node is asserting the wrong box. 23-02's
 /// `expectUiSane` turns this into a hard failure; this fixture is the tripwire
 /// that keeps the behaviour observable in the meantime.
-Widget get nestedSemanticsWithoutContainer => const Semantics(
+Widget get nestedSemanticsWithoutContainer => Semantics(
   container: true,
   identifier: kFxParent,
   child: SizedBox(
@@ -94,7 +94,7 @@ Widget get nestedSemanticsWithoutContainer => const Semantics(
       child: Semantics(
         identifier: kFxNestedNoContainer,
         button: true,
-        child: SizedBox(width: 40, height: 40),
+        child: const SizedBox(width: 40, height: 40),
       ),
     ),
   ),
