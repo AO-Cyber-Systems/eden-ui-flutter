@@ -83,4 +83,31 @@ void main() {
           'and commit the diff to raise it)',
     );
   });
+
+  test(
+      'case 8: every story id the coverage mapping names is actually '
+      'registered', () {
+    // The mapping is hand-maintained and keyed by WIDGET, valued by the story
+    // ids that render it. A stale id — a story renamed or deleted — credits
+    // nothing, so the floor cannot be inflated by one; but it is a mapping
+    // that has drifted from the catalogue, and a reader trusting it would
+    // believe a widget is pinned by a story that no longer exists.
+    StoryRegistry.instance.clear();
+    registerAllStories();
+    final registered =
+        StoryRegistry.instance.all().map((story) => story.id).toSet();
+    StoryRegistry.instance.clear();
+
+    final stale =
+        mappedStoryIds().where((id) => !registered.contains(id)).toList();
+
+    expect(
+      stale,
+      isEmpty,
+      reason: 'tool/story_coverage.dart names story id(s) nothing registers: '
+          '${stale.join(", ")}. Either the story was renamed (update the '
+          'mapping) or it was deleted (drop the entry, and expect the floor '
+          'to need lowering in its own chore: commit).',
+    );
+  });
 }

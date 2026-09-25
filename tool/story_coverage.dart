@@ -97,33 +97,34 @@ String _pascalCase(String snakeCase) => snakeCase
 
 /// One hand-maintained "indirect coverage" entry: a set of exported widget
 /// names that are exercised only indirectly by any story registered under
-/// [component] — never as the direct root of that story's render tree — plus
-/// the human-readable reason why. A wrong entry here is visible in review,
-/// which is the point (TRD 23-04 anti-pattern: no fuzzy string matching).
+/// A widget covered INDIRECTLY: the story renders it, but never as the direct
+/// root of its render tree, plus the human-readable reason why. A wrong entry
+/// here is visible in review, which is the point (TRD 23-04 anti-pattern: no
+/// fuzzy string matching).
 class IndirectEntry {
-  const IndirectEntry(this.widgets, this.reason);
+  const IndirectEntry(this.stories, this.reason);
 
-  final List<String> widgets;
+  /// The story ids that render this widget.
+  final List<String> stories;
+
   final String reason;
 }
 
-/// Declared `story.component` -> indirectly-covered widget name(s), with the
-/// reason each is never the direct root of a story.
+/// Exported widget name -> the ids of the stories that RENDER it indirectly.
 ///
 /// Seeded with the one case that already exists in this repo: the
-/// `layouts/layouts` dev-app story (component `layouts`) builds
-/// `EdenDesktopLayout` and `EdenMobileLayout` directly (see
-/// `lib/dev_app/screens/layouts_screen.dart`), but the barrel line this tool
-/// derives a name from is the GROUPED re-export
+/// `layouts/layouts` story builds `EdenDesktopLayout` and `EdenMobileLayout`
+/// directly (see `lib/dev_app/screens/layouts_screen.dart`), but the barrel
+/// line this tool derives a name from is the GROUPED re-export
 /// `eden_layout/eden_layout_exports.dart` (derived name `EdenLayoutExports`)
 /// — there is no single widget literally named `EdenLayoutExports` to pump.
 /// Deeper still, nav item STATES render only through `EdenDesktopLayout`'s
 /// *private* `_NavTile` — there is no public `EdenNavItem` *widget* to pump
 /// directly, only the `EdenNavItem` *data* class the layout consumes. See
 /// `lib/src/widgets/eden_layout/eden_desktop_layout.dart:651`.
-const Map<String, IndirectEntry> indirectComponentWidgets = {
-  'layouts': IndirectEntry(
-    ['EdenLayoutExports'],
+const Map<String, IndirectEntry> indirectWidgetStories = {
+  'EdenLayoutExports': IndirectEntry(
+    ['layouts/layouts'],
     "the layouts/layouts story builds EdenDesktopLayout and EdenMobileLayout "
     "directly; nav item states render only through EdenDesktopLayout's "
     'private _NavTile, never a public EdenNavItem widget '
@@ -131,46 +132,76 @@ const Map<String, IndirectEntry> indirectComponentWidgets = {
   ),
 };
 
-/// Declared `story.component` -> directly-covered widget name(s) mapping.
+/// Exported widget name -> the ids of the stories that RENDER it.
+///
+/// KEYED BY WIDGET AND VALUED BY STORY ID, not by component. It used to be
+/// the other way round — component -> widgets — and that shape could not
+/// express per-widget coverage at all: ONE registered story for a component
+/// credited EVERY widget mapped to that component. Two consequences, both
+/// real:
+///
+///  * the floor could rise with no new story, by adding a name to a list; and
+///  * deleting the only story that renders a widget left the widget credited
+///    by a sibling story that never renders it, so the ratchet's "may rise,
+///    may never fall" guarantee held only against deleting a component's LAST
+///    story.
+///
 /// Inspectable and hand-maintained rather than fuzzy-matched by string
-/// similarity between a story id and an export name (TRD 23-04
-/// anti-pattern): a wrong entry here is visible in review, which is why this
-/// mapping — not a pumped-and-typed widget tree — is the chosen mechanism
-/// (TRD 23-04 Task 1, "simpler and preferred").
+/// similarity between a story id and an export name (TRD 23-04 anti-pattern):
+/// a wrong entry here is visible in review, which is why this mapping — not a
+/// pumped-and-typed widget tree — is the chosen mechanism (TRD 23-04 Task 1,
+/// "simpler and preferred"). A story id nobody registers credits nothing, so
+/// a stale id is inert rather than quietly load-bearing; `coverage_test.dart`
+/// names the stale ones outright.
 ///
 /// WAVE-1 SCOPE: this floor is deliberately partial. 364 exports with Wave-1
 /// scope at the shell widgets (layout, nav, buttons, inputs, data grid) plus
 /// anything a later objective touches means a 100% gate would be permanently
 /// red — see test/stories/coverage_test.dart's header for the ratchet this
 /// mapping feeds.
-const Map<String, List<String>> componentWidgets = {
-  'buttons': ['EdenButton'],
-  'cards': ['EdenCard'],
-  'badges-alerts': ['EdenBadge', 'EdenAlert'],
-  'inputs': ['EdenInput'],
-  'navigation': ['EdenTabs'],
-  'overlays': ['EdenBanner'],
-  'autofill': ['EdenFieldPurpose', 'EdenAutofillScope'],
-  'selection': ['EdenSelectableRegion'],
+const Map<String, List<String>> widgetStories = {
+  'EdenButton': ['buttons/interactive', 'buttons/all'],
+  'EdenCard': ['cards/interactive', 'cards/all'],
+  'EdenBadge': ['badges-alerts/interactive', 'badges-alerts/all'],
+  'EdenAlert': ['badges-alerts/interactive', 'badges-alerts/all'],
+  'EdenInput': ['inputs/interactive', 'inputs/all'],
+  'EdenTabs': ['navigation/interactive', 'navigation/all'],
+  'EdenBanner': ['overlays/interactive', 'overlays/all'],
+  // `autofill/login-form` renders fields with an EdenFieldPurpose too; the
+  // scope is built by that story ALONE — it is the SAVE half of autofill and
+  // `autofill/purposes` is the resolution table, which builds no scope.
+  'EdenFieldPurpose': ['autofill/purposes', 'autofill/login-form'],
+  'EdenAutofillScope': ['autofill/login-form'],
+  // `selection/table-copy` pins the TSV copy affordance on the table widgets;
+  // `selection/region` is the story that builds an EdenSelectableRegion.
+  'EdenSelectableRegion': ['selection/region'],
 };
 
-/// Returns the widget names covered by [stories]' declared `component`s:
-/// [componentWidgets] entries for every component actually present in
-/// [stories], plus [indirectComponentWidgets] entries whose component is also
-/// present. An indirect entry is never added unconditionally — it still
-/// requires a registered story for that component, exactly like a direct
-/// entry (TRD 23-04 test case 4).
+/// Returns the widget names covered by [stories]: every entry in
+/// [widgetStories] and [indirectWidgetStories] at least one of whose story
+/// ids is present. An indirect entry is never added unconditionally — it
+/// still requires a registered story, exactly like a direct entry (TRD 23-04
+/// test case 4).
 Set<String> widgetsWithStory(List<EdenStory> stories) {
-  final components = stories.map((s) => s.component).toSet();
+  final registered = stories.map((s) => s.id).toSet();
   final covered = <String>{};
-  for (final component in components) {
-    final direct = componentWidgets[component];
-    if (direct != null) covered.addAll(direct);
-    final indirect = indirectComponentWidgets[component];
-    if (indirect != null) covered.addAll(indirect.widgets);
+  for (final entry in widgetStories.entries) {
+    if (entry.value.any(registered.contains)) covered.add(entry.key);
+  }
+  for (final entry in indirectWidgetStories.entries) {
+    if (entry.value.stories.any(registered.contains)) covered.add(entry.key);
   }
   return covered;
 }
+
+/// Every story id either mapping names, sorted. Used by the ratchet test to
+/// report ids no story registers — a stale id credits nothing, but it is a
+/// mapping that has drifted from the catalogue and should be read as such.
+List<String> mappedStoryIds() => <String>{
+      for (final ids in widgetStories.values) ...ids,
+      for (final entry in indirectWidgetStories.values) ...entry.stories,
+    }.toList()
+  ..sort();
 
 /// The computed coverage of the exported widget surface.
 class CoverageReport {
@@ -194,7 +225,7 @@ class CoverageReport {
 
 /// Pure: given the full [exported] name list and the [covered] set, computes
 /// the report. `withStory` is `covered ∩ exported` — a covered entry that is
-/// not actually present in [exported] (a typo in [componentWidgets], say)
+/// not actually present in [exported] (a typo in [widgetStories], say)
 /// contributes nothing, so a wrong mapping entry can never inflate the floor.
 CoverageReport computeCoverage({
   required List<String> exported,

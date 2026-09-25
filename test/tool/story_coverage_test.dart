@@ -107,7 +107,7 @@ void main() {
 
       expect(covered, contains('EdenLayoutExports'));
       expect(
-        indirectComponentWidgets['layouts']!.reason,
+        indirectWidgetStories['EdenLayoutExports']!.reason,
         contains('EdenDesktopLayout'),
       );
     });
@@ -123,6 +123,45 @@ void main() {
       final covered = widgetsWithStory(stories);
 
       expect(covered, isNot(contains('EdenLayoutExports')));
+    });
+
+    test(
+        'case 4c: a story credits only the widgets it RENDERS, never every '
+        'widget its component maps to', () {
+      // `autofill/purposes` renders EdenFieldPurpose; EdenAutofillScope is
+      // pinned by `autofill/login-form` alone (it is the SAVE half of
+      // autofill and only the login form builds one).
+      //
+      // Crediting per COMPONENT handed one story the credit for both, so the
+      // floor could rise with no new story — add a name to the mapping — and
+      // deleting the only story that renders a widget left that widget
+      // covered by a sibling that never renders it. The ratchet's "may rise,
+      // may never fall" guarantee then only held against deleting a
+      // component's LAST story.
+      final covered = widgetsWithStory([
+        story(id: 'autofill/purposes', component: 'autofill'),
+      ]);
+
+      expect(covered, contains('EdenFieldPurpose'));
+      expect(
+        covered,
+        isNot(contains('EdenAutofillScope')),
+        reason: 'no registered story renders an EdenAutofillScope here, so '
+            'nothing may credit one',
+      );
+    });
+
+    test(
+        'case 4d: a story id the mapping names but nobody registers credits '
+        'nothing', () {
+      // The mapping is hand-maintained, so a renamed or deleted story leaves
+      // a stale id behind. A stale id must fall out of coverage rather than
+      // keep crediting a widget for a story that no longer exists.
+      final covered = widgetsWithStory([
+        story(id: 'buttons/renamed-away', component: 'buttons'),
+      ]);
+
+      expect(covered, isEmpty);
     });
   });
 
