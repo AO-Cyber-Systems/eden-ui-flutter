@@ -42,8 +42,14 @@ pubspec.lock
 /web/
 
 # Test screenshots (but not committed golden files)
+#
+# The negation must be `**` deep: the stories job writes baselines to
+# test/stories/_generated/goldens/<runner>/*.png, one level below `goldens/`,
+# so `!test/**/goldens/*.png` re-included nothing the workflow actually
+# produces. The golden gate compared at tolerance 0 against baselines this
+# file made impossible to commit -- which is why the repo had none.
 *.png
-!test/**/goldens/*.png
+!test/**/goldens/**/*.png
 .playwright-mcp/
 
 # DevFlow local runtime state

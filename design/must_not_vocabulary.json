@@ -1,0 +1,20 @@
+[
+  "navigate on close",
+  "fire twice per activation",
+  "cover sibling hit rects",
+  "change route",
+  "lose selection",
+  "steal focus",
+  "select the project",
+  "appear in the mobile bottom bar",
+  "render a tap target",
+  "exceed the rail width",
+  "render below the tap target floor",
+  "render an unlabelled tappable",
+  "nest semantics without a container",
+  "render an empty state for a failed load",
+  "replace loaded content with a spinner",
+  "destroy data without confirmation",
+  "default to the destructive action",
+  "report a partial failure as success"
+]

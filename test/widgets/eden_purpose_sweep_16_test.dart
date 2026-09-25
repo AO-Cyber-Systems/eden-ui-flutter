@@ -427,6 +427,13 @@ void main() {
             showSearch: true,
             searchHint: 'Search everything…',
           ),
+          // Opted IN explicitly. TRD 23-06 flipped `selectableBody` to default
+          // FALSE (eden-ui-flutter#33 / flutter#151536 — a SelectionArea over a
+          // Navigator body asserts on deep-link to a nested route). This guard
+          // is about WHERE the region goes when there is one, not about whether
+          // one is installed by default, so it states the opt-in rather than
+          // relying on a default that has since moved.
+          selectableBody: true,
           body: const Text('BodyText'),
         ),
       ));

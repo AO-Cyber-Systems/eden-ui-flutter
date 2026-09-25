@@ -1,6 +1,13 @@
 /// Eden UI for Flutter — a component library ported from the Eden UI Rails framework.
 library;
 
+// Accessibility contract
+// `EdenInputModality` is a property of a SURFACE (what input it takes), not of
+// the test framework, so it ships here rather than behind `testing.dart` —
+// which imports `package:flutter_test` and must never reach a release graph.
+// `testing.dart` re-exports it.
+export 'src/a11y/eden_input_modality.dart';
+
 // Tokens
 export 'src/tokens/colors.dart';
 export 'src/tokens/spacing.dart';
@@ -11,6 +18,11 @@ export 'src/tokens/typography.dart';
 
 // Theme
 export 'src/theme/eden_theme.dart';
+// The opt-out from the theme above, for a field whose PARENT owns the chrome.
+// Ships beside the theme rather than with the widgets because it is the
+// theme's own escape hatch, and a consumer building a card with a field in it
+// needs it as much as this library does.
+export 'src/theme/eden_bare_field_theme.dart';
 
 // Widgets
 export 'src/widgets/eden_button.dart';

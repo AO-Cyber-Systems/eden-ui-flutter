@@ -414,12 +414,30 @@ form on web, that is this, not a layout bug in your app.
 
 ## 6. Selection and copy
 
-### It is already on
+### The Navigator caveat — read this before you turn selection on
 
-`EdenSelectableRegion` is installed by default in:
+> **A `SelectionArea` must never sit above a `Navigator`.**
+> When a nested route is deep-linked, the Navigator seeds more than one route at once and the
+> covered page underneath is never laid out. `SelectionArea` then orders its selectables on
+> screen, and `_compareScreenOrder` calls `getTransformTo` on that never-laid-out render object,
+> which asserts:
+> `RenderBox was not laid out ... box.dart line 2251 pos 12: 'hasSize'`.
+> Upstream: [flutter#151536](https://github.com/flutter/flutter/issues/151536); the fix,
+> flutter#184900, is **unmerged**. Measured downstream in aodex#611: six routing tests red.
+>
+> Every `go_router` shell app has a Navigator in `body`, and so does every `MaterialApp`. This is
+> why `selectableBody` **defaults to `false`** (eden-ui-flutter#33) and why the
+> `MaterialApp.builder` recipe below is a trap for any app with routes.
+>
+> The safe shape is always the same: **scope the region to the text, not to the shell.**
 
-- `EdenDesktopLayout` and `EdenMobileLayout`, via `selectableBody` (default `true`), which wraps
-  `body`.
+### What is on, and what you opt into
+
+`EdenSelectableRegion` is installed in:
+
+- `EdenDesktopLayout` and `EdenMobileLayout`, via `selectableBody` — **default `false`, opt in
+  with `selectableBody: true`**, which wraps `body`. See the Navigator caveat above: opt in only
+  on a surface whose `body` is not a Navigator. eden-ui-flutter#33.
 - All **10** library pages (`eden_login_page`, `eden_signup_page`, `eden_forgot_password_page`,
   `eden_reset_password_page`, `eden_profile_page`, `eden_settings_page`, `eden_onboarding_page`,
   `eden_splash_page`, `eden_maintenance_page`, `eden_support_panel_demo_page`).
@@ -429,12 +447,19 @@ Plain `Text` under a region becomes selectable as-is. No per-widget change is ne
 `SelectionArea` is an un-draggable selection *island* that stops a drag dead at its boundary, so all
 13 former sites are plain `Text` now. Do not reintroduce one inside a region.
 
-### Opting out
+### Opting in, and opting out
 
-Two levels, and they are not interchangeable:
+Three levels, and they are not interchangeable:
 
 ```dart
-// Whole surface: turn the layout's region off.
+// Whole surface: turn the layout's region ON. Only when `body` is not a
+// Navigator — see the Navigator caveat above (eden-ui-flutter#33).
+EdenDesktopLayout(
+  selectableBody: true,
+  body: MyContent(),
+)
+
+// Whole surface: the default. No region is installed.
 EdenDesktopLayout(
   selectableBody: false,
   body: MyContent(),
@@ -463,14 +488,21 @@ selectable and copyable — `editable_text.dart:935` defaults `enableInteractive
 
 ### Apps that use neither Eden layout
 
-Install one region for the whole app via `MaterialApp.builder`:
+> **Only for an app with no router.** `MaterialApp.builder` installs the region ABOVE the app's
+> own Navigator, which is the exact shape that asserts on a nested deep-link — see the Navigator
+> caveat in section 6 (flutter#151536, eden-ui-flutter#33). If your app routes at all, wrap the
+> text subtrees instead.
 
 ```dart
-MaterialApp(
-  builder: (context, child) =>
-      EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
-  home: MyHomePage(),
-)
+// Routed app — the safe shape. Region scoped to the content.
+EdenSelectableRegion(child: MyArticleBody())
+
+// No router at all — a single region app-wide is fine:
+// MaterialApp(
+//   builder: (context, child) =>
+//       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
+//   home: MyHomePage(),
+// )
 ```
 
 ### Nesting collapses; it does not fragment
@@ -722,8 +754,12 @@ Out of scope for this package, recorded so it is not forgotten.
 actually mount — such an app never reaches `EdenDesktopLayout` or `EdenMobileLayout`, so it does not
 inherit the default selection region described in section 6. It can adopt `EdenSelectableRegion`
 around its content slot exactly the way the Eden layouts do, ideally behind a `selectableBody`-style
-flag for symmetry.
+flag for symmetry — **defaulting to `false`, for the reason in the Navigator caveat in section 6**:
+`PlatformShell`'s content slot is exactly where a router's Navigator lands.
 
 That change belongs in `eden-platform-flutter`, not here: the workspace `CLAUDE.md` requires platform
 logic stay in `eden-platform-flutter` and UI logic stay in `eden-ui-flutter`. Until it lands, an app
-on `PlatformShell` should use the `MaterialApp.builder` recipe in section 6.
+on `PlatformShell` should wrap its own text subtrees in an `EdenSelectableRegion`. Do NOT reach for
+the `MaterialApp.builder` recipe in section 6 unless the app has no router — it installs a region
+above the app's Navigator and carries the flutter#151536 exposure described in the Navigator
+caveat.

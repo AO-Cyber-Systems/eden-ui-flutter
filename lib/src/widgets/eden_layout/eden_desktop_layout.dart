@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../theme/eden_bare_field_theme.dart';
 import '../../tokens/colors.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_field_purpose.dart';
 import '../eden_selectable_region.dart';
 import 'layout_data.dart';
+import 'nav_ink.dart';
 
 /// Standard desktop/web layout with collapsible sidebar, top bar, and content area.
 ///
@@ -21,22 +23,34 @@ import 'layout_data.dart';
 /// └──────────┴──────────────────────────────────┘
 /// ```
 ///
-/// ## Text selection
+/// ## Text selection — OPT-IN since eden-ui-flutter#33
 ///
-/// [body] is wrapped in an [EdenSelectableRegion] by default, so its text is
-/// drag-selectable and copyable with no per-widget change. Only [body] is
-/// wrapped: sidebar, top bar, nav items and the bottom bar are chrome, not
-/// data, so a drag-select cannot pick up navigation labels. Opt out with
-/// `selectableBody: false`, or wrap one subtree in `SelectionContainer.disabled`.
+/// [body] is NOT wrapped in an [EdenSelectableRegion] unless you pass
+/// `selectableBody: true`. The default used to be `true`; it was flipped
+/// because a `SelectionArea` over a subtree containing a Navigator asserts on
+/// deep-link to a nested route (flutter#151536, fix flutter#184900 unmerged),
+/// and every go_router shell app has a Navigator in [body]. See the
+/// [selectableBody] dartdoc for the full reason.
 ///
-/// Not using an Eden layout? Install one region app-wide with
-/// `MaterialApp.builder`:
+/// When you do opt in, only [body] is wrapped: sidebar, top bar, nav items and
+/// the bottom bar are chrome, not data, so a drag-select cannot pick up
+/// navigation labels.
+///
+/// Not using an Eden layout? You can install one region app-wide with
+/// `MaterialApp.builder` — but **only if the app has no Navigator under it**,
+/// which for a `MaterialApp` is almost never true. This recipe carries exactly
+/// the same flutter#151536 exposure as `selectableBody: true`, so prefer
+/// wrapping the specific text subtree instead:
 /// ```dart
-/// MaterialApp(
-///   builder: (context, child) =>
-///       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
-///   home: MyHomePage(),
-/// )
+/// // Safe: scoped to content that is not a Navigator.
+/// EdenSelectableRegion(child: MyArticleBody())
+///
+/// // Exposed to flutter#151536 — a Navigator lives under `child`:
+/// // MaterialApp(
+/// //   builder: (context, child) =>
+/// //       EdenSelectableRegion(child: child ?? const SizedBox.shrink()),
+/// //   home: MyHomePage(),
+/// // )
 /// ```
 class EdenDesktopLayout extends StatefulWidget {
   const EdenDesktopLayout({
@@ -55,8 +69,31 @@ class EdenDesktopLayout extends StatefulWidget {
     this.collapsedWidth = 72,
     this.sidebarFooter,
     this.supportPanel,
-    this.selectableBody = true,
+    this.selectableBody = false,
+    this.itemBuilder,
+    this.sectionBuilder,
   });
+
+  /// Renders one nav row in place of the built-in renderer; return `null` for
+  /// a row to keep the default treatment.
+  ///
+  /// Composition over flags: every behaviour added to [EdenNavItem] so far
+  /// (`expandable`, `caption`, `isDivider`, `badge`) was a library change plus
+  /// a pin bump in two apps. Those flags still work — they render THROUGH the
+  /// default renderer — but the next consumer need is a consumer change.
+  ///
+  /// The `eden-nav-<id>` semantics identifier, the `button`/`label`/`selected`
+  /// annotations and the row's tap action are applied by the layout OUTSIDE
+  /// this builder's result, uniformly for the default renderer and for a
+  /// consumer widget alike — exactly one semantics node per row either way. A
+  /// consumer therefore cannot drop the identifier the aodex and eden-biz E2E
+  /// flows key off.
+  final EdenNavItemBuilder? itemBuilder;
+
+  /// Renders a caption or divider row in place of the built-in treatment;
+  /// return `null` to keep the default. Sections are non-interactive and carry
+  /// no semantics identifier, in either path.
+  final EdenNavSectionBuilder? sectionBuilder;
 
   final List<EdenNavItem> navItems;
   final String selectedId;
@@ -85,16 +122,24 @@ class EdenDesktopLayout extends StatefulWidget {
   /// ```
   final Widget? supportPanel;
 
-  /// Makes the [body] content drag-selectable and copyable by wrapping it in an
-  /// [EdenSelectableRegion]. Default TRUE - this is the carrier that delivers
-  /// universal copy/paste to apps built on the Eden layouts.
+  /// Wraps [body] in an [EdenSelectableRegion] so its text is drag-selectable
+  /// and copyable.
   ///
-  /// Only [body] is wrapped. Sidebar, top bar, nav items and the bottom bar are
-  /// chrome, not data, and stay outside the region so a drag-select cannot pick
-  /// up navigation labels.
+  /// **Defaults to `false` — opt in.** A `SelectionArea` over a subtree
+  /// containing a Navigator asserts when a nested route is deep-linked:
+  /// `SelectionArea`'s `_compareScreenOrder` calls `getTransformTo` on a
+  /// covered page that has never been laid out (flutter#151536; the fix,
+  /// flutter#184900, is unmerged). Every go_router shell app has a Navigator
+  /// in [body]. Measured in aodex#611: six routing tests red, and aodex took
+  /// the `selectableBody: false` opt-out by hand. eden-ui-flutter#33.
   ///
-  /// Set false for a surface that must not be selectable, or wrap an individual
-  /// subtree in `SelectionContainer.disabled` for a finer-grained opt-out.
+  /// Opt in with `selectableBody: true` on surfaces whose [body] is NOT a
+  /// Navigator, or wrap the specific text subtree in an [EdenSelectableRegion]
+  /// yourself.
+  ///
+  /// Only [body] is ever wrapped. Sidebar, top bar, nav items and the bottom
+  /// bar are chrome, not data, and stay outside the region so a drag-select
+  /// cannot pick up navigation labels.
   final bool selectableBody;
 
   @override
@@ -118,6 +163,86 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
         for (final item in items)
           if (item.expandable) item.id: item.initiallyExpanded,
       };
+
+  // -------------------------------------------------------------------------
+  // The single point at which a rail row is emitted (TRD 23-06 Task 1)
+  // -------------------------------------------------------------------------
+
+  /// Emits ONE rail row.
+  ///
+  /// This is the only place in the desktop layout that produces a nav row, and
+  /// therefore the only place that publishes a row's semantics. The
+  /// `Semantics` wrapper is applied UNIFORMLY here — the same node for the
+  /// built-in renderer's result and for a consumer [EdenDesktopLayout
+  /// .itemBuilder]'s result — which is why [_NavTile] and
+  /// [_ExpandableNavHeader] no longer annotate anything themselves. Exactly
+  /// one semantics node per row, whoever rendered it.
+  ///
+  /// (Annotating in both places would nest two `Semantics` widgets. The
+  /// version-specific claim this comment used to carry — "a nested
+  /// `Semantics` without `container: true` is not published at all on Flutter
+  /// 3.41" — has been measured and corrected: it describes an annotation
+  /// carrying no semantics of its own directly inside a `container: true`
+  /// boundary, and only on 3.41.9; on the 3.47.4 CI pins it publishes its own
+  /// node. Two nested IDENTIFIED annotations, the shape at issue here, publish
+  /// TWO nodes with identical rects on BOTH SDKs (CI run 35901104815) — two
+  /// addressable nodes stacked on one rail row, each carrying the row's label.
+  /// One emission point remains the fix; see [EdenMobileLayout] `._navRow` and
+  /// `test/ui_oracle/semantics_geometry_test.dart` case 7 for the
+  /// measurements.)
+  Widget _navRow({
+    required BuildContext context,
+    required EdenNavItem item,
+    required EdenNavItemState state,
+    required Widget Function() defaultRenderer,
+    String? semanticsLabel,
+    bool? expanded,
+    VoidCallback? onTap,
+    bool excludeChildSemantics = false,
+  }) {
+    // One path, with a default builder — never a branch on whether a consumer
+    // supplied one. A builder that returns null declines THIS row and the
+    // default renders it.
+    final EdenNavItemBuilder build =
+        widget.itemBuilder ?? (_, __, ___) => null;
+    final child = build(context, item, state) ?? defaultRenderer();
+    return Semantics(
+      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
+      button: true,
+      label: semanticsLabel ?? item.label,
+      selected: state.isSelected,
+      expanded: expanded,
+      onTap: onTap,
+      child: excludeChildSemantics ? ExcludeSemantics(child: child) : child,
+    );
+  }
+
+  /// Emits one non-interactive section row (caption or divider). Sections
+  /// carry no identifier and no button semantics in either path — same as
+  /// today.
+  /// (`EdenNavItem.widgetKey` stays on the DEFAULT treatment, where it is
+  /// today. A consumer-rendered section keys its own widget.)
+  Widget _navSection({
+    required BuildContext context,
+    required EdenNavItem item,
+    required Widget Function() defaultRenderer,
+  }) {
+    final EdenNavSectionBuilder build =
+        widget.sectionBuilder ?? (_, __) => null;
+    return build(context, item) ?? defaultRenderer();
+  }
+
+  /// The stand-in row a group collapses to in the 72px rail: the parent's icon
+  /// and label, but the FIRST CHILD's id, because that is what a tap navigates
+  /// to. Unchanged behaviour — extracted only so the emission point and the
+  /// default renderer are handed the same item.
+  EdenNavItem _collapsedGroupRailItem(EdenNavItem item) => EdenNavItem(
+        id: item.children.first.id,
+        label: item.label,
+        icon: item.icon,
+        activeIcon: item.activeIcon ?? item.children.first.activeIcon,
+        badge: item.children.first.badge,
+      );
 
   @override
   void initState() {
@@ -217,23 +342,69 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                         // column is noise (D5 — the collapsed rail is icons).
                         if (item.isDivider) ...[
                           if (!_collapsed)
-                            Padding(
-                              key: item.widgetKey,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: EdenSpacing.space2,
-                              ),
-                              child: Divider(
-                                height: 1,
-                                thickness: 1,
-                                color: theme.colorScheme.outlineVariant,
+                            _navSection(
+                              context: context,
+                              item: item,
+                              defaultRenderer: () => Padding(
+                                key: item.widgetKey,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: EdenSpacing.space2,
+                                ),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: theme.colorScheme.outlineVariant,
+                                ),
                               ),
                             ),
                         ] else if (item.isCaption) ...[
                           if (!_collapsed)
-                            _NavSectionLabel(key: item.widgetKey, label: item.label),
+                            _navSection(
+                              context: context,
+                              item: item,
+                              defaultRenderer: () => _NavSectionLabel(
+                                  key: item.widgetKey, label: item.label),
+                            ),
                         ] else if (item.children.isNotEmpty) ...[
                           if (!_collapsed && item.expandable) ...[
-                            _ExpandableNavHeader(
+                            _navRow(
+                              context: context,
+                              item: item,
+                              state: EdenNavItemState(
+                                isSelected: item.id == widget.selectedId ||
+                                    (!_expandedGroupIds.contains(item.id) &&
+                                        item.children.any((c) =>
+                                            c.id == widget.selectedId)),
+                                isExpanded:
+                                    _expandedGroupIds.contains(item.id),
+                                isCollapsedRail: _collapsed,
+                              ),
+                              expanded: _expandedGroupIds.contains(item.id),
+                              semanticsLabel: item.badge == null
+                                  ? item.label
+                                  : '${item.label}, ${item.badge}',
+                              // The tap action has to live on the row's node,
+                              // not on the GestureDetector: the child subtree
+                              // is excluded (so chevron, icon, label and badge
+                              // do not split into competing nodes) and that
+                              // drops the detector's SemanticsAction.tap with
+                              // it. Without this the node announces
+                              // `button: true`, a reader double-taps, and
+                              // nothing happens.
+                              onTap: () {
+                                final willExpand =
+                                    !_expandedGroupIds.contains(item.id);
+                                setState(() {
+                                  if (willExpand) {
+                                    _expandedGroupIds.add(item.id);
+                                  } else {
+                                    _expandedGroupIds.remove(item.id);
+                                  }
+                                });
+                                if (willExpand) widget.onNavChanged(item.id);
+                              },
+                              excludeChildSemantics: true,
+                              defaultRenderer: () => _ExpandableNavHeader(
                               key: item.widgetKey,
                               item: item,
                               expanded: _expandedGroupIds.contains(item.id),
@@ -273,53 +444,80 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                                 if (willExpand) widget.onNavChanged(item.id);
                               },
                             ),
+                            ),
                             if (_expandedGroupIds.contains(item.id))
                               _DisclosedChildren(
                                 groupId: item.id,
                                 children: [
                                   for (final child in item.children)
-                                    _NavTile(
+                                    _navRow(
+                                      context: context,
                                       item: child,
-                                      isSelected:
-                                          child.id == widget.selectedId,
-                                      collapsed: _collapsed,
-                                      onTap: () =>
-                                          widget.onNavChanged(child.id),
+                                      state: EdenNavItemState(
+                                        isSelected:
+                                            child.id == widget.selectedId,
+                                        isCollapsedRail: _collapsed,
+                                        depth: 1,
+                                      ),
+                                      defaultRenderer: () => _NavTile(
+                                        item: child,
+                                        isSelected:
+                                            child.id == widget.selectedId,
+                                        collapsed: _collapsed,
+                                        onTap: () =>
+                                            widget.onNavChanged(child.id),
+                                      ),
                                     ),
                                 ],
                               ),
                           ] else ...[
                             if (!_collapsed)
-                              Padding(
-                                key: item.widgetKey,
-                                padding: _kNavSectionLabelPadding,
-                                child: Text(
-                                  item.label.toUpperCase(),
-                                  style: _navSectionLabelStyle(theme),
+                              _navSection(
+                                context: context,
+                                item: item,
+                                defaultRenderer: () => Padding(
+                                  key: item.widgetKey,
+                                  padding: _kNavSectionLabelPadding,
+                                  child: Text(
+                                    item.label.toUpperCase(),
+                                    style: _navSectionLabelStyle(theme),
+                                  ),
                                 ),
                               ),
                             if (!_collapsed)
                               for (final child in item.children)
-                                _NavTile(
+                                _navRow(
+                                  context: context,
                                   item: child,
-                                  isSelected: child.id == widget.selectedId,
-                                  collapsed: _collapsed,
-                                  onTap: () => widget.onNavChanged(child.id),
+                                  state: EdenNavItemState(
+                                    isSelected: child.id == widget.selectedId,
+                                    isCollapsedRail: _collapsed,
+                                  ),
+                                  defaultRenderer: () => _NavTile(
+                                    item: child,
+                                    isSelected: child.id == widget.selectedId,
+                                    collapsed: _collapsed,
+                                    onTap: () =>
+                                        widget.onNavChanged(child.id),
+                                  ),
                                 )
                             else
                               // Collapsed: render parent icon but use first child's
                               // ID for navigation and selection matching.
-                              _NavTile(
-                                item: EdenNavItem(
-                                  id: item.children.first.id,
-                                  label: item.label,
-                                  icon: item.icon,
-                                  activeIcon: item.activeIcon ?? item.children.first.activeIcon,
-                                  badge: item.children.first.badge,
+                              _navRow(
+                                context: context,
+                                item: _collapsedGroupRailItem(item),
+                                state: EdenNavItemState(
+                                  isSelected: item.children
+                                      .any((c) => c.id == widget.selectedId),
+                                  isCollapsedRail: _collapsed,
                                 ),
-                                isSelected: item.children.any((c) => c.id == widget.selectedId),
-                                collapsed: _collapsed,
-                                onTap: () => widget.onNavChanged(item.children.first.id),
+                                defaultRenderer: () => _NavTile(
+                                  item: _collapsedGroupRailItem(item),
+                                  isSelected: item.children.any((c) => c.id == widget.selectedId),
+                                  collapsed: _collapsed,
+                                  onTap: () => widget.onNavChanged(item.children.first.id),
+                                ),
                               ),
                           ],
                         ] else
@@ -328,11 +526,19 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
                           // the chevron is ABSENT rather than inert and the item
                           // renders exactly as it does today. aodex's PROJECTS
                           // on a fresh account lands here (BCP-R8).
-                          _NavTile(
+                          _navRow(
+                            context: context,
                             item: item,
-                            isSelected: item.id == widget.selectedId,
-                            collapsed: _collapsed,
-                            onTap: () => widget.onNavChanged(item.id),
+                            state: EdenNavItemState(
+                              isSelected: item.id == widget.selectedId,
+                              isCollapsedRail: _collapsed,
+                            ),
+                            defaultRenderer: () => _NavTile(
+                              item: item,
+                              isSelected: item.id == widget.selectedId,
+                              collapsed: _collapsed,
+                              onTap: () => widget.onNavChanged(item.id),
+                            ),
                           ),
                       ],
                     ],
@@ -379,6 +585,17 @@ class _EdenDesktopLayoutState extends State<EdenDesktopLayout> {
 // ---------------------------------------------------------------------------
 // Sidebar header
 // ---------------------------------------------------------------------------
+
+/// Hit area of the sidebar collapse/expand toggle.
+///
+/// The GLYPH stays 20px; this is the box around it that actually receives the
+/// click. A bare `Icon(size: 20)` inside a `GestureDetector` gives a 20x20 hit
+/// target — under even WCAG 2.5.8 Target Size (Minimum)'s 24x24 pointer floor,
+/// so it is undersized on a mouse-driven rail, not only under touch guidance.
+///
+/// 44 rather than 24: the header is already 56px tall, so the larger box costs
+/// no layout at all, and it clears WCAG 2.5.5 Target Size (Enhanced) as well.
+const double _kSidebarToggleHitSize = 44;
 
 class _SidebarHeader extends StatelessWidget {
   const _SidebarHeader({
@@ -431,8 +648,18 @@ class _SidebarHeader extends StatelessWidget {
               button: true,
               label: 'Collapse sidebar',
               child: GestureDetector(
+                // Without `opaque` the 44x44 box is decoration: the padding
+                // around the glyph is transparent, does not hit-test, and the
+                // real target stays 20x20 while the semantics rect claims 44.
+                // The collapsed variant above already carries this; the
+                // expanded one did not.
+                behavior: HitTestBehavior.opaque,
                 onTap: onToggle,
-                child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                child: SizedBox(
+                  width: _kSidebarToggleHitSize,
+                  height: _kSidebarToggleHitSize,
+                  child: Icon(Icons.menu_open, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                ),
               ),
             ),
           ],
@@ -531,27 +758,20 @@ class _ExpandableNavHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fg = isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
+    // NOT colorScheme.primary when selected. The brand gold on the selected
+    // row's 10%-primary band measures 2.05:1 at fontSize 13 in the light
+    // theme — the same class of failure the bottom bar (2.20:1) and the
+    // drawer (1.97:1) were fixed for, unchanged here because nothing had
+    // audited the rail. Same ruling as those two: the brand moves OFF the
+    // text. onSurface on the band is 16.49:1 light, 13.72:1 dark.
+    final fg = theme.colorScheme.onSurface;
 
-    // One semantics node for the whole header: `expanded` is the property the
-    // screen reader and the E2E tooling key on, and a competing label from the
-    // child Text would split it into two nodes. The chevron, icon and badge are
-    // decorative here — the count is folded into the label instead.
-    return Semantics(
-      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-      button: true,
-      expanded: expanded,
-      selected: isSelected,
-      label: item.badge == null ? item.label : '${item.label}, ${item.badge}',
-      // The action has to live HERE, not on the GestureDetector: the
-      // ExcludeSemantics below deliberately drops the child subtree (so the
-      // chevron, icon, label and badge do not split into competing nodes), and
-      // it drops the GestureDetector's SemanticsAction.tap with them. Without
-      // this the node announces `button: true`, a reader double-taps, and
-      // nothing happens — the children become permanently unreachable.
-      onTap: onTap,
-      child: ExcludeSemantics(
-        child: GestureDetector(
+    // No Semantics here: the layout publishes exactly one node per row at the
+    // emission point (_EdenDesktopLayoutState._navRow), which is what lets a
+    // consumer's itemBuilder result carry the same identifier, label and tap
+    // action as this one. The chevron, icon, label and badge below are
+    // decorative — the row's subtree semantics are excluded there.
+    return GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
@@ -595,8 +815,6 @@ class _ExpandableNavHeader extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -672,12 +890,7 @@ class _NavTile extends StatelessWidget {
     );
 
     if (collapsed) {
-      return Semantics(
-        identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-        button: true,
-        label: item.label,
-        selected: isSelected,
-        child: Tooltip(
+      return Tooltip(
           message: item.label,
           preferBelow: false,
           child: GestureDetector(
@@ -704,19 +917,13 @@ class _NavTile extends StatelessWidget {
               ),
             ),
           ),
-        ),
       );
     }
 
-    return Semantics(
-      identifier: item.semanticsIdentifier ?? 'eden-nav-${item.id}',
-      button: true,
-      label: item.label,
-      selected: isSelected,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 40,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
           margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
           padding: const EdgeInsets.symmetric(
             horizontal: _kNavTileHorizontalPadding,
@@ -735,7 +942,11 @@ class _NavTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                    // See _ExpandableHeader: the selected label was brand gold
+                    // on the 10% band at 2.05:1 in the light theme. The state
+                    // is carried by the weight, the band and the brand-
+                    // coloured glyph; it is not carried by unreadable text.
+                    color: theme.colorScheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -743,7 +954,6 @@ class _NavTile extends StatelessWidget {
               if (item.badge != null) _Badge(text: item.badge!),
             ],
           ),
-        ),
       ),
     );
   }
@@ -766,9 +976,19 @@ class _Badge extends StatelessWidget {
         color: theme.colorScheme.primary,
         borderRadius: EdenRadii.borderRadiusFull,
       ),
+      // Was Colors.white on colorScheme.primary: 2.20:1 light, 2.33:1 dark,
+      // at fontSize 10 against WCAG 1.4.3's 4.5:1. The IDENTICAL defect the
+      // mobile drawer and the "More" sheet carried, in the FOURTH rendering
+      // of the same nav row — and the rail had never been audited, because
+      // until expectUiSane learned to measure painted text no instrument in
+      // the suite could see a badge at all. The same near-black ink the other
+      // three take: 8.04:1 and 7.61:1.
       child: Text(
         text,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+        style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: edenNavOnFillInk),
       ),
     );
   }
@@ -790,16 +1010,23 @@ class _UserTile extends StatelessWidget {
     final avatar = CircleAvatar(
       radius: collapsed ? 16 : 18,
       backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+      // The initials were colorScheme.primary on this 15%-primary circle:
+      // 1.98:1 in the light theme at fontSize 12, against a 4.5:1 floor. The
+      // circle keeps the brand tint; the text does not, which is the same
+      // ruling the bar, the drawer and the sheet were given. onSurface on the
+      // tint is 15.89:1 light and 12.45:1 dark. The person glyph moves with
+      // it — at 1.98:1 it also failed 1.4.11's 3:1 for a meaningful icon.
       child: user.initials != null
           ? Text(
               user.initials!,
               style: TextStyle(
                 fontSize: collapsed ? 11 : 12,
                 fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
+                color: theme.colorScheme.onSurface,
               ),
             )
-          : Icon(Icons.person, size: collapsed ? 16 : 18, color: theme.colorScheme.primary),
+          : Icon(Icons.person,
+              size: collapsed ? 16 : 18, color: theme.colorScheme.onSurface),
     );
 
     return Semantics(
@@ -847,6 +1074,23 @@ class _UserTile extends StatelessWidget {
 // Top bar
 // ---------------------------------------------------------------------------
 
+/// Height of the top bar's search pill — the rounded fill a user sees and
+/// clicks.
+///
+/// LOAD-BEARING, and shared by the pill and the field inside it on purpose.
+/// The `TextField` carries `isDense: true` and `contentPadding: EdgeInsets
+/// .zero`, so left to its intrinsic height it is the ~21px text line box: the
+/// `Semantics(identifier: 'eden-topbar-search')` node collapsed to that,
+/// under-reporting a 36px affordance and failing the UI Oracle's 24x24 WCAG
+/// 2.5.8 pointer floor. Constraining the field to this height makes the
+/// field — the real hit target, since `InputDecorator`'s box is what takes
+/// the tap — fill the pill, so the published node and the tappable region are
+/// the same rect. Do NOT fix this by enlarging a wrapper around the field: a
+/// rect that claims area it cannot receive taps in defeats the oracle instead
+/// of satisfying it (pinned by test/ui_oracle/topbar_search_target_test.dart
+/// case 2).
+const double _kTopBarSearchHeight = 36;
+
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.config, this.onMenuTap});
   final EdenTopBarConfig config;
@@ -890,7 +1134,7 @@ class _TopBar extends StatelessWidget {
             const SizedBox(width: EdenSpacing.space4),
             Flexible(
               child: Container(
-                height: 36,
+                height: _kTopBarSearchHeight,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest,
@@ -904,25 +1148,69 @@ class _TopBar extends StatelessWidget {
                       child: Semantics(
                         identifier: 'eden-topbar-search',
                         textField: true,
-                        child: TextField(
-                          autofillHints: searchPurpose.semantics.autofillHints,
-                          keyboardType: searchPurpose.semantics.keyboardType,
-                          obscureText: searchPurpose.semantics.obscureText,
-                          textInputAction: searchPurpose.semantics.textInputAction,
-                          textCapitalization:
-                              searchPurpose.semantics.textCapitalization,
-                          autocorrect: searchPurpose.semantics.autocorrect,
-                          enableSuggestions:
-                              searchPurpose.semantics.enableSuggestions,
-                          decoration: InputDecoration(
-                            hintText: config.searchHint,
-                            hintStyle: TextStyle(fontSize: 13, color: theme.colorScheme.onSurfaceVariant),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
+                        // A TIGHT height constraint, not a decorative box: the
+                        // TextField itself grows to fill the pill, so the
+                        // region that takes the tap grows with the semantics
+                        // rect instead of staying a 21px line in the middle
+                        // of it.
+                        child: SizedBox(
+                          height: _kTopBarSearchHeight,
+                          child: EdenBareFieldTheme(
+                            // THE PILL IS THE CHROME. Without this wrapper the
+                            // field inherits EdenTheme's inputDecorationTheme
+                            // and paints TWO things over the pill the Container
+                            // above draws: an opaque `fillColor` rectangle
+                            // (white in light, neutral[800] in dark), sized
+                            // from the decorator's ~20px CONTENT height rather
+                            // than the 36px the SizedBox forces — which is why
+                            // the captured frame showed white for y=11..28 and
+                            // the pill's own #e4e4e7 only for y=30..44, and why
+                            // the hint measured 4.83:1 against `surface` where
+                            // its token pair against the pill is 3.81:1 — and
+                            // an `enabledBorder` ring in colorScheme.outline,
+                            // which `border: InputBorder.none` does NOT turn
+                            // off and which read #dcdcdf along the pill's top
+                            // edge. Pinned by topbar_search_pill_paint_test
+                            // .dart case 1 and field_border_overpaint_test.dart.
+                            child: TextField(
+                              autofillHints:
+                                  searchPurpose.semantics.autofillHints,
+                              keyboardType: searchPurpose.semantics.keyboardType,
+                              obscureText: searchPurpose.semantics.obscureText,
+                              textInputAction:
+                                  searchPurpose.semantics.textInputAction,
+                              textCapitalization:
+                                  searchPurpose.semantics.textCapitalization,
+                              autocorrect: searchPurpose.semantics.autocorrect,
+                              enableSuggestions:
+                                  searchPurpose.semantics.enableSuggestions,
+                              decoration: InputDecoration(
+                                hintText: config.searchHint,
+                                // `secondary`, not `onSurfaceVariant`: the ink
+                                // now sits on the pill's
+                                // `surfaceContainerHighest` fill, and
+                                // onSurfaceVariant on that is 3.81:1 at 13px —
+                                // under 1.4.3's 4.5:1 floor. The failure was
+                                // real all along; it was masked for as long as
+                                // the glyph was painted on the white overpaint
+                                // (4.83:1 against white). In BOTH Eden themes
+                                // `secondary` is this palette's muted neutral
+                                // (neutral[600] light, neutral[400] dark) and is
+                                // the only ColorScheme role that clears the
+                                // floor on that fill while still reading as a
+                                // hint rather than as entered text: 6.09:1
+                                // light, 5.81:1 dark. The DARK value does not
+                                // move — dark `secondary` and dark
+                                // `onSurfaceVariant` are the same neutral[400].
+                                hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: theme.colorScheme.secondary),
+                                isDense: true,
+                              ),
+                              style: const TextStyle(fontSize: 13),
+                              onChanged: config.onSearch,
+                            ),
                           ),
-                          style: const TextStyle(fontSize: 13),
-                          onChanged: config.onSearch,
                         ),
                       ),
                     ),

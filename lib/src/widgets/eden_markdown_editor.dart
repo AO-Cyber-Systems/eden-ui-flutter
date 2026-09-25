@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
@@ -199,31 +200,43 @@ class _EdenMarkdownEditorState extends State<EdenMarkdownEditor> {
         const SingleActivator(LogicalKeyboardKey.keyI, control: true): () =>
             _wrapSelection('_', '_'),
       },
-      child: TextField(
-        controller: _controller,
-        onChanged: widget.onChanged,
-        minLines: widget.minLines,
-        maxLines: widget.maxLines ?? widget.minLines * 2,
-        autofillHints: semantics.autofillHints,
-        keyboardType: semantics.keyboardType,
-        obscureText: semantics.obscureText,
-        textInputAction: semantics.textInputAction,
-        textCapitalization: semantics.textCapitalization,
-        autocorrect: semantics.autocorrect,
-        enableSuggestions: semantics.enableSuggestions,
-        decoration: InputDecoration(
-          hintText: widget.placeholder,
-          hintStyle: TextStyle(
-            color: isDark ? EdenColors.neutral[500]! : EdenColors.neutral[400]!,
+      child: EdenBareFieldTheme(
+        // THE EDITOR FRAME IS THE CHROME. The frame around toolbar, divider
+        // and body declares the border; EdenTheme's inputDecorationTheme drew
+        // a second one immediately inside it, in the same neutral[300] /
+        // neutral[700], so a 1px line rendered 2px thick.
+        //
+        // The frame declares NO fill, which is why dropping the theme's also
+        // changes what the body sits on: the edit pane now takes the host's
+        // surface, the same one the preview pane beside it has always taken.
+        // Before this, edit was `Colors.white` / neutral[800] and preview was
+        // the host — a seam visible in split mode. Pinned by
+        // field_border_overpaint_test.dart.
+        child: TextField(
+          controller: _controller,
+          onChanged: widget.onChanged,
+          minLines: widget.minLines,
+          maxLines: widget.maxLines ?? widget.minLines * 2,
+          autofillHints: semantics.autofillHints,
+          keyboardType: semantics.keyboardType,
+          obscureText: semantics.obscureText,
+          textInputAction: semantics.textInputAction,
+          textCapitalization: semantics.textCapitalization,
+          autocorrect: semantics.autocorrect,
+          enableSuggestions: semantics.enableSuggestions,
+          decoration: InputDecoration(
+            hintText: widget.placeholder,
+            hintStyle: TextStyle(
+              color: isDark ? EdenColors.neutral[500]! : EdenColors.neutral[400]!,
+            ),
+            contentPadding: const EdgeInsets.all(EdenSpacing.space3),
           ),
-          contentPadding: const EdgeInsets.all(EdenSpacing.space3),
-          border: InputBorder.none,
-        ),
-        style: TextStyle(
-          fontSize: 14,
-          height: 1.6,
-          color: theme.colorScheme.onSurface,
-          fontFamily: 'monospace',
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.6,
+            color: theme.colorScheme.onSurface,
+            fontFamily: 'monospace',
+          ),
         ),
       ),
     );

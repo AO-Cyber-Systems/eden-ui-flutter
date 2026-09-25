@@ -5,3 +5,94 @@ linter:
     prefer_const_constructors: true
     prefer_const_declarations: true
     avoid_print: false
+
+analyzer:
+  errors:
+    # NOT a way to keep a legacy plugin forever -- a deliberate, narrow
+    # suppression of ONE options-file diagnostic, so that `flutter analyze
+    # --no-fatal-infos` keeps failing on every real warning.
+    #
+    # Dart 3.13 (Flutter 3.47.4) reports `analysis_options_deprecated_plugins`
+    # as a WARNING against the `plugins:` key below, and `--no-fatal-infos`
+    # does not suppress warnings -- so the Analyze job went red on the
+    # registration itself (CI run 35891331608).
+    #
+    # The key cannot simply be deleted. custom_lint's CLI decides whether a
+    # context root is linted by reading exactly this list:
+    # `CustomLintWorkspace._isCustomLintEnabled` (custom_lint 0.8.1,
+    # lib/src/workspace.dart) returns false unless
+    # `analyzer: plugins:` contains `custom_lint`, and a disabled workspace
+    # prints "No issues found!" and exits 0. Removing the key would turn the
+    # Lint gate into a permanent false green -- the exact failure this
+    # objective's differential control was built to catch.
+    #
+    # Nor can it be migrated today: the replacement system
+    # (https://dart.dev/tools/analyzer-plugins, Dart 3.10+, top-level
+    # `plugins:` + package:analysis_server_plugin) is a different plugin
+    # protocol. custom_lint has published nothing against it -- 0.8.1
+    # (2025-09-09) is still the latest release -- so migrating means
+    # rewriting all three rules against analysis_server_plugin. That is a
+    # separate objective; it is tracked, not smuggled into a CI fix.
+    #
+    # DELETE THIS LINE the day the rules move to the new plugin system, or
+    # the day the deprecation becomes an error and the suppression stops
+    # working.
+    analysis_options_deprecated_plugins: ignore
+  plugins:
+    - custom_lint
+  exclude:
+    # `lints/` is its own package with its own pubspec and its own `dart test`.
+    # Its fixtures are deliberately malformed-looking Dart (stub Color /
+    # TextStyle / EdgeInsets declarations) whose whole job is to be linted, not
+    # analyzed. Excluding it keeps `flutter analyze` on THIS package reporting
+    # exactly what it reported before this file changed.
+    - lints/**
+
+custom_lint:
+  rules:
+    # Enforced scope. Wave-1 scope is the shell widgets; the rules fire only
+    # here so the gate is GREEN the day it lands rather than drowning in 517
+    # files of existing debt (184 files reference EdenColors directly, 165
+    # reference EdenRadii -- measured in Objective 022).
+    #
+    # Measured unscoped backlog, `dart run lints/bin/measure_debt.dart 'lib/**'`
+    # on 2026-09-22 (515 files in scope, 374 of them with at least one finding):
+    #
+    #     no_raw_color             426
+    #     text_style_needs_family  772
+    #     no_magic_spacing        1502
+    #
+    # Widen by adding a glob here, in its own commit, after clearing the
+    # findings it exposes. A gate that is switched off is worth less than a
+    # narrow gate that holds.
+    #
+    # YAML SHAPE, read this before editing: custom_lint takes the FIRST key of
+    # each list item as the rule name and every SIBLING key as that rule's
+    # options. Indenting the options UNDER the rule name parses fine, produces
+    # an empty options map, and the rule then silently matches nothing --
+    # `dart run custom_lint` prints "No issues found!" either way. Keep
+    # `enforced_paths` at the same indentation as the rule name.
+    - no_raw_color:
+      enforced_paths:
+        - lib/src/widgets/eden_layout/**
+    - text_style_needs_family:
+      enforced_paths:
+        - lib/src/widgets/eden_layout/**
+      # LEGACY BASELINE, not an off switch. These two files carry 19
+      # pre-existing text_style_needs_family findings between them (measured
+      # 2026-09-22). Naming a TextStyle family changes rendered pixels under
+      # a golden suite, which is not this TRD's work -- but a NEW file in
+      # this directory is gated from its first commit, and the number above
+      # is what a follow-up budgets against. Delete a line here, clear that
+      # file, in one commit.
+      legacy_exemptions:
+        - lib/src/widgets/eden_layout/eden_desktop_layout.dart
+        - lib/src/widgets/eden_layout/eden_mobile_layout.dart
+    - no_magic_spacing:
+      enforced_paths:
+        - lib/src/widgets/eden_layout/**
+      # LEGACY BASELINE -- 13 pre-existing no_magic_spacing findings across
+      # these two files (measured 2026-09-22). Same terms as above.
+      legacy_exemptions:
+        - lib/src/widgets/eden_layout/eden_desktop_layout.dart
+        - lib/src/widgets/eden_layout/eden_mobile_layout.dart

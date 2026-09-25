@@ -1,6 +1,6 @@
 name: eden_ui_flutter
 description: Eden UI component library for Flutter — ported from the Eden UI Rails framework.
-version: 2.0.0
+version: 2.2.0
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -34,6 +34,13 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  # DEV-ONLY, deliberately. Two apps (eden-biz, aodex) pin this library by
+  # path/git; anything under `dependencies:` would enter THEIR production
+  # resolve. custom_lint and the local `lints/` package are build-time design
+  # enforcement and must never leave this repo's dev graph.
+  custom_lint: ^0.8.1
+  eden_lints:
+    path: lints
 
 flutter:
   uses-material-design: true
