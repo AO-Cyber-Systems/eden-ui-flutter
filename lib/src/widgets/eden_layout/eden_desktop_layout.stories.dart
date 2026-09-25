@@ -14,6 +14,16 @@
 // 720px 'narrow' one included — narrow still renders the rail, not the bottom
 // bar). See eden_nav_item.stories.dart for the reasoning; the declaration
 // selects WCAG 2.5.8's 24x24 floor and waives nothing.
+//
+// VIEWPORT. The narrow story declares `viewportWidth: 720` rather than
+// wrapping the shell in a SizedBox. It used to do the latter, and the
+// harness's child slot is TIGHT: the 720 was clamped back to 1280 by
+// `BoxConstraints.enforce` and the story rendered the DEFAULT surface. The
+// two light goldens were byte-identical (sha256 a077f9dd…), as were the dark
+// pair, so the narrow rail had never been rendered once and the `expectUiSane`
+// half re-measured the default surface too. A declared viewport drives
+// `tester.view.physicalSize`, so MediaQuery, the golden's dimensions and every
+// geometry rule agree on one number.
 
 import 'package:flutter/material.dart';
 
@@ -54,11 +64,11 @@ const EdenTopBarConfig kShellTopBar = EdenTopBarConfig(
   searchHint: 'Search orders…',
 );
 
-/// The width the 'narrow' story imposes on the shell. A VIEWPORT, not
-/// spacing: it is named rather than inlined so `no_magic_spacing` -- which
-/// cannot tell a viewport from a gutter, and correctly refuses to guess --
-/// reads a token-shaped reference here instead of a bare literal. Same pixels.
-const double _kNarrowShellWidth = 720;
+/// The viewport the 'narrow' story is measured at. A VIEWPORT, not spacing:
+/// it is named rather than inlined so `no_magic_spacing` -- which cannot tell
+/// a viewport from a gutter, and correctly refuses to guess -- reads a
+/// token-shaped reference here instead of a bare literal. Same pixels.
+const double _kNarrowShellViewport = 720;
 
 /// Body copy long enough to actually be visible in the golden — an empty body
 /// would make a content-area regression invisible.
@@ -95,9 +105,10 @@ final List<EdenStory> edenDesktopLayoutStories = <EdenStory>[
   ),
 
   /// Pins the rail's behaviour BELOW the comfortable breakpoint. The width is
-  /// imposed by the story (a SizedBox around the same shell), not by editing
-  /// the harness default — the generated tests all call the harness at its one
-  /// viewport, so a per-story width has to live in the story.
+  /// DECLARED by the story and driven through `tester.view.physicalSize`, not
+  /// imposed with a SizedBox around the shell: the harness's child slot is
+  /// tight, so a SizedBox is clamped back to the harness width and the story
+  /// silently renders the default surface.
   EdenStory(
     id: 'desktop-layout/narrow',
     component: 'desktop-layout',
@@ -105,6 +116,7 @@ final List<EdenStory> edenDesktopLayoutStories = <EdenStory>[
     icon: Icons.width_normal,
     knobs: const [],
     inputModality: EdenInputModality.pointer,
-    build: (context, _) => SizedBox(width: _kNarrowShellWidth, child: _shell()),
+    viewportWidth: _kNarrowShellViewport,
+    build: (context, _) => _shell(),
   ),
 ];

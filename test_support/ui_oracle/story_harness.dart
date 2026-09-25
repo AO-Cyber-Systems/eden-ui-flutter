@@ -61,6 +61,10 @@ final bool kGoldenSkip = kGoldenSkipReason != null;
 final String kGoldenSkipSuffix =
     kGoldenSkipReason == null ? '' : ' [skipped: $kGoldenSkipReason]';
 
+/// The viewport every story is measured at unless it declares its own
+/// [EdenStory.viewportWidth]. 1280x800 is the catalogue's desktop frame.
+const double kDefaultStoryViewportWidth = 1280;
+
 /// Directory (relative to the generated test file) holding the CI baselines.
 /// `ci/` is the Alchemist-style platform tag, expressed as a directory rather
 /// than a package dependency — see the TRD's no-new-deps gotcha.
@@ -100,18 +104,32 @@ const String kRegenerateStoryTestsCommandRef =
 String goldenPathFor(EdenStory story, ThemeMode themeMode) =>
     '$kGoldenDir/${story.id.replaceAll('/', '_')}.${themeMode.name}.png';
 
+/// The viewport [story] is measured at: an explicit [width] when a caller
+/// names one, else the story's own [EdenStory.viewportWidth], else
+/// [kDefaultStoryViewportWidth].
+///
+/// THE STORY'S DECLARATION IS NOT OPTIONAL SUGAR. `wrap()`'s child slot is
+/// TIGHT, so a story that tries to impose its own width with an inner
+/// `SizedBox` is clamped straight back and renders the default surface. That
+/// is how `desktop-layout/narrow` came to be byte-identical to
+/// `desktop-layout/default` and how a 390px phone story came to be pinned at
+/// 1280. Driving `tester.view.physicalSize` is what makes the declared width
+/// the one MediaQuery, the golden and every geometry rule all see.
+double storyViewportWidth(EdenStory story, double? width) =>
+    width ?? story.viewportWidth ?? kDefaultStoryViewportWidth;
+
 Future<void> _pump(
   WidgetTester tester,
   EdenStory story, {
   required ThemeMode themeMode,
-  required double width,
+  required double? width,
 }) async {
   await wrap(
     tester,
     Builder(
       builder: (context) => story.build(context, story.defaultKnobValues),
     ),
-    width: width,
+    width: storyViewportWidth(story, width),
     themeMode: themeMode,
   );
 }
@@ -137,7 +155,7 @@ Future<void> expectStorySane(
   EdenStory story, {
   required ThemeMode themeMode,
   required EdenInputModality inputModality,
-  double width = 1280,
+  double? width,
 }) async {
   await _pump(tester, story, themeMode: themeMode, width: width);
   await expectUiSane(tester, inputModality: inputModality);
@@ -152,7 +170,7 @@ Future<void> expectStoryGolden(
   WidgetTester tester,
   EdenStory story, {
   required ThemeMode themeMode,
-  double width = 1280,
+  double? width,
 }) async {
   await _pump(tester, story, themeMode: themeMode, width: width);
   await expectLater(

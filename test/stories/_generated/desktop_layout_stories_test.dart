@@ -44,24 +44,28 @@ void main() {
   testWidgets('desktop-layout/narrow — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/narrow'),
         themeMode: ThemeMode.light,
+        width: 720,
         inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('desktop-layout/narrow — light — golden$kGoldenSkipSuffix',
       (tester) async {
     await expectStoryGolden(tester, storyById('desktop-layout/narrow'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        width: 720);
   }, skip: kGoldenSkip);
 
   testWidgets('desktop-layout/narrow — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/narrow'),
         themeMode: ThemeMode.dark,
+        width: 720,
         inputModality: EdenInputModality.pointer);
   });
 
   testWidgets('desktop-layout/narrow — dark — golden$kGoldenSkipSuffix',
       (tester) async {
     await expectStoryGolden(tester, storyById('desktop-layout/narrow'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        width: 720);
   }, skip: kGoldenSkip);
 }

@@ -68,12 +68,27 @@ String generateStoryTestSource(String component, List<EdenStory> stories) {
     ..writeln('  setUp(ensureStoriesRegistered);');
 
   for (final s in sorted) {
+    // Emitted VERBATIM from the story when it declares one, never defaulted
+    // here. The VIEWPORT a surface is measured at must be readable at the
+    // assertion, exactly like the tap-target floor below it: a story whose
+    // width is inherited from a harness default is a story nobody can tell
+    // was measured at the wrong width — which is how two goldens came to be
+    // byte-identical to their siblings.
+    final viewport = s.viewportWidth == null
+        ? ''
+        : '\n        width: ${_literal(s.viewportWidth!)},';
+    // The golden call takes no `inputModality`, so the width is its LAST
+    // argument; a story that declares none must emit byte-identically to
+    // before, or every baseline in the catalogue churns for nothing.
+    final goldenTail = s.viewportWidth == null
+        ? ');'
+        : ',\n        width: ${_literal(s.viewportWidth!)});';
     for (final theme in const ['light', 'dark']) {
       b
         ..writeln()
         ..writeln("  testWidgets('${s.id} — $theme — expectUiSane', (tester) async {")
         ..writeln("    await expectStorySane(tester, storyById('${s.id}'),")
-        ..writeln('        themeMode: ThemeMode.$theme,')
+        ..writeln('        themeMode: ThemeMode.$theme,$viewport')
         // Emitted VERBATIM from the story, never defaulted here. The tap-target
         // floor a surface is held to must be readable at the assertion.
         ..writeln(
@@ -84,7 +99,7 @@ String generateStoryTestSource(String component, List<EdenStory> stories) {
             "  testWidgets('${s.id} — $theme — golden\$kGoldenSkipSuffix',")
         ..writeln('      (tester) async {')
         ..writeln("    await expectStoryGolden(tester, storyById('${s.id}'),")
-        ..writeln('        themeMode: ThemeMode.$theme);')
+        ..writeln('        themeMode: ThemeMode.$theme$goldenTail')
         ..writeln('  }, skip: kGoldenSkip);');
     }
   }
@@ -92,6 +107,11 @@ String generateStoryTestSource(String component, List<EdenStory> stories) {
   b.writeln('}');
   return b.toString();
 }
+
+/// A `double` written the way a reader would write it: `720`, not `720.0`,
+/// when it is whole.
+String _literal(double value) =>
+    value == value.roundToDouble() ? '${value.round()}' : '$value';
 
 /// PURE. Groups [stories] by component and emits one source per component,
 /// keyed by file name, in sorted key order.

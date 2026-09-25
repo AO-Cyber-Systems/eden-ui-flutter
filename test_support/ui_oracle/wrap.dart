@@ -25,6 +25,14 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 /// [themeMode] selects between `EdenTheme.light()` and `EdenTheme.dark()`;
 /// [theme] overrides the light theme when supplied.
 ///
+/// GOTCHA — THE CHILD SLOT IS TIGHT. [child] is laid out inside
+/// `SizedBox(width: width)`, which hands it a TIGHT width constraint, so a
+/// child's OWN `SizedBox(width: n)` is clamped straight back to [width] by
+/// `BoxConstraints.enforce`. A surface that wants a narrower frame must be
+/// pumped at a narrower [width] — declare `EdenStory.viewportWidth` and the
+/// story harness passes it here. Two goldens were byte-identical to their
+/// siblings for exactly this reason before it was declared.
+///
 /// GOTCHA: this calls `pumpAndSettle()`, which throws on an animation that
 /// never settles. A child with an infinite/repeating animation must be pumped
 /// by the caller instead — pump a fixed `Duration` after `wrap()` returns

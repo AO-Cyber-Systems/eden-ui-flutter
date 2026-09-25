@@ -20,24 +20,28 @@ void main() {
   testWidgets('mobile-layout/default — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('mobile-layout/default'),
         themeMode: ThemeMode.light,
+        width: 390,
         inputModality: EdenInputModality.touch);
   });
 
   testWidgets('mobile-layout/default — light — golden$kGoldenSkipSuffix',
       (tester) async {
     await expectStoryGolden(tester, storyById('mobile-layout/default'),
-        themeMode: ThemeMode.light);
+        themeMode: ThemeMode.light,
+        width: 390);
   }, skip: kGoldenSkip);
 
   testWidgets('mobile-layout/default — dark — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('mobile-layout/default'),
         themeMode: ThemeMode.dark,
+        width: 390,
         inputModality: EdenInputModality.touch);
   });
 
   testWidgets('mobile-layout/default — dark — golden$kGoldenSkipSuffix',
       (tester) async {
     await expectStoryGolden(tester, storyById('mobile-layout/default'),
-        themeMode: ThemeMode.dark);
+        themeMode: ThemeMode.dark,
+        width: 390);
   }, skip: kGoldenSkip);
 }
