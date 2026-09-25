@@ -508,4 +508,55 @@ void main() {
           "branch's defect. It must fail loudly, naming the term.",
     );
   });
+
+  // ── Case 17: a term the TOKEN REGEX cannot match is refused, not invisible ──
+  test('case 17: a must_not term in a non-conforming shape is refused', () {
+    // THE HOLE UNDER CASE 16. Case 16 compares the token scan against the rule
+    // scan — but BOTH used the same `[a-z][a-z0-9]*` shape, so a term that
+    // matched neither (capitalised, or digit-initial) was invisible to both.
+    // The generator dropped it and case 12 still reported 78 of 78: the
+    // source-to-artifact lock was detecting dropped rules with the very regex
+    // that dropped them.
+    //
+    // Latent rather than live — all 78 terms conform today — which is exactly
+    // why it needed closing before the next doc is written.
+    for (final term in const <String>[
+      'Fire twice per activation',
+      '2 taps to open',
+    ]) {
+      expect(
+        () => parsePattern(
+          buildPatternDoc(
+            rawInteractionBody:
+                '- `must_not: fire twice per activation` $kInheritedMarker — a rule.\n'
+                '- `must_not: $term` — a rule in a shape the catalogue cannot carry.\n',
+          ),
+          fileName: 'sample-pattern.md',
+          vocabulary: _sampleVocabulary(),
+        ),
+        throwsA(isA<PatternFrontMatterError>().having(
+          (e) => e.message,
+          'message',
+          allOf(contains(term), contains('lowercase')),
+        )),
+        reason: 'the term must be NAMED and the doc REFUSED — a generator '
+            'that cannot read a rule must not pretend the rule is not there.',
+      );
+    }
+  });
+
+  // ── Case 18: the plain term scan sees a non-conforming term ─────────────
+  test('case 18: the term scan is case-insensitive, so nothing hides from it',
+      () {
+    // `mustNotTermsIn` is what case 12's lock reads the doc bodies with. If it
+    // cannot see a term, the lock cannot see it dropped.
+    expect(
+      mustNotTermsIn('- `must_not: Fire twice per activation` — a rule.\n'),
+      equals(const <String>['Fire twice per activation']),
+    );
+    expect(
+      mustNotTermsIn('- `must_not: 2 taps to open` — a rule.\n'),
+      equals(const <String>['2 taps to open']),
+    );
+  });
 }

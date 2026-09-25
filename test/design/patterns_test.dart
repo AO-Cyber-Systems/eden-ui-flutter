@@ -21,6 +21,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:eden_ui_flutter/dev_app/registry/register_all.dart';
 import 'package:eden_ui_flutter/dev_app/registry/story_registry.dart';
 
+import '../../tool/gen_pattern_catalogue.dart' show mustNotTermsIn;
+
 /// The seven headings every pattern file carries, in this order.
 const List<String> kRequiredHeadings = <String>[
   '## Intent',
@@ -74,7 +76,10 @@ List<File> _patternFiles() {
 String _name(File f) => f.uri.pathSegments.last;
 
 /// `must_not: <term>` — terms are lowercase words separated by single spaces.
-final RegExp _mustNotToken = RegExp(r'must_not:\s*([a-z][a-z0-9]*(?: [a-z0-9]+)*)');
+// The term scan lives in tool/gen_pattern_catalogue.dart as `mustNotTermsIn`
+// and is deliberately PERMISSIVE: it reads a term exactly as written, so a
+// capitalised or digit-initial one cannot slip past this vocabulary gate the
+// way it used to slip past the generator's own `[a-z][a-z0-9]*` regex.
 
 /// `story:<id>` — ids are the registry's URL-safe alphabet.
 final RegExp _storyToken = RegExp(r'story:([a-z0-9\-/]+)');
@@ -154,8 +159,7 @@ void main() {
         .toSet();
     final problems = <String>[];
     for (final file in _patternFiles()) {
-      for (final m in _mustNotToken.allMatches(file.readAsStringSync())) {
-        final term = m.group(1)!;
+      for (final term in mustNotTermsIn(file.readAsStringSync())) {
         if (!vocabulary.contains(term)) {
           problems.add(
             '${_name(file)}: must_not term "$term" is not in the closed '

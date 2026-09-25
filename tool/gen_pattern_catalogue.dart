@@ -170,9 +170,34 @@ const String kCatalogueNote =
 
 /// `must_not: <term>` — terms are lowercase words separated by single spaces.
 ///
-/// The same shape `test/design/patterns_test.dart` case 3 already gates.
+/// The same shape `test/design/patterns_test.dart` case 3 already gates. This
+/// is the CONFORMING shape, used to validate; it is NOT what the doc bodies
+/// are scanned with — see [kMustNotTokenAnyShape].
 final RegExp kMustNotToken =
     RegExp(r'must_not:\s*([a-z][a-z0-9]*(?: [a-z0-9]+)*)');
+
+/// The whole conforming term, anchored — `kMustNotToken`'s body as a
+/// full-string test.
+final RegExp kMustNotTermShape =
+    RegExp(r'^[a-z][a-z0-9]*(?: [a-z0-9]+)*$');
+
+/// `must_not: <anything>` — whatever the author actually wrote, up to the
+/// closing backtick, the em dash that opens the prose, or the end of the line.
+///
+/// WHY A SECOND, PERMISSIVE SCAN. The source-to-artifact lock
+/// (`pattern_catalogue_fresh_test.dart` case 12) detects dropped rules by
+/// scanning the doc bodies for `must_not:` tokens and checking the catalogue
+/// carries each one. It used [kMustNotToken] to do it — the generator's OWN
+/// regex — so a term that regex could not match (capitalised, digit-initial)
+/// was invisible to the token scan AND to the rule scan: the generator
+/// dropped it and the lock still reported 78 of 78. A lock that detects loss
+/// with the instrument that causes it is not a lock.
+///
+/// Scanning permissively and then REFUSING anything that does not conform
+/// (see `parsePattern`) is what closes it: nothing can be written that the
+/// catalogue silently declines to carry.
+final RegExp kMustNotTokenAnyShape =
+    RegExp(r'must_not:[ \t]*([^\n`—]*)');
 
 /// A whole rule line: the backticked token, plus the optional election marker.
 ///
@@ -269,15 +294,19 @@ String? _readScalar(String frontMatter, String key) {
   return m.group(1)!.trim();
 }
 
-/// Every `must_not: <term>` token in [body], in document order, deduplicated.
+/// Every `must_not: <term>` token in [body], in document order, deduplicated,
+/// EXACTLY AS WRITTEN — conforming or not.
 ///
 /// Kept as the plain term scan the freshness test uses to state, independently
-/// of every classification rule below, what the doc says.
+/// of every classification rule below, what the doc says. It must be able to
+/// see a term the rest of this file would refuse, or it cannot report that
+/// one was dropped (see [kMustNotTokenAnyShape]).
 List<String> mustNotTermsIn(String body) {
   final seen = <String>{};
   final out = <String>[];
-  for (final m in kMustNotToken.allMatches(body)) {
-    final term = m.group(1)!;
+  for (final m in kMustNotTokenAnyShape.allMatches(body)) {
+    final term = m.group(1)!.trim();
+    if (term.isEmpty) continue;
     if (seen.add(term)) out.add(term);
   }
   return out;
@@ -366,6 +395,26 @@ PatternEntry parsePattern(
   }
 
   final rules = rulesIn(body);
+
+  // Every `must_not:` token must be written in the closed term SHAPE before
+  // anything else asks what it says. A term the rule regex cannot match is
+  // one the generator drops on the floor, and the freshness lock used the
+  // same regex to look for dropped rules — so a non-conforming term was
+  // invisible to both and the catalogue reported itself complete.
+  final malformed = <String>[
+    for (final term in mustNotTermsIn(body))
+      if (!kMustNotTermShape.hasMatch(term)) term,
+  ];
+  if (malformed.isNotEmpty) {
+    throw PatternFrontMatterError(
+        '$fileName: must_not term(s) ${malformed.map(jsonEncode).join(", ")} '
+        'are not written in the term shape the catalogue can carry: lowercase '
+        'words, starting with a letter, separated by single spaces '
+        '(`must_not: fire twice per activation`). A term outside that shape is '
+        'stated to humans and dropped from $kCataloguePath without a word. '
+        'Remedy: reword it to a term in $kVocabularyPath, then run '
+        '$kRegenerateCommand.');
+  }
 
   // Every `must_not:` token must be a real rule line. A token the rule regex
   // cannot see is a rule written in a shape the catalogue will silently drop —
