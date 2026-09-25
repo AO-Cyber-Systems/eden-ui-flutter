@@ -377,4 +377,210 @@ void main() {
     await pumpSurface(tester, nonInteractiveIdentifiedControls());
     await expectUiSane(tester, inputModality: EdenInputModality.touch);
   });
+
+  testWidgets(
+      'case 14: a button made untappable by AbsorbPointer is named',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, absorbedButton());
+    // THE SECOND FALSE-GREEN CASE, and the one the rule's own message already
+    // claimed to detect. `RenderAbsorbPointer.hitTest` returns
+    // `absorbing ? size.contains(position)` — TRUE without adding itself or
+    // anything below it to the hit path — so the enclosing
+    // RenderSemanticsAnnotations still adds ITSELF and a check that only asks
+    // "is the owner in the path?" passes. The route count reads 1 because
+    // AbsorbPointer also sets isBlockingUserActions.
+    //
+    // RED (before the descendant requirement): exit 0 — zero violations on a
+    // surface a real finger cannot touch.
+    // GREEN (fixture's AbsorbPointer -> ExcludeSemantics): exit 0 for the
+    // right reason.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-absorbed-button"'),
+            contains('never reaches it'),
+            contains('inert to a real tap'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('case 15: text painted in its own background colour is named',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, invisibleText());
+    // Ink == background is 1.00:1 — invisible text, the maximum-severity
+    // 1.4.3 failure. It used to be read as "the region was not resolvable"
+    // and skipped in silence.
+    //
+    // RED (before the 1.00:1 arm): exit 0 — no violation at all.
+    // GREEN (fixture ink -> #F5F5F5): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"Storage almost full"'),
+            contains('1.00:1'),
+            contains('#FF1E1E1E'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('case 16: paint-time Opacity is composed into the ink',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, fadedText());
+    // #111111 on #FFFFFF is 18.9:1 on the token pair and ~2.0:1 once
+    // `Opacity(0.3)` has painted it. Reading the ink off `TextStyle.color`
+    // alone reports the token pair and calls it conformant.
+    //
+    // RED (before ancestor opacity was composed in): exit 0.
+    // GREEN (fixture opacity -> 1.0): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"Storage almost full"'),
+            contains('below the WCAG 1.4.3 floor'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('case 17: a solid TextStyle.foreground is resolved as the ink',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, paintedForegroundText());
+    // `TextStyle.foreground` leaves `TextStyle.color` NULL, and the rule
+    // returned null — no measurement, no word — for every such paragraph.
+    //
+    // RED (before foreground was read): exit 0.
+    // GREEN (fixture -> `color: Color(0xFFF5F5F5)`): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"Storage almost full"'),
+            contains('below the WCAG 1.4.3 floor'),
+            contains('#FF2A2A2A'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets(
+      'case 18: an UNFLAGGED control whose tap route no pointer reaches is '
+      'named', (WidgetTester tester) async {
+    await pumpSurface(tester, unreachableUnflaggedControl());
+    // `InkWell`/`InkResponse` publish `Semantics(onTap:)` with NO button flag,
+    // so gating liveness on `button || link` left the commonest interactive
+    // shape in a consumer screen unchecked: routes == 1, affordance == null,
+    // neither arm ran, and the control was completely dead.
+    //
+    // RED (before the unflagged arm): exit 0.
+    // GREEN (fixture IgnorePointer -> ExcludeSemantics): exit 0.
+    await expectLater(
+      () => expectUiSane(tester, inputModality: EdenInputModality.touch),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-unflagged-row"'),
+            contains('never reaches it'),
+            contains('inert to a real tap'),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets(
+      'case 19: an UNFLAGGED control with a reachable tap route stays green',
+      (WidgetTester tester) async {
+    // The differential control for case 18. Widening liveness to every
+    // identified node that declares a tap route must not turn into a ban on
+    // InkWell.
+    await pumpSurface(tester, reachableUnflaggedControl());
+    await expectUiSane(tester, inputModality: EdenInputModality.touch);
+  });
+
+  testWidgets(
+      'case 20: a scrolled list does not accuse its OFF-SCREEN rows',
+      (WidgetTester tester) async {
+    // 30 correct rows in a 300px viewport. Six fit; Flutter builds a handful
+    // more inside the cache extent and publishes them with `isHidden: true`,
+    // carrying identifiers and tap routes no pointer can reach — because no
+    // user can see them.
+    //
+    // RED (before the isHidden/isInvisible/isMergedIntoParent exclusion):
+    // exit 1 — expectUiSane found 5 violation(s) on this surface:
+    //   control "fx-row-7" announces itself as a button and declares a tap
+    //   action, but a pointer dropped in the middle of the rect it publishes
+    //   never reaches it ... (and fx-row-8, -9, -10, -11)
+    // GREEN (exclusion applied): exit 0, with rows 0-6 still measured.
+    await pumpSurface(tester, scrolledListRows());
+    await expectUiSane(tester, inputModality: EdenInputModality.pointer);
+  });
+
+  testWidgets('case 21: allowOverlap exempts a PAIR, not an identifier',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, twoOverlapPairs());
+    // `fx-ov-a` overlaps BOTH `fx-ov-b` and `fx-ov-c`. Exempting the (a, b)
+    // pair must leave (a, c) reported. Matching per-identifier — which is
+    // what the violation message told the reader to do — silences every
+    // overlap `a` will ever have, forever, including the ones nobody has
+    // looked at yet.
+    //
+    // RED (per-identifier matching): exit 0 — no violation at all.
+    await expectLater(
+      () => expectUiSane(
+        tester,
+        inputModality: EdenInputModality.touch,
+        allowOverlap: const <(String, String)>{('fx-ov-a', 'fx-ov-b')},
+      ),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('"fx-ov-a"'),
+            contains('"fx-ov-c"'),
+            isNot(contains('"fx-ov-b"')),
+          ),
+        ),
+      ),
+    );
+  });
+
+  testWidgets('case 22: allowOverlap accepts the pair in either order',
+      (WidgetTester tester) async {
+    // The escape hatch had ZERO test coverage before case 21. Order must not
+    // decide whether an exemption applies — a caller writes the pair the way
+    // the two controls read to them, not in the oracle's sort order.
+    await pumpSurface(tester, twoOverlapPairs());
+    await expectUiSane(
+      tester,
+      inputModality: EdenInputModality.touch,
+      allowOverlap: const <(String, String)>{
+        ('fx-ov-b', 'fx-ov-a'),
+        ('fx-ov-c', 'fx-ov-a'),
+      },
+    );
+  });
 }

@@ -64,8 +64,39 @@ class SemanticsGeometryNode {
       'globalRect: $globalRect, actions: $actions)';
 }
 
+/// Whether the accessibility tree publishes [node] as something a user can
+/// actually see and reach.
+///
+/// WHY THIS EXISTS. A `ListView` builds a few rows beyond its viewport (the
+/// cache extent) and publishes them as real semantics nodes carrying their
+/// identifiers, their labels and their tap routes — flagged `isHidden`,
+/// because no user can see them. Every geometry rule in this package used to
+/// walk those rows like any other, and a CORRECT 30-row list came back with
+/// one "inert to a real tap" violation per off-screen row. Measured on
+/// `test/testing/_fixtures/broken_surfaces.dart`'s `scrolledListRows`: five
+/// false accusations on a screen with nothing wrong with it.
+///
+/// That is the pressure that gets an oracle switched off, or gets identifier
+/// sets dumped into an escape hatch — so the exclusion is encoded rather than
+/// left to the consumer.
+///
+/// The three predicates are exactly the ones `flutter_test`'s own
+/// `MinimumTapTargetGuideline` and `LabeledTapTargetGuideline` apply, named
+/// here rather than reached for because they are private to those classes:
+///
+///  * [SemanticsNode.isMergedIntoParent] — the node does not stand on its own;
+///    its parent is the control.
+///  * [SemanticsNode.isInvisible] — an empty rect: there is no geometry to
+///    measure.
+///  * `isHidden` — published, but not presented.
+bool isPresentedToUser(SemanticsNode node) =>
+    !node.isMergedIntoParent &&
+    !node.isInvisible &&
+    !node.flagsCollection.isHidden;
+
 /// Every node in the current semantics tree that carries a non-empty
-/// identifier, sorted by `(top, left, identifier)`.
+/// identifier AND is presented to the user ([isPresentedToUser]), sorted by
+/// `(top, left, identifier)`.
 ///
 /// Sorting is deliberate: `visitChildren` order is an implementation detail and
 /// must never be asserted on directly.
@@ -116,7 +147,7 @@ List<SemanticsGeometryNode> _collect(WidgetTester tester) {
   void visit(SemanticsNode node, List<SemanticsNode> ancestors) {
     final SemanticsData data = node.getSemanticsData();
     final String identifier = data.identifier;
-    if (identifier.isNotEmpty) {
+    if (identifier.isNotEmpty && isPresentedToUser(node)) {
       found.add(
         SemanticsGeometryNode(
           id: node.id,

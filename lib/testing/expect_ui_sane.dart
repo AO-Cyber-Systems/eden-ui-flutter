@@ -71,13 +71,19 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 ///    broken. `tester.takeException()` is called EXACTLY ONCE here; a second
 ///    call anywhere returns null and the overflow disappears.
 /// 2. **Viewport containment.** Every identified control's semantics rect lies
-///    inside the view.
+///    inside the view. Nodes the accessibility tree does not PRESENT — a
+///    `ListView`'s off-screen rows, anything `isHidden`, `isInvisible` or
+///    merged into its parent — are excluded from this and from every other
+///    geometry rule here, exactly as `flutter_test`'s own tap-target and
+///    labelling guidelines exclude them. See `isPresentedToUser`.
 /// 3. **Disjointness.** No two identified controls' rects intersect. On web the
 ///    semantics node — not the widget — receives the click, so an overlap means
 ///    one control silently eats the other's taps. [allowOverlap] lists the
-///    identifiers permitted to intersect (a deliberate overlay, a badge sitting
-///    on its host); it is the escape hatch that makes adoption across 600+
-///    consumer screens possible without editing the screens.
+///    PAIRS permitted to intersect (a deliberate overlay, a badge sitting on
+///    its host); it is the escape hatch that makes adoption across 600+
+///    consumer screens possible without editing the screens. It is matched per
+///    pair and never per identifier: exempting one identifier would exempt it
+///    against every other control on the surface, for ever.
 /// 4. **Exactly one WORKING tap action per control that announces one.** The
 ///    rule is two-sided, and the lower bound is the one that matters: an
 ///    oracle that is silent on zero goes GREEN on a surface whose controls are
@@ -86,9 +92,14 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 ///    non-identified descendant fires twice; a control that announces
 ///    `button: true` (or `link: true`) with NO tap route announces an
 ///    affordance that does not exist; and a control whose single tap route no
-///    pointer can reach — `IgnorePointer` blocks the subtree's hit test while
-///    leaving the outer node's action in place — is inert to a real finger
-///    even though the count reads a healthy 1. Nodes that announce no
+///    pointer can reach — `IgnorePointer` and `AbsorbPointer` both block the
+///    subtree's hit test while leaving the outer node's action in place — is
+///    inert to a real finger even though the count reads a healthy 1.
+///    Reachability is asserted for EVERY identified node that declares a tap
+///    route, flagged or not: `InkWell`/`InkResponse` publish
+///    `Semantics(onTap:)` with no button flag, which is the commonest
+///    interactive shape in a consumer screen, and gating on the flag left all
+///    of them unchecked. Nodes that declare NO tap route and announce no
 ///    affordance are exempt: a caption band carries an identifier and nothing
 ///    to activate, and the top-bar search announces `textField: true`, whose
 ///    affordance is focus, not tap.
@@ -100,8 +111,12 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 ///    aggregated report, prefixed with the guideline's name.
 ///
 /// 6. **Painted-text contrast (WCAG 1.4.3).** Every `Text` and `EditableText`
-///    in the tree is measured: its ink comes from the resolved `TextStyle`,
-///    the surface it sits on from the rendered pixels. This REPLACES Flutter's
+///    in the tree is measured: its ink comes from the resolved `TextStyle`
+///    (`color`, or a solid `foreground` Paint) with every ancestor
+///    `Opacity`/`AnimatedOpacity`/`FadeTransition` factor composed into its
+///    alpha, and the surface it sits on from the rendered pixels. Ink that
+///    equals its background is reported as 1.00:1 — invisible text is the
+///    maximum-severity failure of this rule, not an unmeasurable region. This REPLACES Flutter's
 ///    `textContrastGuideline`, which could not see badge text at all — it
 ///    looks text up by a semantics node's LABEL, and a badge inside an
 ///    `ExcludeSemantics` is the label of nothing — and which misreads small
@@ -129,7 +144,7 @@ const AccessibilityGuideline wcagMinimumTargetSizeGuideline =
 Future<void> expectUiSane(
   WidgetTester tester, {
   EdenInputModality inputModality = EdenInputModality.touch,
-  Set<String> allowOverlap = const <String>{},
+  Set<(String, String)> allowOverlap = const <(String, String)>{},
 }) async {
   final List<String> violations = <String>[];
 
@@ -358,7 +373,7 @@ List<String> _viewportViolations(
 /// rule itself does not need converted.
 List<String> _overlapViolations(
   List<SemanticsGeometryNode> nodes,
-  Set<String> allowOverlap,
+  Set<(String, String)> allowOverlap,
 ) {
   final List<String> out = <String>[];
   for (int i = 0; i < nodes.length; i++) {
@@ -367,7 +382,14 @@ List<String> _overlapViolations(
       final SemanticsGeometryNode b = nodes[j];
       final String aId = a.identifier ?? '';
       final String bId = b.identifier ?? '';
-      if (allowOverlap.contains(aId) || allowOverlap.contains(bId)) {
+      // PER PAIR, never per identifier. Exempting an identifier exempts it
+      // against EVERY other control on the surface, for ever: a badge
+      // legitimately sitting on its host would then silently cover an
+      // unrelated button and this rule would have nothing to say about it.
+      // Order does not decide the verdict — a caller writes the pair the way
+      // the two controls read to them.
+      if (allowOverlap.contains((aId, bId)) ||
+          allowOverlap.contains((bId, aId))) {
         continue;
       }
       if (rectsOverlap(a.globalRect, b.globalRect)) {
@@ -376,7 +398,8 @@ List<String> _overlapViolations(
           '"$bId" is ${b.globalRect}, they share '
           '${a.globalRect.intersect(b.globalRect)}. On web the semantics node '
           'is the click target, so one of these eats the other\'s taps. Pass '
-          'allowOverlap: {\'$aId\'} if the overlap is deliberate.',
+          'allowOverlap: {(\'$aId\', \'$bId\')} if THIS PAIR is deliberate — '
+          'it exempts these two against each other and nothing else.',
         );
       }
     }
@@ -407,14 +430,37 @@ List<String> _overlapViolations(
 //     strips the inner `GestureDetector`'s IMPLICIT tap route from the
 //     published tree.
 //
+// `AbsorbPointer` is the same false green one widget over, and it defeated the
+// first shape of the reachability check outright:
+// `RenderAbsorbPointer.hitTest` returns `absorbing ? size.contains(position)`
+// — TRUE without adding itself or anything below it to the hit path — so the
+// enclosing `RenderSemanticsAnnotations` still added ITSELF and a check that
+// asked only "is the owner in the path?" passed. `_pathEntersOwner` asks
+// whether a DESCENDANT of the owner took the pointer, which is the honest
+// question.
+//
 // So the outer `Semantics(onTap:)` survives and the route count reads exactly
 // 1. The zero arm alone does NOT catch that case; reachability is what does.
 // Both arms are kept because they are different defects: zero is "nothing was
 // ever wired up", unreachable is "it was wired up and something in between
 // eats the pointer".
 //
-// SCOPE — `button: true` or `link: true`, nothing else. Not every identified
-// node is interactive. `EdenMobileLayout._navSection` publishes no identifier
+// SCOPE — TWO PREDICATES, not one.
+//
+//   * An ANNOUNCED AFFORDANCE (`button: true` or `link: true`) must have
+//     exactly one tap route, and that route must be reachable.
+//   * A DECLARED TAP ROUTE must be reachable, whatever the node announces.
+//
+// The second was added after the first was found to miss the commonest
+// interactive shape there is: `InkWell`/`InkResponse` publish
+// `Semantics(onTap: …)` with NO button flag, so a row like
+// `Semantics(container: true, identifier: 'row-3') > InkWell(onTap: …)`
+// reported routes == 1 and affordance == null, NEITHER arm ran, and the row
+// could be wrapped in an `IgnorePointer` and be entirely dead in silence —
+// across 600+ consumer screens.
+//
+// What stays out of scope is a node that declares NO route and announces no
+// affordance. Not every identified node is interactive. `EdenMobileLayout._navSection` publishes no identifier
 // and no affordance flag by design, and `EdenDesktopLayout`'s top-bar search
 // publishes `identifier: 'eden-topbar-search', textField: true` — a text
 // field's affordance is focus, not tap, and reddening it would be the wrong
@@ -448,7 +494,11 @@ List<String> _tapRouteViolations(
   void walk(SemanticsNode node) {
     final SemanticsData data = node.getSemanticsData();
     final String identifier = data.identifier;
-    if (identifier.isNotEmpty) {
+    // A node the accessibility tree does not PRESENT is not a control this
+    // rule can speak about: a `ListView`'s off-screen rows publish real
+    // identifiers and real tap routes, and no pointer reaches them because no
+    // user can see them. See `isPresentedToUser`.
+    if (identifier.isNotEmpty && isPresentedToUser(node)) {
       final int routes = _countTapRoutes(node, isOwner: true);
       if (routes > 1) {
         out.add(
@@ -483,6 +533,32 @@ List<String> _tapRouteViolations(
             'pointer away.',
           );
         }
+      } else if (routes == 1 &&
+          !_pointerReaches(tester, ownerById[node.id], rectById[node.id])) {
+        // THE UNFLAGGED ARM. `InkWell`/`InkResponse` publish
+        // `Semantics(onTap: …)` with NO button flag, and that is the
+        // commonest interactive shape in a consumer screen. Gating liveness
+        // on `button || link` left every one of them unchecked: a row like
+        // `Semantics(container: true, identifier: 'row-3') > InkWell(onTap:)`
+        // reports routes == 1 and no affordance, so NEITHER arm ran and the
+        // control could be wrapped in an IgnorePointer and be entirely dead
+        // in silence — across 600+ consumer screens.
+        //
+        // The scope stays narrow on purpose: a DECLARED TAP ROUTE is the
+        // premise. A node with no route and no flag announces nothing and is
+        // still exempt (a caption band, the top-bar search) — that is
+        // `nonInteractiveIdentifiedControls`, the differential control this
+        // widening is pinned against.
+        out.add(
+          'control "$identifier" declares a tap action, but a pointer dropped '
+          'in the middle of the rect it publishes never reaches it — it is '
+          'inert to a real tap. It announces no button or link flag, so a '
+          'screen reader offers it nothing either: the tap route is the only '
+          'affordance it has, and no pointer can take it. Something between '
+          'the node and its content refuses the hit test '
+          '(IgnorePointer/AbsorbPointer, a zero-size or offset child, a '
+          'sibling painted over it).',
+        );
       }
     }
     node.visitChildren((SemanticsNode child) {
@@ -571,7 +647,58 @@ bool _pointerReaches(
     return true;
   }
   final HitTestResult result = tester.hitTestOnBinding(location);
+  return _pathEntersOwner(result, owner);
+}
+
+/// Whether [result]'s hit path actually got INSIDE [owner]'s render subtree.
+///
+/// WHY "INSIDE" AND NOT "REACHED THE OWNER". This rule used to ask only
+/// whether [owner] appeared anywhere in the path, and `AbsorbPointer` walks
+/// straight through that:
+///
+///   `RenderAbsorbPointer.hitTest` is
+///   `absorbing ? size.contains(position) : super.hitTest(...)` — it returns
+///   TRUE **without adding itself, or anything below it, to the path**. The
+///   enclosing `RenderSemanticsAnnotations` sees a hit child, adds ITSELF,
+///   and the owner is in the path on a control no finger can touch. It also
+///   sets `isBlockingUserActions`, which strips the inner route so the count
+///   reads a healthy 1 — the same false-green shape `IgnorePointer` produced,
+///   one widget over, and one the old message already claimed to detect.
+///
+/// Every render object that genuinely takes a pointer ADDS ITSELF to the path
+/// (`RenderBox.hitTest` does it, and so does
+/// `RenderProxyBoxWithHitTestBehavior` for an opaque or translucent
+/// `GestureDetector`). So "a strict descendant of the owner is in the path"
+/// is the honest question, and an absorbed subtree answers it correctly.
+///
+/// A LEAF owner — one with no render children at all — can only ever be
+/// reached as itself, so for those the old test still applies. Anything else
+/// would accuse a control whose own render object is the hit surface.
+bool _pathEntersOwner(HitTestResult result, RenderObject owner) {
+  for (final HitTestEntry entry in result.path) {
+    final Object target = entry.target;
+    if (target is! RenderObject || identical(target, owner)) {
+      continue;
+    }
+    for (RenderObject? ancestor = target.parent;
+        ancestor != null;
+        ancestor = ancestor.parent) {
+      if (identical(ancestor, owner)) {
+        return true;
+      }
+    }
+  }
+  if (_hasRenderChildren(owner)) {
+    return false;
+  }
   return result.path.any((HitTestEntry e) => identical(e.target, owner));
+}
+
+/// Whether [owner] has any child render object.
+bool _hasRenderChildren(RenderObject owner) {
+  bool any = false;
+  owner.visitChildren((RenderObject _) => any = true);
+  return any;
 }
 
 /// Counts `SemanticsAction.tap` on [node] and on its descendants, stopping at
@@ -682,13 +809,39 @@ const double _epsilon = 0.01;
 // token pair disagree, the frame is the thing to go and look at — the
 // disagreement is evidence about the widget, not only about the rule.
 //
-// KNOWN LIMIT, recorded rather than fixed: a `Text` whose ink cannot be
-// resolved from its style — `TextStyle.color` null with no `DefaultTextStyle`
-// to inherit from, or a `Text.rich` whose spans carry their own colours — is
-// not measured. `Text.rich` is the real one: `Text.data` is null there, so
-// those are skipped by the empty-string test and a low-contrast span inside a
-// rich paragraph goes unreported. Every low-contrast defect this branch found
-// was a plain `Text`; a per-span walk is the fix when one is not.
+// WHAT PAINT TIME DOES TO THE INK — what is closed, and what is left.
+//
+// The ink is the AUTHOR'S declared colour, so anything that changes the glyph
+// after the style is resolved is invisible to this rule unless it goes and
+// looks. Two of those are now closed:
+//
+//   * `Opacity` / `AnimatedOpacity` / `FadeTransition` — every ancestor
+//     factor is multiplied into the ink's alpha before it is composited over
+//     the measured background (`_ancestorPaintOpacity`). This was the live
+//     one: `lib/src` has 38 `Opacity(` sites, and a 0.3-opacity caption
+//     painting ~2:1 used to report its token pair at 8:1.
+//   * `TextStyle.foreground` carrying a SOLID `Paint` — it leaves
+//     `TextStyle.color` null, and every paragraph written that way used to be
+//     skipped without a word. The paint's colour is now the ink.
+//
+// STILL OPEN, recorded rather than fixed. None has a site in `lib/src` today:
+//
+//   * `ColorFiltered` and `ShaderMask` ancestors, and a `TextStyle.foreground`
+//     carrying a SHADER — the painted colour is not a single value the style
+//     can be asked for. Skipped rather than guessed at. Closing them means
+//     deriving the ink from the pixels, which is the measurement this rule
+//     exists BECAUSE the stock guideline gets it wrong on small text; the
+//     honest next step, if one ever appears, is a refusal that NAMES the
+//     paragraph as unmeasured rather than a silent pass.
+//   * `Text.rich`: `Text.data` is null there, so those are skipped by the
+//     empty-string test and a low-contrast span inside a rich paragraph goes
+//     unreported. A per-span walk is the fix when one is needed.
+//   * A `Text` with no resolvable ink at all — `TextStyle.color` null, no
+//     `foreground`, and no `DefaultTextStyle` to inherit from.
+//
+// An opacity factor of exactly 0 (a completed fade-out, a hidden-but-laid-out
+// slot) is treated as content that is not presented and skipped — not as a
+// 1.4.3 failure.
 
 /// WCAG 1.4.3 AA floors, and the size at which "large text" begins. Same
 /// numbers `MinimumTextContrastGuideline` uses, restated rather than reached
@@ -853,10 +1006,39 @@ String? _measureText(
   final TextStyle effective = declared == null || declared.inherit
       ? DefaultTextStyle.of(element).style.merge(declared)
       : declared;
-  final Color? foreground = effective.color;
-  if (foreground == null || foreground.a == 0) {
+  // INK, part 1: what the author declared. `TextStyle.foreground` is a Paint
+  // and leaves `TextStyle.color` NULL, so reading `color` alone skipped every
+  // paragraph written that way without a word. A solid paint has a colour
+  // this rule can use; a paint carrying a SHADER does not (see the KNOWN
+  // LIMIT block above).
+  final Paint? foregroundPaint = effective.foreground;
+  final Color? declaredInk = effective.color ??
+      (foregroundPaint != null && foregroundPaint.shader == null
+          ? foregroundPaint.color
+          : null);
+  if (declaredInk == null || declaredInk.a == 0) {
     // No resolvable ink, or fully transparent. A rule that cannot establish
     // the fact stays silent rather than accusing a control it did not measure.
+    return null;
+  }
+
+  // INK, part 2: what PAINT TIME did to it. `Opacity`, `AnimatedOpacity` and
+  // `FadeTransition` all multiply the glyph's alpha after the style has been
+  // resolved, so a 0.3-opacity caption whose token pair is 8:1 actually
+  // paints at ~2:1 and the style alone calls it conformant. `lib/src` has 38
+  // `Opacity(` sites. Composing the ancestors' factors into the ink's alpha
+  // and letting the existing translucency path blend it over the measured
+  // background is the whole fix.
+  //
+  // A factor of 0 means the text is deliberately not painted at all (a
+  // fade-out, a hidden-but-laid-out slot); the alpha test above then makes
+  // this rule stay silent, which is correct — invisible-on-purpose is not a
+  // 1.4.3 failure, it is content that is not presented.
+  final double paintOpacity = _ancestorPaintOpacity(box);
+  final Color foreground = paintOpacity >= 1.0
+      ? declaredInk
+      : declaredInk.withValues(alpha: declaredInk.a * paintOpacity);
+  if (foreground.a == 0) {
     return null;
   }
   final double fontSize = effective.fontSize ?? _kDefaultFontSize;
@@ -891,12 +1073,26 @@ String? _measureText(
 
   final Map<int, int> histogram =
       _argbHistogram(data, region, imageWidth, imageHeight);
+  if (histogram.isEmpty) {
+    // No pixels were captured for this region at all. Genuinely unmeasured,
+    // so not accused.
+    return null;
+  }
   final Color? background = _dominantBackground(histogram, foreground);
   if (background == null) {
-    // Every pixel in the region is the ink itself — there is no background to
-    // compare against, which means the region was not resolvable rather than
-    // that it failed.
-    return null;
+    // EVERY pixel inside the paragraph's box is the ink, to within rasteriser
+    // rounding. This used to return null, reasoning that "the region was not
+    // resolvable rather than that it failed" — which is backwards. Ink ==
+    // background is 1.00:1: completely invisible text, the MAXIMUM-severity
+    // 1.4.3 failure and the one measurement this rule can be most certain
+    // about. This repo's own history contains a dark-on-dark editor defect;
+    // silence is the last thing it should answer with here.
+    return 'painted text "$string" is 1.00:1 against its background — every '
+        'pixel inside its box is the ink colour ${_hex(foreground)}, so the '
+        'text is invisible. The WCAG 1.4.3 floor for ${fontSize}px'
+        '${isBold ? ' bold' : ''} text is $target:1. '
+        'Painted by:\n      '
+        '${element.debugGetCreatorChain(6)}';
   }
 
   // A translucent ink has no contrast ratio of its own; composite it over what
@@ -915,6 +1111,32 @@ String? _measureText(
       'the surface it is painted on measures ${_hex(background)}. '
       'Painted by:\n      '
       '${element.debugGetCreatorChain(6)}';
+}
+
+/// The product of every `Opacity`/`AnimatedOpacity`/`FadeTransition` factor
+/// between [box] and the root.
+///
+/// `RenderOpacity` carries a plain `double`; `RenderAnimatedOpacity` (what
+/// `AnimatedOpacity` and `FadeTransition` build) carries an `Animation`, read
+/// at its settled value — every surface this oracle measures has been through
+/// `pumpAndSettle`.
+///
+/// APPROXIMATION, stated because it is one: when the opacity layer covers the
+/// paragraph AND the surface behind it, the measured background is already
+/// faded, so blending a faded ink over it double-counts the far side of the
+/// blend slightly. It is a far smaller error than ignoring paint-time opacity
+/// altogether, which reports the author's token pair for a glyph that is not
+/// on the screen in that colour.
+double _ancestorPaintOpacity(RenderObject box) {
+  double factor = 1.0;
+  for (RenderObject? node = box.parent; node != null; node = node.parent) {
+    if (node is RenderOpacity) {
+      factor *= node.opacity;
+    } else if (node is RenderAnimatedOpacity) {
+      factor *= node.opacity.value;
+    }
+  }
+  return factor;
 }
 
 /// The colour a paragraph is painted ON: the most frequent colour in its box

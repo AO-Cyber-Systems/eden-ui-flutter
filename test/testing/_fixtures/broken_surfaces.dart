@@ -480,3 +480,330 @@ Widget excludedBadgeText() {
     ),
   );
 }
+
+/// DEFECT 9 — a control that announces `button: true`, declares exactly ONE
+/// tap action, and is made untappable by [AbsorbPointer] rather than by
+/// [IgnorePointer].
+///
+/// The SAME false green as [unreachableButton], one widget over, and the one
+/// the reachability arm's own message named as a cause it detects while the
+/// implementation did not. Measured mechanism:
+///
+///   * `RenderAbsorbPointer.hitTest` returns `absorbing ? size.contains(...)`
+///     — TRUE without adding itself or anything below it to the hit path. The
+///     enclosing `RenderSemanticsAnnotations` therefore still adds ITSELF, so
+///     a check that only asks "is the owner in the path?" passes; and
+///   * `describeSemanticsConfiguration` sets `isBlockingUserActions`, which
+///     strips the inner `GestureDetector`'s implicit tap route, so the count
+///     reads a healthy 1.
+///
+/// A real finger gets nothing.
+///
+/// Rule violated: "a control that announces an affordance must have exactly
+/// one tap route" (unreachable arm), via a DESCENDANT of the owner having to
+/// be in the hit path.
+Widget absorbedButton() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Semantics(
+        container: true,
+        identifier: 'fx-absorbed-button',
+        label: 'Confirm order',
+        button: true,
+        onTap: () {},
+        // FIX: change `AbsorbPointer(absorbing: true,` to `ExcludeSemantics(`.
+        // Both stop the inner GestureDetector publishing a second tap route;
+        // only ExcludeSemantics leaves it able to take the pointer.
+        child: AbsorbPointer(
+          absorbing: true,
+          child: GestureDetector(
+            onTap: () {},
+            behavior: HitTestBehavior.opaque,
+            child: const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child:
+                    Text('C', style: TextStyle(fontSize: 20, color: _legibleInk)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 10 — text painted in EXACTLY its background colour.
+///
+/// #1E1E1E on #1E1E1E is 1.00:1 — completely invisible, the maximum-severity
+/// WCAG 1.4.3 failure. The contrast rule used to read this as "the region was
+/// not resolvable": every pixel inside the paragraph's box is within
+/// rasteriser rounding of the ink, so the dominant-background search returned
+/// null and the paragraph was silently skipped. Backwards — the one
+/// measurement it can be most certain about is the one it declined to report.
+///
+/// Rule violated: the oracle's own painted-text contrast walk.
+Widget invisibleText() {
+  return const Center(
+    child: ColoredBox(
+      color: Color(0xFF1E1E1E),
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(
+          'Storage almost full',
+          // FIX: change this to `Color(0xFFF5F5F5)`.
+          style: TextStyle(fontSize: 16, color: Color(0xFF1E1E1E)),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 11 — conformant token colours made illegible by PAINT-TIME opacity.
+///
+/// #111111 on #FFFFFF is 18.9:1 and passes on the colour pair alone. Wrapped
+/// in `Opacity(0.3)` the glyphs composite to ~#B7B7B7, which is ~2.0:1 — a
+/// real 1.4.3 failure that reading the ink off `TextStyle.color` alone cannot
+/// see. `AnimatedOpacity` and `FadeTransition` are the same shape through
+/// `RenderAnimatedOpacity`; `lib/src` has 38 `Opacity(` sites.
+///
+/// Rule violated: the oracle's own painted-text contrast walk (ancestor
+/// opacity composed into the ink).
+Widget fadedText() {
+  return const Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        // FIX: change `opacity: 0.3` to `opacity: 1.0`.
+        child: Opacity(
+          opacity: 0.3,
+          child: Text(
+            'Storage almost full',
+            style: TextStyle(fontSize: 16, color: _legibleInk),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 12 — ink declared through `TextStyle.foreground` instead of
+/// `TextStyle.color`.
+///
+/// A `foreground` [Paint] leaves `TextStyle.color` NULL, so a rule that reads
+/// only `color` skipped this paragraph without a word. #2A2A2A on #1E1E1E is
+/// ~1.15:1.
+///
+/// Rule violated: the oracle's own painted-text contrast walk (solid
+/// `TextStyle.foreground` resolved as ink).
+Widget paintedForegroundText() {
+  return Center(
+    child: ColoredBox(
+      color: const Color(0xFF1E1E1E),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          'Storage almost full',
+          style: TextStyle(
+            fontSize: 16,
+            // FIX: change this to `Color(0xFFF5F5F5)`.
+            foreground: Paint()..color = const Color(0xFF2A2A2A),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 13 — an UNFLAGGED identified control whose one tap route no pointer
+/// can reach.
+///
+/// `InkWell`/`InkResponse` publish `Semantics(onTap: …)` with NO `button`
+/// flag, and that is the commonest interactive shape in a consumer screen. The
+/// liveness rule used to run only for a node announcing `button: true` or
+/// `link: true`, so this control — identified, tappable, and completely dead —
+/// was checked by NEITHER arm.
+///
+/// [IgnorePointer] both blocks the subtree's hit test and strips the inner
+/// `GestureDetector`'s implicit route, so the count reads a healthy 1 on a
+/// node that announces no affordance at all.
+///
+/// Rule violated: "an identified control that declares a tap route must be
+/// reachable by a pointer", regardless of which flags it announces.
+Widget unreachableUnflaggedControl() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Semantics(
+        container: true,
+        identifier: 'fx-unflagged-row',
+        label: 'Row 3',
+        // Deliberately NO `button: true` — this is what InkWell publishes.
+        onTap: () {},
+        // FIX: change `IgnorePointer` to `ExcludeSemantics`.
+        child: IgnorePointer(
+          child: GestureDetector(
+            onTap: () {},
+            behavior: HitTestBehavior.opaque,
+            child: const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child:
+                    Text('R', style: TextStyle(fontSize: 20, color: _legibleInk)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// NOT A DEFECT — the differential control for [unreachableUnflaggedControl].
+///
+/// The same unflagged, identified, tappable shape with NOTHING between the
+/// node and its content. Widening the liveness rule to every identified node
+/// that declares a tap route must leave this green, or the rule is not a rule
+/// but a ban on `InkWell`.
+///
+/// There is no `FIX:` line.
+Widget reachableUnflaggedControl() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: Semantics(
+        container: true,
+        identifier: 'fx-live-row',
+        label: 'Row 4',
+        onTap: () {},
+        child: ExcludeSemantics(
+          child: GestureDetector(
+            onTap: () {},
+            behavior: HitTestBehavior.opaque,
+            child: const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child:
+                    Text('L', style: TextStyle(fontSize: 20, color: _legibleInk)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// NOT A DEFECT — a 30-row `ListView` in a 300px viewport.
+///
+/// Every row is correct: identified, labelled, 400x48, with an OPAQUE gesture
+/// surface filling it (the shape `EdenMobileLayout._navRow` uses — one
+/// semantics node over an `ExcludeSemantics`'d detector). Only six rows fit;
+/// Flutter builds a few more inside the cache extent and publishes them with
+/// `isHidden: true`.
+///
+/// Those hidden rows carry identifiers and tap routes, and no pointer can
+/// reach them — because no user can see them. The stock
+/// `MinimumTapTargetGuideline` and `LabeledTapTargetGuideline` both skip
+/// nodes flagged `isHidden`/`isInvisible`/`isMergedIntoParent`; this oracle's
+/// own walks did not, so a correct list reported one "inert to a real tap"
+/// violation per off-screen row. Measured on this fixture: FIVE false
+/// accusations on a screen with nothing wrong with it.
+///
+/// THAT is the pressure that gets an oracle switched off — or gets identifier
+/// sets dumped into `allowOverlap`, which is its own defect (see
+/// [twoOverlapPairs]).
+///
+/// There is no `FIX:` line — a rule that reddens an off-screen row is the
+/// wrong rule.
+Widget scrolledListRows() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: SizedBox(
+        width: 400,
+        height: 300,
+        child: ListView.builder(
+          itemCount: 30,
+          itemExtent: 48,
+          itemBuilder: (BuildContext context, int i) => Semantics(
+            container: true,
+            identifier: 'fx-row-$i',
+            label: 'Row $i',
+            button: true,
+            onTap: () {},
+            child: ExcludeSemantics(
+              child: GestureDetector(
+                onTap: () {},
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  height: 48,
+                  child: Center(
+                    child: Text(
+                      'Row $i',
+                      style: const TextStyle(fontSize: 14, color: _legibleInk),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// DEFECT 14 — one control overlapping TWO others.
+///
+/// `fx-ov-a` is a 200x48 strip at the origin; `fx-ov-b` and `fx-ov-c` are
+/// 48x48 controls at x=0 and x=140, both inside it. `b` and `c` do not touch
+/// each other. So the surface states exactly two overlapping PAIRS, (a,b) and
+/// (a,c), which is what makes it able to tell a per-pair exemption from a
+/// per-identifier one: exempting (a,b) must leave (a,c) reported.
+///
+/// There is no single `FIX:` line — the fixture exists to be run twice, once
+/// with `allowOverlap: {}` and once with `allowOverlap: {('fx-ov-a',
+/// 'fx-ov-b')}`.
+Widget twoOverlapPairs() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: SizedBox(
+        width: 200,
+        height: 100,
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              left: 0,
+              top: 0,
+              child: Semantics(
+                container: true,
+                identifier: 'fx-ov-a',
+                label: 'Row',
+                button: true,
+                onTap: () {},
+                child: const SizedBox(
+                  width: 200,
+                  height: 48,
+                  child: Center(
+                    child: Text('Row',
+                        style: TextStyle(fontSize: 14, color: _legibleInk)),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(left: 0, top: 0, child: _control('fx-ov-b', 'Badge', 'B')),
+            Positioned(
+                left: 140, top: 0, child: _control('fx-ov-c', 'Close', 'X')),
+          ],
+        ),
+      ),
+    ),
+  );
+}
