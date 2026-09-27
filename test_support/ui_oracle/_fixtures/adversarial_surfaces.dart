@@ -528,3 +528,173 @@ Widget throwingBuild() {
     ),
   );
 }
+
+// -----------------------------------------------------------------------------
+// UNREACHABLE — the shapes a HIT TEST cannot decide
+// -----------------------------------------------------------------------------
+//
+// THE LIMIT THESE THREE MAKE EXECUTABLE. `Semantics(onTap:)` is an
+// ACCESSIBILITY declaration. It creates no pointer handler, and nothing in
+// the render tree says which render object — if any — implements it. So
+// "does a finger take this control's route?" has no answer available to
+// `_pointerReaches`, which can only observe whether SOMETHING inside the
+// control took the hit.
+//
+// The rows below are therefore `notCaught`, and their independent proof is
+// not a pixel reading but a REAL TAP: `tester.tapAt` at the rect's centre,
+// and the control's own callback does not fire. That is the strongest proof
+// available for this defect class, and it turns red the day the oracle
+// learns to report it.
+//
+// [advTapFired] is module-level because a `CatalogueRow.fixture` is a
+// `Widget Function()` with nowhere to hand a flag back. Every builder below
+// resets it, so a proof reads the tap that its own row just performed.
+bool advTapFired = false;
+
+/// A row whose OWN tap surface is dead, with a LIVE control of its own under
+/// the centre.
+///
+/// `Stack` hit-tests `lastChild` first, so a pointer at the centre reaches
+/// the switch and never the row's `Positioned.fill` surface — which
+/// `IgnorePointer` has taken out of the hit test anyway. The row announces a
+/// button, declares exactly one tap route (`_countTapRoutes` stops at the
+/// switch's identifier), and no finger can activate it.
+///
+/// THERE IS NO FIX LINE, AND THAT IS MEASURED, not an omission. Swapping the
+/// `IgnorePointer` for `ExcludeSemantics` — the repair every other
+/// unreachable fixture in the repo carries — changes NOTHING here: `Stack`
+/// hit-tests `lastChild` first (`defaultHitTestChildren` walks backwards and
+/// stops at the first hit), so the switch keeps taking the centre and the
+/// row's `Positioned.fill` surface is never in the path either way. A row
+/// whose centre is occupied by another control cannot have a centre-tap route
+/// of its own; the repair is to move the switch off the centre or to drop the
+/// row's route, not to change a wrapper.
+///
+/// An earlier revision of this fixture (and of the rule) claimed the
+/// `ExcludeSemantics` swap produced a clean run. It was written as a comment
+/// and never executed. It does not.
+Widget deadRouteLiveInnerControl() {
+  advTapFired = false;
+  return _surfaceFrame(
+    Center(
+      child: SizedBox(
+        width: 240,
+        height: 48,
+        child: Semantics(
+          container: true,
+          identifier: 'adv-dead-route-row',
+          label: 'Notifications',
+          button: true,
+          onTap: () => advTapFired = true,
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: GestureDetector(
+                    onTap: () => advTapFired = true,
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+              Center(
+                child: Semantics(
+                  container: true,
+                  identifier: 'adv-dead-route-switch',
+                  label: 'Enabled',
+                  child: Switch(value: true, onChanged: (bool _) {}),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// The same dead row with a BARE `Text` under the centre instead of a
+/// control.
+///
+/// This is the shape that defeats every "what took the hit?" refinement:
+/// `RenderParagraph.hitTestSelf` returns true, so the paragraph IS in the
+/// path, it carries no identifier and advertises no tap, and the route count
+/// stays at 1. Announced as a button, one route, and completely dead.
+///
+/// Same measured caveat as above: `ExcludeSemantics` in place of the
+/// `IgnorePointer` does not repair it, because the `Text` is `lastChild` and
+/// takes the centre hit first. Putting the tap surface ON TOP does repair it,
+/// and that is the mutation this row's proof was verified against.
+Widget deadRouteBareText() {
+  advTapFired = false;
+  return _surfaceFrame(
+    Center(
+      child: SizedBox(
+        width: 240,
+        height: 48,
+        child: Semantics(
+          container: true,
+          identifier: 'adv-dead-route-text',
+          label: 'Notifications',
+          button: true,
+          onTap: () => advTapFired = true,
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: GestureDetector(
+                    onTap: () => advTapFired = true,
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+              const Center(
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 14, color: _legibleInk),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// THE ONE THAT INDICTS THE LANE'S OWN BASELINE: an accessibility-only tap
+/// route, with no gesture handler anywhere in the subtree.
+///
+/// This is [_liveButton]'s shape exactly — `Semantics(button: true, onTap:) >
+/// SizedBox > Center > Text` — which the differential control at the top of
+/// this file calls "genuinely live". It is not: `tester.tapAt` at its centre
+/// does not fire its `onTap`, because nothing under it handles a pointer. It
+/// passes `_pointerReaches` only because `RenderParagraph` hit-tests itself.
+///
+/// So "reachable", as this oracle measures it, means "something inside took
+/// the hit" and never "a finger works". That is why the arm's message was
+/// reworded, and why this row exists rather than a comment saying the same
+/// thing.
+Widget accessibilityOnlyTapRoute() {
+  advTapFired = false;
+  return _surfaceFrame(
+    Center(
+      child: Semantics(
+        container: true,
+        identifier: 'adv-a11y-only-route',
+        label: 'Go',
+        button: true,
+        onTap: () => advTapFired = true,
+        child: const SizedBox(
+          width: 60,
+          height: 60,
+          child: Center(
+            child: Text('Go',
+                style: TextStyle(fontSize: 20, color: _legibleInk)),
+          ),
+        ),
+      ),
+    ),
+  );
+}

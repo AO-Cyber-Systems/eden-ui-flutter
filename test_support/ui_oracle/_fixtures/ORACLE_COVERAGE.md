@@ -11,8 +11,8 @@ added, deleted or reworded there changes this table on the next run.
 
 - **12** violations `expectUiSane` can emit, derived from its source.
 - **7** shapes caught, with a fixture in this lane.
-- **11** shapes caught, fixtured in the review-findings lane.
-- **9** shapes NOT CAUGHT — each one proved broken on the frame and silent in the oracle.
+- **10** shapes caught, fixtured in the review-findings lane.
+- **12** shapes NOT CAUGHT — each one proved broken on the frame and silent in the oracle.
 - **1** check with no fixture anywhere.
 - **2** differential rows: shapes that must produce NO violation.
 
@@ -47,7 +47,6 @@ target-size floor, covered by another control, or dead to the hit test.
 | `overlapping-identified-controls` | unreachable | `_overlapViolations#controls-and-overlap-is-is-they` | `broken_surfaces.dart#overlappingControls` | not measured here — the fix lane owns the fixture |
 | `two-tap-routes-on-one-control` | unreachable | `_tapRouteViolations#control-declares-tap-actions-its-own` | `broken_surfaces.dart#doubleTapAction` | not measured here — the fix lane owns the fixture |
 | `absorb-pointer-path` | unreachable | `_tapRouteViolations#control-announces-itself-as-and-declares` | `broken_surfaces.dart#absorbedButton` | not measured here — the fix lane owns the fixture |
-| `dead-route-live-inner-control` | unreachable | `_tapRouteViolations#control-announces-itself-as-and-declares` | `broken_surfaces.dart#deadRouteLiveInnerControl` | not measured here — the fix lane owns the fixture |
 | `inkwell-unflagged-tap` | unreachable | `_tapRouteViolations#control-declares-a-tap-action-but` | `broken_surfaces.dart#unreachableUnflaggedControl` | not measured here — the fix lane owns the fixture |
 | `ink-equals-background` | unreadable | `_measureText#painted-text-is-1-00-1` | `broken_surfaces.dart#invisibleText` | not measured here — the fix lane owns the fixture |
 | `opacity-faded-ink` | unreadable | `_measureText#painted-text-is-1-against-its` | `broken_surfaces.dart#fadedText` | not measured here — the fix lane owns the fixture |
@@ -64,6 +63,9 @@ target-size floor, covered by another control, or dead to the hit test.
 | `glyphs-clipped-out-of-their-own-box` | unreadable | **NOT CAUGHT** | `painted-ink-not-measured` |
 | `foreground-paint-carrying-a-shader` | unreadable | **NOT CAUGHT** | `unresolvable-ink-is-silence` |
 | `low-contrast-span-in-a-rich-paragraph` | unreadable | **NOT CAUGHT** | `text-rich-spans-unmeasured` |
+| `dead-route-live-inner-control` | unreachable | **NOT CAUGHT** | `a11y-route-is-not-a-finger` |
+| `dead-route-bare-text-at-the-centre` | unreachable | **NOT CAUGHT** | `a11y-route-is-not-a-finger` |
+| `accessibility-only-tap-route` | unreachable | **NOT CAUGHT** | `a11y-route-is-not-a-finger` |
 | `zero-size-ancestor` | unreachable | **NOT CAUGHT** | `removed-control-out-of-contract` |
 | `clipped-entirely-out-by-an-ancestor` | unreachable | **NOT CAUGHT** | `removed-control-out-of-contract` |
 | `offstage` | unreachable | **NOT CAUGHT** | `removed-control-out-of-contract` |
@@ -87,6 +89,10 @@ Text.rich has no `data`, so the walk skips it and a low-contrast span inside a r
 
 A control collapsed to zero size, clipped entirely out, or placed behind Offstage publishes NO presented semantics node and paints NO pixels. There is nothing on the surface for a surface-level oracle to measure, and expectUiSane takes no list of what SHOULD be there. These are catchable only against a declared expectation — the story manifest or the golden diff — and naming them here is the point: a green expectUiSane says nothing about whether the screen still has its buttons.
 
+### `a11y-route-is-not-a-finger`
+
+A tap route declared with Semantics(onTap:) creates no pointer handler, and nothing in the render tree says which render object — if any — implements it. `_pointerReaches` can therefore only observe whether SOMETHING inside the control took the hit, never whether a finger would take the ROUTE. Measured: the lane's own differential control, `_liveButton`, is pointer-inert — tester.tapAt at its centre does not fire its onTap — and passes. A rule that tried to close this by asking WHAT took the hit was reverted in round 3: it falsely accused an all-live row with an identified child at its centre (Stack hit-tests lastChild first, so the child takes the centre and the row's own live surface is never in the path) and still missed the bare-Text shape. Closing it honestly means deciding whether an accessibility-only tap route is a defect at all — a product decision with a wide blast radius, since the clean fixture and every unreachable row are built on that shape — not a smarter hit-test walk.
+
 ### `guideline-exception-unfixturable`
 
 The drain that re-reports an exception raised while the stock accessibility guidelines run. Provoking it in-process means breaking the font bootstrap or the guideline machinery for the whole file, which would make every other test in it meaningless. Left with no fixture DELIBERATELY, and named here so the table does not imply coverage it does not have.
@@ -101,7 +107,6 @@ this repo, so a row pointing at "finding 3" would point at a list that does not 
 - **`opacity-faded-ink`** — Ancestor Opacity/AnimatedOpacity/FadeTransition factors composed into the ink's alpha, so a faded caption is measured as painted rather than as authored.
 - **`inkwell-unflagged-tap`** — InkWell publishes Semantics(onTap:) with no button flag; reachability is asserted for every identified node that declares a tap route, flagged or not.
 - **`hidden-node-viewport`** — A ListView's off-screen rows publish real identifiers and real tap routes. Excluding non-presented nodes is what stops a correct 30-row list reporting one false accusation per off-screen row.
-- **`dead-route-live-inner-control`** — A row whose OWN tap surface is dead, with a live control of its own (a switch) under the middle of its rect. "Some strict descendant is in the hit path" was true and the row passed for a reason the rule does not claim; the hit must reach the owner without crossing another IDENTIFIED control — the same boundary _countTapRoutes draws one rule over.
 
 ## Every shape, in full
 
@@ -161,6 +166,18 @@ TextStyle.foreground nulls out `color`, and a paint carrying a shader has no col
 
 Text.rich carries no `data`, so the paragraph is skipped whole and a 1.06:1 span inside it is never measured.
 
+### `dead-route-live-inner-control` — **NOT CAUGHT**
+
+The row's own tap surface is inside an IgnorePointer and a live switch sits under its centre. Stack hit-tests lastChild first, so the switch takes the hit, something inside the owner IS in the path, and the row reads reachable.
+
+### `dead-route-bare-text-at-the-centre` — **NOT CAUGHT**
+
+The same dead row with a bare Text under the centre. RenderParagraph hit-tests itself, carries no identifier and advertises no tap — the shape that defeats every "what took the hit?" refinement while keeping the route count at 1.
+
+### `accessibility-only-tap-route` — **NOT CAUGHT**
+
+THE LANE'S OWN BASELINE. Semantics(button: true, onTap:) over a Text, with no gesture handler anywhere — the shape of _liveButton, which this file calls "genuinely live". A real tap does not fire its onTap, and the oracle says nothing.
+
 ### `zero-size-ancestor` — **NOT CAUGHT**
 
 SizedBox.shrink collapses the control to 0x0. It publishes no presented node and paints no pixel, so there is nothing on the surface to measure.
@@ -192,10 +209,6 @@ A tap fires every route the node and its unidentified descendants advertise.
 ### `absorb-pointer-path` — caught (fix lane)
 
 See the ownedByFixLane entry. Not fixtured here: the fix lane owns it.
-
-### `dead-route-live-inner-control` — caught (fix lane)
-
-See the ownedByFixLane entry. Not fixtured here: the fix lane owns it, and it needs an allowOverlap pair this lane's runner does not pass.
 
 ### `inkwell-unflagged-tap` — caught (fix lane)
 

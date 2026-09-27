@@ -192,13 +192,36 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
     );
   }
 
-  // SEED: the functions expectUiSane folds into its aggregated report. Any
-  // check that is not reachable from here cannot produce a violation, so
-  // starting anywhere else would over-count.
-  final Set<String> reached = RegExp(
-    r'violations\.add(?:All)?\(\s*(?:await\s+)?(_[A-Za-z0-9_]+)\(',
-  ).allMatches(entry.join('\n')).map((RegExpMatch m) => m.group(1)!).toSet();
-  if (reached.isEmpty) {
+  // SEED: `expectUiSane` ITSELF, plus everything it calls.
+  //
+  // THREE HOLES THIS CLOSED, all of them the same shape — a check the parser
+  // could not see produces no row, so no orphan, so a clean run:
+  //
+  //   1. The seed used to be `violations.add(_f(` only, so `expectUiSane`'s
+  //      OWN BODY was in no function's scan. A check written inline there —
+  //      `if (bad) violations.add('...')` — was invisible to BOTH directions
+  //      of this parser. It is now scanned like any other function.
+  //   2. That same regex missed `final x = await _f(t); violations.addAll(x);`
+  //      — an aggregation through a local. The seed is now every call in
+  //      `expectUiSane`'s body that resolves to a function declared in this
+  //      file, which subsumes the shape whatever the plumbing.
+  //   3. Both the seed and the walk required a LEADING UNDERSCORE, so a
+  //      public helper was never traversed. The `bodies.containsKey` guard is
+  //      what keeps this honest — only top-level declarations in this file
+  //      are followed — so the underscore was never load-bearing.
+  //
+  // Over-counting is the SAFE direction here: a function reached that emits
+  // no message contributes nothing, while one not reached hides whatever it
+  // emits.
+  final RegExp anyCall = RegExp(r'\b([A-Za-z_][A-Za-z0-9_]*)\s*\(');
+  final Set<String> reached = <String>{'expectUiSane'};
+  for (final RegExpMatch call in anyCall.allMatches(entry.join('\n'))) {
+    final String callee = call.group(1)!;
+    if (bodies.containsKey(callee)) {
+      reached.add(callee);
+    }
+  }
+  if (reached.length < 2) {
     throw StateError(
       'OracleCheckInventory: expectUiSane aggregates no check functions. '
       'Either the aggregation moved or the parser stopped matching it.',
@@ -212,8 +235,7 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
     if (body == null) {
       continue;
     }
-    for (final RegExpMatch call
-        in RegExp(r'\b(_[A-Za-z0-9_]+)\(').allMatches(body.join('\n'))) {
+    for (final RegExpMatch call in anyCall.allMatches(body.join('\n'))) {
       final String callee = call.group(1)!;
       if (bodies.containsKey(callee) && reached.add(callee)) {
         queue.add(callee);

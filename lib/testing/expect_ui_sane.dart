@@ -525,12 +525,14 @@ List<String> _tapRouteViolations(
           out.add(
             'control "$identifier" announces itself as $affordance and '
             'declares a tap action, but a pointer dropped in the middle of '
-            'the rect it publishes never reaches it — it is inert to a '
-            'real tap. Something between the node and its content refuses the '
-            'hit test (IgnorePointer/AbsorbPointer, a zero-size or offset '
-            'child, a sibling painted over it). ExcludeSemantics is the '
-            'wrapper that silences a duplicate route WITHOUT taking the '
-            'pointer away.',
+            'the rect it publishes descends into NOTHING inside the control — '
+            'no part of its subtree takes the hit. Something between the node '
+            'and its content refuses the hit test '
+            '(IgnorePointer/AbsorbPointer, a zero-size or offset child, a '
+            'sibling painted over it). ExcludeSemantics is the wrapper that '
+            'silences a duplicate route WITHOUT taking the pointer away. '
+            'NOTE: the converse does not hold — this rule cannot tell you a '
+            'finger WOULD work, only that none can get in.',
           );
         }
       } else if (routes == 1 &&
@@ -551,11 +553,11 @@ List<String> _tapRouteViolations(
         // widening is pinned against.
         out.add(
           'control "$identifier" declares a tap action, but a pointer dropped '
-          'in the middle of the rect it publishes never reaches it — it is '
-          'inert to a real tap. It announces no button or link flag, so a '
-          'screen reader offers it nothing either: the tap route is the only '
-          'affordance it has, and no pointer can take it. Something between '
-          'the node and its content refuses the hit test '
+          'in the middle of the rect it publishes descends into NOTHING '
+          'inside the control — no part of its subtree takes the hit. It '
+          'announces no button or link flag, so a screen reader offers it '
+          'nothing either: the tap route is the only affordance it has. '
+          'Something between the node and its content refuses the hit test '
           '(IgnorePointer/AbsorbPointer, a zero-size or offset child, a '
           'sibling painted over it).',
         );
@@ -675,81 +677,69 @@ bool _pointerReaches(
 /// reached as itself, so for those the old test still applies. Anything else
 /// would accuse a control whose own render object is the hit surface.
 ///
-/// WHY "A DESCENDANT" IS NOT ENOUGH EITHER, and what the second loop is for.
-/// "Some strict descendant took the pointer" is true of a row whose OWN tap
-/// surface is dead but which happens to have a live, unrelated control — a
-/// `Switch`, a text field — sitting under the middle of its rect. The rule
-/// then passes for a weaker reason than it claims: the pointer reached
-/// SOMETHING inside the row, but what it reached was the switch, and a finger
-/// there toggles the switch and never takes the row's route.
+/// WHAT THIS CANNOT DECIDE, and why it does not try. ROUND 3 OF THIS ARM.
 ///
-/// The boundary is the one [_countTapRoutes] already draws, one rule over: a
-/// descendant carrying its OWN IDENTIFIER is a separate control and owns its
-/// own routes. So a hit is evidence about THIS control only while the path
-/// from the hit target up to [owner] crosses no other identified control. An
-/// unidentified inner control does not need this arm and must not trigger it
-/// — an `InkWell` under `Semantics(identifier:)` is the commonest correct
-/// shape there is, and an unidentified inner node that advertises its own tap
-/// is already reported by the route-count arm (routes == 2), not by this one.
+/// A previous revision required that the walk from the hit target up to
+/// [owner] cross no OTHER identified control, on the reasoning that a hit
+/// landing inside a separate control is not evidence about this one. It was
+/// wrong in both directions and is reverted. Measured:
 ///
-/// The owner's own semantics node is read once and compared by identity, so
-/// that a descendant whose semantics MERGE into it answers the same node and
-/// is recognised as part of this control rather than as a separate one.
+///   * FALSE POSITIVE. An all-live row with an identified child at its
+///     centre — a settings row with a `Switch` in it — was reported inert.
+///     `Stack` hit-tests `lastChild` first, so the child takes the centre and
+///     the row's own live surface is never in the path. There is no exemption
+///     either: `allowOverlap` is read by `_overlapViolations`, not by this
+///     arm. The shape is already reported, correctly, as an overlap.
+///   * FALSE NEGATIVE ANYWAY. Swap that `Switch` for a bare `Text` and the
+///     rule went quiet again: `RenderParagraph` is in the path, carries no
+///     identifier and advertises no tap, so nothing blocked — on a row whose
+///     own route is dead.
+///
+/// THE REASON NO RULE HERE CAN DO BETTER. `Semantics(onTap:)` is an
+/// ACCESSIBILITY declaration. It creates no pointer handler, and nothing in
+/// the render tree says which render object — if any — implements it. The
+/// honest question "can a finger take THIS control's route?" therefore has no
+/// answer available from a hit test. It has an answer available from a real
+/// tap, and that answer is recorded in the catalogue rather than guessed at
+/// here: see `accessibilityOnlyTapRoute` and `deadRouteBareText` in
+/// `adversarial_surfaces.dart`, both `notCaught`, both proved by a tap that
+/// does not fire the callback.
+///
+/// MEASURED, AND THE REASON THIS ARM'S MESSAGE WAS REWORDED: the differential
+/// control the whole unreachable lane is built on — `_liveButton`, documented
+/// as "genuinely live" — is itself pointer-inert. `Semantics(button: true,
+/// onTap:) > SizedBox > Center > Text` has no gesture handler, and
+/// `tester.tapAt` at its centre does not fire its `onTap`. So "reachable"
+/// here has only ever meant "something inside this control takes the
+/// pointer", and the message now says that instead of claiming a finger
+/// works.
+///
+/// What IS sound, and what this returns false for: nothing inside the owner
+/// took the pointer at all. `IgnorePointer`, `AbsorbPointer`, a zero-size or
+/// offset child, a sibling painted over it — in every one of those no pointer
+/// descends into the control, and that is a fact a hit test can establish.
 bool _pathEntersOwner(HitTestResult result, RenderObject owner) {
-  final SemanticsNode? ownerNode = owner.debugSemantics;
-
-  // `HitTestResult.path` is DEEPEST FIRST: `RenderBox.hitTest` adds its
-  // children before itself. So the first entry that is at or inside [owner]
-  // is the render object the pointer actually landed on within this control,
-  // and it is the only one that can answer the question. Reading the whole
-  // path instead is how "a descendant is in the path" crept back in through
-  // the side door — every intermediate box between the real target and the
-  // owner (a `RenderStack`, a padding, a `RenderFlex`) is ALSO a strict
-  // descendant of the owner, so a loop that keeps looking always found one.
+  // EVERY entry, not the first one at-or-inside the owner. With
+  // `HitTestBehavior.translucent` the owner's own live surface can appear
+  // LATER in the same path than a child that also took the hit, and stopping
+  // at the first match reported a reachable control as inert.
   for (final HitTestEntry entry in result.path) {
     final Object target = entry.target;
-    if (target is! RenderObject) {
+    if (target is! RenderObject || identical(target, owner)) {
       continue;
     }
-    if (identical(target, owner)) {
-      // The pointer reached the owner without anything BELOW it taking the
-      // hit first. Only a LEAF owner — one with no render children — can be
-      // reached that way honestly; for anything else this is the
-      // `AbsorbPointer` shape, where the owner adds itself over a subtree
-      // that took nothing.
-      return !_hasRenderChildren(owner);
-    }
-    bool blocked = false;
-    for (RenderObject? ancestor = target;
+    for (RenderObject? ancestor = target.parent;
         ancestor != null;
         ancestor = ancestor.parent) {
       if (identical(ancestor, owner)) {
-        return !blocked;
-      }
-      if (!blocked && _isOtherIdentifiedControl(ancestor, ownerNode)) {
-        blocked = true;
+        return true;
       }
     }
-    // Not under [owner] at all — a sibling subtree painted at the same
-    // place. Keep looking for the entry that is.
   }
-  return false;
-}
-
-/// Whether [object] owns a presented semantics node that is a control in its
-/// own right — one carrying its own identifier — and is not [ownerNode].
-///
-/// `debugSemantics` is non-null only on the render object a node was built
-/// from, and a descendant merged into [ownerNode] answers that same node, so
-/// the identity test is what separates "part of this control" from "a
-/// different control inside it".
-bool _isOtherIdentifiedControl(RenderObject object, SemanticsNode? ownerNode) {
-  final SemanticsNode? node = object.debugSemantics;
-  if (node == null || identical(node, ownerNode)) {
+  if (_hasRenderChildren(owner)) {
     return false;
   }
-  return node.getSemanticsData().identifier.isNotEmpty &&
-      isPresentedToUser(node);
+  return result.path.any((HitTestEntry e) => identical(e.target, owner));
 }
 
 /// Whether [owner] has any child render object.
@@ -922,12 +912,16 @@ Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
   final List<Rect> disabledRegions = _disabledRegions(tester);
   final _PaintOrder paintOrder = _PaintOrder.of(tester);
 
-  // HOISTED, and it must stay hoisted. `_textElements` walks the whole pumped
-  // tree and answers the same list whatever view is being rasterised — none
-  // of its three inputs is per-view. Computing it inside the loop measured
-  // every `Text` against every view's frame on a multi-view binding, which is
-  // both N times the work and N-1 measurements of a paragraph against a frame
-  // it was never painted into.
+  // THE WALK IS VIEW-INDEPENDENT; THE MEASUREMENT IS NOT. `_textElements`
+  // answers the same list whatever view is being rasterised, so it runs once.
+  // The MEASUREMENT then has to be partitioned, and an earlier revision only
+  // hoisted the walk: every paragraph was still measured against every view's
+  // frame, so on a two-view binding each violation was reported twice and one
+  // of the two readings was taken from a frame the paragraph was never
+  // painted into.
+  //
+  // Each element is therefore assigned to the `RenderView` it actually hangs
+  // under, and measured against that view's capture and no other.
   final List<Element> candidates = _textElements(
     tester,
     disabledRegions,
@@ -936,8 +930,20 @@ Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
   if (candidates.isEmpty) {
     return out;
   }
+  final Map<RenderView, List<Element>> byView = <RenderView, List<Element>>{};
+  for (final Element element in candidates) {
+    final RenderView? view = _owningRenderView(element.renderObject);
+    if (view == null) {
+      continue;
+    }
+    byView.putIfAbsent(view, () => <Element>[]).add(element);
+  }
 
   for (final RenderView renderView in tester.binding.renderViews) {
+    final List<Element>? inThisView = byView[renderView];
+    if (inThisView == null || inThisView.isEmpty) {
+      continue;
+    }
     // One capture per view, not one per element: `toImage` is the expensive
     // part and every element reads the same frame.
     final OffsetLayer layer = renderView.debugLayer! as OffsetLayer;
@@ -963,7 +969,7 @@ Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
       continue;
     }
 
-    for (final Element element in candidates) {
+    for (final Element element in inThisView) {
       final String? violation = _measureText(
         element,
         data,
@@ -977,6 +983,21 @@ Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
   }
 
   return out;
+}
+
+/// The [RenderView] [object] hangs under, or null when it is not attached to
+/// one.
+///
+/// This is what partitions the contrast measurement by view: a paragraph must
+/// be read out of the frame it was painted into, and on a multi-view binding
+/// the two are not interchangeable.
+RenderView? _owningRenderView(RenderObject? object) {
+  for (RenderObject? node = object; node != null; node = node.parent) {
+    if (node is RenderView) {
+      return node;
+    }
+  }
+  return null;
 }
 
 /// Every `Text` element in the pumped tree that the stock guideline has NOT

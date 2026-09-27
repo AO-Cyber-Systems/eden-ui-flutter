@@ -134,7 +134,7 @@ void main() {
           reason: 'the report must NAME each dead row, not merely fail.',
         );
       }
-      expect(report, contains('inert to a real tap'));
+      expect(report, contains('no part of its subtree takes the hit'));
     },
   );
 

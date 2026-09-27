@@ -109,6 +109,7 @@ class CatalogueRow {
     this.legacyRoutesGt1,
     this.legacyOwnerInPath,
     this.proof,
+    this.allowOverlap = const <(String, String)>{},
   });
 
   /// Stable handle for this shape. The fix lane can adopt these slugs; the
@@ -153,6 +154,17 @@ class CatalogueRow {
 
   /// The independent proof, required on every `notCaught` row.
   final FrameProof? proof;
+
+  /// Overlap pairs this row's surface declares as deliberate.
+  ///
+  /// NOT AN ESCAPE HATCH FOR THE ROW — it is how a row about ONE defect keeps
+  /// a SECOND, correct report from drowning it. A control nested inside
+  /// another identified control overlaps it by construction, and
+  /// `_overlapViolations` says so; a row whose subject is the nesting's
+  /// effect on REACHABILITY has to exempt that pair or it can never assert
+  /// "found 1 violation", let alone "found none". Per pair, like the rule
+  /// itself: every other pair on the surface stays checked.
+  final Set<(String, String)> allowOverlap;
 }
 
 // -----------------------------------------------------------------------------
@@ -192,6 +204,23 @@ const Map<String, String> gaps = <String, String>{
           '— the story manifest or the golden diff — and naming them here is '
           'the point: a green expectUiSane says nothing about whether the '
           'screen still has its buttons.',
+  'a11y-route-is-not-a-finger':
+      'A tap route declared with Semantics(onTap:) creates no pointer '
+          'handler, and nothing in the render tree says which render object — '
+          'if any — implements it. `_pointerReaches` can therefore only '
+          'observe whether SOMETHING inside the control took the hit, never '
+          'whether a finger would take the ROUTE. Measured: the lane\'s own '
+          'differential control, `_liveButton`, is pointer-inert — '
+          'tester.tapAt at its centre does not fire its onTap — and passes. '
+          'A rule that tried to close this by asking WHAT took the hit was '
+          'reverted in round 3: it falsely accused an all-live row with an '
+          'identified child at its centre (Stack hit-tests lastChild first, '
+          'so the child takes the centre and the row\'s own live surface is '
+          'never in the path) and still missed the bare-Text shape. Closing '
+          'it honestly means deciding whether an accessibility-only tap route '
+          'is a defect at all — a product decision with a wide blast radius, '
+          'since the clean fixture and every unreachable row are built on '
+          'that shape — not a smarter hit-test walk.',
   'guideline-exception-unfixturable':
       'The drain that re-reports an exception raised while the stock '
           'accessibility guidelines run. Provoking it in-process means '
@@ -226,13 +255,6 @@ const Map<String, String> ownedByFixLane = <String, String>{
       "A ListView's off-screen rows publish real identifiers and real tap "
           'routes. Excluding non-presented nodes is what stops a correct '
           '30-row list reporting one false accusation per off-screen row.',
-  'dead-route-live-inner-control':
-      'A row whose OWN tap surface is dead, with a live control of its own '
-          '(a switch) under the middle of its rect. "Some strict descendant '
-          'is in the hit path" was true and the row passed for a reason the '
-          'rule does not claim; the hit must reach the owner without '
-          'crossing another IDENTIFIED control — the same boundary '
-          '_countTapRoutes draws one rule over.',
 };
 
 // -----------------------------------------------------------------------------
@@ -420,6 +442,50 @@ final List<CatalogueRow> catalogue = <CatalogueRow>[
     proof: _provesSpanIsOnTheFrameAndIllegible,
   ),
 
+  // ---- UNREACHABLE, NOT caught: the hit test cannot decide -----------------
+  CatalogueRow(
+    shape: 'dead-route-live-inner-control',
+    defectClass: DefectClass.unreachable,
+    status: RowStatus.notCaught,
+    summary: "The row's own tap surface is inside an IgnorePointer and a live "
+        'switch sits under its centre. Stack hit-tests lastChild first, so '
+        'the switch takes the hit, something inside the owner IS in the path, '
+        'and the row reads reachable.',
+    fixture: deadRouteLiveInnerControl,
+    gap: 'a11y-route-is-not-a-finger',
+    proof: _provesTapDoesNotFire('adv-dead-route-row'),
+    // The nesting is reported — correctly — by the OVERLAP rule, which is a
+    // different defect and a different message. Exempting that one pair is
+    // what lets this row be about reachability at all.
+    allowOverlap: const <(String, String)>{
+      ('adv-dead-route-row', 'adv-dead-route-switch'),
+    },
+  ),
+  CatalogueRow(
+    shape: 'dead-route-bare-text-at-the-centre',
+    defectClass: DefectClass.unreachable,
+    status: RowStatus.notCaught,
+    summary: 'The same dead row with a bare Text under the centre. '
+        'RenderParagraph hit-tests itself, carries no identifier and '
+        'advertises no tap — the shape that defeats every "what took the '
+        'hit?" refinement while keeping the route count at 1.',
+    fixture: deadRouteBareText,
+    gap: 'a11y-route-is-not-a-finger',
+    proof: _provesTapDoesNotFire('adv-dead-route-text'),
+  ),
+  CatalogueRow(
+    shape: 'accessibility-only-tap-route',
+    defectClass: DefectClass.unreachable,
+    status: RowStatus.notCaught,
+    summary: "THE LANE'S OWN BASELINE. Semantics(button: true, onTap:) over a "
+        'Text, with no gesture handler anywhere — the shape of _liveButton, '
+        'which this file calls "genuinely live". A real tap does not fire '
+        'its onTap, and the oracle says nothing.',
+    fixture: accessibilityOnlyTapRoute,
+    gap: 'a11y-route-is-not-a-finger',
+    proof: _provesTapDoesNotFire('adv-a11y-only-route'),
+  ),
+
   // ---- UNREACHABLE by removal, NOT caught ----------------------------------
   CatalogueRow(
     shape: 'zero-size-ancestor',
@@ -504,16 +570,6 @@ final List<CatalogueRow> catalogue = <CatalogueRow>[
         'owns it.',
     checkId: '_tapRouteViolations#control-announces-itself-as-and-declares',
     externalFixture: 'absorbedButton',
-  ),
-  const CatalogueRow(
-    shape: 'dead-route-live-inner-control',
-    defectClass: DefectClass.unreachable,
-    status: RowStatus.caughtElsewhere,
-    summary: 'See the ownedByFixLane entry. Not fixtured here: the fix lane '
-        'owns it, and it needs an allowOverlap pair this lane\'s runner does '
-        'not pass.',
-    checkId: '_tapRouteViolations#control-announces-itself-as-and-declares',
-    externalFixture: 'deadRouteLiveInnerControl',
   ),
   const CatalogueRow(
     shape: 'inkwell-unflagged-tap',
@@ -640,6 +696,44 @@ Future<void> _provesSpanIsOnTheFrameAndIllegible(WidgetTester tester) async {
   );
 }
 
+/// Proves that a REAL TAP at the centre of [identifier]'s published rect does
+/// not fire the control's own callback.
+///
+/// THIS IS A STRONGER PROOF THAN THE FRAME READINGS ABOVE, and it has to be:
+/// the defect these rows describe is not visible on the frame at all. The
+/// control paints correctly, publishes a correct rect, announces a button and
+/// declares a route. The only thing wrong with it is that pressing it does
+/// nothing, and the only instrument that can see that is a press.
+///
+/// It also pins the PREMISE both ways: the rect has to exist and the tap has
+/// to land inside it, or a row could go quiet because the fixture stopped
+/// rendering rather than because the oracle stopped reporting.
+FrameProof _provesTapDoesNotFire(String identifier) {
+  return (WidgetTester tester) async {
+    final Rect rect = globalRectOf(tester, identifier);
+    final double ratio = tester.view.devicePixelRatio;
+    final Offset centre = rect.center / ratio;
+    expect(
+      advTapFired,
+      isFalse,
+      reason: 'the fixture reported a tap before this proof pressed '
+          'anything — the flag is not being reset',
+    );
+
+    await tester.tapAt(centre);
+    await tester.pump();
+
+    expect(
+      advTapFired,
+      isFalse,
+      reason: '"$identifier" IS reachable by a real tap now. Either the '
+          'fixture stopped demonstrating the defect, or the oracle has '
+          'learned to report this class and the row should be promoted to '
+          'caught — establish WHICH before touching this row.',
+    );
+  };
+}
+
 /// Proves the control carrying [identifier] has left the surface entirely —
 /// no presented semantics node — which is why the oracle has nothing to say.
 FrameProof _provesControlVanished(String identifier) {
@@ -662,9 +756,12 @@ FrameProof _provesControlVanished(String identifier) {
 // The run
 // -----------------------------------------------------------------------------
 
-Future<TestFailure?> _runOracle(WidgetTester tester) async {
+Future<TestFailure?> _runOracle(
+  WidgetTester tester, {
+  Set<(String, String)> allowOverlap = const <(String, String)>{},
+}) async {
   try {
-    await expectUiSane(tester);
+    await expectUiSane(tester, allowOverlap: allowOverlap);
     return null;
   } on TestFailure catch (failure) {
     return failure;
@@ -682,7 +779,8 @@ void main() {
       testWidgets('${row.shape} (${row.status.name})',
           (WidgetTester tester) async {
         await wrap(tester, row.fixture!());
-        final TestFailure? failure = await _runOracle(tester);
+        final TestFailure? failure =
+            await _runOracle(tester, allowOverlap: row.allowOverlap);
 
         switch (row.status) {
           case RowStatus.caught:
@@ -836,18 +934,24 @@ void main() {
       // list BY NAME rather than at a count. An unrecognised message site
       // fails here instead of being ignored.
       //
-      // THE ONE ENTRY. `_describeEscapedException` builds the "Offending
-      // widget(s):" tail of the overflow message through a ternary into a
-      // local, so the empty-culprits branch is a message fragment no opener
-      // can be sitting behind. It is part of the message of
-      // `_describeEscapedException#overflow-of-pixels-on-the-offending`,
-      // which the `render-overflow` row already accounts for — not a check of
-      // its own.
+      // THE TWO ENTRIES.
+      //
+      //   * `_describeEscapedException` builds the "Offending widget(s):"
+      //     tail of the overflow message through a ternary into a local, so
+      //     the empty-culprits branch is a fragment no opener can be sitting
+      //     behind. It belongs to
+      //     `_describeEscapedException#overflow-of-pixels-on-the-offending`,
+      //     which the `render-overflow` row accounts for.
+      //   * `expectUiSane`'s own aggregation HEADER. It is not a check — it
+      //     is the envelope every check's message is printed inside, and it
+      //     appears here only because `expectUiSane`'s body is now scanned
+      //     at all, which is the point of that change.
       expect(
         inventory.unattributedLiterals,
         <String>[
           '_describeEscapedException: the overflowing render object could '
               'not be located in the tree',
+          'expectUiSane: expectUiSane found * violation(s) on this surface:',
         ],
         reason: 'a message-shaped string in expect_ui_sane.dart is not '
             'accounted for by any recognised check site. Either it IS a '
@@ -859,7 +963,7 @@ void main() {
       );
     });
 
-    test('returned fragments rejected by the length floor are the known five',
+    test('returned fragments rejected by the length floor are the known six',
         () {
       // Each of these is a PHRASE substituted into somebody else's message,
       // not a violation:
@@ -867,13 +971,14 @@ void main() {
       //   ''    — `_stringOf`'s switch default: a widget that paints no
       //           string at all.
       //   '#*'  — `_hex`, which formats a colour for another message.
-      //   '*'   — `_describeEscapedException`'s per-culprit separator,
-      //           `'\n      $c'`, normalised.
+      //   '*'   — TWICE: `_describeEscapedException`'s per-culprit
+      //           separator `'\n      $c'`, and `expectUiSane`'s own
+      //           `'  - $v'` bullet, both normalised to the interpolation.
       //   'a button' / 'a link' — `_announcedAffordance`, the noun phrase the
       //           tap-route messages interpolate.
       expect(
         inventory.rejectedFragments,
-        <String>['', '#*', '*', 'a button', 'a link'],
+        <String>['', '#*', '*', '*', 'a button', 'a link'],
         reason: 'a short returned literal appeared in a reachable check '
             'function. If it is a phrase substituted into another message, '
             'add it here. If it is a VIOLATION message, the length floor in '

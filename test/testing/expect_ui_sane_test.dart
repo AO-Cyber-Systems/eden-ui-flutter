@@ -322,7 +322,8 @@ void main() {
     // RED (broken fixture): exit 1 —
     //   control "fx-unreachable-button" announces itself as a button and
     //   declares a tap action, but a pointer dropped in the middle of the rect
-    //   it publishes never reaches it - it is inert to a real tap.
+    //   it publishes descends into NOTHING inside the control - no part of
+    //   its subtree takes the hit.
     // GREEN (IgnorePointer -> ExcludeSemantics): exit 0.
     await expectLater(
       () => expectUiSane(tester, inputModality: EdenInputModality.touch),
@@ -332,8 +333,8 @@ void main() {
           'message',
           allOf(
             contains('"fx-unreachable-button"'),
-            contains('never reaches it'),
-            contains('inert to a real tap'),
+            contains('descends into NOTHING inside the control'),
+            contains('no part of its subtree takes the hit'),
           ),
         ),
       ),
@@ -402,8 +403,8 @@ void main() {
           'message',
           allOf(
             contains('"fx-absorbed-button"'),
-            contains('never reaches it'),
-            contains('inert to a real tap'),
+            contains('descends into NOTHING inside the control'),
+            contains('no part of its subtree takes the hit'),
           ),
         ),
       ),
@@ -502,8 +503,8 @@ void main() {
           'message',
           allOf(
             contains('"fx-unflagged-row"'),
-            contains('never reaches it'),
-            contains('inert to a real tap'),
+            contains('descends into NOTHING inside the control'),
+            contains('no part of its subtree takes the hit'),
           ),
         ),
       ),
@@ -532,7 +533,7 @@ void main() {
     // exit 1 — expectUiSane found 5 violation(s) on this surface:
     //   control "fx-row-7" announces itself as a button and declares a tap
     //   action, but a pointer dropped in the middle of the rect it publishes
-    //   never reaches it ... (and fx-row-8, -9, -10, -11)
+    //   descends into NOTHING inside the control ... (and -8, -9, -10, -11)
     // GREEN (exclusion applied): exit 0, with rows 0-6 still measured.
     await pumpSurface(tester, scrolledListRows());
     await expectUiSane(tester, inputModality: EdenInputModality.pointer);
@@ -585,50 +586,25 @@ void main() {
   });
 
   testWidgets(
-      'case 22: a control whose OWN tap route is dead is named even when a '
-      'live unrelated control sits under its centre',
-      (WidgetTester tester) async {
-    await pumpSurface(tester, deadRouteLiveInnerControl());
-    // THE THIRD FALSE-GREEN OF THIS FAMILY, and the one that made the
-    // reachability rule pass for a weaker reason than it claimed. The arm
-    // asked whether ANY strict descendant of the owner was in the hit path.
-    // The switch IS a descendant, so a row announced as a button, declaring
-    // one tap route and untouchable through it, reported nothing. A finger
-    // in the middle of this row toggles the switch.
+      'case 23: an all-live row with an identified control at its centre '
+      'stays GREEN', (WidgetTester tester) async {
+    // THE EXECUTED GREEN, not a described one. Round 2 of the reachability
+    // arm required the hit path to reach the owner without crossing another
+    // identified control; it reddened this row, where nothing is dead. The
+    // arm is reverted, and this case is what keeps it reverted: it fails the
+    // moment anyone reintroduces a rule that reasons about WHICH descendant
+    // took the hit.
     //
-    // `allowOverlap` exempts the row/switch pair ONLY: a switch inside its
-    // row legitimately overlaps it, and that is not the defect here. Every
-    // other pair on the surface stays checked.
-    //
-    // RED (before the "no other identified control in the way" requirement):
-    // exit 0 — zero violations on a row no finger can activate.
-    // GREEN (fixture's IgnorePointer -> ExcludeSemantics): exit 0 for the
-    // right reason — the row's own surface takes the pointer again
-    // everywhere the switch does not.
-    await expectLater(
-      () => expectUiSane(
-        tester,
-        inputModality: EdenInputModality.pointer,
-        allowOverlap: const <(String, String)>{
-          ('fx-dead-route-row', 'fx-dead-route-switch'),
-        },
-      ),
-      throwsA(
-        isA<TestFailure>().having(
-          (TestFailure f) => f.message,
-          'message',
-          allOf(
-            contains('found 1 violation(s)'),
-            contains('"fx-dead-route-row"'),
-            contains('never reaches it'),
-            contains('inert to a real tap'),
-            // The SWITCH must not be accused. It is reachable, and a rule
-            // that reddens the live control inside a dead row is a rule that
-            // gets switched off.
-            isNot(contains('"fx-dead-route-switch"')),
-          ),
-        ),
-      ),
+    // `allowOverlap` exempts the row/switch pair ONLY. The nesting is
+    // genuinely reported by the overlap rule — correctly, and with a
+    // different message — and that is not what this case is about.
+    await pumpSurface(tester, liveRowWithIdentifiedChild());
+    await expectUiSane(
+      tester,
+      inputModality: EdenInputModality.pointer,
+      allowOverlap: const <(String, String)>{
+        ('fx-live-row-outer', 'fx-live-row-switch'),
+      },
     );
   });
 }

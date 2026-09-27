@@ -808,36 +808,26 @@ Widget twoOverlapPairs() {
   );
 }
 
-/// DEFECT 15 — a control whose OWN tap route is dead, with a live UNRELATED
-/// control sitting under the middle of its rect.
+/// NOT A DEFECT — an all-live row with an identified control of its own under
+/// its centre.
 ///
-/// THE FALSE GREEN THIS CATCHES. The reachability arm asked whether ANY
-/// strict descendant of the owner appears in the hit path. That is true here:
-/// the pointer dropped in the middle of the row lands on the switch, and the
-/// switch is a descendant. So the row — announced as a button, declaring one
-/// tap route, and completely untouchable through that route — passed, and it
-/// passed for a reason the rule does not claim. A finger in the middle of
-/// this row toggles a switch; it never takes the row's route.
+/// THE FALSE POSITIVE THIS PINS. Round 2 of the reachability arm required
+/// that the hit path reach the owner without crossing another IDENTIFIED
+/// control, so that a row whose own route was dead could not pass on a
+/// switch's liveness. It accused THIS row — where nothing is dead at all.
+/// `Stack` hit-tests `lastChild` first, so the switch takes the centre and
+/// the row's own live `Positioned.fill` surface is never in the path; the
+/// rule could not tell that apart from a dead row, because at the centre
+/// there is nothing to tell apart.
 ///
-/// The row's own surface is the `Positioned.fill` `GestureDetector`, and
-/// `IgnorePointer` takes the pointer away from it and strips its semantics,
-/// so the route count still reads a healthy 1.
+/// A settings row with a toggle in it is not a rare shape, and the arm had no
+/// exemption for it: `allowOverlap` is read by `_overlapViolations`, never by
+/// the reachability arm. The nesting IS reported by the overlap rule, which
+/// is correct and is a different message; this case exempts that one pair so
+/// the assertion is about reachability alone.
 ///
-/// WHY THE SWITCH CARRIES AN IDENTIFIER. It is what makes the shape ESCAPE
-/// the other arm: `_countTapRoutes` stops at a descendant with its own
-/// identifier, so the row reports routes == 1 rather than 2 and the
-/// double-route message never fires. An UNIDENTIFIED switch here would be
-/// caught — by the route-count arm, for a different reason. This fixture is
-/// the gap between the two.
-///
-/// Pumped with `allowOverlap: {('fx-dead-route-row',
-/// 'fx-dead-route-switch')}`: a switch inside its row legitimately overlaps
-/// it, and that pair is not what this fixture is about.
-///
-/// Rule violated: "a control that announces an affordance and declares a tap
-/// route must be reachable by a pointer" — through the OWNER's own route, not
-/// through whatever else happens to be under the rect's centre.
-Widget deadRouteLiveInnerControl() {
+/// There is no `FIX:` line — reddening this row is the defect.
+Widget liveRowWithIdentifiedChild() {
   return Center(
     child: ColoredBox(
       color: _surface,
@@ -846,16 +836,14 @@ Widget deadRouteLiveInnerControl() {
         height: 48,
         child: Semantics(
           container: true,
-          identifier: 'fx-dead-route-row',
+          identifier: 'fx-live-row-outer',
           label: 'Notifications',
           button: true,
           onTap: () {},
           child: Stack(
             children: <Widget>[
-              // The ROW's own tap surface, and the only thing that would take
-              // its route. FIX: change `IgnorePointer` to `ExcludeSemantics`.
               Positioned.fill(
-                child: IgnorePointer(
+                child: ExcludeSemantics(
                   child: GestureDetector(
                     onTap: () {},
                     behavior: HitTestBehavior.opaque,
@@ -863,11 +851,10 @@ Widget deadRouteLiveInnerControl() {
                   ),
                 ),
               ),
-              // A live control of its OWN, under the row's centre.
               Center(
                 child: Semantics(
                   container: true,
-                  identifier: 'fx-dead-route-switch',
+                  identifier: 'fx-live-row-switch',
                   label: 'Enabled',
                   child: Switch(value: true, onChanged: (bool _) {}),
                 ),
