@@ -39,10 +39,27 @@
 // So it is read the other way too. Every message-shaped string LITERAL inside
 // a reachable function that no recognised site claims is reported in
 // [OracleCheckInventory.unattributedLiterals], and the catalogue pins that
-// list empty. A message built into a local, a message returned from a shape
-// the opener regex does not match, a message in a quote style nobody
-// anticipated — each of them now arrives as an unattributed literal and fails
-// the table, instead of being ignored.
+// list empty.
+//
+// THAT WAS NOT ENOUGH ON ITS OWN, and the gap is worth stating because the
+// paragraph above used to claim it was closed. "Message-shaped" needs a
+// floor, or every path fragment and format string is noise; the floor was 16
+// characters after normalisation. A message that is PURE INTERPOLATION is
+// under it — `'${a}: ${b}'` normalises to `*: *` — so a check written
+//
+//     final String m = '${node.identifier}: ${r.width}';
+//     out.add(m);
+//
+// produced no site, no unattributed literal and no rejected fragment.
+// Measured on the real oracle: the catalogue passed clean. That shape is one
+// refactor away from existing — `_guidelineViolations` emits exactly such a
+// string inline today.
+//
+// So a literal assigned to a LOCAL is tracked, and the local is promoted to a
+// real SITE when it is what gets added or returned. Length never enters into
+// it, because the site path has no floor. A check written that way now
+// reaches the inventory with its message and the catalogue demands a row for
+// it like any other.
 //
 // The same treatment closes the length floor on RETURNS. The floor exists
 // because a reachable helper can return a PHRASE that is substituted into
@@ -221,10 +238,27 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
       reached.add(callee);
     }
   }
-  if (reached.length < 2) {
+  // THE TRIPWIRE, ASSERTED ON THE AGGREGATION AND NOT ON `reached.length`.
+  // Under the widened seed ANY file-local call satisfies a length test —
+  // `identifiedNodes`, `rootSemanticsNodeOf` — so `reached.length < 2` stayed
+  // quiet even if every `violations.addAll(...)` line moved to another file,
+  // which is the one thing it was written to catch. Count the aggregation
+  // itself instead.
+  //
+  // The floor is ONE, not a number chosen to fit the real oracle: this
+  // parser is also run against small synthetic sources by its own tests, and
+  // a floor tuned to the real file would have made those unrepresentable.
+  // "How many checks should be here" is the catalogue's job, and it holds
+  // the real file to >= 12 sites.
+  final int aggregations =
+      RegExp(r'violations\.add(?:All)?\(').allMatches(entry.join('\n')).length;
+  if (aggregations == 0) {
     throw StateError(
-      'OracleCheckInventory: expectUiSane aggregates no check functions. '
-      'Either the aggregation moved or the parser stopped matching it.',
+      'OracleCheckInventory: expectUiSane aggregates nothing — no '
+      'violations.add/addAll call in its body. Either the aggregation moved '
+      'out of this function or the parser stopped matching it, and either '
+      'way every coverage assertion downstream would be passing on an '
+      'inventory built from almost nothing.',
     );
   }
 
@@ -255,6 +289,35 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
     // below reports every message-shaped literal that is NOT on one of them.
     final Set<int> claimed = <int>{};
     int ordinal = -1;
+    // PASS 1 — STRING LOCALS. A message assembled into a local sits behind no
+    // opener at all, so pass 2 cannot see it, and when the message is pure
+    // interpolation the reverse scan cannot either: `'${a}: ${b}'` normalises
+    // to `*: *`, five characters, below the message-shaped floor. Measured on
+    // the real oracle: a brand-new check written
+    //
+    //     final String m = '${node.identifier}: ${r.width}';
+    //     out.add(m);
+    //
+    // produced zero sites, zero unattributed literals and zero rejected
+    // fragments — the catalogue passed clean on a check nothing exercises.
+    // The shape is one refactor away in the code today: `_guidelineViolations`
+    // emits exactly that string inline.
+    //
+    // So a literal assigned to a local is remembered here, and pass 2
+    // promotes it to a REAL SITE when the local is what gets added or
+    // returned. That is strictly better than reporting it as unattributed:
+    // the check ends up in the inventory with its message, and the catalogue
+    // demands a row for it like any other.
+    final Map<String, (String, int, int)> localLiterals =
+        <String, (String, int, int)>{};
+    for (int i = 0; i < body.length; i++) {
+      final RegExpMatch? assign = _localAssignment.firstMatch(body[i]);
+      if (assign == null) {
+        continue;
+      }
+      final (String raw, int last) = _gatherLiteral(body, i);
+      localLiterals[assign.group(1)!] = (_normalise(raw), i, last);
+    }
     for (int i = 0; i < body.length; i++) {
       final RegExpMatch? opener = _opener.firstMatch(body[i]);
       if (opener == null) {
@@ -270,6 +333,32 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
         rest = at < body.length ? body[at].trim() : '';
       }
       if (!_startsLiteral(rest)) {
+        // The opener may be handing over a LOCAL that holds the message.
+        final RegExpMatch? ident = _bareIdentifier.firstMatch(rest);
+        final (String, int, int)? local =
+            ident == null ? null : localLiterals[ident.group(1)!];
+        if (local == null) {
+          continue;
+        }
+        ordinal++;
+        final String message = local.$1;
+        claimed.add(i);
+        for (int line = local.$2; line <= local.$3; line++) {
+          claimed.add(line);
+        }
+        final bool viaAdd = opener.group(1) == '.add(';
+        if (!viaAdd && message.length < _minimumReturnedMessage) {
+          rejected.add(message);
+          continue;
+        }
+        sites.add(
+          OracleCheckSite(
+            id: '$function#${_slugFor(message, slugs, ordinal)}',
+            function: function,
+            message: message,
+            viaAdd: viaAdd,
+          ),
+        );
         continue;
       }
       ordinal++;
@@ -283,17 +372,9 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
         rejected.add(message);
         continue;
       }
-      String slug = _slug(message);
-      if (slug.isEmpty) {
-        slug = 'site-$ordinal';
-      }
-      if (slugs.contains(slug)) {
-        slug = '$slug-$ordinal';
-      }
-      slugs.add(slug);
       sites.add(
         OracleCheckSite(
-          id: '$function#$slug',
+          id: '$function#${_slugFor(message, slugs, ordinal)}',
           function: function,
           message: message,
           viaAdd: viaAdd,
@@ -335,6 +416,33 @@ final RegExp _opener = RegExp(r'(\.add\(|\breturn\b|=>)');
 /// it could not see.
 final RegExp _anyLiteral =
     RegExp(r"'((?:[^'\\]|\\.)*)'" r'|"((?:[^"\\]|\\.)*)"');
+
+/// A local assigned a string literal: `final String m = '...'`, `var m = "..."`,
+/// or a bare reassignment. The capture is the local's NAME.
+final RegExp _localAssignment = RegExp(
+  r'''^\s*(?:final\s+|const\s+|var\s+)?(?:String\??\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*['"]''',
+);
+
+/// What follows an opener when it is handing over a bare local rather than a
+/// literal: `out.add(m);`, `return m;`.
+final RegExp _bareIdentifier =
+    RegExp(r'^([A-Za-z_][A-Za-z0-9_]*)\s*[);,]');
+
+/// The slug for [message], kept unique within one function.
+///
+/// Shared by both site paths — a literal behind an opener and a local
+/// promoted to a site — so the two cannot drift into different id schemes.
+String _slugFor(String message, List<String> slugs, int ordinal) {
+  String slug = _slug(message);
+  if (slug.isEmpty) {
+    slug = 'site-$ordinal';
+  }
+  if (slugs.contains(slug)) {
+    slug = '$slug-$ordinal';
+  }
+  slugs.add(slug);
+  return slug;
+}
 
 /// Whether [rest] — what follows an opener — begins a string literal.
 bool _startsLiteral(String rest) =>

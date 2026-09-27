@@ -83,20 +83,32 @@ Widget _surfaceFrame(Widget child) {
   );
 }
 
-/// A 60x60 labelled button that is genuinely live: it publishes one tap
-/// route, it is big enough for the touch floor, and its glyph is legible.
+/// A 60x60 labelled button: it publishes one tap route, it is big enough for
+/// the touch floor, and its glyph is legible.
 ///
-/// Every UNREACHABLE fixture below wraps exactly this widget. The control is
-/// held constant on purpose — the only difference between a fixture that
-/// passes and one that does not is the mechanism placed around it, so a
-/// violation can only be about that mechanism.
-Widget _liveButton(String identifier) {
+/// IT IS NOT "GENUINELY LIVE", WHICH IS WHAT THIS DOCSTRING USED TO SAY.
+/// `Semantics(button: true, onTap:)` over a `Text` declares an ACCESSIBILITY
+/// route and creates no pointer handler, so `tester.tapAt` at its centre does
+/// not fire its `onTap` — measured, and pinned by the
+/// `accessibility-only-tap-route` row, which calls THIS function so the claim
+/// cannot drift from the thing it describes. It passes `_pointerReaches` only
+/// because `RenderParagraph` hit-tests itself.
+///
+/// That is still the right control for this lane, because every UNREACHABLE
+/// fixture below wraps exactly this widget: the only difference between a
+/// fixture that passes and one that does not is the mechanism placed around
+/// it, so a violation can only be about that mechanism. It is the wrong
+/// control for "a finger works", and the row says so.
+///
+/// [onTap] exists so that row can observe the tap; every other caller leaves
+/// it null and gets the inert default.
+Widget _liveButton(String identifier, {VoidCallback? onTap}) {
   return Semantics(
     container: true,
     identifier: identifier,
     label: 'Go',
     button: true,
-    onTap: () {},
+    onTap: onTap ?? () {},
     child: const SizedBox(
       width: 60,
       height: 60,
@@ -549,6 +561,12 @@ Widget throwingBuild() {
 // [advTapFired] is module-level because a `CatalogueRow.fixture` is a
 // `Widget Function()` with nowhere to hand a flag back. Every builder below
 // resets it, so a proof reads the tap that its own row just performed.
+//
+// `repairedBareTextRow` is the POSITIVE CONTROL for this flag, and it is not
+// optional. Every other user wires it to an `onTap` no pointer can reach, so
+// without that fixture nothing in the repo ever observes it becoming TRUE —
+// and "the tap did not fire because the control is dead" and "this flag
+// never fires for anything" become the same observation.
 bool advTapFired = false;
 
 /// A row whose OWN tap surface is dead, with a LIVE control of its own under
@@ -623,8 +641,10 @@ Widget deadRouteLiveInnerControl() {
 ///
 /// Same measured caveat as above: `ExcludeSemantics` in place of the
 /// `IgnorePointer` does not repair it, because the `Text` is `lastChild` and
-/// takes the centre hit first. Putting the tap surface ON TOP does repair it,
-/// and that is the mutation this row's proof was verified against.
+/// takes the centre hit first. Putting the tap surface ON TOP does repair it
+/// — and that is not a claim in a comment, it is [repairedBareTextRow],
+/// which is this tree with that one change and whose row asserts the tap
+/// DOES fire.
 Widget deadRouteBareText() {
   advTapFired = false;
   return _surfaceFrame(
@@ -666,11 +686,16 @@ Widget deadRouteBareText() {
 /// THE ONE THAT INDICTS THE LANE'S OWN BASELINE: an accessibility-only tap
 /// route, with no gesture handler anywhere in the subtree.
 ///
-/// This is [_liveButton]'s shape exactly — `Semantics(button: true, onTap:) >
-/// SizedBox > Center > Text` — which the differential control at the top of
-/// this file calls "genuinely live". It is not: `tester.tapAt` at its centre
-/// does not fire its `onTap`, because nothing under it handles a pointer. It
-/// passes `_pointerReaches` only because `RenderParagraph` hit-tests itself.
+/// IT CALLS [_liveButton]. It used to be a hand-copied duplicate of it, which
+/// made the row assert a property of a COPY: give `_liveButton` a real
+/// gesture handler — the obvious response to being indicted — and the copy
+/// would stay inert, this row would stay green, and the catalogue would go on
+/// claiming something about `_liveButton` that had stopped being true. Now
+/// the row fails the moment the thing it is about changes.
+///
+/// `tester.tapAt` at its centre does not fire its `onTap`, because nothing
+/// under it handles a pointer. It passes `_pointerReaches` only because
+/// `RenderParagraph` hit-tests itself.
 ///
 /// So "reachable", as this oracle measures it, means "something inside took
 /// the hit" and never "a finger works". That is why the arm's message was
@@ -680,18 +705,46 @@ Widget accessibilityOnlyTapRoute() {
   advTapFired = false;
   return _surfaceFrame(
     Center(
-      child: Semantics(
-        container: true,
-        identifier: 'adv-a11y-only-route',
-        label: 'Go',
-        button: true,
+      child: _liveButton(
+        'adv-a11y-only-route',
         onTap: () => advTapFired = true,
-        child: const SizedBox(
-          width: 60,
-          height: 60,
-          child: Center(
-            child: Text('Go',
-                style: TextStyle(fontSize: 20, color: _legibleInk)),
+      ),
+    ),
+  );
+}
+
+Widget repairedBareTextRow() {
+  advTapFired = false;
+  return _surfaceFrame(
+    Center(
+      child: SizedBox(
+        width: 240,
+        height: 48,
+        child: Semantics(
+          container: true,
+          identifier: 'adv-repaired-row',
+          label: 'Notifications',
+          button: true,
+          onTap: () => advTapFired = true,
+          child: Stack(
+            children: <Widget>[
+              const Center(
+                child: Text(
+                  'Notifications',
+                  style: TextStyle(fontSize: 14, color: _legibleInk),
+                ),
+              ),
+              // ON TOP, which is the whole repair.
+              Positioned.fill(
+                child: ExcludeSemantics(
+                  child: GestureDetector(
+                    onTap: () => advTapFired = true,
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

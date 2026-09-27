@@ -12,24 +12,27 @@ added, deleted or reworded there changes this table on the next run.
 - **12** violations `expectUiSane` can emit, derived from its source.
 - **7** shapes caught, with a fixture in this lane.
 - **10** shapes caught, fixtured in the review-findings lane.
-- **12** shapes NOT CAUGHT — each one proved broken on the frame and silent in the oracle.
+- **12** shapes NOT CAUGHT — each one silent in the oracle and proved broken
+  independently: on the frame for the unreadable ones, by a REAL TAP that does not
+  fire the callback for the 3 whose route no finger can take.
 - **1** check with no fixture anywhere.
-- **2** differential rows: shapes that must produce NO violation.
+- **3** differential rows: shapes that must produce NO violation.
 
 **The shape of the result.** An UNREACHABLE shape is caught when some MECHANISM takes
 the pointer away from the whole control — IgnorePointer, AbsorbPointer, a zero-size or
-offset child, a sibling painted over it. Three unreachable shapes are NOT caught, and
-they are the ones where the control takes a pointer somewhere and still cannot be
-activated: `Semantics(onTap:)` declares an ACCESSIBILITY route and creates no pointer
-handler, so nothing in the render tree says which render object — if any — implements
-it. Those rows are proved by a REAL TAP that does not fire the callback. Note what one
-of them is: the differential control this lane is built on is itself pointer-inert.
+offset child, a sibling painted over it. 3 unreachable shapes are NOT
+caught, and they are the ones where the control takes a pointer somewhere and still
+cannot be activated: `Semantics(onTap:)` declares an ACCESSIBILITY route and creates no
+pointer handler, so nothing in the render tree says which render object — if any —
+implements it. Those rows are proved by a REAL TAP that does not fire the callback. Note
+what one of them is: the differential control this lane is built on is itself
+pointer-inert.
 
 Every UNREADABLE shape probed is missed: the contrast rule reads its ink from the
-resolved TextStyle, so no defect that changes the ink at PAINT time can reach it. Three
-further unreachable rows are missed for a third reason — the control is gone from
-layout, paint and semantics alike, and a surface-level oracle with no list of what
-SHOULD be there has nothing to measure.
+resolved TextStyle, so no defect that changes the ink at PAINT time can reach it.
+3 further unreachable rows are missed for a third reason — the control
+is gone from layout, paint and semantics alike, and a surface-level oracle with no list
+of what SHOULD be there has nothing to measure.
 
 A green run of the oracle means the surface passes the checks in the first table.
 It says NOTHING about the shapes in the second.
@@ -49,6 +52,7 @@ target-size floor, covered by another control, or dead to the hit test.
 | `visibility-maintaining-size-and-semantics` | unreachable | `_tapRouteViolations#control-announces-itself-as-but-has` | `adversarial_surfaces.dart` | `routes > 1` only: SILENT; owner-anywhere-in-path: reports |
 | `transformed-past-the-view-edge` | unreachable | `_viewportViolations#control-is-outside-the-viewport-its` | `adversarial_surfaces.dart` | `routes > 1` only: SILENT; owner-anywhere-in-path: SILENT |
 | `exception-swallowed-during-build` | escaped | `_describeEscapedException#an-exception-escaped-during-layout-paint` | `adversarial_surfaces.dart` | no earlier variant of this check is kept executable |
+| `repaired-bare-text-row` | differential | _(control)_ | `adversarial_surfaces.dart` | no earlier variant of this check is kept executable |
 | `render-overflow` | escaped | `_describeEscapedException#overflow-of-pixels-on-the-offending` | `broken_surfaces.dart#overflowingRow` | not measured here — the fix lane owns the fixture |
 | `stock-guideline-failure` | unreachable | `_guidelineViolations#site-0` | `broken_surfaces.dart#tinyTapTarget` | not measured here — the fix lane owns the fixture |
 | `overlapping-identified-controls` | unreachable | `_overlapViolations#controls-and-overlap-is-is-they` | `broken_surfaces.dart#overlappingControls` | not measured here — the fix lane owns the fixture |
@@ -172,6 +176,10 @@ TextStyle.foreground nulls out `color`, and a paint carrying a shader has no col
 ### `low-contrast-span-in-a-rich-paragraph` — **NOT CAUGHT**
 
 Text.rich carries no `data`, so the paragraph is skipped whole and a 1.06:1 span inside it is never measured.
+
+### `repaired-bare-text-row` — caught
+
+THE POSITIVE CONTROL for the tap proof, and the executed form of the repair claim on deadRouteBareText: the same tree with the row's own surface moved ON TOP of the Text. The oracle says nothing AND a real tap fires the callback.
 
 ### `dead-route-live-inner-control` — **NOT CAUGHT**
 

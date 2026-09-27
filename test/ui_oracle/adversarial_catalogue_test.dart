@@ -442,6 +442,19 @@ final List<CatalogueRow> catalogue = <CatalogueRow>[
     proof: _provesSpanIsOnTheFrameAndIllegible,
   ),
 
+  CatalogueRow(
+    shape: 'repaired-bare-text-row',
+    defectClass: DefectClass.differential,
+    status: RowStatus.caught,
+    summary: 'THE POSITIVE CONTROL for the tap proof, and the executed form '
+        'of the repair claim on deadRouteBareText: the same tree with the '
+        "row's own surface moved ON TOP of the Text. The oracle says "
+        'nothing AND a real tap fires the callback.',
+    fixture: repairedBareTextRow,
+    identifier: 'adv-repaired-row',
+    proof: _provesTapFires('adv-repaired-row'),
+  ),
+
   // ---- UNREACHABLE, NOT caught: the hit test cannot decide -----------------
   CatalogueRow(
     shape: 'dead-route-live-inner-control',
@@ -734,6 +747,34 @@ FrameProof _provesTapDoesNotFire(String identifier) {
   };
 }
 
+/// THE POSITIVE CONTROL for [_provesTapDoesNotFire]: proves a real tap at the
+/// centre of [identifier]'s rect DOES fire the control's callback.
+///
+/// Without this, the negative proof is unfalsifiable. `advTapFired` is wired
+/// in every other fixture to an `onTap` no pointer can reach, so "false after
+/// the tap" is also what a never-reset flag, a fixture that stopped
+/// rendering, and an `onTap: () {}` typo all produce. This is the case that
+/// fails when the flag stops working, instead of every other case passing
+/// more easily.
+FrameProof _provesTapFires(String identifier) {
+  return (WidgetTester tester) async {
+    final Rect rect = globalRectOf(tester, identifier);
+    expect(advTapFired, isFalse, reason: 'the flag was not reset');
+
+    await tester.tapAt(rect.center / tester.view.devicePixelRatio);
+    await tester.pump();
+
+    expect(
+      advTapFired,
+      isTrue,
+      reason: 'a real tap in the middle of "$identifier" did NOT fire its '
+          'callback. Either this fixture has stopped being the repaired '
+          'shape, or advTapFired has stopped working — and if it has, every '
+          'row that reads it as FALSE is now passing for no reason.',
+    );
+  };
+}
+
 /// Proves the control carrying [identifier] has left the surface entirely —
 /// no presented semantics node — which is why the oracle has nothing to say.
 FrameProof _provesControlVanished(String identifier) {
@@ -820,10 +861,17 @@ void main() {
                   'messageContains, and take its gap out of the table. '
                   'Reported: ${failure?.message}',
             );
-            await row.proof!(tester);
           case RowStatus.caughtElsewhere:
           case RowStatus.noFixture:
             fail('a row with a fixture cannot be ${row.status.name}');
+        }
+
+        // EVERY row that declares a proof runs it, not only the notCaught
+        // ones. A `caught` differential row is exactly where the POSITIVE
+        // control for a proof instrument belongs: it is the case that fails
+        // when the instrument stops working.
+        if (row.proof != null) {
+          await row.proof!(tester);
         }
 
         if (row.legacyRoutesGt1 != null) {
@@ -1091,12 +1139,22 @@ String _notReachable() {
       expect(parseOracleCheckInventory(fake).unattributedLiterals, isEmpty);
     });
 
-    test('a message the openers do NOT match is reported, not ignored', () {
-      // THE HOLE THE REVERSE SCAN CLOSES. A message built into a local sits
-      // behind no `.add(`, no `return` and no `=>`, so no site is recognised
-      // for it — and with only the orphan direction, a check written this way
-      // added nothing to the inventory and the catalogue passed without ever
-      // mentioning it.
+    test('a message built into a LOCAL becomes a site, interpolation and all',
+        () {
+      // TWO HOLES, and the second is the one that could still lose a check.
+      //
+      // A message assembled into a local sits behind no `.add(`, no `return`
+      // and no `=>`, so the opener scan cannot see it. A PROSE message was
+      // still caught by the reverse scan. A message that is pure
+      // INTERPOLATION was not: `'${a}: ${b}'` normalises to `*: *`, five
+      // characters, under the message-shaped floor — so it produced no site,
+      // no unattributed literal and no rejected fragment, and the catalogue
+      // passed clean. Measured on the real oracle before the fix, with a new
+      // check written in exactly this shape.
+      //
+      // Both are now SITES, which is better than "unattributed": the check
+      // reaches the inventory with its message and the catalogue demands a
+      // row for it like any other.
       const String hidden = '''
 Future<void> expectUiSane(WidgetTester tester) async {
   final List<String> violations = <String>[];
@@ -1107,20 +1165,24 @@ List<String> _hiddenCheck(WidgetTester tester) {
   final List<String> out = <String>[];
   final String message = 'this control is broken in a brand new way';
   out.add(message);
+  final String interpolated = '\${a}: \${b}';
+  out.add(interpolated);
   return out;
 }
 ''';
       final OracleCheckInventory inventory = parseOracleCheckInventory(hidden);
       expect(
-        inventory.sites,
-        isEmpty,
-        reason: 'the openers genuinely do not match this shape — which is '
-            'the premise: if they did, the reverse scan would not be what '
-            'catches it',
+        inventory.sites.map((OracleCheckSite s) => s.message),
+        unorderedEquals(<String>[
+          'this control is broken in a brand new way',
+          '*: *',
+        ]),
       );
       expect(
         inventory.unattributedLiterals,
-        <String>['_hiddenCheck: this control is broken in a brand new way'],
+        isEmpty,
+        reason: 'both are accounted for as sites now, so neither should also '
+            'be reported as unclaimed',
       );
     });
 
@@ -1224,7 +1286,22 @@ String _statusColumn(CatalogueRow row) => switch (row.status) {
       RowStatus.noFixture => '**NO FIXTURE**',
     };
 
+/// How many `notCaught` rows belong to [gap].
+///
+/// DERIVED, because the sentences in the standfirst used to say "three"
+/// twice in hardcoded prose sitting directly under the derived `**$missed**`
+/// bullet. Add or close one row and the generated table contradicted its own
+/// count — with the freshness test green, because the prose matched the file
+/// it had just written.
+int _missedWithGap(String gap) => catalogue
+    .where((CatalogueRow row) =>
+        row.status == RowStatus.notCaught && row.gap == gap)
+    .length;
+
 String _renderTable(OracleCheckInventory inventory) {
+  final int unreachableByRoute = _missedWithGap('a11y-route-is-not-a-finger');
+  final int unreachableByRemoval =
+      _missedWithGap('removed-control-out-of-contract');
   final int caught = catalogue
       .where((CatalogueRow r) =>
           r.status == RowStatus.caught &&
@@ -1262,8 +1339,12 @@ String _renderTable(OracleCheckInventory inventory) {
     ..writeln('- **$caught** shapes caught, with a fixture in this lane.')
     ..writeln('- **$elsewhere** shapes caught, fixtured in the '
         'review-findings lane.')
-    ..writeln('- **$missed** shapes NOT CAUGHT — each one proved broken on '
-        'the frame and silent in the oracle.')
+    ..writeln('- **$missed** shapes NOT CAUGHT — each one silent in the '
+        'oracle and proved broken')
+    ..writeln('  independently: on the frame for the unreadable ones, by a '
+        'REAL TAP that does not')
+    ..writeln('  fire the callback for the $unreachableByRoute whose route no '
+        'finger can take.')
     ..writeln('- **$none** check with no fixture anywhere.')
     ..writeln('- **$controls** differential rows: shapes that must produce NO '
         'violation.')
@@ -1272,28 +1353,29 @@ String _renderTable(OracleCheckInventory inventory) {
         'when some MECHANISM takes')
     ..writeln('the pointer away from the whole control — IgnorePointer, '
         'AbsorbPointer, a zero-size or')
-    ..writeln('offset child, a sibling painted over it. Three unreachable '
-        'shapes are NOT caught, and')
-    ..writeln('they are the ones where the control takes a pointer somewhere '
-        'and still cannot be')
-    ..writeln('activated: `Semantics(onTap:)` declares an ACCESSIBILITY route '
-        'and creates no pointer')
-    ..writeln('handler, so nothing in the render tree says which render '
-        'object — if any — implements')
-    ..writeln('it. Those rows are proved by a REAL TAP that does not fire the '
-        "callback. Note what one")
-    ..writeln('of them is: the differential control this lane is built on is '
-        'itself pointer-inert.')
+    ..writeln('offset child, a sibling painted over it. $unreachableByRoute '
+        'unreachable shapes are NOT')
+    ..writeln('caught, and they are the ones where the control takes a '
+        'pointer somewhere and still')
+    ..writeln('cannot be activated: `Semantics(onTap:)` declares an '
+        'ACCESSIBILITY route and creates no')
+    ..writeln('pointer handler, so nothing in the render tree says which '
+        'render object — if any —')
+    ..writeln('implements it. Those rows are proved by a REAL TAP that does '
+        'not fire the callback. Note')
+    ..writeln('what one of them is: the differential control this lane is '
+        'built on is itself')
+    ..writeln('pointer-inert.')
     ..writeln()
     ..writeln('Every UNREADABLE shape probed is missed: the contrast rule '
         'reads its ink from the')
     ..writeln('resolved TextStyle, so no defect that changes the ink at PAINT '
-        'time can reach it. Three')
-    ..writeln('further unreachable rows are missed for a third reason — the '
-        'control is gone from')
-    ..writeln('layout, paint and semantics alike, and a surface-level oracle '
-        'with no list of what')
-    ..writeln('SHOULD be there has nothing to measure.')
+        'time can reach it.')
+    ..writeln('$unreachableByRemoval further unreachable rows are missed for '
+        'a third reason — the control')
+    ..writeln('is gone from layout, paint and semantics alike, and a '
+        'surface-level oracle with no list')
+    ..writeln('of what SHOULD be there has nothing to measure.')
     ..writeln()
     ..writeln('A green run of the oracle means the surface passes the checks '
         'in the first table.')
