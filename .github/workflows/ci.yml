@@ -103,7 +103,15 @@ jobs:
           #
           # Do NOT lower this pin without changing that source in the same
           # commit -- they are one decision, not two.
-          flutter-version: '3.47.4'
+          # BUMPED WITH pubspec.yaml's floor, not independently. main's
+          # toolchain-alignment commit (f9107c3) raised `sdk: ^3.13.4` /
+          # `flutter: >=3.47.5` and bumped the two pins main's OWN ci.yml has.
+          # This job (and `stories`, and probe-guard.yml) is added by this
+          # branch, so its pin stayed at 3.47.4 -- Dart 3.13.3 -- and `flutter
+          # pub get` could no longer resolve the package at all. The job died
+          # before running its gate, which is the worst way for a gate to
+          # fail: red for a reason that has nothing to do with what it checks.
+          flutter-version: '3.47.5'
           cache: true
 
       - run: flutter pub get
@@ -155,7 +163,15 @@ jobs:
           #
           # Do NOT lower this pin without changing that source in the same
           # commit -- they are one decision, not two.
-          flutter-version: '3.47.4'
+          # BUMPED WITH pubspec.yaml's floor, not independently. main's
+          # toolchain-alignment commit (f9107c3) raised `sdk: ^3.13.4` /
+          # `flutter: >=3.47.5` and bumped the two pins main's OWN ci.yml has.
+          # This job (and `stories`, and probe-guard.yml) is added by this
+          # branch, so its pin stayed at 3.47.4 -- Dart 3.13.3 -- and `flutter
+          # pub get` could no longer resolve the package at all. The job died
+          # before running its gate, which is the worst way for a gate to
+          # fail: red for a reason that has nothing to do with what it checks.
+          flutter-version: '3.47.5'
           cache: true
 
       - run: flutter pub get
