@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/eden_bare_field_theme.dart';
 import '../theme/eden_status_palette.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
@@ -603,17 +604,20 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
           // description. maxLines is 1 (the TextField default), so it is not
           // multilineText, and no autofill hint describes a line description.
           // Shape C keeps this cell's existing keyboard and Enter behaviour.
-          TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              isDense: true,
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-            ),
-            style: theme.textTheme.bodySmall,
-            onChanged: (value) => _emitChange(
-              rowIndex,
-              item.copyWith(description: value),
+          EdenBareFieldTheme(
+            // THE TABLE ROW IS THE CHROME. An inline cell in the grid, not a
+            // boxed input: EdenTheme's inputDecorationTheme drew a
+            // colorScheme.outline ring around every editable cell and filled
+            // each with an opaque box. Pinned by
+            // field_border_overpaint_test.dart.
+            child: TextField(
+              controller: controller,
+              decoration: const InputDecoration(isDense: true),
+              style: theme.textTheme.bodySmall,
+              onChanged: (value) => _emitChange(
+                rowIndex,
+                item.copyWith(description: value),
+              ),
             ),
           ),
           modifiersWidget,
@@ -654,27 +658,26 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       // eden-field-purpose: EdenFieldPurpose.decimalAmount - a line quantity
       // held as a double, so fractional units (1.5 kg) must stay typeable.
       // _decimalFormatter() is RegExp(r'[0-9.]') so '.' is accepted.
-      TextField(
-        controller: controller,
-        autofillHints: money.autofillHints,
-        keyboardType: money.keyboardType,
-        obscureText: money.obscureText,
-        textInputAction: money.textInputAction,
-        textCapitalization: money.textCapitalization,
-        autocorrect: money.autocorrect,
-        enableSuggestions: money.enableSuggestions,
-        inputFormatters: [_decimalFormatter()],
-        decoration: const InputDecoration(
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
+      EdenBareFieldTheme(
+        // THE TABLE ROW IS THE CHROME, as in the description cell above.
+        child: TextField(
+          controller: controller,
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
+          inputFormatters: [_decimalFormatter()],
+          decoration: const InputDecoration(isDense: true),
+          style: Theme.of(context).textTheme.bodySmall,
+          onChanged: (raw) {
+            final parsed = double.tryParse(raw);
+            if (parsed == null) return;
+            _emitChange(rowIndex, item.copyWith(quantity: parsed));
+          },
         ),
-        style: Theme.of(context).textTheme.bodySmall,
-        onChanged: (raw) {
-          final parsed = double.tryParse(raw);
-          if (parsed == null) return;
-          _emitChange(rowIndex, item.copyWith(quantity: parsed));
-        },
       ),
     );
   }
@@ -709,27 +712,26 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       // eden-field-purpose: EdenFieldPurpose.decimalAmount - the per-unit
       // money price. _decimalFormatter() is RegExp(r'[0-9.]'), so '.' is
       // accepted.
-      TextField(
-        controller: controller,
-        autofillHints: money.autofillHints,
-        keyboardType: money.keyboardType,
-        obscureText: money.obscureText,
-        textInputAction: money.textInputAction,
-        textCapitalization: money.textCapitalization,
-        autocorrect: money.autocorrect,
-        enableSuggestions: money.enableSuggestions,
-        inputFormatters: [_decimalFormatter()],
-        decoration: const InputDecoration(
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
+      EdenBareFieldTheme(
+        // THE TABLE ROW IS THE CHROME, as in the description cell above.
+        child: TextField(
+          controller: controller,
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
+          inputFormatters: [_decimalFormatter()],
+          decoration: const InputDecoration(isDense: true),
+          style: Theme.of(context).textTheme.bodySmall,
+          onChanged: (raw) {
+            final parsed = double.tryParse(raw);
+            if (parsed == null) return;
+            _emitChange(rowIndex, item.copyWith(unitPrice: parsed));
+          },
         ),
-        style: Theme.of(context).textTheme.bodySmall,
-        onChanged: (raw) {
-          final parsed = double.tryParse(raw);
-          if (parsed == null) return;
-          _emitChange(rowIndex, item.copyWith(unitPrice: parsed));
-        },
       ),
     );
   }
@@ -763,34 +765,33 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       item,
       // eden-field-purpose: EdenFieldPurpose.decimalAmount - a money discount
       // amount. _decimalFormatter() is RegExp(r'[0-9.]'), so '.' is accepted.
-      TextField(
-        controller: controller,
-        autofillHints: money.autofillHints,
-        keyboardType: money.keyboardType,
-        obscureText: money.obscureText,
-        textInputAction: money.textInputAction,
-        textCapitalization: money.textCapitalization,
-        autocorrect: money.autocorrect,
-        enableSuggestions: money.enableSuggestions,
-        inputFormatters: [_decimalFormatter()],
-        decoration: const InputDecoration(
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
+      EdenBareFieldTheme(
+        // THE TABLE ROW IS THE CHROME, as in the description cell above.
+        child: TextField(
+          controller: controller,
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
+          inputFormatters: [_decimalFormatter()],
+          decoration: const InputDecoration(isDense: true),
+          style: Theme.of(context).textTheme.bodySmall,
+          onChanged: (raw) {
+            if (raw.isEmpty) {
+              _emitChange(rowIndex, item.copyWith(discountAmount: null));
+              return;
+            }
+            final parsed = double.tryParse(raw);
+            if (parsed == null) return;
+            _emitChange(
+              rowIndex,
+              item.copyWith(discountAmount: parsed),
+            );
+          },
         ),
-        style: Theme.of(context).textTheme.bodySmall,
-        onChanged: (raw) {
-          if (raw.isEmpty) {
-            _emitChange(rowIndex, item.copyWith(discountAmount: null));
-            return;
-          }
-          final parsed = double.tryParse(raw);
-          if (parsed == null) return;
-          _emitChange(
-            rowIndex,
-            item.copyWith(discountAmount: parsed),
-          );
-        },
       ),
     );
   }
@@ -824,31 +825,30 @@ class _EdenLineItemEditorState<T> extends State<EdenLineItemEditor<T>> {
       // eden-field-purpose: EdenFieldPurpose.decimalAmount - a tax rate held
       // as a double. _decimalFormatter() is RegExp(r'[0-9.]'), so '.' is
       // accepted.
-      TextField(
-        controller: controller,
-        autofillHints: money.autofillHints,
-        keyboardType: money.keyboardType,
-        obscureText: money.obscureText,
-        textInputAction: money.textInputAction,
-        textCapitalization: money.textCapitalization,
-        autocorrect: money.autocorrect,
-        enableSuggestions: money.enableSuggestions,
-        inputFormatters: [_decimalFormatter()],
-        decoration: const InputDecoration(
-          isDense: true,
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
+      EdenBareFieldTheme(
+        // THE TABLE ROW IS THE CHROME, as in the description cell above.
+        child: TextField(
+          controller: controller,
+          autofillHints: money.autofillHints,
+          keyboardType: money.keyboardType,
+          obscureText: money.obscureText,
+          textInputAction: money.textInputAction,
+          textCapitalization: money.textCapitalization,
+          autocorrect: money.autocorrect,
+          enableSuggestions: money.enableSuggestions,
+          inputFormatters: [_decimalFormatter()],
+          decoration: const InputDecoration(isDense: true),
+          style: Theme.of(context).textTheme.bodySmall,
+          onChanged: (raw) {
+            if (raw.isEmpty) {
+              _emitChange(rowIndex, item.copyWith(taxRate: null));
+              return;
+            }
+            final parsed = double.tryParse(raw);
+            if (parsed == null) return;
+            _emitChange(rowIndex, item.copyWith(taxRate: parsed));
+          },
         ),
-        style: Theme.of(context).textTheme.bodySmall,
-        onChanged: (raw) {
-          if (raw.isEmpty) {
-            _emitChange(rowIndex, item.copyWith(taxRate: null));
-            return;
-          }
-          final parsed = double.tryParse(raw);
-          if (parsed == null) return;
-          _emitChange(rowIndex, item.copyWith(taxRate: parsed));
-        },
       ),
     );
   }

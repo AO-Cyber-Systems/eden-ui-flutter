@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
@@ -143,38 +144,47 @@ class _EdenMessageInputState extends State<EdenMessageInput> {
                       color: isDark ? EdenColors.neutral[700]! : EdenColors.neutral[200]!,
                     ),
                   ),
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    enabled: widget.enabled,
-                    // minLines/maxLines stay the widget's own business:
-                    // multilineText resolves TextInputType.multiline but
-                    // deliberately does NOT set line counts.
-                    minLines: widget.minLines,
-                    maxLines: widget.maxLines,
-                    onChanged: _handleChanged,
-                    autofillHints: composerSemantics.autofillHints,
-                    keyboardType: composerSemantics.keyboardType,
-                    obscureText: composerSemantics.obscureText,
-                    textInputAction: composerSemantics.textInputAction,
-                    textCapitalization: composerSemantics.textCapitalization,
-                    autocorrect: composerSemantics.autocorrect,
-                    enableSuggestions: composerSemantics.enableSuggestions,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: widget.placeholder,
-                      hintStyle: TextStyle(
-                        color: isDark ? EdenColors.neutral[500] : EdenColors.neutral[400],
+                  child: EdenBareFieldTheme(
+                    // THE COMPOSER IS THE CHROME. The Container above
+                    // declares the fill (neutral[50] / neutral[800]) AND a
+                    // Border.all (neutral[200] / neutral[700]); EdenTheme's
+                    // inputDecorationTheme painted its own fill over the first
+                    // and a colorScheme.outline ring one pixel inside the
+                    // second — #d4d4d8 immediately within the composer's own
+                    // #e4e4e7 edge, a doubled border. Pinned by
+                    // field_border_overpaint_test.dart.
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      enabled: widget.enabled,
+                      // minLines/maxLines stay the widget's own business:
+                      // multilineText resolves TextInputType.multiline but
+                      // deliberately does NOT set line counts.
+                      minLines: widget.minLines,
+                      maxLines: widget.maxLines,
+                      onChanged: _handleChanged,
+                      autofillHints: composerSemantics.autofillHints,
+                      keyboardType: composerSemantics.keyboardType,
+                      obscureText: composerSemantics.obscureText,
+                      textInputAction: composerSemantics.textInputAction,
+                      textCapitalization: composerSemantics.textCapitalization,
+                      autocorrect: composerSemantics.autocorrect,
+                      enableSuggestions: composerSemantics.enableSuggestions,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: theme.colorScheme.onSurface,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: EdenSpacing.space3,
-                        vertical: EdenSpacing.space2,
+                      decoration: InputDecoration(
+                        hintText: widget.placeholder,
+                        hintStyle: TextStyle(
+                          color: isDark ? EdenColors.neutral[500] : EdenColors.neutral[400],
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: EdenSpacing.space3,
+                          vertical: EdenSpacing.space2,
+                        ),
+                        isDense: true,
                       ),
-                      isDense: true,
                     ),
                   ),
                 ),

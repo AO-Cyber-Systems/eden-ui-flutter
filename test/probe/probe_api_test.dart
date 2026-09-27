@@ -1,0 +1,354 @@
+// EdenProbeApi — the Dart entry the JS shim calls, tested over hand-built
+// surfaces. A test that asserted `window.__edenProbe != null` would prove
+// nothing about the rects the driver receives; these assert the rects.
+library;
+
+import 'dart:async';
+
+import 'package:eden_ui_flutter/src/probe/probe_api.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '_fixtures/probe_surfaces.dart';
+
+Future<void> _pumpSurface(WidgetTester tester, Widget surface) async {
+  await tester.pumpWidget(MaterialApp(home: Scaffold(body: surface)));
+}
+
+void main() {
+  group('EdenProbeApi.find', () {
+    testWidgets(
+      'find({key:}) returns the keyed element OWN render-box rect, not the parent\'s',
+      (WidgetTester tester) async {
+        await _pumpSurface(tester, probeKeyedBoxSurface());
+
+        final List<EdenProbeHit> hits =
+            EdenProbeApi.find(key: 'probe-target');
+
+        expect(hits, hasLength(1));
+
+        final Rect expected =
+            tester.getRect(find.byKey(const ValueKey<String>('probe-target')));
+        expect(hits.single.rect, expected);
+        expect(hits.single.rect.size, const Size(120, 40));
+
+        // The differential that makes this a geometry test: the parent is
+        // 360x200 and a probe that walked up to it would still "find
+        // something".
+        final Rect parent =
+            tester.getRect(find.byKey(const ValueKey<String>('probe-parent')));
+        expect(hits.single.rect, isNot(parent));
+      },
+    );
+
+    testWidgets('find({text:}) matches a Text(\'Hello\')',
+        (WidgetTester tester) async {
+      await _pumpSurface(tester, probeTextSurface());
+
+      final List<EdenProbeHit> hits = EdenProbeApi.find(text: 'Hello');
+
+      expect(hits, isNotEmpty);
+      final Rect expected = tester.getRect(find.text('Hello'));
+      expect(
+        hits.map((EdenProbeHit h) => h.rect),
+        contains(expected),
+      );
+      // 'Goodbye' is on the same surface and must not be swept in.
+      final Rect goodbye = tester.getRect(find.text('Goodbye'));
+      expect(hits.map((EdenProbeHit h) => h.rect), isNot(contains(goodbye)));
+    });
+
+    testWidgets('find({text:}) also matches the same string inside a Text.rich span',
+        (WidgetTester tester) async {
+      await _pumpSurface(tester, probeTextSurface());
+
+      final List<EdenProbeHit> hits = EdenProbeApi.find(text: 'Hello');
+
+      // A Text widget's runtime tree IS a RichText, so a probe reading only
+      // Text.data misses every composed string a user reads.
+      final Rect rich = tester.getRect(
+        find.byWidgetPredicate(
+          (Widget w) => w is Text && w.data == null && w.textSpan != null,
+        ),
+      );
+      expect(hits.map((EdenProbeHit h) => h.rect), contains(rich));
+    });
+
+    testWidgets('find({identifier:}) matches a semantics identifier and returns that node\'s rect',
+        (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pumpSurface(tester, probeSemanticsSurface());
+
+      final List<EdenProbeHit> hits =
+          EdenProbeApi.find(identifier: 'eden-nav-home');
+
+      expect(hits, hasLength(1));
+      expect(hits.single.identifier, 'eden-nav-home');
+      expect(hits.single.rect.size, const Size(100, 48));
+      expect(hits.single.actions, contains('tap'));
+      handle.dispose();
+    });
+
+    testWidgets('find({}) with no criteria returns [] and does not throw',
+        (WidgetTester tester) async {
+      await _pumpSurface(tester, probeKeyedBoxSurface());
+
+      expect(EdenProbeApi.find(), isEmpty);
+    });
+  });
+
+  group('EdenProbeApi.tree', () {
+    testWidgets('lists every identified node with rect and actions, and shows BOTH tap routes of a double-declared control',
+        (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await _pumpSurface(tester, probeSemanticsSurface());
+
+      final Map<String, Object?> tree = EdenProbeApi.tree();
+
+      expect(tree['route'], '/');
+
+      final List<Object?> nodes = tree['nodes']! as List<Object?>;
+      final Map<String, Map<String, Object?>> byIdentifier =
+          <String, Map<String, Object?>>{
+        for (final Object? n in nodes)
+          (n! as Map<String, Object?>)['identifier']! as String:
+              n as Map<String, Object?>,
+      };
+
+      expect(
+        byIdentifier.keys,
+        containsAll(<String>[
+          'eden-nav-home',
+          'fx-probe-double-tap',
+          'fx-probe-double-tap-inner',
+        ]),
+      );
+
+      // Every node carries a real rect, not a placeholder.
+      final Map<String, Object?> home = byIdentifier['eden-nav-home']!;
+      final Map<String, Object?> homeRect =
+          home['rect']! as Map<String, Object?>;
+      expect(homeRect['w'], 100.0);
+      expect(homeRect['h'], 48.0);
+      expect(home['actions'], contains('tap'));
+
+      // The double-fire, visible from OUTSIDE the app: two overlapping nodes
+      // that BOTH advertise tap.
+      final Map<String, Object?> outer = byIdentifier['fx-probe-double-tap']!;
+      final Map<String, Object?> inner =
+          byIdentifier['fx-probe-double-tap-inner']!;
+      expect(outer['actions'], contains('tap'));
+      expect(inner['actions'], contains('tap'));
+
+      Rect asRect(Map<String, Object?> node) {
+        final Map<String, Object?> r = node['rect']! as Map<String, Object?>;
+        return Rect.fromLTWH(
+          r['x']! as double,
+          r['y']! as double,
+          r['w']! as double,
+          r['h']! as double,
+        );
+      }
+
+      final Rect intersection = asRect(outer).intersect(asRect(inner));
+      expect(intersection.width, greaterThan(0));
+      expect(intersection.height, greaterThan(0));
+      handle.dispose();
+    });
+  });
+
+  group('EdenProbeApi.settled', () {
+    testWidgets('is false while an AnimationController runs and true once it stops',
+        (WidgetTester tester) async {
+      final AnimationController controller = AnimationController(
+        vsync: tester,
+        duration: const Duration(milliseconds: 300),
+      );
+      addTearDown(controller.dispose);
+
+      await _pumpSurface(tester, ProbeAnimatingSurface(controller: controller));
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.settled(), isTrue,
+          reason: 'a static surface is settled');
+
+      controller.forward();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(EdenProbeApi.settled(), isFalse,
+          reason: 'a running ticker means a driver must keep waiting');
+
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.settled(), isTrue);
+
+      // The opt-in HTTP hook: a consumer that says a request is in flight is
+      // not settled even with no frame scheduled.
+      EdenProbeApi.inFlightRequests = 1;
+      expect(EdenProbeApi.settled(), isFalse);
+      EdenProbeApi.inFlightRequests = 0;
+    });
+  });
+
+  group('EdenProbeApi.state', () {
+    testWidgets('reports route, theme brightness, viewport and semantics flag',
+        (WidgetTester tester) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: Brightness.dark),
+          home: Scaffold(body: probeKeyedBoxSurface()),
+        ),
+      );
+
+      final Map<String, Object?> state = EdenProbeApi.state();
+
+      expect(state['route'], '/');
+      expect(state['theme'], 'dark');
+      expect(state['semantics'], isTrue);
+
+      final Map<String, Object?> viewport =
+          state['viewport']! as Map<String, Object?>;
+      expect(viewport['w'], tester.view.physicalSize.width / tester.view.devicePixelRatio);
+      expect(viewport['h'], tester.view.physicalSize.height / tester.view.devicePixelRatio);
+      handle.dispose();
+    });
+
+    testWidgets(
+        'reading the route does NOT make the probe a dependent of the route, '
+        'so pushing one rebuilds nothing the app would not have rebuilt',
+        (WidgetTester tester) async {
+      // THE PROBE MUST NOT PERTURB THE APP IT OBSERVES.
+      //
+      // `_currentRoute` used to call `ModalRoute.of(element)` on EVERY element
+      // in the tree. That is `dependOnInheritedWidgetOfExactType`, so every
+      // one of them became a dependent of the route's inherited model — and
+      // pushing a route flips `isCurrent` on the model below it, which
+      // notifies every dependent and marks it dirty. One `state()` call
+      // turned the next push into a whole-tree rebuild.
+      //
+      // The counter below sits inside the FIRST route's page, which
+      // `_ModalScopeState` caches in `_page` precisely so that pushing on top
+      // of it does not rebuild it.
+      //
+      // RED (with `ModalRoute.of(element)` restored), and LOUDER than the
+      // counter this case was written around: the push does not merely
+      // rebuild the page, it trips Flutter's own
+      // `InheritedElement.notifyClients` assertion — "check that it really is
+      // our descendant" (framework.dart:6417). The old walk called
+      // `ModalRoute.of` on EVERY element, ancestors of the modal scope and
+      // sibling subtrees included, so the model ended up holding dependents
+      // that are not below it and the first notify after a probe read throws.
+      // A probe read followed by a route change was a debug-build crash, not
+      // only a wasted rebuild.
+      final GlobalKey<NavigatorState> navigator = GlobalKey<NavigatorState>();
+      int homeBuilds = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigator,
+          home: Builder(
+            builder: (BuildContext context) {
+              homeBuilds++;
+              return const Scaffold(body: Text('home'));
+            },
+          ),
+        ),
+      );
+      expect(homeBuilds, 1);
+
+      // THE CONTROL. Push and pop with the probe never called, to establish
+      // that this page does not rebuild on a push by itself — otherwise the
+      // assertion below would be measuring Flutter, not the probe.
+      await _pushNamed(tester, navigator, '/control');
+      expect(
+        homeBuilds,
+        1,
+        reason: 'the first route rebuilds on a push even with no probe in '
+            'the picture, so this case cannot attribute a rebuild to the '
+            'probe',
+      );
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      final int beforeProbe = homeBuilds;
+
+      // THE MEASUREMENT. Read the route, then push.
+      expect(EdenProbeApi.state()['route'], '/');
+      await _pushNamed(tester, navigator, '/second');
+
+      expect(
+        homeBuilds,
+        beforeProbe,
+        reason: 'the page under the first route rebuilt because the probe '
+            'read the route. The probe subscribed the app to the route model '
+            'and the app is now rebuilding on frames it would have skipped.',
+      );
+      expect(EdenProbeApi.state()['route'], '/second');
+    });
+
+    testWidgets(
+        'reading the route POPS NOTHING — the history is identical after '
+        'repeated reads', (WidgetTester tester) async {
+      // THE INVARIANT A MUTATING API OWES. `_currentRoute` reads the topmost
+      // route through `NavigatorState.popUntil`, whose next statement after
+      // the predicate is a real `pop()`. The rule holds only because the
+      // predicate always returns true, and nothing in the language enforces
+      // that — an edit to the predicate, or an SDK change to the loop order,
+      // turns a probe read into a production navigation teardown.
+      //
+      // The rebuild case above cannot see that: it pushes AFTER the read and
+      // re-reads, which reports the same answer whether or not the read had
+      // popped. This one measures the STACK.
+      final GlobalKey<NavigatorState> navigator = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigator,
+          home: const Scaffold(body: Text('home')),
+        ),
+      );
+      await _pushNamed(tester, navigator, '/second');
+      await _pushNamed(tester, navigator, '/third');
+
+      // Read it FIVE times. One pop per read would be invisible to a single
+      // before/after comparison of the top route's name.
+      for (int i = 0; i < 5; i++) {
+        expect(EdenProbeApi.state()['route'], '/third');
+        EdenProbeApi.tree();
+      }
+
+      // The stack is still three deep: two pops get back to '/', and the
+      // route names on the way down are the ones that were pushed.
+      expect(navigator.currentState!.canPop(), isTrue);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.state()['route'], '/second');
+
+      expect(navigator.currentState!.canPop(), isTrue);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.state()['route'], '/');
+      expect(
+        navigator.currentState!.canPop(),
+        isFalse,
+        reason: 'the stack is deeper or shallower than the three routes that '
+            'were pushed — a probe read moved the history',
+      );
+    });
+  });
+}
+
+/// Pushes a named route and settles, so a case reads as the interaction it is
+/// rather than as four lines of navigator boilerplate.
+Future<void> _pushNamed(
+  WidgetTester tester,
+  GlobalKey<NavigatorState> navigator,
+  String name,
+) async {
+  unawaited(
+    navigator.currentState!.push(
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: name),
+        builder: (BuildContext context) => Scaffold(body: Text(name)),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}

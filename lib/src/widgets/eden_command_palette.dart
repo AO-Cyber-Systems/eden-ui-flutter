@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
@@ -235,27 +236,36 @@ class _EdenCommandPaletteState extends State<EdenCommandPalette> {
           ),
         ),
       ),
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        autofocus: true,
-        onChanged: _onQueryChanged,
-        autofillHints: searchPurpose.semantics.autofillHints,
-        keyboardType: searchPurpose.semantics.keyboardType,
-        obscureText: searchPurpose.semantics.obscureText,
-        textInputAction: searchPurpose.semantics.textInputAction,
-        textCapitalization: searchPurpose.semantics.textCapitalization,
-        autocorrect: searchPurpose.semantics.autocorrect,
-        enableSuggestions: searchPurpose.semantics.enableSuggestions,
-        style: const TextStyle(fontSize: 15),
-        decoration: InputDecoration(
-          hintText: widget.placeholder,
-          prefixIcon: const Icon(Icons.search, size: 20),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: EdenBareFieldTheme(
+        // THE PALETTE SURFACE IS THE CHROME. This row is separated from the
+        // results by its own bottom border and sits on whatever surface hosts
+        // the palette, exactly as the results list below it does.
+        //
+        // This field had already nulled `border`, `enabledBorder` and
+        // `focusedBorder` by hand — three of the six slots — so it carried no
+        // ring, but it still inherited the fill, the content padding and the
+        // error/disabled borders. The fill is why the query row read
+        // neutral[800] in dark while the results directly under it read the
+        // host's surface: the same seam, on the other side of the divider.
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          autofocus: true,
+          onChanged: _onQueryChanged,
+          autofillHints: searchPurpose.semantics.autofillHints,
+          keyboardType: searchPurpose.semantics.keyboardType,
+          obscureText: searchPurpose.semantics.obscureText,
+          textInputAction: searchPurpose.semantics.textInputAction,
+          textCapitalization: searchPurpose.semantics.textCapitalization,
+          autocorrect: searchPurpose.semantics.autocorrect,
+          enableSuggestions: searchPurpose.semantics.enableSuggestions,
+          style: const TextStyle(fontSize: 15),
+          decoration: InputDecoration(
+            hintText: widget.placeholder,
+            prefixIcon: const Icon(Icons.search, size: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
         ),
       ),
     );

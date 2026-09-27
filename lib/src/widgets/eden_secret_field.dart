@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radii.dart';
@@ -210,41 +211,57 @@ class _EdenSecretFieldState extends State<EdenSecretField> {
         color: surfaceBg,
         borderRadius: EdenRadii.borderRadiusMd,
       ),
-      child: TextField(
-        controller: _controller,
-        obscureText: _obscured,
-        autofillHints: secretSemantics.autofillHints,
-        keyboardType: secretSemantics.keyboardType,
-        textInputAction: secretSemantics.textInputAction,
-        textCapitalization: secretSemantics.textCapitalization,
-        autocorrect: secretSemantics.autocorrect,
-        enableSuggestions: secretSemantics.enableSuggestions,
-        onChanged: _handleChange,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontFamily: 'monospace',
-          fontFamilyFallback: const ['Courier New', 'Courier'],
-        ),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: EdenSpacing.space3,
-            vertical: EdenSpacing.space3,
+      child: EdenBareFieldTheme(
+        // THE CONTAINER IS THE CHROME. The
+        // `Container(color: surfaceBg, borderRadius: md)` directly above holds
+        // nothing but this field and carries the same radius the borders below
+        // use: its fill IS this field's background, and the theme's covered it
+        // completely — neutral[800] over neutral[900] in dark, a 1.19:1 step
+        // that made the secret's box read a shade lighter than the read-only
+        // twin `_buildReadOnlyField` builds from the same `surfaceBg`.
+        //
+        // The BORDERS below are this widget's own, declared at the site, which
+        // still wins over the theme it is merged with. What the wrapper takes
+        // away here is the fill, the 16x12 content padding, and the
+        // `disabledBorder` / `errorBorder` / `focusedErrorBorder` slots this
+        // field never declared — the states where EdenTheme's form chrome
+        // would still have appeared around a field that has its own.
+        child: TextField(
+          controller: _controller,
+          obscureText: _obscured,
+          autofillHints: secretSemantics.autofillHints,
+          keyboardType: secretSemantics.keyboardType,
+          textInputAction: secretSemantics.textInputAction,
+          textCapitalization: secretSemantics.textCapitalization,
+          autocorrect: secretSemantics.autocorrect,
+          enableSuggestions: secretSemantics.enableSuggestions,
+          onChanged: _handleChange,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontFamily: 'monospace',
+            fontFamilyFallback: const ['Courier New', 'Courier'],
           ),
-          border: OutlineInputBorder(
-            borderRadius: EdenRadii.borderRadiusMd,
-            borderSide: BorderSide(color: borderColor),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: EdenRadii.borderRadiusMd,
-            borderSide: BorderSide(color: borderColor),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: EdenRadii.borderRadiusMd,
-            borderSide: BorderSide(color: focusBorderColor, width: 2),
-          ),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: _buildSuffixButtons(theme),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: EdenSpacing.space3,
+              vertical: EdenSpacing.space3,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: EdenRadii.borderRadiusMd,
+              borderSide: BorderSide(color: borderColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: EdenRadii.borderRadiusMd,
+              borderSide: BorderSide(color: borderColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: EdenRadii.borderRadiusMd,
+              borderSide: BorderSide(color: focusBorderColor, width: 2),
+            ),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: _buildSuffixButtons(theme),
+            ),
           ),
         ),
       ),

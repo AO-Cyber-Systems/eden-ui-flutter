@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
@@ -264,35 +265,42 @@ class _EdenRichTextEditorState extends State<EdenRichTextEditor> {
         minHeight: widget.minHeight,
         maxHeight: widget.maxHeight,
       ),
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        readOnly: widget.readOnly,
-        enabled: widget.enabled,
-        maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
-        onChanged: widget.onChanged,
-        autofillHints: semantics.autofillHints,
-        keyboardType: semantics.keyboardType,
-        obscureText: semantics.obscureText,
-        textInputAction: semantics.textInputAction,
-        textCapitalization: semantics.textCapitalization,
-        autocorrect: semantics.autocorrect,
-        enableSuggestions: semantics.enableSuggestions,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontFamily: widget.format == EdenRichTextFormat.markdown
-              ? null
-              : null,
-          height: 1.6,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.placeholder,
-          contentPadding: const EdgeInsets.all(EdenSpacing.space3),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
+      child: EdenBareFieldTheme(
+        // THE FRAME IS THE CHROME. The
+        // `Container(color: isDark ? neutral[900] : Colors.white)` that wraps
+        // the toolbar and the body together is this editor's chrome. The
+        // theme's fill painted neutral[800] over it in dark — a 1.19:1 step
+        // that left the toolbar a different colour from the body directly
+        // below it — and, although the four borders this field used to null by
+        // hand covered the enabled, focused and disabled states, `errorBorder`
+        // and `focusedErrorBorder` were still EdenTheme's form chrome. The
+        // wrapper covers all six and everything else besides.
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          readOnly: widget.readOnly,
+          enabled: widget.enabled,
+          maxLines: null,
+          expands: true,
+          textAlignVertical: TextAlignVertical.top,
+          onChanged: widget.onChanged,
+          autofillHints: semantics.autofillHints,
+          keyboardType: semantics.keyboardType,
+          obscureText: semantics.obscureText,
+          textInputAction: semantics.textInputAction,
+          textCapitalization: semantics.textCapitalization,
+          autocorrect: semantics.autocorrect,
+          enableSuggestions: semantics.enableSuggestions,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontFamily: widget.format == EdenRichTextFormat.markdown
+                ? null
+                : null,
+            height: 1.6,
+          ),
+          decoration: InputDecoration(
+            hintText: widget.placeholder,
+            contentPadding: const EdgeInsets.all(EdenSpacing.space3),
+          ),
         ),
       ),
     );

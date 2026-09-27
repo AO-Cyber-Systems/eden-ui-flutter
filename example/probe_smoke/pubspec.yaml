@@ -1,0 +1,33 @@
+name: probe_smoke
+description: >-
+  The smallest app that exercises the eden_ui_flutter runtime probe bridge.
+  It exists so tool/probe_guard.sh can build a REAL release web bundle and grep
+  it: "the define is off so it is tree-shaken" is a claim, a grep over
+  build/web/main.dart.js is evidence.
+publish_to: none
+version: 0.0.1
+
+environment:
+  # KEPT IN STEP WITH ../../pubspec.yaml, which this app depends on by PATH.
+  # main's toolchain-alignment commit raised the library to `sdk: ^3.13.4` /
+  # `flutter: >=3.47.5` and did not touch this file, leaving the app
+  # declaring support for toolchains its own dependency refuses to resolve
+  # under. `flutter pub get` here picks the intersection and says nothing, so
+  # the contradiction is invisible until a build on an older SDK fails inside
+  # the dependency rather than at this declaration.
+  sdk: ^3.13.4
+  flutter: ">=3.47.5"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Path pin, not a version pin: the guard must build the bridge as it stands
+  # in THIS worktree, not as it stands on pub.
+  eden_ui_flutter:
+    path: ../..
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

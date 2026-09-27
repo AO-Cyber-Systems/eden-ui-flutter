@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/spacing.dart';
 import '../tokens/radii.dart';
@@ -243,24 +244,32 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
           // is conventionally SCREAMING_SNAKE_CASE.
           Expanded(
             flex: 3,
-            child: TextField(
-              controller: TextEditingController(text: entry.key)
-                ..selection = TextSelection.collapsed(offset: entry.key.length),
-              style: monoStyle,
-              readOnly: widget.readOnly,
-              decoration: InputDecoration(
-                hintText: 'KEY',
-                hintStyle: monoStyle?.copyWith(
-                  color: EdenColors.neutral[400],
+            child: EdenBareFieldTheme(
+              // THE CARD IS THE CHROME. An inline KEY cell on the editor's
+              // `surfaceBg` card, not a boxed input. EdenTheme's
+              // inputDecorationTheme painted both a box over that card —
+              // neutral[800] over neutral[900] in dark, a 1.19:1 step, one per
+              // cell per row — and a colorScheme.outline ring around every
+              // cell. Pinned by field_fill_overpaint_test.dart and
+              // field_border_overpaint_test.dart.
+              child: TextField(
+                controller: TextEditingController(text: entry.key)
+                  ..selection = TextSelection.collapsed(offset: entry.key.length),
+                style: monoStyle,
+                readOnly: widget.readOnly,
+                decoration: InputDecoration(
+                  hintText: 'KEY',
+                  hintStyle: monoStyle?.copyWith(
+                    color: EdenColors.neutral[400],
+                  ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: EdenSpacing.space2,
+                    vertical: EdenSpacing.space2,
+                  ),
                 ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: EdenSpacing.space2,
-                  vertical: EdenSpacing.space2,
-                ),
-                border: InputBorder.none,
+                onChanged: (v) => _updateKey(index, v),
               ),
-              onChanged: (v) => _updateKey(index, v),
             ),
           ),
           // Equals divider
@@ -292,26 +301,28 @@ class _EdenEnvEditorState extends State<EdenEnvEditor> {
           // revealing the value restores both. That posture is unchanged here.
           Expanded(
             flex: 5,
-            child: TextField(
-              controller: TextEditingController(text: entry.value)
-                ..selection =
-                    TextSelection.collapsed(offset: entry.value.length),
-              style: monoStyle,
-              readOnly: widget.readOnly,
-              obscureText: !isRevealed,
-              decoration: InputDecoration(
-                hintText: 'value',
-                hintStyle: monoStyle?.copyWith(
-                  color: EdenColors.neutral[400],
+            child: EdenBareFieldTheme(
+              // THE CARD IS THE CHROME, same as the KEY cell above.
+              child: TextField(
+                controller: TextEditingController(text: entry.value)
+                  ..selection =
+                      TextSelection.collapsed(offset: entry.value.length),
+                style: monoStyle,
+                readOnly: widget.readOnly,
+                obscureText: !isRevealed,
+                decoration: InputDecoration(
+                  hintText: 'value',
+                  hintStyle: monoStyle?.copyWith(
+                    color: EdenColors.neutral[400],
+                  ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: EdenSpacing.space2,
+                    vertical: EdenSpacing.space2,
+                  ),
                 ),
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: EdenSpacing.space2,
-                  vertical: EdenSpacing.space2,
-                ),
-                border: InputBorder.none,
+                onChanged: (v) => _updateValue(index, v),
               ),
-              onChanged: (v) => _updateValue(index, v),
             ),
           ),
           // Reveal toggle

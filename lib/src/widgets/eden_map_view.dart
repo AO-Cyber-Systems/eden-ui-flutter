@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/eden_bare_field_theme.dart';
 import '../tokens/colors.dart';
 import '../tokens/radii.dart';
 import '../tokens/spacing.dart';
@@ -447,46 +448,52 @@ class _EdenMapViewState extends State<EdenMapView>
       // address hint would drop a password-manager autofill panel over the map
       // and would claim the typed text is the user's own address when it is
       // usually somewhere they are looking for.
-      child: TextField(
-        controller: _searchController,
-        onChanged: widget.onSearchChanged,
-        autofillHints: search.autofillHints,
-        keyboardType: search.keyboardType,
-        obscureText: search.obscureText,
-        textInputAction: search.textInputAction,
-        textCapitalization: search.textCapitalization,
-        autocorrect: search.autocorrect,
-        enableSuggestions: search.enableSuggestions,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: isDark ? Colors.white : EdenColors.neutral[900],
-        ),
-        decoration: InputDecoration(
-          hintText: widget.searchHint,
-          hintStyle: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? EdenColors.neutral[500] : EdenColors.neutral[400],
+      child: EdenBareFieldTheme(
+        // THE SEARCH CARD IS THE CHROME. The floating Container above
+        // declares the fill, the radius and the shadow; EdenTheme's
+        // inputDecorationTheme drew a colorScheme.outline ring inside that
+        // card — #d4d4d8 on white in light, #3f3f46 on neutral[800] in dark.
+        // Pinned by field_border_overpaint_test.dart.
+        child: TextField(
+          controller: _searchController,
+          onChanged: widget.onSearchChanged,
+          autofillHints: search.autofillHints,
+          keyboardType: search.keyboardType,
+          obscureText: search.obscureText,
+          textInputAction: search.textInputAction,
+          textCapitalization: search.textCapitalization,
+          autocorrect: search.autocorrect,
+          enableSuggestions: search.enableSuggestions,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: isDark ? Colors.white : EdenColors.neutral[900],
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
-          ),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.close,
-                    size: 20,
-                    color:
-                        isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    widget.onSearchChanged?.call('');
-                  },
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: EdenSpacing.space4,
-            vertical: EdenSpacing.space3,
+          decoration: InputDecoration(
+            hintText: widget.searchHint,
+            hintStyle: theme.textTheme.bodyMedium?.copyWith(
+              color: isDark ? EdenColors.neutral[500] : EdenColors.neutral[400],
+            ),
+            prefixIcon: Icon(
+              Icons.search,
+              color: isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
+            ),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      size: 20,
+                      color:
+                          isDark ? EdenColors.neutral[400] : EdenColors.neutral[500],
+                    ),
+                    onPressed: () {
+                      _searchController.clear();
+                      widget.onSearchChanged?.call('');
+                    },
+                  )
+                : null,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: EdenSpacing.space4,
+              vertical: EdenSpacing.space3,
+            ),
           ),
         ),
       ),

@@ -5,8 +5,12 @@
 // every story once at its defaultKnobValues.
 //
 // Objective 040 (TRD 40-17) raised the total from 45 to 49 by registering the
-// autofill/selection stories. This count is a real contract: registering a new
-// story is meant to break it.
+// autofill/selection stories.
+// Objective 23 (TRD 23-05) raised the total from 49 to 60 by registering the
+// co-located nav/layout stories — the FIFTH group, emitted by
+// tool/gen_stories.dart into register_stories.g.dart: 8 nav-item states,
+// 2 desktop-layout states and 1 mobile-layout state.
+// This count is a real contract: registering a new story is meant to break it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,9 +29,10 @@ void main() {
   });
 
   test(
-      'registry has exactly 49 stories '
-      '(6 interactive + 4 autofill/selection + 6 galleries + 33 static)', () {
-    expect(StoryRegistry.instance.all().length, equals(49));
+      'registry has exactly 60 stories '
+      '(6 interactive + 4 autofill/selection + 6 galleries + 33 static '
+      '+ 11 co-located)', () {
+    expect(StoryRegistry.instance.all().length, equals(60));
   });
 
   test('all story ids are unique', () {
