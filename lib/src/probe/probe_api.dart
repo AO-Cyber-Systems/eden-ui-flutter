@@ -207,9 +207,19 @@ abstract final class EdenProbeApi {
   /// The name of the route currently on top.
   ///
   /// GOTCHA: there is no binding-level "current route" in Flutter. The walk
-  /// keeps the LAST [NavigatorState] the element walk reaches, which is the
-  /// innermost one for a nested-navigator app — the same "deepest wins" rule
-  /// [_currentBrightness] follows.
+  /// keeps the LAST [NavigatorState] a PRE-ORDER DFS reaches — which is
+  /// "last in child order", NOT "innermost", and the two are different the
+  /// moment an app has more than one navigator.
+  ///
+  /// KNOWN LIMIT, stated because the earlier wording claimed otherwise: an
+  /// `IndexedStack` of tabs that each own a `Navigator` lays out every tab,
+  /// so every one of their navigators is mounted and this returns the LAST
+  /// TAB's top route whatever tab is on screen. Closing it means asking which
+  /// navigator is being painted, which the element tree does not say; a
+  /// consumer with nested navigators should read the route from its own
+  /// router instead of from here. A single-navigator app — which is every
+  /// consumer of this package today — is unaffected, and the DFS order makes
+  /// the answer for one navigator exact.
   ///
   /// WHY NOT `ModalRoute.of(element)`. THE PROBE MUST NOT PERTURB THE APP IT
   /// OBSERVES, and that call does. `ModalRoute.of` is

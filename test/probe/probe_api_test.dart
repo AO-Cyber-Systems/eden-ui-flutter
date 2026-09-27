@@ -283,6 +283,55 @@ void main() {
       );
       expect(EdenProbeApi.state()['route'], '/second');
     });
+
+    testWidgets(
+        'reading the route POPS NOTHING — the history is identical after '
+        'repeated reads', (WidgetTester tester) async {
+      // THE INVARIANT A MUTATING API OWES. `_currentRoute` reads the topmost
+      // route through `NavigatorState.popUntil`, whose next statement after
+      // the predicate is a real `pop()`. The rule holds only because the
+      // predicate always returns true, and nothing in the language enforces
+      // that — an edit to the predicate, or an SDK change to the loop order,
+      // turns a probe read into a production navigation teardown.
+      //
+      // The rebuild case above cannot see that: it pushes AFTER the read and
+      // re-reads, which reports the same answer whether or not the read had
+      // popped. This one measures the STACK.
+      final GlobalKey<NavigatorState> navigator = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigator,
+          home: const Scaffold(body: Text('home')),
+        ),
+      );
+      await _pushNamed(tester, navigator, '/second');
+      await _pushNamed(tester, navigator, '/third');
+
+      // Read it FIVE times. One pop per read would be invisible to a single
+      // before/after comparison of the top route's name.
+      for (int i = 0; i < 5; i++) {
+        expect(EdenProbeApi.state()['route'], '/third');
+        EdenProbeApi.tree();
+      }
+
+      // The stack is still three deep: two pops get back to '/', and the
+      // route names on the way down are the ones that were pushed.
+      expect(navigator.currentState!.canPop(), isTrue);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.state()['route'], '/second');
+
+      expect(navigator.currentState!.canPop(), isTrue);
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(EdenProbeApi.state()['route'], '/');
+      expect(
+        navigator.currentState!.canPop(),
+        isFalse,
+        reason: 'the stack is deeper or shallower than the three routes that '
+            'were pushed — a probe read moved the history',
+      );
+    });
   });
 }
 
