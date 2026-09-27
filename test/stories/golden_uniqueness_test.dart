@@ -54,10 +54,38 @@ import '../../tool/gen_story_tests.dart' show coLocatedStories;
 /// Directory holding the committed CI baselines, relative to the package root.
 const String kGoldenBaselineDir = 'test/stories/_generated/goldens/ci';
 
-/// The baseline file name every (story, theme) the GENERATOR emits a golden
-/// for will be compared against, derived through the same [goldenPathFor] the
-/// assertion itself calls. Typing the names — or a count — here would make
-/// this gate agree with a list rather than with the catalogue.
+/// Every (story, theme) the GENERATOR emits a golden for, as
+/// `<baseline file name> -> <the story ids that produced it>`, derived
+/// through the same [goldenPathFor] the assertion itself calls.
+///
+/// COMPUTED ONCE. `coLocatedStories()` CLEARS the global [StoryRegistry] and
+/// re-registers it as a side effect; calling it per assertion re-entered that
+/// three times a run for an answer that cannot change within one isolate.
+///
+/// A MAP, NOT A SET, because [goldenPathFor] flattens `/` to `_`: the story
+/// ids `a/b` and `a_b` produce ONE file name. As a set that is invisible —
+/// the expected count silently drops by one, the floor weakens by one, and
+/// one of the two stories reads as neither missing nor orphaned. Keeping the
+/// sources lets [expectedBaselineNames] exist and the collision be reported.
+final Map<String, List<String>> _expectedByName = () {
+  final Map<String, List<String>> out = <String, List<String>>{};
+  for (final EdenStory story in coLocatedStories()) {
+    for (final ThemeMode mode in <ThemeMode>[
+      ThemeMode.light,
+      ThemeMode.dark,
+    ]) {
+      out
+          .putIfAbsent(
+            goldenPathFor(story, mode).split('/').last,
+            () => <String>[],
+          )
+          .add('${story.id} (${mode.name})');
+    }
+  }
+  return out;
+}();
+
+/// The baseline file names, one per (story, theme).
 ///
 /// WHY THE SET AND NOT A NUMBER. A count says "22 files are present"; it says
 /// nothing about WHICH. Rename a story and the count is unchanged while its
@@ -66,16 +94,7 @@ const String kGoldenBaselineDir = 'test/stories/_generated/goldens/ci';
 /// the golden expectations skip entirely, so nothing in a local run, and
 /// nothing in the non-Linux half of CI, notices that a story lost its
 /// baseline.
-Set<String> expectedBaselineNames() {
-  return <String>{
-    for (final EdenStory story in coLocatedStories())
-      for (final ThemeMode mode in <ThemeMode>[
-        ThemeMode.light,
-        ThemeMode.dark,
-      ])
-        goldenPathFor(story, mode).split('/').last,
-  };
-}
+Set<String> expectedBaselineNames() => _expectedByName.keys.toSet();
 
 /// A pair of baselines that is DELIBERATELY byte-identical.
 class PermittedIdenticalGoldens {
@@ -203,6 +222,20 @@ void main() {
           'their golden comparison has nothing to compare against:\n  '
           '${missing.join('\n  ')}\nRun the update_goldens dispatch and '
           'commit the artifact.',
+    );
+
+    final List<String> collisions = <String>[
+      for (final MapEntry<String, List<String>> e in _expectedByName.entries)
+        if (e.value.length > 1) '${e.key} <- ${e.value.join(', ')}',
+    ]..sort();
+    expect(
+      collisions,
+      isEmpty,
+      reason: 'two (story, theme) pairs want the SAME baseline file. '
+          'goldenPathFor flattens "/" to "_", so the story ids "a/b" and '
+          '"a_b" collide — one of them is comparing against the other\'s '
+          'pixels, the expected count is one short, and neither reads as '
+          'missing or orphaned:\n  ${collisions.join('\n  ')}',
     );
 
     final List<String> orphans = <String>[

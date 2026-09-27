@@ -119,11 +119,33 @@ jobs:
       # `lints/` is a separate package; custom_lint needs it resolved too.
       - run: dart pub get --directory=lints
 
+      # THE RULES' OWN TESTS. `lints/` is a separate package, so the root
+      # `flutter test` never walked it and `lints/test/rules_test.dart` -- the
+      # only thing that proves the three rules fire on a violation and stay
+      # quiet on a clean file -- had NEVER been executed in CI. A rule nobody
+      # runs is a rule nobody knows works.
+      - name: Design-rule unit tests
+        run: dart test
+        working-directory: lints
+
       # THE GATE. Non-zero when any of the three design rules fires inside the
       # enforced scope declared in analysis_options.yaml. Deliberately NOT
       # continue-on-error: a non-blocking gate is the exact failure mode this
       # job exists to avoid.
       - run: dart run custom_lint
+
+      # THE NON-VACUITY CONTROL, and it runs AFTER the gate on purpose: it
+      # writes a deliberately-violating file into the enforced scope, so a
+      # leftover from a crashed run must not be able to poison the real gate
+      # above (the script traps and deletes it either way).
+      #
+      # `dart run custom_lint` exits 0 both when the rules hold and when they
+      # are not running -- a missing `plugins: custom_lint`, a duplicate
+      # top-level `analyzer:` key, or `enforced_paths` indented one level too
+      # far. All three have happened. This step fails if the gate stays quiet
+      # on a file that must be reported.
+      - name: Lint gate non-vacuity control
+        run: bash tool/lint_gate_assert.sh
 
   stories:
     name: Stories (goldens + expectUiSane)

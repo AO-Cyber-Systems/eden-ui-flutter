@@ -8,8 +8,15 @@ publish_to: none
 version: 0.0.1
 
 environment:
-  sdk: ">=3.6.0 <4.0.0"
-  flutter: ">=3.27.0"
+  # KEPT IN STEP WITH ../../pubspec.yaml, which this app depends on by PATH.
+  # main's toolchain-alignment commit raised the library to `sdk: ^3.13.4` /
+  # `flutter: >=3.47.5` and did not touch this file, leaving the app
+  # declaring support for toolchains its own dependency refuses to resolve
+  # under. `flutter pub get` here picks the intersection and says nothing, so
+  # the contradiction is invisible until a build on an older SDK fails inside
+  # the dependency rather than at this declaration.
+  sdk: ^3.13.4
+  flutter: ">=3.47.5"
 
 dependencies:
   flutter:
