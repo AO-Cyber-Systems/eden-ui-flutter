@@ -16,13 +16,20 @@ added, deleted or reworded there changes this table on the next run.
 - **1** check with no fixture anywhere.
 - **2** differential rows: shapes that must produce NO violation.
 
-**The shape of the result.** Every UNREACHABLE shape probed — a control present on
-the frame that no pointer can take — is caught. Every UNREADABLE shape probed is
-missed: the contrast rule reads its ink from the resolved TextStyle, so no defect that
-changes the ink at PAINT time can reach it. The three unreachable rows that are also
-missed are missed for a different reason — the control is gone from layout, paint and
-semantics alike, and a surface-level oracle with no list of what SHOULD be there has
-nothing to measure.
+**The shape of the result.** An UNREACHABLE shape is caught when some MECHANISM takes
+the pointer away from the whole control — IgnorePointer, AbsorbPointer, a zero-size or
+offset child, a sibling painted over it. Three unreachable shapes are NOT caught, and
+they are the ones where the control takes a pointer somewhere and still cannot be
+activated: `Semantics(onTap:)` declares an ACCESSIBILITY route and creates no pointer
+handler, so nothing in the render tree says which render object — if any — implements
+it. Those rows are proved by a REAL TAP that does not fire the callback. Note what one
+of them is: the differential control this lane is built on is itself pointer-inert.
+
+Every UNREADABLE shape probed is missed: the contrast rule reads its ink from the
+resolved TextStyle, so no defect that changes the ink at PAINT time can reach it. Three
+further unreachable rows are missed for a third reason — the control is gone from
+layout, paint and semantics alike, and a surface-level oracle with no list of what
+SHOULD be there has nothing to measure.
 
 A green run of the oracle means the surface passes the checks in the first table.
 It says NOTHING about the shapes in the second.

@@ -1268,19 +1268,32 @@ String _renderTable(OracleCheckInventory inventory) {
     ..writeln('- **$controls** differential rows: shapes that must produce NO '
         'violation.')
     ..writeln()
-    ..writeln('**The shape of the result.** Every UNREACHABLE shape probed — '
-        'a control present on')
-    ..writeln('the frame that no pointer can take — is caught. Every '
-        'UNREADABLE shape probed is')
-    ..writeln('missed: the contrast rule reads its ink from the resolved '
-        'TextStyle, so no defect that')
-    ..writeln('changes the ink at PAINT time can reach it. The three '
-        'unreachable rows that are also')
-    ..writeln('missed are missed for a different reason — the control is gone '
-        'from layout, paint and')
-    ..writeln('semantics alike, and a surface-level oracle with no list of '
-        'what SHOULD be there has')
-    ..writeln('nothing to measure.')
+    ..writeln('**The shape of the result.** An UNREACHABLE shape is caught '
+        'when some MECHANISM takes')
+    ..writeln('the pointer away from the whole control — IgnorePointer, '
+        'AbsorbPointer, a zero-size or')
+    ..writeln('offset child, a sibling painted over it. Three unreachable '
+        'shapes are NOT caught, and')
+    ..writeln('they are the ones where the control takes a pointer somewhere '
+        'and still cannot be')
+    ..writeln('activated: `Semantics(onTap:)` declares an ACCESSIBILITY route '
+        'and creates no pointer')
+    ..writeln('handler, so nothing in the render tree says which render '
+        'object — if any — implements')
+    ..writeln('it. Those rows are proved by a REAL TAP that does not fire the '
+        "callback. Note what one")
+    ..writeln('of them is: the differential control this lane is built on is '
+        'itself pointer-inert.')
+    ..writeln()
+    ..writeln('Every UNREADABLE shape probed is missed: the contrast rule '
+        'reads its ink from the')
+    ..writeln('resolved TextStyle, so no defect that changes the ink at PAINT '
+        'time can reach it. Three')
+    ..writeln('further unreachable rows are missed for a third reason — the '
+        'control is gone from')
+    ..writeln('layout, paint and semantics alike, and a surface-level oracle '
+        'with no list of what')
+    ..writeln('SHOULD be there has nothing to measure.')
     ..writeln()
     ..writeln('A green run of the oracle means the surface passes the checks '
         'in the first table.')
