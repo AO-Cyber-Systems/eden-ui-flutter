@@ -45,12 +45,14 @@ Future<Map<int, int>> frameHistogramOf(
 
   ByteData? bytes;
   int width = 0;
+  int height = 0;
   await tester.runAsync<void>(() async {
     final ui.Image image = await layer.toImage(
       renderView.paintBounds,
       pixelRatio: 1 / renderView.flutterView.devicePixelRatio,
     );
     width = image.width;
+    height = image.height;
     bytes = await image.toByteData();
     image.dispose();
   });
@@ -62,7 +64,15 @@ Future<Map<int, int>> frameHistogramOf(
   final Map<int, int> counts = <int, int>{};
   for (int x = region.left.floor(); x < region.right.ceil(); x++) {
     for (int y = region.top.floor(); y < region.bottom.ceil(); y++) {
-      if (x < 0 || y < 0) {
+      // THE UPPER BOUNDS ARE NOT DECORATION. The buffer is one flat scanline
+      // array, so `x >= width` is still a VALID offset — it is the pixel at
+      // (x - width, y + 1). Without this test a region that runs past the
+      // right edge silently folds the next row's pixels into the histogram,
+      // and this reader — the INDEPENDENT proof for every not-caught row —
+      // would be a weaker reader than the `_argbHistogram` it is checking.
+      // An independent check that is weaker than what it checks proves
+      // nothing.
+      if (x < 0 || y < 0 || x >= width || y >= height) {
         continue;
       }
       final int offset = (y * width + x) * 4;

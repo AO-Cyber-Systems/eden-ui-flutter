@@ -44,10 +44,38 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:eden_ui_flutter/dev_app/registry/eden_story.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../test_support/ui_oracle/story_harness.dart' show goldenPathFor;
+import '../../tool/gen_story_tests.dart' show coLocatedStories;
 
 /// Directory holding the committed CI baselines, relative to the package root.
 const String kGoldenBaselineDir = 'test/stories/_generated/goldens/ci';
+
+/// The baseline file name every (story, theme) the GENERATOR emits a golden
+/// for will be compared against, derived through the same [goldenPathFor] the
+/// assertion itself calls. Typing the names — or a count — here would make
+/// this gate agree with a list rather than with the catalogue.
+///
+/// WHY THE SET AND NOT A NUMBER. A count says "22 files are present"; it says
+/// nothing about WHICH. Rename a story and the count is unchanged while its
+/// baseline is an orphan and its new name has none — and `matchesGoldenFile`
+/// on a MISSING baseline does not fail the way a reader expects: off Linux
+/// the golden expectations skip entirely, so nothing in a local run, and
+/// nothing in the non-Linux half of CI, notices that a story lost its
+/// baseline.
+Set<String> expectedBaselineNames() {
+  return <String>{
+    for (final EdenStory story in coLocatedStories())
+      for (final ThemeMode mode in <ThemeMode>[
+        ThemeMode.light,
+        ThemeMode.dark,
+      ])
+        goldenPathFor(story, mode).split('/').last,
+  };
+}
 
 /// A pair of baselines that is DELIBERATELY byte-identical.
 class PermittedIdenticalGoldens {
@@ -100,13 +128,21 @@ Map<String, String> _baselines() {
       .toList()
     ..sort((File a, File b) => a.path.compareTo(b.path));
 
-  if (files.length < 2) {
+  // THE FLOOR IS THE CATALOGUE, NOT `2`. It used to be two — on a message
+  // that said in the same breath that 22 were expected — so twenty of the
+  // twenty-two baselines could go missing and this gate would still pass and
+  // still call itself a proof about the catalogue. A floor a reader has to
+  // be told is wrong by the message beside it is not a floor.
+  final Set<String> expected = expectedBaselineNames();
+  if (files.length < expected.length) {
     fail(
-      'golden uniqueness: $kGoldenBaselineDir holds ${files.length} PNG(s). '
-      'With fewer than two there is no pair to compare, so this gate proves '
-      'nothing and says so rather than passing. The catalogue has 11 stories '
-      'in 2 themes; a directory this empty means the baselines were not '
-      'committed.',
+      'golden uniqueness: $kGoldenBaselineDir holds ${files.length} PNG(s), '
+      'and the story catalogue declares ${expected.length} '
+      '(${expected.length ~/ 2} stories in 2 themes). A short directory means '
+      'the baselines were not committed, so this gate would be comparing a '
+      'fraction of the catalogue and reporting a pass about all of it. Run '
+      'the update_goldens dispatch (gh workflow run ci.yml --ref <branch> -f '
+      'update_goldens=true) and commit the artifact.',
     );
   }
 
@@ -130,9 +166,56 @@ void main() {
     final Map<String, String> baselines = _baselines();
     expect(
       baselines.length,
-      greaterThanOrEqualTo(2),
+      greaterThanOrEqualTo(expectedBaselineNames().length),
       reason: 'already asserted inside _baselines(); restated so the case '
           'name is not the only record of what it checked',
+    );
+  });
+
+  test('case 4: every (story, theme) in the catalogue HAS a baseline', () {
+    // The half `case 1` cannot see. A count only says how many files are
+    // there; this says which. Both directions are asserted, because both are
+    // real defects: a story with no baseline is a comparison that never runs
+    // (and, off Linux, never even reports a skip against a name), and a
+    // baseline no story claims is a file nothing compares — the residue of a
+    // renamed or deleted story, which is exactly how `desktop-layout/narrow`
+    // came to be pinned against the wrong surface.
+    final Map<String, String> baselines = _baselines();
+    final Set<String> expected = expectedBaselineNames();
+
+    expect(
+      expected,
+      isNotEmpty,
+      reason: 'the story catalogue came back empty, so the two assertions '
+          'below would both pass on nothing. Either registerGeneratedStories '
+          'stopped registering or the generated registration was not '
+          'committed.',
+    );
+
+    final List<String> missing = <String>[
+      for (final String name in expected)
+        if (!baselines.containsKey(name)) name,
+    ]..sort();
+    expect(
+      missing,
+      isEmpty,
+      reason: 'these (story, theme) pairs have no committed baseline, so '
+          'their golden comparison has nothing to compare against:\n  '
+          '${missing.join('\n  ')}\nRun the update_goldens dispatch and '
+          'commit the artifact.',
+    );
+
+    final List<String> orphans = <String>[
+      for (final String name in baselines.keys)
+        if (!expected.contains(name)) name,
+    ]..sort();
+    expect(
+      orphans,
+      isEmpty,
+      reason: 'these baselines belong to no (story, theme) the generator '
+          'emits, so nothing compares them and nothing will ever notice them '
+          'going stale:\n  ${orphans.join('\n  ')}\nDelete them, or restore '
+          'the story that was renamed out from under them.',
     );
   });
 
