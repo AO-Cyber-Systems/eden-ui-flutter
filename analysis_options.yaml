@@ -1,6 +1,3 @@
-analyzer:
-  exclude:
-    - build/**
 include: package:flutter_lints/flutter.yaml
 
 linter:
@@ -50,6 +47,15 @@ analyzer:
     # analyzed. Excluding it keeps `flutter analyze` on THIS package reporting
     # exactly what it reported before this file changed.
     - lints/**
+    # From main's toolchain-alignment commit (f9107c3), which added it as a
+    # SECOND top-level `analyzer:` key. Git merged both keys in without a
+    # conflict and the result is a duplicate mapping: `flutter analyze` picks
+    # one of them silently, and `dart run custom_lint` — the Lint gate —
+    # THROWS on `loadYaml` ("Duplicate mapping key") before it reads a single
+    # rule. Folded into this block so there is exactly one `analyzer:`, and
+    # so `plugins: custom_lint` (without which custom_lint exits 0 having
+    # linted nothing) cannot be the key that loses.
+    - build/**
 
 custom_lint:
   rules:

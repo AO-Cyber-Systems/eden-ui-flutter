@@ -203,17 +203,23 @@ void main() {
     visit(root);
     handle.dispose();
 
+    // A LOWER BOUND, not an equality. How many nodes a merge publishes is
+    // SDK-dependent — `semantics_geometry_test` case 7 is this repo's other
+    // record of 3.47.x publishing a node 3.41.9 does not — and a newer SDK
+    // publishing MORE of them does not weaken this case. FEWER would: one
+    // node means there is nothing to exclude and case 3 is about nothing, so
+    // that fails here and says so rather than passing quietly.
     expect(
       carrying.length,
-      2,
-      reason: 'the fixture no longer publishes one identifier on two nodes, '
-          'so case 3 has nothing to exclude',
+      greaterThanOrEqualTo(2),
+      reason: 'the fixture no longer publishes one identifier on more than '
+          'one node, so case 3 has nothing to exclude',
     );
     expect(
       carrying.where(isPresentedToUser).length,
       1,
-      reason: 'exactly one of the two is the control; the other is merged '
-          'into it',
+      reason: 'exactly one of them is the control; the rest are merged into '
+          'it',
     );
   });
 }
