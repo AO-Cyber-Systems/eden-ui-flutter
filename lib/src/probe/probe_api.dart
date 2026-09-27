@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
+import '../a11y/semantics_presentation.dart';
+
 /// One probe hit: an element or semantics node the probe matched.
 class EdenProbeHit {
   const EdenProbeHit({
@@ -204,19 +206,53 @@ abstract final class EdenProbeApi {
 
   /// The name of the route currently on top.
   ///
-  /// GOTCHA: there is no binding-level "current route" in Flutter. The deepest
-  /// element that sits under a [ModalRoute] is the one on top, so the walk
-  /// keeps the LAST non-null answer.
+  /// GOTCHA: there is no binding-level "current route" in Flutter. The walk
+  /// keeps the LAST [NavigatorState] the element walk reaches, which is the
+  /// innermost one for a nested-navigator app — the same "deepest wins" rule
+  /// [_currentBrightness] follows.
+  ///
+  /// WHY NOT `ModalRoute.of(element)`. THE PROBE MUST NOT PERTURB THE APP IT
+  /// OBSERVES, and that call does. `ModalRoute.of` is
+  /// `context.dependOnInheritedWidgetOfExactType<_ModalScopeStatus>()`, so
+  /// calling it on every element in the tree registered EVERY ELEMENT IN THE
+  /// TREE as a dependent of the route's inherited model. The next time
+  /// anything on that model changed — pushing a route flips `isCurrent`,
+  /// which is enough — every one of those elements was marked dirty and the
+  /// whole app rebuilt, on a frame it would otherwise have skipped. A probe
+  /// that makes the app rebuild is measuring a different app.
+  ///
+  /// There is no public non-dependent reader for it either:
+  /// `getInheritedWidgetOfExactType<T>` is the dependency-free lookup, but it
+  /// is generic over the inherited widget's TYPE and `_ModalScopeStatus` is
+  /// private to `package:flutter/src/widgets/routes.dart`, as are
+  /// `_ModalScope` and its state. Every public accessor built on it
+  /// (`ModalRoute.of`, `settingsOf`, `isCurrentOf`, ...) goes through
+  /// `InheritedModel.inheritFrom` and registers an aspect dependency.
+  ///
+  /// So the route is read off the NAVIGATOR instead, which is public all the
+  /// way down and holds no inherited-widget relationship with this call:
+  /// `NavigatorState.popUntil` hands its predicate the topmost PRESENT route
+  /// and, because the predicate accepts it immediately, returns without ever
+  /// reaching its `pop()` — see `NavigatorState.popUntil`, whose body is
+  /// `while (candidate != null) { if (predicate(candidate.route)) return; pop(); ... }`.
+  /// It is a read. Do NOT "simplify" the predicate to anything that can
+  /// return false: the next call in that loop is a real pop.
   static String? _currentRoute() {
     String? name;
     for (final Element element in _elements()) {
-      if (!element.mounted) {
+      if (!element.mounted || element is! StatefulElement) {
         continue;
       }
-      final ModalRoute<Object?>? route = ModalRoute.of(element);
-      if (route != null) {
-        name = route.settings.name ?? name;
+      final State<StatefulWidget> state = element.state;
+      if (state is! NavigatorState) {
+        continue;
       }
+      Route<Object?>? top;
+      state.popUntil((Route<Object?> route) {
+        top = route;
+        return true; // ALWAYS. See the comment above.
+      });
+      name = top?.settings.name ?? name;
     }
     return name;
   }
@@ -291,9 +327,29 @@ class _ProbeSemanticsNode {
   final List<String> actions;
 }
 
-/// Every semantics node carrying a non-empty identifier, sorted by
-/// `(top, left, identifier)` — `visitChildren` order is an implementation
-/// detail and must never leak into a driver's expectations.
+/// Every semantics node carrying a non-empty identifier AND PRESENTED TO THE
+/// USER ([isPresentedToUser]), sorted by `(top, left, identifier)` —
+/// `visitChildren` order is an implementation detail and must never leak into
+/// a driver's expectations.
+///
+/// THE EXCLUSION IS THE ORACLE'S, NOT A SECOND COPY OF IT. `isPresentedToUser`
+/// lives in `lib/src/a11y/semantics_presentation.dart` and is the same
+/// function `identifiedNodes` in `lib/testing/semantics_geometry.dart` calls.
+/// It was added to the oracle and not to the probe, and the two answers
+/// promptly diverged on the same tree:
+///
+///   * a `ListView`'s off-screen rows are published with their identifiers,
+///     their labels and their tap routes, flagged `isHidden`. The oracle
+///     skipped them; the probe handed a driver five rows it could "click"
+///     that no user can see, at rects outside the viewport.
+///   * a node flagged `isMergedIntoParent` is not a control of its own. The
+///     probe reported it AND its parent — one control, one identifier, two
+///     different rects — and a driver picking either one is picking at
+///     random.
+///
+/// `test/probe/probe_oracle_presentation_agreement_test.dart` pins the two
+/// walks to the same answer over the same trees, so this cannot drift again
+/// by one side being edited.
 List<_ProbeSemanticsNode> _identifiedSemanticsNodes() {
   // `PipelineOwner.semanticsOwner` is deprecated in favour of the
   // SemanticsBinding, but the binding exposes no root SemanticsNode. This is
@@ -309,7 +365,7 @@ List<_ProbeSemanticsNode> _identifiedSemanticsNodes() {
 
   void visit(SemanticsNode node, List<SemanticsNode> ancestors) {
     final SemanticsData data = node.getSemanticsData();
-    if (data.identifier.isNotEmpty) {
+    if (data.identifier.isNotEmpty && isPresentedToUser(node)) {
       found.add(_ProbeSemanticsNode(
         id: node.id,
         identifier: data.identifier,

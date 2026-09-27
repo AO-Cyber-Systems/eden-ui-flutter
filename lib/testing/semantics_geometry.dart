@@ -36,6 +36,16 @@ import 'package:flutter/rendering.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_test/flutter_test.dart';
 
+// THE SHARED PRESENTATION PREDICATE. `isPresentedToUser` used to be declared
+// here, which meant the runtime probe — which cannot import this file, it
+// imports flutter_test — could not use it and did not. The two walks then
+// disagreed about the same tree. It now lives in a production-safe library
+// both sides import, and is re-exported here so every existing caller of this
+// file keeps reaching it by the same name.
+import '../src/a11y/semantics_presentation.dart';
+
+export '../src/a11y/semantics_presentation.dart' show isPresentedToUser;
+
 /// One semantics node, with the rect the accessibility tree publishes for it
 /// resolved into global (screen) coordinates.
 class SemanticsGeometryNode {
@@ -63,36 +73,6 @@ class SemanticsGeometryNode {
       'SemanticsGeometryNode(id: $id, identifier: $identifier, '
       'globalRect: $globalRect, actions: $actions)';
 }
-
-/// Whether the accessibility tree publishes [node] as something a user can
-/// actually see and reach.
-///
-/// WHY THIS EXISTS. A `ListView` builds a few rows beyond its viewport (the
-/// cache extent) and publishes them as real semantics nodes carrying their
-/// identifiers, their labels and their tap routes — flagged `isHidden`,
-/// because no user can see them. Every geometry rule in this package used to
-/// walk those rows like any other, and a CORRECT 30-row list came back with
-/// one "inert to a real tap" violation per off-screen row. Measured on
-/// `test/testing/_fixtures/broken_surfaces.dart`'s `scrolledListRows`: five
-/// false accusations on a screen with nothing wrong with it.
-///
-/// That is the pressure that gets an oracle switched off, or gets identifier
-/// sets dumped into an escape hatch — so the exclusion is encoded rather than
-/// left to the consumer.
-///
-/// The three predicates are exactly the ones `flutter_test`'s own
-/// `MinimumTapTargetGuideline` and `LabeledTapTargetGuideline` apply, named
-/// here rather than reached for because they are private to those classes:
-///
-///  * [SemanticsNode.isMergedIntoParent] — the node does not stand on its own;
-///    its parent is the control.
-///  * [SemanticsNode.isInvisible] — an empty rect: there is no geometry to
-///    measure.
-///  * `isHidden` — published, but not presented.
-bool isPresentedToUser(SemanticsNode node) =>
-    !node.isMergedIntoParent &&
-    !node.isInvisible &&
-    !node.flagsCollection.isHidden;
 
 /// Every node in the current semantics tree that carries a non-empty
 /// identifier AND is presented to the user ([isPresentedToUser]), sorted by

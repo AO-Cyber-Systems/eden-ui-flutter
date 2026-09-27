@@ -3,6 +3,8 @@
 // nothing about the rects the driver receives; these assert the rects.
 library;
 
+import 'dart:async';
+
 import 'package:eden_ui_flutter/src/probe/probe_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -209,5 +211,95 @@ void main() {
       expect(viewport['h'], tester.view.physicalSize.height / tester.view.devicePixelRatio);
       handle.dispose();
     });
+
+    testWidgets(
+        'reading the route does NOT make the probe a dependent of the route, '
+        'so pushing one rebuilds nothing the app would not have rebuilt',
+        (WidgetTester tester) async {
+      // THE PROBE MUST NOT PERTURB THE APP IT OBSERVES.
+      //
+      // `_currentRoute` used to call `ModalRoute.of(element)` on EVERY element
+      // in the tree. That is `dependOnInheritedWidgetOfExactType`, so every
+      // one of them became a dependent of the route's inherited model — and
+      // pushing a route flips `isCurrent` on the model below it, which
+      // notifies every dependent and marks it dirty. One `state()` call
+      // turned the next push into a whole-tree rebuild.
+      //
+      // The counter below sits inside the FIRST route's page, which
+      // `_ModalScopeState` caches in `_page` precisely so that pushing on top
+      // of it does not rebuild it.
+      //
+      // RED (with `ModalRoute.of(element)` restored), and LOUDER than the
+      // counter this case was written around: the push does not merely
+      // rebuild the page, it trips Flutter's own
+      // `InheritedElement.notifyClients` assertion — "check that it really is
+      // our descendant" (framework.dart:6417). The old walk called
+      // `ModalRoute.of` on EVERY element, ancestors of the modal scope and
+      // sibling subtrees included, so the model ended up holding dependents
+      // that are not below it and the first notify after a probe read throws.
+      // A probe read followed by a route change was a debug-build crash, not
+      // only a wasted rebuild.
+      final GlobalKey<NavigatorState> navigator = GlobalKey<NavigatorState>();
+      int homeBuilds = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigator,
+          home: Builder(
+            builder: (BuildContext context) {
+              homeBuilds++;
+              return const Scaffold(body: Text('home'));
+            },
+          ),
+        ),
+      );
+      expect(homeBuilds, 1);
+
+      // THE CONTROL. Push and pop with the probe never called, to establish
+      // that this page does not rebuild on a push by itself — otherwise the
+      // assertion below would be measuring Flutter, not the probe.
+      await _pushNamed(tester, navigator, '/control');
+      expect(
+        homeBuilds,
+        1,
+        reason: 'the first route rebuilds on a push even with no probe in '
+            'the picture, so this case cannot attribute a rebuild to the '
+            'probe',
+      );
+      navigator.currentState!.pop();
+      await tester.pumpAndSettle();
+      final int beforeProbe = homeBuilds;
+
+      // THE MEASUREMENT. Read the route, then push.
+      expect(EdenProbeApi.state()['route'], '/');
+      await _pushNamed(tester, navigator, '/second');
+
+      expect(
+        homeBuilds,
+        beforeProbe,
+        reason: 'the page under the first route rebuilt because the probe '
+            'read the route. The probe subscribed the app to the route model '
+            'and the app is now rebuilding on frames it would have skipped.',
+      );
+      expect(EdenProbeApi.state()['route'], '/second');
+    });
   });
+}
+
+/// Pushes a named route and settles, so a case reads as the interaction it is
+/// rather than as four lines of navigator boilerplate.
+Future<void> _pushNamed(
+  WidgetTester tester,
+  GlobalKey<NavigatorState> navigator,
+  String name,
+) async {
+  unawaited(
+    navigator.currentState!.push(
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: name),
+        builder: (BuildContext context) => Scaffold(body: Text(name)),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
