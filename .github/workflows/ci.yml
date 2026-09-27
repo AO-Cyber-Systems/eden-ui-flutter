@@ -41,7 +41,7 @@ jobs:
           #
           # Do NOT lower this pin without changing that source in the same
           # commit -- they are one decision, not two.
-          flutter-version: '3.47.4'
+          flutter-version: '3.47.5'
           cache: true
 
       - run: flutter pub get
@@ -72,7 +72,7 @@ jobs:
           #
           # Do NOT lower this pin without changing that source in the same
           # commit -- they are one decision, not two.
-          flutter-version: '3.47.4'
+          flutter-version: '3.47.5'
           cache: true
 
       - run: flutter pub get
