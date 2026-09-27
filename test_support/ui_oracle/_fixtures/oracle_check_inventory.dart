@@ -15,23 +15,41 @@
 // rewording one changes this list on the next run, and the catalogue test
 // fails until a fixture is declared against the new shape.
 //
-// WHAT COUNTS AS A SITE, stated because the rule has one deliberate hole:
+// WHAT COUNTS AS A SITE:
 //
 //   * any `<accumulator>.add(<string literal>)` in a reachable function —
 //     included whatever its length, because a message can be entirely
 //     interpolation (`'${guideline.description}: ${failure.message}'`); and
-//   * any `return <string literal>` in a reachable function whose message is
-//     at least [_minimumReturnedMessage] characters after normalisation.
+//   * any `return <string literal>` or `=> <string literal>` in a reachable
+//     function whose message is at least [_minimumReturnedMessage] characters
+//     after normalisation.
 //
-// The length floor on RETURNS exists because a reachable helper can return a
-// PHRASE that is substituted into someone else's message —
-// `_announcedAffordance` returns 'a button' — and those are not checks. The
-// floor is a heuristic, so the hole it leaves is closed rather than ignored:
-// every returned literal the floor REJECTS is reported in
-// [OracleCheckInventory.rejectedFragments], and the catalogue pins that list
-// by name. A new short returned message therefore cannot slip past — it
-// arrives as an unrecognised fragment and the test asks whether it is a
-// violation the table now has to account for.
+// Single AND double quoted, because the quote a message happens to be written
+// in is not a fact about whether it is a check.
+//
+// THE PARSER IS BIDIRECTIONAL, and that is the part that makes the catalogue
+// mean anything. Read one way it reports every site it recognises, and the
+// catalogue fails on a site no row accounts for. That direction alone is
+// worth very little: a site the parser does not RECOGNISE produces no row to
+// be missing, so a new check written in a shape the regexes do not match adds
+// nothing to the inventory and the catalogue passes — silently, with a check
+// nothing exercises. The parser was in exactly that state: single quotes
+// only, and only directly after `.add(` or `return`.
+//
+// So it is read the other way too. Every message-shaped string LITERAL inside
+// a reachable function that no recognised site claims is reported in
+// [OracleCheckInventory.unattributedLiterals], and the catalogue pins that
+// list empty. A message built into a local, a message returned from a shape
+// the opener regex does not match, a message in a quote style nobody
+// anticipated — each of them now arrives as an unattributed literal and fails
+// the table, instead of being ignored.
+//
+// The same treatment closes the length floor on RETURNS. The floor exists
+// because a reachable helper can return a PHRASE that is substituted into
+// someone else's message — `_announcedAffordance` returns 'a button' — and
+// those are not checks. Every returned literal the floor REJECTS is reported
+// in [OracleCheckInventory.rejectedFragments], and the catalogue pins that
+// list by name.
 library;
 
 import 'dart:io';
@@ -76,6 +94,7 @@ class OracleCheckInventory {
     required this.sites,
     required this.rejectedFragments,
     required this.reachedFunctions,
+    required this.unattributedLiterals,
   });
 
   /// Every message-producing site, ordered by id.
@@ -87,6 +106,17 @@ class OracleCheckInventory {
 
   /// The functions reached transitively from `expectUiSane`'s aggregation.
   final List<String> reachedFunctions;
+
+  /// `<function>: <literal>` for every message-shaped string literal inside a
+  /// reachable function that NO recognised site claims, ordered.
+  ///
+  /// THE OTHER DIRECTION. Orphan sites (a site with no catalogue row) only
+  /// catch a check the parser managed to SEE. These catch the check it did
+  /// not: a message built into a local, an opener shape the regex does not
+  /// match, a quote style nobody anticipated. The catalogue pins this empty,
+  /// so an unrecognised message site fails loudly rather than quietly adding
+  /// nothing to the inventory.
+  final List<String> unattributedLiterals;
 
   /// The site carrying [id], or null.
   OracleCheckSite? operator [](String id) {
@@ -193,15 +223,18 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
 
   final List<OracleCheckSite> sites = <OracleCheckSite>[];
   final List<String> rejected = <String>[];
+  final List<String> unattributed = <String>[];
   final List<String> functions = reached.toList()..sort();
 
   for (final String function in functions) {
     final List<String> body = bodies[function]!;
     final List<String> slugs = <String>[];
+    // Lines a recognised site has already accounted for. The reverse scan
+    // below reports every message-shaped literal that is NOT on one of them.
+    final Set<int> claimed = <int>{};
     int ordinal = -1;
     for (int i = 0; i < body.length; i++) {
-      final RegExpMatch? opener =
-          RegExp(r'(\.add\(|\breturn\b)').firstMatch(body[i]);
+      final RegExpMatch? opener = _opener.firstMatch(body[i]);
       if (opener == null) {
         continue;
       }
@@ -214,12 +247,16 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
         }
         rest = at < body.length ? body[at].trim() : '';
       }
-      if (!rest.startsWith("'")) {
+      if (!_startsLiteral(rest)) {
         continue;
       }
       ordinal++;
-      final String message = _normalise(_gatherLiteral(body, at));
-      final bool viaAdd = opener.group(1) != 'return';
+      final (String raw, int last) = _gatherLiteral(body, at);
+      final String message = _normalise(raw);
+      for (int line = i; line <= last; line++) {
+        claimed.add(line);
+      }
+      final bool viaAdd = opener.group(1) == '.add(';
       if (!viaAdd && message.length < _minimumReturnedMessage) {
         rejected.add(message);
         continue;
@@ -241,42 +278,111 @@ OracleCheckInventory parseOracleCheckInventory(String source) {
         ),
       );
     }
+
+    // THE REVERSE SCAN — the direction the orphan check cannot see. Anything
+    // message-shaped on a line no site claimed.
+    for (int i = 0; i < body.length; i++) {
+      if (claimed.contains(i)) {
+        continue;
+      }
+      for (final String literal in _messageShapedLiterals(body[i])) {
+        unattributed.add('$function: $literal');
+      }
+    }
   }
 
   sites.sort((OracleCheckSite a, OracleCheckSite b) => a.id.compareTo(b.id));
   rejected.sort();
+  unattributed.sort();
   return OracleCheckInventory(
     sites: sites,
     rejectedFragments: rejected,
     reachedFunctions: functions,
+    unattributedLiterals: unattributed,
   );
 }
 
+/// The three openers a message can sit behind. `=>` is here because an arrow
+/// body is a return written shorter, and a check written as one produced no
+/// inventory row at all.
+final RegExp _opener = RegExp(r'(\.add\(|\breturn\b|=>)');
+
+/// One string literal, either quote style. Dart does not care which a message
+/// is written in and neither may this: recognising only `'` meant a
+/// double-quoted message added no row and the catalogue passed with a check
+/// it could not see.
+final RegExp _anyLiteral =
+    RegExp(r"'((?:[^'\\]|\\.)*)'" r'|"((?:[^"\\]|\\.)*)"');
+
+/// Whether [rest] — what follows an opener — begins a string literal.
+bool _startsLiteral(String rest) =>
+    rest.startsWith("'") || rest.startsWith('"');
+
+/// A single-quoted literal that is NOT a raw string, and the same for double
+/// quotes. The lookbehind is what excludes `r'...'`: a raw string in this
+/// file's scope is a regex or a path, never a violation message, and
+/// `_describeOverflow`'s `RegExp(r'A (\w+) overflowed by ...')` would
+/// otherwise be reported as an unattributed message for ever.
+final List<RegExp> _nonRawLiterals = <RegExp>[
+  RegExp(r"(?<![A-Za-z0-9_$'])'((?:[^'\\]|\\.)*)'"),
+  RegExp(r'(?<![A-Za-z0-9_$"])"((?:[^"\\]|\\.)*)"'),
+];
+
+/// Every string literal on [line] that looks like a MESSAGE rather than like
+/// punctuation, a key, or a format fragment.
+///
+/// "Message-shaped" is: at least [_minimumReturnedMessage] characters after
+/// normalisation, and containing a space. Deliberately generous — a false
+/// positive costs somebody one line in the catalogue's pin and a moment
+/// deciding what it is; a false NEGATIVE is a check nothing exercises,
+/// reported as a clean run.
+List<String> _messageShapedLiterals(String line) {
+  final List<String> out = <String>[];
+  for (final RegExp pattern in _nonRawLiterals) {
+    for (final RegExpMatch match in pattern.allMatches(line)) {
+      final String normalised = _normalise(match.group(1)!);
+      if (normalised.length >= _minimumReturnedMessage &&
+          normalised.contains(' ')) {
+        out.add(normalised);
+      }
+    }
+  }
+  return out;
+}
+
 /// Joins the adjacent string literals that make up one Dart expression,
-/// starting at [index].
+/// starting at [index], and returns them with the index of the LAST line it
+/// consumed.
+///
+/// The line index is what lets the reverse scan tell a literal that belongs
+/// to a recognised site from one nothing claimed.
 ///
 /// Dart concatenates adjacent literals, and every message in the oracle is
 /// written as one per source line, so a site's text is spread over up to a
 /// dozen lines. Collection stops at the first line that does not end inside
 /// the expression.
-String _gatherLiteral(List<String> body, int index) {
-  final RegExp literal = RegExp(r"'((?:[^'\\]|\\.)*)'");
+(String, int) _gatherLiteral(List<String> body, int index) {
   final StringBuffer out = StringBuffer();
+  int last = index;
   for (int i = index; i < body.length; i++) {
     final String line = body[i].trim();
-    final Iterable<RegExpMatch> matches = literal.allMatches(line);
+    final Iterable<RegExpMatch> matches = _anyLiteral.allMatches(line);
     if (matches.isEmpty) {
       break;
     }
     for (final RegExpMatch match in matches) {
-      out.write(match.group(1));
+      out.write(match.group(1) ?? match.group(2));
     }
-    if (line.endsWith("'") || line.endsWith("',")) {
+    last = i;
+    if (line.endsWith("'") ||
+        line.endsWith("',") ||
+        line.endsWith('"') ||
+        line.endsWith('",')) {
       continue;
     }
     break;
   }
-  return out.toString();
+  return (out.toString(), last);
 }
 
 /// A literal with every interpolation replaced by `*` and whitespace

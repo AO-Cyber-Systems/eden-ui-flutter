@@ -583,4 +583,52 @@ void main() {
       },
     );
   });
+
+  testWidgets(
+      'case 22: a control whose OWN tap route is dead is named even when a '
+      'live unrelated control sits under its centre',
+      (WidgetTester tester) async {
+    await pumpSurface(tester, deadRouteLiveInnerControl());
+    // THE THIRD FALSE-GREEN OF THIS FAMILY, and the one that made the
+    // reachability rule pass for a weaker reason than it claimed. The arm
+    // asked whether ANY strict descendant of the owner was in the hit path.
+    // The switch IS a descendant, so a row announced as a button, declaring
+    // one tap route and untouchable through it, reported nothing. A finger
+    // in the middle of this row toggles the switch.
+    //
+    // `allowOverlap` exempts the row/switch pair ONLY: a switch inside its
+    // row legitimately overlaps it, and that is not the defect here. Every
+    // other pair on the surface stays checked.
+    //
+    // RED (before the "no other identified control in the way" requirement):
+    // exit 0 — zero violations on a row no finger can activate.
+    // GREEN (fixture's IgnorePointer -> ExcludeSemantics): exit 0 for the
+    // right reason — the row's own surface takes the pointer again
+    // everywhere the switch does not.
+    await expectLater(
+      () => expectUiSane(
+        tester,
+        inputModality: EdenInputModality.pointer,
+        allowOverlap: const <(String, String)>{
+          ('fx-dead-route-row', 'fx-dead-route-switch'),
+        },
+      ),
+      throwsA(
+        isA<TestFailure>().having(
+          (TestFailure f) => f.message,
+          'message',
+          allOf(
+            contains('found 1 violation(s)'),
+            contains('"fx-dead-route-row"'),
+            contains('never reaches it'),
+            contains('inert to a real tap'),
+            // The SWITCH must not be accused. It is reachable, and a rule
+            // that reddens the live control inside a dead row is a rule that
+            // gets switched off.
+            isNot(contains('"fx-dead-route-switch"')),
+          ),
+        ),
+      ),
+    );
+  });
 }

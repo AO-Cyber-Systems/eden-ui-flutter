@@ -11,7 +11,7 @@ added, deleted or reworded there changes this table on the next run.
 
 - **12** violations `expectUiSane` can emit, derived from its source.
 - **7** shapes caught, with a fixture in this lane.
-- **10** shapes caught, fixtured in the review-findings lane.
+- **11** shapes caught, fixtured in the review-findings lane.
 - **9** shapes NOT CAUGHT — each one proved broken on the frame and silent in the oracle.
 - **1** check with no fixture anywhere.
 - **2** differential rows: shapes that must produce NO violation.
@@ -47,6 +47,7 @@ target-size floor, covered by another control, or dead to the hit test.
 | `overlapping-identified-controls` | unreachable | `_overlapViolations#controls-and-overlap-is-is-they` | `broken_surfaces.dart#overlappingControls` | not measured here — the fix lane owns the fixture |
 | `two-tap-routes-on-one-control` | unreachable | `_tapRouteViolations#control-declares-tap-actions-its-own` | `broken_surfaces.dart#doubleTapAction` | not measured here — the fix lane owns the fixture |
 | `absorb-pointer-path` | unreachable | `_tapRouteViolations#control-announces-itself-as-and-declares` | `broken_surfaces.dart#absorbedButton` | not measured here — the fix lane owns the fixture |
+| `dead-route-live-inner-control` | unreachable | `_tapRouteViolations#control-announces-itself-as-and-declares` | `broken_surfaces.dart#deadRouteLiveInnerControl` | not measured here — the fix lane owns the fixture |
 | `inkwell-unflagged-tap` | unreachable | `_tapRouteViolations#control-declares-a-tap-action-but` | `broken_surfaces.dart#unreachableUnflaggedControl` | not measured here — the fix lane owns the fixture |
 | `ink-equals-background` | unreadable | `_measureText#painted-text-is-1-00-1` | `broken_surfaces.dart#invisibleText` | not measured here — the fix lane owns the fixture |
 | `opacity-faded-ink` | unreadable | `_measureText#painted-text-is-1-against-its` | `broken_surfaces.dart#fadedText` | not measured here — the fix lane owns the fixture |
@@ -100,6 +101,7 @@ this repo, so a row pointing at "finding 3" would point at a list that does not 
 - **`opacity-faded-ink`** — Ancestor Opacity/AnimatedOpacity/FadeTransition factors composed into the ink's alpha, so a faded caption is measured as painted rather than as authored.
 - **`inkwell-unflagged-tap`** — InkWell publishes Semantics(onTap:) with no button flag; reachability is asserted for every identified node that declares a tap route, flagged or not.
 - **`hidden-node-viewport`** — A ListView's off-screen rows publish real identifiers and real tap routes. Excluding non-presented nodes is what stops a correct 30-row list reporting one false accusation per off-screen row.
+- **`dead-route-live-inner-control`** — A row whose OWN tap surface is dead, with a live control of its own (a switch) under the middle of its rect. "Some strict descendant is in the hit path" was true and the row passed for a reason the rule does not claim; the hit must reach the owner without crossing another IDENTIFIED control — the same boundary _countTapRoutes draws one rule over.
 
 ## Every shape, in full
 
@@ -190,6 +192,10 @@ A tap fires every route the node and its unidentified descendants advertise.
 ### `absorb-pointer-path` — caught (fix lane)
 
 See the ownedByFixLane entry. Not fixtured here: the fix lane owns it.
+
+### `dead-route-live-inner-control` — caught (fix lane)
+
+See the ownedByFixLane entry. Not fixtured here: the fix lane owns it, and it needs an allowOverlap pair this lane's runner does not pass.
 
 ### `inkwell-unflagged-tap` — caught (fix lane)
 

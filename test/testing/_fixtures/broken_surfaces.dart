@@ -807,3 +807,75 @@ Widget twoOverlapPairs() {
     ),
   );
 }
+
+/// DEFECT 15 — a control whose OWN tap route is dead, with a live UNRELATED
+/// control sitting under the middle of its rect.
+///
+/// THE FALSE GREEN THIS CATCHES. The reachability arm asked whether ANY
+/// strict descendant of the owner appears in the hit path. That is true here:
+/// the pointer dropped in the middle of the row lands on the switch, and the
+/// switch is a descendant. So the row — announced as a button, declaring one
+/// tap route, and completely untouchable through that route — passed, and it
+/// passed for a reason the rule does not claim. A finger in the middle of
+/// this row toggles a switch; it never takes the row's route.
+///
+/// The row's own surface is the `Positioned.fill` `GestureDetector`, and
+/// `IgnorePointer` takes the pointer away from it and strips its semantics,
+/// so the route count still reads a healthy 1.
+///
+/// WHY THE SWITCH CARRIES AN IDENTIFIER. It is what makes the shape ESCAPE
+/// the other arm: `_countTapRoutes` stops at a descendant with its own
+/// identifier, so the row reports routes == 1 rather than 2 and the
+/// double-route message never fires. An UNIDENTIFIED switch here would be
+/// caught — by the route-count arm, for a different reason. This fixture is
+/// the gap between the two.
+///
+/// Pumped with `allowOverlap: {('fx-dead-route-row',
+/// 'fx-dead-route-switch')}`: a switch inside its row legitimately overlaps
+/// it, and that pair is not what this fixture is about.
+///
+/// Rule violated: "a control that announces an affordance and declares a tap
+/// route must be reachable by a pointer" — through the OWNER's own route, not
+/// through whatever else happens to be under the rect's centre.
+Widget deadRouteLiveInnerControl() {
+  return Center(
+    child: ColoredBox(
+      color: _surface,
+      child: SizedBox(
+        width: 240,
+        height: 48,
+        child: Semantics(
+          container: true,
+          identifier: 'fx-dead-route-row',
+          label: 'Notifications',
+          button: true,
+          onTap: () {},
+          child: Stack(
+            children: <Widget>[
+              // The ROW's own tap surface, and the only thing that would take
+              // its route. FIX: change `IgnorePointer` to `ExcludeSemantics`.
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: GestureDetector(
+                    onTap: () {},
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
+              ),
+              // A live control of its OWN, under the row's centre.
+              Center(
+                child: Semantics(
+                  container: true,
+                  identifier: 'fx-dead-route-switch',
+                  label: 'Enabled',
+                  child: Switch(value: true, onChanged: (bool _) {}),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}

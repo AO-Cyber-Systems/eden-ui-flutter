@@ -226,6 +226,13 @@ const Map<String, String> ownedByFixLane = <String, String>{
       "A ListView's off-screen rows publish real identifiers and real tap "
           'routes. Excluding non-presented nodes is what stops a correct '
           '30-row list reporting one false accusation per off-screen row.',
+  'dead-route-live-inner-control':
+      'A row whose OWN tap surface is dead, with a live control of its own '
+          '(a switch) under the middle of its rect. "Some strict descendant '
+          'is in the hit path" was true and the row passed for a reason the '
+          'rule does not claim; the hit must reach the owner without '
+          'crossing another IDENTIFIED control — the same boundary '
+          '_countTapRoutes draws one rule over.',
 };
 
 // -----------------------------------------------------------------------------
@@ -497,6 +504,16 @@ final List<CatalogueRow> catalogue = <CatalogueRow>[
         'owns it.',
     checkId: '_tapRouteViolations#control-announces-itself-as-and-declares',
     externalFixture: 'absorbedButton',
+  ),
+  const CatalogueRow(
+    shape: 'dead-route-live-inner-control',
+    defectClass: DefectClass.unreachable,
+    status: RowStatus.caughtElsewhere,
+    summary: 'See the ownedByFixLane entry. Not fixtured here: the fix lane '
+        'owns it, and it needs an allowOverlap pair this lane\'s runner does '
+        'not pass.',
+    checkId: '_tapRouteViolations#control-announces-itself-as-and-declares',
+    externalFixture: 'deadRouteLiveInnerControl',
   ),
   const CatalogueRow(
     shape: 'inkwell-unflagged-tap',
@@ -802,11 +819,61 @@ void main() {
       }
     });
 
-    test('returned fragments rejected by the length floor are the known two',
+    test('the message fragments no site attributes are the known one', () {
+      // THE OTHER DIRECTION, and the one that makes "every check has a row"
+      // worth anything.
+      //
+      // "Every check has a row" only ever looked at checks the PARSER
+      // recognised. A site the parser could not see produced no inventory
+      // row, so there was no orphan to report and this table passed — with a
+      // check nothing in the repo exercises. It could not see a
+      // double-quoted message, an arrow body, or a message built into a
+      // local, and the floor it was measured against (12 sites against a
+      // minimum of 10) had two sites of slack on top of that.
+      //
+      // So the inventory now reports every message-shaped literal inside a
+      // reachable function that no recognised site claims, and this pins the
+      // list BY NAME rather than at a count. An unrecognised message site
+      // fails here instead of being ignored.
+      //
+      // THE ONE ENTRY. `_describeEscapedException` builds the "Offending
+      // widget(s):" tail of the overflow message through a ternary into a
+      // local, so the empty-culprits branch is a message fragment no opener
+      // can be sitting behind. It is part of the message of
+      // `_describeEscapedException#overflow-of-pixels-on-the-offending`,
+      // which the `render-overflow` row already accounts for — not a check of
+      // its own.
+      expect(
+        inventory.unattributedLiterals,
+        <String>[
+          '_describeEscapedException: the overflowing render object could '
+              'not be located in the tree',
+        ],
+        reason: 'a message-shaped string in expect_ui_sane.dart is not '
+            'accounted for by any recognised check site. Either it IS a '
+            'violation message written in a shape '
+            'oracle_check_inventory.dart does not parse — fix the parser and '
+            'give the check a row — or it is a fragment of a message that '
+            'already has one, in which case add it here WITH the reason. '
+            'Found:\n  ${inventory.unattributedLiterals.join('\n  ')}',
+      );
+    });
+
+    test('returned fragments rejected by the length floor are the known five',
         () {
+      // Each of these is a PHRASE substituted into somebody else's message,
+      // not a violation:
+      //
+      //   ''    — `_stringOf`'s switch default: a widget that paints no
+      //           string at all.
+      //   '#*'  — `_hex`, which formats a colour for another message.
+      //   '*'   — `_describeEscapedException`'s per-culprit separator,
+      //           `'\n      $c'`, normalised.
+      //   'a button' / 'a link' — `_announcedAffordance`, the noun phrase the
+      //           tap-route messages interpolate.
       expect(
         inventory.rejectedFragments,
-        <String>['a button', 'a link'],
+        <String>['', '#*', '*', 'a button', 'a link'],
         reason: 'a short returned literal appeared in a reachable check '
             'function. If it is a phrase substituted into another message, '
             'add it here. If it is a VIOLATION message, the length floor in '
@@ -846,16 +913,22 @@ void main() {
     // parser against a source it is not reading in anger, so a change that
     // breaks the extraction is named here rather than showing up as a table
     // that quietly shrank.
+    //
+    // The fake carries one of each SHAPE a message can be written in —
+    // single-quoted, double-quoted, arrow-bodied — because the parser used to
+    // see only the first and the catalogue had no way to notice.
     const String fake = '''
 Future<void> expectUiSane(WidgetTester tester) async {
   final List<String> violations = <String>[];
   violations.addAll(_fakeCheck(tester));
   violations.add(_fakeDescribe(tester));
+  violations.add(_fakeArrow(tester));
 }
 
 List<String> _fakeCheck(WidgetTester tester) {
   final List<String> out = <String>[];
   out.add('control "\$id" did the wrong thing entirely');
+  out.add("a double-quoted message is still a message");
   out.add('\${a}: \${b}');
   return out;
 }
@@ -867,22 +940,28 @@ String _fakeDescribe(WidgetTester tester) {
   return 'a message long enough to be a violation';
 }
 
+String _fakeArrow(WidgetTester tester) =>
+    'an arrow body is a return written shorter';
+
 String _notReachable() {
   return 'this one is never aggregated and must not appear';
 }
 ''';
 
-    test('finds add sites of any length and long returns', () {
+    test('finds add sites of any length, long returns and arrow bodies', () {
       final OracleCheckInventory inventory = parseOracleCheckInventory(fake);
       expect(
         inventory.sites.map((OracleCheckSite s) => s.message),
         unorderedEquals(<String>[
           'a message long enough to be a violation',
+          'an arrow body is a return written shorter',
+          'a double-quoted message is still a message',
           'control "*" did the wrong thing entirely',
           '*: *',
         ]),
-        reason: 'the parser must keep a fully-interpolated add() site and '
-            'drop nothing but short returns',
+        reason: 'the parser must keep a fully-interpolated add() site, both '
+            'quote styles and an arrow body, and drop nothing but short '
+            'returns',
       );
     });
 
@@ -900,6 +979,68 @@ String _notReachable() {
       );
     });
 
+    test('a recognised source leaves nothing unattributed', () {
+      // The differential control for the case below. If the fake produced
+      // unattributed literals of its own, that case would pass whatever the
+      // reverse scan did.
+      expect(parseOracleCheckInventory(fake).unattributedLiterals, isEmpty);
+    });
+
+    test('a message the openers do NOT match is reported, not ignored', () {
+      // THE HOLE THE REVERSE SCAN CLOSES. A message built into a local sits
+      // behind no `.add(`, no `return` and no `=>`, so no site is recognised
+      // for it — and with only the orphan direction, a check written this way
+      // added nothing to the inventory and the catalogue passed without ever
+      // mentioning it.
+      const String hidden = '''
+Future<void> expectUiSane(WidgetTester tester) async {
+  final List<String> violations = <String>[];
+  violations.addAll(_hiddenCheck(tester));
+}
+
+List<String> _hiddenCheck(WidgetTester tester) {
+  final List<String> out = <String>[];
+  final String message = 'this control is broken in a brand new way';
+  out.add(message);
+  return out;
+}
+''';
+      final OracleCheckInventory inventory = parseOracleCheckInventory(hidden);
+      expect(
+        inventory.sites,
+        isEmpty,
+        reason: 'the openers genuinely do not match this shape — which is '
+            'the premise: if they did, the reverse scan would not be what '
+            'catches it',
+      );
+      expect(
+        inventory.unattributedLiterals,
+        <String>['_hiddenCheck: this control is broken in a brand new way'],
+      );
+    });
+
+    test('a RAW string is not mistaken for a message', () {
+      // `_describeOverflow`'s `RegExp(r'A (\\w+) overflowed by ...')` is a
+      // pattern, not a violation, and reporting it would make the reverse
+      // scan noise a reader learns to append to.
+      const String withRegex = '''
+Future<void> expectUiSane(WidgetTester tester) async {
+  final List<String> violations = <String>[];
+  violations.addAll(_rawCheck(tester));
+}
+
+List<String> _rawCheck(WidgetTester tester) {
+  final RegExp overflow = RegExp(r'A thing overflowed by some pixels here');
+  final List<String> out = <String>[];
+  return out;
+}
+''';
+      expect(
+        parseOracleCheckInventory(withRegex).unattributedLiterals,
+        isEmpty,
+      );
+    });
+
     test('refuses a source with no expectUiSane rather than returning none',
         () {
       expect(
@@ -909,11 +1050,13 @@ String _notReachable() {
     });
 
     test('the real oracle yields a non-trivial inventory', () {
-      // The floor that makes "every check has a row" mean something: an
-      // inventory that came back with two entries would pass that test and
-      // prove nothing, which is precisely how a pattern catalogue on this
-      // branch claimed 78 rules and carried 2.
-      expect(inventory.sites.length, greaterThanOrEqualTo(10));
+      // A floor is the WEAKEST thing this file does — it was 10 against a
+      // measured 12, two sites of slack, and a floor can never notice a check
+      // the parser failed to recognise at all. The real guard is the
+      // bidirectional pair above: orphan sites AND unattributed literals.
+      // This stays as the coarse "the derivation did not collapse" tripwire,
+      // moved up to what is actually there.
+      expect(inventory.sites.length, greaterThanOrEqualTo(12));
       expect(inventory.reachedFunctions, contains('_tapRouteViolations'));
       expect(inventory.reachedFunctions, contains('_measureText'));
     });

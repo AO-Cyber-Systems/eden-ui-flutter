@@ -674,24 +674,82 @@ bool _pointerReaches(
 /// A LEAF owner — one with no render children at all — can only ever be
 /// reached as itself, so for those the old test still applies. Anything else
 /// would accuse a control whose own render object is the hit surface.
+///
+/// WHY "A DESCENDANT" IS NOT ENOUGH EITHER, and what the second loop is for.
+/// "Some strict descendant took the pointer" is true of a row whose OWN tap
+/// surface is dead but which happens to have a live, unrelated control — a
+/// `Switch`, a text field — sitting under the middle of its rect. The rule
+/// then passes for a weaker reason than it claims: the pointer reached
+/// SOMETHING inside the row, but what it reached was the switch, and a finger
+/// there toggles the switch and never takes the row's route.
+///
+/// The boundary is the one [_countTapRoutes] already draws, one rule over: a
+/// descendant carrying its OWN IDENTIFIER is a separate control and owns its
+/// own routes. So a hit is evidence about THIS control only while the path
+/// from the hit target up to [owner] crosses no other identified control. An
+/// unidentified inner control does not need this arm and must not trigger it
+/// — an `InkWell` under `Semantics(identifier:)` is the commonest correct
+/// shape there is, and an unidentified inner node that advertises its own tap
+/// is already reported by the route-count arm (routes == 2), not by this one.
+///
+/// The owner's own semantics node is read once and compared by identity, so
+/// that a descendant whose semantics MERGE into it answers the same node and
+/// is recognised as part of this control rather than as a separate one.
 bool _pathEntersOwner(HitTestResult result, RenderObject owner) {
+  final SemanticsNode? ownerNode = owner.debugSemantics;
+
+  // `HitTestResult.path` is DEEPEST FIRST: `RenderBox.hitTest` adds its
+  // children before itself. So the first entry that is at or inside [owner]
+  // is the render object the pointer actually landed on within this control,
+  // and it is the only one that can answer the question. Reading the whole
+  // path instead is how "a descendant is in the path" crept back in through
+  // the side door — every intermediate box between the real target and the
+  // owner (a `RenderStack`, a padding, a `RenderFlex`) is ALSO a strict
+  // descendant of the owner, so a loop that keeps looking always found one.
   for (final HitTestEntry entry in result.path) {
     final Object target = entry.target;
-    if (target is! RenderObject || identical(target, owner)) {
+    if (target is! RenderObject) {
       continue;
     }
-    for (RenderObject? ancestor = target.parent;
+    if (identical(target, owner)) {
+      // The pointer reached the owner without anything BELOW it taking the
+      // hit first. Only a LEAF owner — one with no render children — can be
+      // reached that way honestly; for anything else this is the
+      // `AbsorbPointer` shape, where the owner adds itself over a subtree
+      // that took nothing.
+      return !_hasRenderChildren(owner);
+    }
+    bool blocked = false;
+    for (RenderObject? ancestor = target;
         ancestor != null;
         ancestor = ancestor.parent) {
       if (identical(ancestor, owner)) {
-        return true;
+        return !blocked;
+      }
+      if (!blocked && _isOtherIdentifiedControl(ancestor, ownerNode)) {
+        blocked = true;
       }
     }
+    // Not under [owner] at all — a sibling subtree painted at the same
+    // place. Keep looking for the entry that is.
   }
-  if (_hasRenderChildren(owner)) {
+  return false;
+}
+
+/// Whether [object] owns a presented semantics node that is a control in its
+/// own right — one carrying its own identifier — and is not [ownerNode].
+///
+/// `debugSemantics` is non-null only on the render object a node was built
+/// from, and a descendant merged into [ownerNode] answers that same node, so
+/// the identity test is what separates "part of this control" from "a
+/// different control inside it".
+bool _isOtherIdentifiedControl(RenderObject object, SemanticsNode? ownerNode) {
+  final SemanticsNode? node = object.debugSemantics;
+  if (node == null || identical(node, ownerNode)) {
     return false;
   }
-  return result.path.any((HitTestEntry e) => identical(e.target, owner));
+  return node.getSemanticsData().identifier.isNotEmpty &&
+      isPresentedToUser(node);
 }
 
 /// Whether [owner] has any child render object.
@@ -864,16 +922,22 @@ Future<List<String>> _paintedTextContrastViolations(WidgetTester tester) async {
   final List<Rect> disabledRegions = _disabledRegions(tester);
   final _PaintOrder paintOrder = _PaintOrder.of(tester);
 
-  for (final RenderView renderView in tester.binding.renderViews) {
-    final List<Element> candidates = _textElements(
-      tester,
-      disabledRegions,
-      paintOrder,
-    );
-    if (candidates.isEmpty) {
-      continue;
-    }
+  // HOISTED, and it must stay hoisted. `_textElements` walks the whole pumped
+  // tree and answers the same list whatever view is being rasterised — none
+  // of its three inputs is per-view. Computing it inside the loop measured
+  // every `Text` against every view's frame on a multi-view binding, which is
+  // both N times the work and N-1 measurements of a paragraph against a frame
+  // it was never painted into.
+  final List<Element> candidates = _textElements(
+    tester,
+    disabledRegions,
+    paintOrder,
+  );
+  if (candidates.isEmpty) {
+    return out;
+  }
 
+  for (final RenderView renderView in tester.binding.renderViews) {
     // One capture per view, not one per element: `toImage` is the expensive
     // part and every element reads the same frame.
     final OffsetLayer layer = renderView.debugLayer! as OffsetLayer;
