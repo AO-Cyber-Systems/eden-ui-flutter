@@ -214,7 +214,13 @@ abstract final class EdenProbeApi {
   /// KNOWN LIMIT, stated because the earlier wording claimed otherwise: an
   /// `IndexedStack` of tabs that each own a `Navigator` lays out every tab,
   /// so every one of their navigators is mounted and this returns the LAST
-  /// TAB's top route whatever tab is on screen. Closing it means asking which
+  /// TAB's top route whatever tab is on screen — and not even reliably that.
+  /// The `?? name` below keeps the last NON-NULL answer, so if the last
+  /// tab's top route was pushed without `settings` its name is null and the
+  /// PREVIOUS tab's route is reported instead. The fallback is deliberate for
+  /// the single-navigator case, where it is what lets an unnamed route leave
+  /// the last real answer standing rather than blanking it; with several
+  /// navigators it is one more reason the answer is not meaningful. Closing it means asking which
   /// navigator is being painted, which the element tree does not say; a
   /// consumer with nested navigators should read the route from its own
   /// router instead of from here. A single-navigator app — which is every
