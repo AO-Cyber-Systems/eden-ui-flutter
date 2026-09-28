@@ -21,6 +21,25 @@
 // that a badge whose text fails contrast is named by `expectUiSane` on a real
 // surface, with no per-case arithmetic to keep in sync.
 //
+// A FOURTH DEFECT WAS IN THE SAME ROW THE WHOLE TIME (eden-ui-flutter#55).
+// The audit above fixed the selected LABEL — brand gold on the 10% band,
+// 2.05:1 light. The selected ICON beside it, same row, same gold, same
+// 2.05:1, was left. It stayed failing with every gate green because no
+// instrument in this package could see icon ink: `expectUiSane`'s painted-ink
+// rule enumerates `find.byType(Text)` and `EditableText`, an `Icon` renders as
+// a `RichText`, and until #52 every icon in every golden was an empty square,
+// so a gold glyph and a black glyph and no glyph were the same bytes.
+//
+// The second half of this file is therefore NOT an oracle assertion. It is
+// eight computed cases — icon ink and label ink, selected and unselected, in
+// both themes — each of which takes the ink from the resolved widget and the
+// SURFACE FROM THE RASTERISED FRAME and computes the WCAG ratio. They are
+// computed rather than pinned deliberately: `expect(icon.color, <hex>)` passes
+// forever and reports nothing the day the band behind it moves, which is
+// exactly how a 2.05:1 glyph survived an audit that was looking straight at
+// it. They can be deleted the day `expectUiSane` walks icons — and that, not
+// this file, is the real fix.
+//
 // THE BOTTOM BAR IS NOT RE-PUMPED HERE. Its badge — Colors.white on
 // colorScheme.error, 3.76:1 at 9px in both themes — is held by the generated
 // `mobile-layout/default` story, which pumps the real shell at 390px in both
@@ -45,6 +64,7 @@ import 'package:eden_ui_flutter/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../test_support/ui_oracle/measure_ink.dart';
 import '../../test_support/ui_oracle/wrap.dart';
 
 /// The rail's own set: the SELECTED row also carries the badge, so the
@@ -87,6 +107,89 @@ void main() {
               'label is the one that carried the brand colour.');
 
       await expectUiSane(tester, inputModality: EdenInputModality.pointer);
+    });
+
+    // -----------------------------------------------------------------------
+    // COMPUTED: the four inks of a nav row, measured against the frame.
+    // -----------------------------------------------------------------------
+    //
+    // WHY BOTH INKS AND BOTH STATES. The label was fixed and the icon was not,
+    // and the only reason that was possible is that the two were never
+    // measured together. Selected and unselected are both here because the
+    // defect lived in ONE of the two states — a test that only pumps the
+    // default state measures whichever one the fixture happens to select.
+    //
+    // FLOORS. WCAG 1.4.11 asks 3:1 for a non-text glyph that carries meaning;
+    // WCAG 1.4.3 asks 4.5:1 for the 13px label. Different numbers, so they are
+    // stated per assertion rather than shared.
+    testWidgets('the rail row\'s ICON and LABEL both clear their floor '
+        'against the surface they are painted on, selected and unselected '
+        '($mode)', (WidgetTester tester) async {
+      await wrap(
+        tester,
+        EdenDesktopLayout(
+          navItems: _railItems,
+          selectedId: 'home',
+          onNavChanged: (_) {},
+          user: _user,
+          body: const SizedBox.shrink(),
+        ),
+        themeMode: themeMode,
+      );
+
+      final Finder selectedIcon = find.byIcon(Icons.home_outlined);
+      final Finder selectedLabel = find.text('Home');
+      final Finder unselectedIcon = find.byIcon(Icons.insert_chart_outlined);
+      final Finder unselectedLabel = find.text('Reports');
+      for (final Finder f in <Finder>[
+        selectedIcon,
+        selectedLabel,
+        unselectedIcon,
+        unselectedLabel,
+      ]) {
+        expect(f, findsOneWidget,
+            reason: 'the measurement needs exactly one node to measure; '
+                '$f matched a different number, so the fixture — not the '
+                'contrast — is what this run would be reporting on.');
+      }
+
+      // SELECTED. The row carries the 10%-primary band, and it is the band —
+      // not the glyph — that is the selection affordance. Both inks are
+      // therefore `onSurface`: 16.47:1 light, 13.74:1 dark at the branch
+      // point. The icon read 2.05:1 light / 6.49:1 dark before #55.
+      await expectInkContrast(
+        tester,
+        selectedIcon,
+        iconInk(tester, selectedIcon),
+        floor: 3.0,
+        what: 'the SELECTED rail icon (WCAG 1.4.11, non-text)',
+      );
+      await expectInkContrast(
+        tester,
+        selectedLabel,
+        textInk(tester, selectedLabel),
+        floor: 4.5,
+        what: 'the SELECTED rail label (WCAG 1.4.3, 13px text)',
+      );
+
+      // UNSELECTED. No band; both inks sit on the rail's own fill.
+      // `onSurfaceVariant` is 4.83:1 light / 6.91:1 dark there — it was never
+      // part of the failure, and it is asserted so that a future change that
+      // lightens the variant tone cannot pass silently.
+      await expectInkContrast(
+        tester,
+        unselectedIcon,
+        iconInk(tester, unselectedIcon),
+        floor: 3.0,
+        what: 'the UNSELECTED rail icon (WCAG 1.4.11, non-text)',
+      );
+      await expectInkContrast(
+        tester,
+        unselectedLabel,
+        textInk(tester, unselectedLabel),
+        floor: 4.5,
+        what: 'the UNSELECTED rail label (WCAG 1.4.3, 13px text)',
+      );
     });
   }
 }

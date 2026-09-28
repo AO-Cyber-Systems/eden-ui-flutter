@@ -796,7 +796,11 @@ class _ExpandableNavHeader extends StatelessWidget {
                 Icon(
                   isSelected ? (item.activeIcon ?? item.icon) : item.icon,
                   size: 20,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  // THE ICON FOLLOWS THE LABEL, NOT THE INDICATOR. See
+                  // _NavTile for the measurement and the ruling.
+                  color: isSelected
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -883,10 +887,30 @@ class _NavTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // THE SELECTED ICON FOLLOWS THE LABEL, NOT THE INDICATOR. The brand gold
+    // on the selected row's 10%-primary band measures 2.05:1 in the light
+    // theme, under WCAG 1.4.11's 3:1 floor for non-text — the SAME number the
+    // selected LABEL was fixed for, on the same row, in the same gold. The
+    // label was moved to `onSurface`; the icon beside it was left, and stayed
+    // failing with every gate green, because no instrument in this package
+    // could see icon ink (eden-ui-flutter#55).
+    //
+    // The icon is CONTENT — which destination this row is — not the selection
+    // affordance. The affordance is the band, which is unchanged and still
+    // brand gold. So the icon takes the content ink: 16.47:1 light, 13.74:1
+    // dark on the band. Unselected is unchanged at `onSurfaceVariant`,
+    // 4.83:1 light / 6.91:1 dark on the rail's own surface.
+    //
+    // Pinned by `test/ui_oracle/desktop_rail_contrast_test.dart`, which
+    // COMPUTES the ratio from the resolved colours rather than asserting a
+    // hex — a test that pins a literal passes forever and says nothing when
+    // the surface token moves underneath it.
     final icon = Icon(
       isSelected ? (item.activeIcon ?? item.icon) : item.icon,
       size: 20,
-      color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+      color: isSelected
+          ? theme.colorScheme.onSurface
+          : theme.colorScheme.onSurfaceVariant,
     );
 
     if (collapsed) {
@@ -944,8 +968,11 @@ class _NavTile extends StatelessWidget {
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     // See _ExpandableHeader: the selected label was brand gold
                     // on the 10% band at 2.05:1 in the light theme. The state
-                    // is carried by the weight, the band and the brand-
-                    // coloured glyph; it is not carried by unreadable text.
+                    // is carried by the weight and the band; it is NOT carried
+                    // by the glyph's colour either — that claim was in this
+                    // comment and it was the defect, because the glyph was
+                    // carrying it at the same 2.05:1 the label had been fixed
+                    // for (#55).
                     color: theme.colorScheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,

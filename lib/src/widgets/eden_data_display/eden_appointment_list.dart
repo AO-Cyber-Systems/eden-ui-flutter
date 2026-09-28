@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/eden_status_palette.dart';
+import '../../tokens/glyph_ink.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../../tokens/typography.dart';
@@ -246,8 +247,6 @@ class _EdenAppointmentsTruncated extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final EdenStatusPalette palette =
-        theme.extension<EdenStatusPalette>() ?? EdenStatusPalette.commercial();
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
@@ -261,10 +260,22 @@ class _EdenAppointmentsTruncated extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
+          // GLYPH TONE, NOT THE BASE HUE. `palette.warningFg` (#F59E0B) on
+          // `surfaceContainerLow` is 2.06:1 in the light theme against WCAG
+          // 1.4.11's 3:1 floor for non-text — and 8.25:1 in dark, which is
+          // why it read as fine. The hue is tuned against the dark surface;
+          // see `EdenGlyphInk`. The icon keeps the warning hue (nothing else
+          // on this row carries it) and takes the tone that clears the floor
+          // on the surface it is actually painted on: 4.81:1 light, 8.25:1
+          // dark.
           Icon(
+            // KEYED so a contrast test can name THIS glyph rather than find
+            // it by icon data or by geometry. A finder that matches the wrong
+            // node reports "fine" and "did not look" identically.
+            key: const ValueKey<String>('eden-appointment-truncated-icon'),
             Icons.filter_list_outlined,
             size: _kTruncatedIconSize,
-            color: palette.warningFg,
+            color: EdenGlyphInk.warning(theme.brightness),
           ),
           const SizedBox(width: EdenSpacing.space2),
           Expanded(
@@ -626,8 +637,20 @@ class _EdenAppointmentStatus extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final EdenStatusPalette palette =
         theme.extension<EdenStatusPalette>() ?? EdenStatusPalette.commercial();
+    // GLYPH TONE, NOT THE BASE HUE — the comment above says the colour moved
+    // onto the dot precisely so the WORD could stay legible, and then the dot
+    // was painted in a hue that is 2.00:1 on this chip in the light theme
+    // (5.87:1 dark). Under 1.4.11's 3:1 floor. The dot is redundant with the
+    // word beside it and so arguably exempt; it is fixed anyway, because a
+    // hue that is invisible in half the themes it ships in is a defect on its
+    // own terms. `EdenGlyphInk.success` is 4.32:1 light, 5.87:1 dark here.
+    //
+    // `neutralFg` is left alone: #52525B on `surfaceContainerHigh` is 5.14:1
+    // light and the dark palette's own value clears the floor too. It was
+    // never part of this class of failure — it is a neutral, not a hue.
     final Color dot = switch (EdenAppointmentStatusTone.of(status)) {
-      EdenAppointmentStatusTone.confirmed => palette.successFg,
+      EdenAppointmentStatusTone.confirmed =>
+        EdenGlyphInk.success(theme.brightness),
       EdenAppointmentStatusTone.neutral => palette.neutralFg,
     };
 
@@ -644,6 +667,9 @@ class _EdenAppointmentStatus extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Container(
+            // KEYED for the same reason as the truncation icon: the contrast
+            // test measures this dot by name, not by hunting for an 8x8 circle.
+            key: const ValueKey<String>('eden-appointment-status-dot'),
             width: _kStatusDotSize,
             height: _kStatusDotSize,
             decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
