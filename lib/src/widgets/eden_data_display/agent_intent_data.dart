@@ -9,8 +9,9 @@
 // PROVENANCE — the recordings, on eden-biz `origin/main`, at
 // `go/internal/agentintent/testdata/`:
 //
-//   01-list_upcoming_appointments-populated.json   5 appointments, 1 with
-//                                                  `notes`, no `truncated` key
+//   01-list_upcoming_appointments-populated.json   5 appointments, 2 with
+//                                                  `notes` (rows 1 and 5), no
+//                                                  `truncated` key
 //   02-list_upcoming_appointments-empty.json       `appointments: []`, no
 //                                                  `truncated` key
 //   04-list_upcoming_appointments-large.json       50 appointments (61 seeded,

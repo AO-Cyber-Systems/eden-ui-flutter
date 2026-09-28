@@ -36,11 +36,26 @@ typedef EdenAppointmentActionCallback = void Function(
 /// It also renders no affordance when [onAction] is null: an enabled control
 /// that calls nothing is a lie the user only discovers by pressing it.
 ///
-/// FILLS ITS PARENT. The list takes the height it is given and scrolls inside
-/// it; the truncation notice, when there is one, is pinned BELOW the scroll
-/// area rather than appended as a final row. A truncation notice that scrolls
-/// is a notice nobody reads, because the reader who needs it is the one who
-/// never reached the bottom.
+/// TWO HEIGHT MODES, AND THE SECOND IS THE ONE THIS COMPONENT EXISTS FOR.
+///
+/// BOUNDED (a panel, a route body, anything inside a `Scaffold`): the list
+/// takes the height it is given and scrolls inside it, and the truncation
+/// notice is pinned BELOW the scroll area rather than appended as a final row.
+/// A truncation notice that scrolls is a notice nobody reads, because the
+/// reader who needs it is the one who never reached the bottom.
+///
+/// UNBOUNDED (a conversational transcript, which is itself a scrollable and
+/// therefore hands its children `maxHeight: infinity`): the list SHRINK-WRAPS,
+/// stops scrolling on its own, and flows into the transcript's scroll. The
+/// notice is then simply the last thing in the block, which is correct there —
+/// there is no inner viewport for it to be pinned to.
+///
+/// This branch is not defensive tidying. `Expanded` under an unbounded parent
+/// throws `RenderFlex children have non-zero flex but incoming height
+/// constraints are unbounded`, and the agent-UI surface this component was
+/// built for is exactly that shape. Every test in the repo pumps it through
+/// `wrap()`, which always bounds height, so nothing would have caught it —
+/// `eden_data_display_test.dart` now pumps it unbounded on purpose.
 class EdenAppointmentList extends StatelessWidget {
   const EdenAppointmentList({
     super.key,
@@ -85,37 +100,53 @@ class EdenAppointmentList extends StatelessWidget {
       builder: (BuildContext context, BoxConstraints constraints) {
         final bool narrow =
             constraints.maxWidth < kEdenAppointmentListNarrowBreakpoint;
+        final bool bounded = constraints.maxHeight.isFinite;
+
+        final Widget body = data.appointments.isEmpty
+            ? _EdenAppointmentsEmpty(centred: bounded)
+            : ListView.separated(
+                // Shrink-wrapped and inert only when there is no height to
+                // scroll within. Inside a bounded parent this stays a real
+                // viewport, which is what keeps the 50-row story lazy.
+                shrinkWrap: !bounded,
+                physics:
+                    bounded ? null : const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  vertical: EdenSpacing.space2,
+                ),
+                itemCount: data.appointments.length,
+                separatorBuilder: (BuildContext context, int index) => Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: theme.colorScheme.outlineVariant,
+                ),
+                itemBuilder: (BuildContext context, int index) {
+                  final EdenAppointmentSummary appointment =
+                      data.appointments[index];
+                  return _EdenAppointmentRow(
+                    appointment: appointment,
+                    narrow: narrow,
+                    openAction: open,
+                    cancelAction: cancel,
+                    onAction: onAction,
+                  );
+                },
+              );
+
         return Column(
+          // `min` when unbounded: a Column that tried to be `max` against an
+          // infinite height is the same crash as the `Expanded` below it.
+          mainAxisSize: bounded ? MainAxisSize.max : MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Expanded(
-              child: data.appointments.isEmpty
-                  ? const _EdenAppointmentsEmpty()
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: EdenSpacing.space2,
-                      ),
-                      itemCount: data.appointments.length,
-                      separatorBuilder: (BuildContext context, int index) =>
-                          Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: theme.colorScheme.outlineVariant,
-                      ),
-                      itemBuilder: (BuildContext context, int index) {
-                        final EdenAppointmentSummary appointment =
-                            data.appointments[index];
-                        return _EdenAppointmentRow(
-                          appointment: appointment,
-                          narrow: narrow,
-                          openAction: open,
-                          cancelAction: cancel,
-                          onAction: onAction,
-                        );
-                      },
-                    ),
-            ),
-            if (data.truncated)
+            if (bounded) Expanded(child: body) else body,
+            // SUPPRESSED ON AN EMPTY LIST. `truncated: true` with zero rows
+            // rendered "No upcoming appointments" directly above "Showing the
+            // first 0", which is not a sentence anyone can act on and reads
+            // like a bug in the tool rather than an answer. No recording pairs
+            // the two — `limit: 0` is the only way to reach it — and when they
+            // do meet, the empty state is the whole of what is known.
+            if (data.truncated && data.appointments.isNotEmpty)
               _EdenAppointmentsTruncated(shown: data.appointments.length),
           ],
         );
@@ -135,12 +166,21 @@ class EdenAppointmentList extends StatelessWidget {
 /// point of having a separate `error/refusal` component is that these two are
 /// not the same answer.
 class _EdenAppointmentsEmpty extends StatelessWidget {
-  const _EdenAppointmentsEmpty();
+  const _EdenAppointmentsEmpty({required this.centred});
+
+  /// True inside a bounded parent, where there is space to centre within.
+  ///
+  /// False under an unbounded height: `Center` would try to fill infinity.
+  /// The state then sizes to its own content with a generous inset, which is
+  /// also how it should read in a conversational transcript — a block of
+  /// prose, not a centred placeholder in a panel that does not exist.
+  final bool centred;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Center(
+    final Widget content = Padding(
+      padding: const EdgeInsets.all(EdenSpacing.space6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -167,6 +207,7 @@ class _EdenAppointmentsEmpty extends StatelessWidget {
         ],
       ),
     );
+    return centred ? Center(child: content) : content;
   }
 }
 
@@ -406,7 +447,7 @@ class _EdenAppointmentCancel extends StatelessWidget {
   }
 }
 
-/// `09:00 – 10:00` over (or beside) `Wed 8 Jan`.
+/// `09:00 – 10:00` over (or beside) `Tue 8 Jan`.
 class _EdenAppointmentWhen extends StatelessWidget {
   const _EdenAppointmentWhen({
     required this.appointment,
@@ -617,7 +658,13 @@ String edenFormatClock(DateTime at) =>
     '${at.hour.toString().padLeft(2, '0')}:'
     '${at.minute.toString().padLeft(2, '0')}';
 
-/// `2030-01-08T09:00:00Z` -> `Wed 8 Jan`.
+/// `2030-01-08T09:00:00Z` -> `Tue 8 Jan`.
+///
+/// (Both doc examples said `Wed` until eden-ui-flutter#53 review. The CODE
+/// was right -- 2030-01-08 is a Tuesday, the goldens render `Tue 8 Jan` and
+/// the unit test below asserts `Tue 8 Jan` -- so the only thing wrong was
+/// the prose a reader checks the behaviour against, which is the worst
+/// place for it to be wrong.)
 @visibleForTesting
 String edenFormatDay(DateTime at) =>
     '${_kWeekdays[at.weekday - 1]} ${at.day} ${_kMonths[at.month - 1]}';

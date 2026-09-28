@@ -34,6 +34,34 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../test_support/ui_oracle/wrap.dart';
 
+/// Pumps [child] with an UNBOUNDED height, the way a conversational
+/// transcript does.
+///
+/// WHY THIS HELPER EXISTS. `wrap()` — which every story test and every test
+/// above uses — lays its child out inside a `Scaffold` body and always hands
+/// it a finite height. So the entire catalogue exercised one of the two height
+/// modes these components ship into, and the OTHER one is the agent-UI surface
+/// they were built for: a transcript is itself a scrollable, and a scrollable
+/// gives its children `maxHeight: infinity`. `Expanded` and
+/// `SingleChildScrollView` both THROW there. Nothing in the repo could have
+/// caught it (eden-ui-flutter#53 review).
+Future<void> pumpUnbounded(WidgetTester tester, Widget child) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: EdenTheme.light(),
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[child],
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
 /// Every semantics identifier currently published by the pumped surface.
 Set<String> _identifiers(WidgetTester tester) {
   final SemanticsHandle handle = tester.ensureSemantics();
@@ -336,6 +364,167 @@ void main() {
       expect(edenFormatDay(DateTime.utc(2030, 1, 8, 9)), 'Tue 8 Jan');
       expect(edenFormatDay(DateTime.utc(2030, 1, 11, 22)), 'Fri 11 Jan');
       expect(edenFormatDay(DateTime.utc(2030, 12, 1)), 'Sun 1 Dec');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // The height mode the whole catalogue could not reach
+  // -------------------------------------------------------------------------
+  group('unbounded height — the conversational surface', () {
+    testWidgets('the list renders inside a transcript instead of throwing',
+        (WidgetTester tester) async {
+      // Pre-fix this threw "RenderFlex children have non-zero flex but
+      // incoming height constraints are unbounded", from the top-level
+      // Expanded. `wrap()` always bounds height, so all 12 story runs and
+      // every test above passed over it.
+      await pumpUnbounded(
+        tester,
+        EdenAppointmentList(
+          data: EdenAppointmentListData(
+            appointments: kFixturePopulatedAppointments,
+          ),
+          actions: kFixtureAppointmentActions,
+          onAction: (_, __) {},
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('Priya Raman'), findsOneWidget);
+      // SHRINK-WRAPPED, not windowed. Every row is laid out, because the
+      // transcript scrolls for it — a lazy viewport here would show a few
+      // rows and silently swallow the rest into a scroll nobody can reach.
+      expect(find.text('Alice Anderson'), findsOneWidget);
+    });
+
+    testWidgets('the empty state renders unbounded', (WidgetTester tester) async {
+      // `Center` under an infinite height is the same crash one widget down.
+      await pumpUnbounded(
+        tester,
+        const EdenAppointmentList(
+          data: EdenAppointmentListData(
+            appointments: <EdenAppointmentSummary>[],
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('No upcoming appointments'), findsOneWidget);
+    });
+
+    testWidgets('a truncated list renders unbounded, notice and all',
+        (WidgetTester tester) async {
+      await pumpUnbounded(
+        tester,
+        EdenAppointmentList(
+          data: EdenAppointmentListData(
+            appointments: kFixtureLargeAppointments,
+            truncated: true,
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Showing the first 50'), findsOneWidget);
+    });
+
+    testWidgets('the refusal renders unbounded', (WidgetTester tester) async {
+      // The SingleChildScrollView added for the long-reason case would throw
+      // here if it were unconditional.
+      await pumpUnbounded(
+        tester,
+        const EdenRefusal(data: kFixtureRefusalBare),
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('appointment not found'), findsOneWidget);
+    });
+  });
+
+  group('a long refusal reason is reachable, not clipped', () {
+    testWidgets('a reason taller than the card does not overflow',
+        (WidgetTester tester) async {
+      // The reason is untrusted text from a tool error; its length is not
+      // ours to assume. Pre-fix this overflowed the non-scrolling Column,
+      // which is a debug band and SILENT CLIPPING in release -- the exact
+      // "reason the reader cannot see" that refusing to ellipsise it was
+      // meant to prevent.
+      final String long = List<String>.filled(
+        400,
+        'customer not found in this tenant',
+      ).join(' ');
+      await wrap(tester, EdenRefusal(data: EdenRefusalData(reason: long)));
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'a RenderFlex overflow is reported through FlutterError during '
+            'layout, not thrown at the call site, so this is the only place it '
+            'surfaces in a plain widget test',
+      );
+      // Still present and still whole -- scrolled, never truncated.
+      expect(find.textContaining('customer not found in this tenant'),
+          findsOneWidget);
+      final Text text = tester.widget<Text>(
+        find.textContaining('customer not found in this tenant'),
+      );
+      expect(text.maxLines, isNull, reason: 'no ellipsis on a refusal reason');
+      expect(find.byType(Scrollable), findsWidgets);
+    });
+  });
+
+  group('is_error is READ, not merely transcribed', () {
+    testWidgets('true and false render differently',
+        (WidgetTester tester) async {
+      // The field carried a comment saying a dropped field "cannot later be
+      // noticed changing" -- while nothing read it, so `is_error: false`
+      // rendered pixel-identically and could have changed for ever unnoticed
+      // (eden-ui-flutter#53 review). It now selects the tone; this is what
+      // makes that claim true.
+      Color borderOf(WidgetTester t) {
+        final Container box = t.widget<Container>(
+          find
+              .descendant(
+                of: find.byType(EdenRefusal),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        return ((box.decoration! as BoxDecoration).border! as Border).top.color;
+      }
+
+      await wrap(tester, const EdenRefusal(data: kFixtureRefusalBare));
+      final Color errorEdge = borderOf(tester);
+
+      await wrap(
+        tester,
+        const EdenRefusal(
+          data: EdenRefusalData(reason: 'appointment not found', isError: false),
+        ),
+      );
+      final Color plainEdge = borderOf(tester);
+
+      expect(errorEdge, isNot(equals(plainEdge)));
+
+      // AND THE CONTRACT IS UNCHANGED ON BOTH BRANCHES. The tone moves; the
+      // one-sidedness does not. A non-error refusal is still a refusal.
+      expect(_tapRouteCount(tester), 0);
+      expect(find.text('appointment not found'), findsOneWidget);
+    });
+  });
+
+  group('truncated: true with an empty list', () {
+    testWidgets('renders the empty state and NO "Showing the first 0"',
+        (WidgetTester tester) async {
+      // Reachable only with `limit: 0`; no recording pairs the two. It used to
+      // render "No upcoming appointments" directly above "Showing the first
+      // 0", which is not a sentence anyone can act on.
+      await wrap(
+        tester,
+        const EdenAppointmentList(
+          data: EdenAppointmentListData(
+            appointments: <EdenAppointmentSummary>[],
+            truncated: true,
+          ),
+        ),
+      );
+      expect(find.text('No upcoming appointments'), findsOneWidget);
+      expect(find.textContaining('Showing the first'), findsNothing);
     });
   });
 }

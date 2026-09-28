@@ -53,70 +53,110 @@ class EdenRefusal extends StatelessWidget {
     final EdenStatusPalette palette =
         theme.extension<EdenStatusPalette>() ?? EdenStatusPalette.commercial();
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: kEdenRefusalMaxWidth),
-        child: Container(
-          padding: const EdgeInsets.all(EdenSpacing.space6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow,
-            borderRadius: EdenRadii.borderRadiusLg,
-            border: Border.all(color: palette.dangerBorder),
+    // `is_error` IS READ, and this is where. It was carried on the model with
+    // a comment saying a dropped field "cannot later be noticed changing" --
+    // but nothing read it, so `is_error: false` rendered pixel-identically to
+    // `true` and the field could have changed for ever without anything
+    // noticing. A transcribed field that nothing consumes is not a guard
+    // against drift; it is a claim of one.
+    //
+    // It selects the TONE and nothing else: same layout, same copy, same
+    // absence of actions. Every recording to date is `true` and renders in the
+    // danger palette; a refusal the tool did not flag as an error is still a
+    // refusal, it just does not shout. No recording exercises the neutral
+    // branch -- it exists so the field is observable, and
+    // `eden_data_display_test.dart` pins that the two differ.
+    final Color edge = data.isError ? palette.dangerBorder : palette.neutralBorder;
+    final Color glyph = data.isError ? palette.dangerFg : palette.neutralFg;
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        // THE REASON IS UNTRUSTED TEXT OF UNKNOWN LENGTH. It comes back from a
+        // tool error, so its length is not this package's to assume. In a
+        // non-scrolling `mainAxisSize: min` Column a long one overflowed --
+        // which in debug is a yellow-and-black band and in RELEASE is silent
+        // clipping, i.e. exactly the "reason the reader cannot see" that
+        // refusing to ellipsise it was meant to prevent.
+        //
+        // So the reason SCROLLS inside whatever height the card has, while the
+        // heading and the footer stay put. Nothing is truncated and nothing is
+        // hidden: the text is all there, and reaching it is a gesture rather
+        // than a guess.
+        //
+        // Under an UNBOUNDED height there is nothing to scroll within and a
+        // viewport would throw, so the text simply lays out at full height --
+        // correct in a conversational transcript, which scrolls for it.
+        final Widget reason = Text(
+          data.reason,
+          style: EdenTypography.bodyLarge(context).copyWith(
+            color: theme.colorScheme.onSurface,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        );
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: kEdenRefusalMaxWidth),
+            child: Container(
+              padding: const EdgeInsets.all(EdenSpacing.space6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: EdenRadii.borderRadiusLg,
+                border: Border.all(color: edge),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  // A GLYPH, not text. WCAG 1.4.3 does not reach it and
-                  // `expectUiSane`'s contrast rule only walks Text and
-                  // EditableText, so nothing here measures it: the 3:1
-                  // non-text floor it clears (dangerFg #EF4444 on
-                  // surfaceContainerLow is 3.9:1 light, 5.4:1 dark) is
-                  // asserted by this comment and by a human looking at the
-                  // golden, and by nothing else in the gate.
-                  Icon(
-                    Icons.block_outlined,
-                    size: _kRefusalIconSize,
-                    color: palette.dangerFg,
-                  ),
-                  const SizedBox(width: EdenSpacing.space3),
-                  Expanded(
-                    child: Text(
-                      _kRefusalHeading,
-                      style: EdenTypography.headlineSmall(context).copyWith(
-                        color: theme.colorScheme.onSurface,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      // A GLYPH, not text. WCAG 1.4.3 does not reach it and
+                      // `expectUiSane`'s contrast rule only walks Text and
+                      // EditableText, so nothing here measures it: the 3:1
+                      // non-text floor it clears (dangerFg #EF4444 on
+                      // surfaceContainerLow is 3.9:1 light, 5.4:1 dark) is
+                      // asserted by this comment and by a human looking at the
+                      // golden, and by nothing else in the gate.
+                      Icon(
+                        Icons.block_outlined,
+                        size: _kRefusalIconSize,
+                        color: glyph,
                       ),
+                      const SizedBox(width: EdenSpacing.space3),
+                      Expanded(
+                        child: Text(
+                          _kRefusalHeading,
+                          style: EdenTypography.headlineSmall(context).copyWith(
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: EdenSpacing.space3),
+                  // VERBATIM. No prefix stripping, no rewording, no ellipsis:
+                  // the reason is the entire content of a refusal.
+                  if (constraints.maxHeight.isFinite)
+                    Flexible(child: SingleChildScrollView(child: reason))
+                  else
+                    reason,
+                  const SizedBox(height: EdenSpacing.space4),
+                  // THE ABSENCE OF A BUTTON, SAID OUT LOUD. Without this line
+                  // the card is a dead end that looks like a loading state
+                  // someone forgot to finish. With it, the dead end is the
+                  // message.
+                  Text(
+                    _kRefusalFooter,
+                    style: EdenTypography.bodySmall(context).copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: EdenSpacing.space3),
-              // VERBATIM. No prefix stripping, no rewording, no ellipsis: the
-              // reason is the entire content of a refusal, and a truncated
-              // reason is a refusal whose cause the reader cannot see.
-              Text(
-                data.reason,
-                style: EdenTypography.bodyLarge(context).copyWith(
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: EdenSpacing.space4),
-              // THE ABSENCE OF A BUTTON, SAID OUT LOUD. Without this line the
-              // card is a dead end that looks like a loading state someone
-              // forgot to finish. With it, the dead end is the message.
-              Text(
-                _kRefusalFooter,
-                style: EdenTypography.bodySmall(context).copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
