@@ -60,6 +60,34 @@ Future<Color> paintedBackgroundOf(
   Finder finder,
   Color ink,
 ) async {
+  // GUARD (b): `_isNear` below compares ALL FOUR bytes of a candidate pixel
+  // against `ink`'s own raw bytes, INCLUDING alpha. A rasterised frame is
+  // opaque — every captured pixel's alpha byte is ~255 — so a translucent
+  // `ink` (alpha < 1.0) can never be "near" anything the exclusion sees, the
+  // exclusion never fires, and the ink's OWN composited pixels stay in the
+  // histogram and can win the mode as "the background". The caller
+  // (`expectInkContrast`) then does `Color.alphaBlend(ink, surface)` on TOP
+  // of that already-composited value — blending the same translucent ink a
+  // second time over its own appearance — and reports a ratio near 1.0:1
+  // against a colour that was never the real surface. Refusing here, rather
+  // than guessing, is the same principle `iconInk`'s `blendMode` guard
+  // applies below: there is no single background this can recover from a
+  // region that may be entirely the ink's own translucent fill, so it does
+  // not answer one. Composite the ink against its actual background first
+  // (`Color.alphaBlend`) and pass that OPAQUE colour instead.
+  if (ink.a < 1.0) {
+    throw StateError(
+      'paintedBackgroundOf was asked to exclude a translucent ink '
+      '(${hexOf(ink)}, alpha ${ink.a.toStringAsFixed(2)}). A translucent '
+      "ink's own composited pixels never match its raw (unblended) bytes "
+      'in a rasterised frame, so the exclusion cannot find them and they '
+      'can win the histogram mode as "the background" — which reports a '
+      'spurious near-1.0:1 ratio once the caller blends the same ink over '
+      'it a second time. Composite the ink over its actual background '
+      '(Color.alphaBlend) and pass that opaque colour instead.',
+    );
+  }
+
   final Element element = finder.evaluate().single;
   final RenderBox box = element.renderObject! as RenderBox;
   RenderObject? node = box;
@@ -75,6 +103,7 @@ Future<Color> paintedBackgroundOf(
 
   ByteData? bytes;
   int width = 0;
+  int height = 0;
   await tester.binding.runAsync<void>(() async {
     final ui.Image image =
         await (view.debugLayer! as OffsetLayer).toImage(
@@ -85,6 +114,7 @@ Future<Color> paintedBackgroundOf(
       pixelRatio: 1 / view.flutterView.devicePixelRatio,
     );
     width = image.width;
+    height = image.height;
     bytes = await image.toByteData();
     image.dispose();
   });
@@ -94,6 +124,25 @@ Future<Color> paintedBackgroundOf(
   final Map<int, int> histogram = <int, int>{};
   for (int y = region.top.floor(); y < region.bottom.ceil(); y++) {
     for (int x = region.left.floor(); x < region.right.ceil(); x++) {
+      // GUARD (c): `x` was never bounded to [0, width) — only the overall
+      // buffer OFFSET was checked, which is row-agnostic. A node whose
+      // paintBounds extend past the LEFT or RIGHT edge of the view lands an
+      // offset that is still inside the buffer (it just addresses the
+      // ADJACENT ROW), so the old check never caught it and the histogram
+      // silently measured an unrelated region. Throwing on the node's own
+      // geometry — not on the derived buffer offset — is what catches that;
+      // clamping and continuing would answer a number for a node that was
+      // only partially measured, which the caller would treat as a fact
+      // about the whole one.
+      if (x < 0 || x >= width || y < 0 || y >= height) {
+        throw StateError(
+          'the node found by $finder paints outside the frame: its rect is '
+          '$region, and the view is (0, 0)-($width, $height). An off-frame '
+          'pixel cannot be measured, so this refuses rather than silently '
+          "reading whatever is at that offset in the buffer — which, for a "
+          "row-wrapped x, is the ADJACENT ROW's colour, not this node's.",
+        );
+      }
       final int offset = (y * width + x) * 4;
       if (offset < 0 || offset + 3 >= data.lengthInBytes) {
         continue;
@@ -128,23 +177,49 @@ Future<Color> paintedBackgroundOf(
   return Color(best);
 }
 
-/// The colour the `Icon` found by [finder] declares, including the
-/// `IconTheme` it would inherit when it declares none.
+/// The colour the `Icon` found by [finder] is ACTUALLY PAINTED with,
+/// including the `IconTheme` it would inherit when it declares none, and the
+/// ancestor `IconTheme.opacity` it is dimmed by when one applies.
+///
+/// `Icon.build` (`packages/flutter/lib/src/widgets/icon.dart:293-297`)
+/// applies the resolved `IconTheme.opacity` to the declared colour EVEN WHEN
+/// `Icon.color` is set explicitly — Material installs a dimmed `IconTheme`
+/// for disabled and secondary icon regions, so this is not a hypothetical.
+/// Returning the declared colour unchanged under such a theme would report
+/// the glyph MORE opaque than it is painted: the computed ratio reads HIGH
+/// and the assertion passes a glyph that is actually failing. That is the
+/// worst failure mode a conformance instrument has — it is not blind, it is
+/// confidently wrong (`check-whose-failure-is-its-success`).
+///
+/// Throws when `Icon.blendMode` is set. `Icon.build` (same file, lines
+/// 299-304) then paints through a `foreground` `Paint` instead of `color`,
+/// and the painted result depends on the destination pixels beneath the
+/// glyph — there is no single "ink" this can report, and answering one
+/// anyway would be the same failure mode this guard exists to close.
 Color iconInk(WidgetTester tester, Finder finder) {
   final Element element = finder.evaluate().single;
   final Icon icon = element.widget as Icon;
-  final Color? declared = icon.color;
-  if (declared != null) {
-    return declared;
+  if (icon.blendMode != null) {
+    throw StateError(
+      "iconInk cannot resolve ${icon.icon}'s ink: it declares a blendMode "
+      '(${icon.blendMode}), and Icon.build paints it through a foreground '
+      'Paint whose result depends on the destination pixels beneath it. '
+      'There is no single colour to report.',
+    );
   }
+  final Color? declared = icon.color;
   final Color? inherited = IconTheme.of(element).color;
-  if (inherited == null) {
+  final Color? base = declared ?? inherited;
+  if (base == null) {
     throw StateError(
       'no resolvable ink for ${icon.icon} — neither Icon.color nor an '
       'ancestor IconTheme names one.',
     );
   }
-  return inherited;
+  final double themeOpacity = IconTheme.of(element).opacity ?? 1.0;
+  return themeOpacity == 1.0
+      ? base
+      : base.withValues(alpha: base.a * themeOpacity);
 }
 
 /// The colour the `Text` found by [finder] declares, including the
