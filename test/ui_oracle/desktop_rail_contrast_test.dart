@@ -57,6 +57,28 @@
 // with every product change on this branch reverted. The oracle's own
 // painted-text rule reads its ink from the resolved TextStyle instead and is
 // not subject to it.
+//
+// WHAT THIS FILE ADDS, AND WHY THE EIGHT CASES ABOVE COULD NOT SEE #58's
+// REGRESSION (eden-ui-flutter#58 code review). Every one of the eight
+// computed cases above measures ink against the SURFACE that ink sits on —
+// icon-vs-band, label-vs-band, icon-vs-fill, label-vs-fill. That is correct
+// as far as it looks, and it is blind ON PRINCIPLE to the axis that
+// regressed: WHAT IDENTIFIES the row as selected in the first place. #58
+// correctly moved the selected icon's ink off the 10%-primary band — brand
+// gold at 2.05:1, the same failure #55 fixed on the label — and onto
+// `onSurface`, which is 16.47:1 light / 13.74:1 dark on that same band. A
+// real fix, and every one of the eight cases above passed on it both before
+// and after, because none of them was ever looking at the band's OWN
+// legibility. Once the icon stopped carrying the colour, the band was the
+// ONLY thing left identifying the selected row, and it measures 1.08:1
+// light / 1.17:1 dark against the rail's own fill (`Colors.white` light /
+// `EdenColors.neutral[900]` dark) — under WCAG 1.4.11's 3:1 floor for the
+// visual information that identifies a component's state. A file that
+// looks straight at both colours and never asks whether the STATE ITSELF is
+// identifiable cannot see that. The five cases below ask that question
+// directly, parameterised ALSO over the COLLAPSED rail (72px, icon-only) —
+// which the eight cases above never pump at all, and which is the one state
+// with no label to fall back on once the band is gone.
 library;
 
 import 'package:eden_ui_flutter/eden_ui.dart';
@@ -81,6 +103,18 @@ const EdenLayoutUser _user = EdenLayoutUser(
   email: 'ada@example.com',
   initials: 'AL',
 );
+
+/// The rail, at either sidebar width. [collapsed] pumps the 72px icon-only
+/// rail — the state the eight cases above never exercise, and the one with
+/// no label to identify the row once the band is gone.
+Widget _rail(bool collapsed) => EdenDesktopLayout(
+      navItems: _railItems,
+      selectedId: 'home',
+      onNavChanged: (_) {},
+      user: _user,
+      initiallyCollapsed: collapsed,
+      body: const SizedBox.shrink(),
+    );
 
 void main() {
   for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
@@ -191,5 +225,133 @@ void main() {
         what: 'the UNSELECTED rail label (WCAG 1.4.3, 13px text)',
       );
     });
+
+    // -------------------------------------------------------------------
+    // SELECTION CARRIER — what identifies the row, not just its ink.
+    // -------------------------------------------------------------------
+    //
+    // Five independent cases (not five asserts in one test) so a failure in
+    // one does not hide the others: (a) is expected to fail on the unfixed
+    // tree with zero matches, (e) is expected to fail printing the band's
+    // measured ratio, (b) either fails on the same cardinality check or has
+    // nothing to read a rim from, and (c)/(d) are expected to PASS — they
+    // measure ink-vs-surface, which is correct today and was never the
+    // defect. Parameterised over collapsed too: the collapsed rail has no
+    // label at all, so it is the state with the least to fall back on.
+    for (final bool collapsed in <bool>[false, true]) {
+      final String railState = collapsed ? 'collapsed' : 'expanded';
+
+      testWidgets(
+          'the desktop RAIL selected row publishes exactly one selection '
+          'indicator ($mode, $railState)', (WidgetTester tester) async {
+        await wrap(tester, _rail(collapsed), themeMode: themeMode);
+        expect(
+          find.byKey(const ValueKey<String>('eden-nav-selection-indicator')),
+          findsOneWidget,
+          reason: 'the rail selects exactly one row (Home). An indicator on '
+              'every row identifies nothing and an indicator on no row is '
+              'the eden-ui-flutter#58 review finding: today the desktop '
+              'rail has no colour-bearing carrier for its selected state '
+              'at all.',
+        );
+      });
+
+      testWidgets(
+          "the selection indicator's RIM clears 3:1 against the rail's own "
+          'painted fill ($mode, $railState)', (WidgetTester tester) async {
+        await wrap(tester, _rail(collapsed), themeMode: themeMode);
+        final Finder indicator = find
+            .byKey(const ValueKey<String>('eden-nav-selection-indicator'));
+        expect(indicator, findsOneWidget,
+            reason: 'no selection indicator is on screen to read a rim '
+                'colour off — see the cardinality case above for the '
+                'underlying defect.');
+        final BoxDecoration decoration =
+            tester.widget<Container>(indicator).decoration! as BoxDecoration;
+        final Color rim = decoration.border!.top.color;
+        // Sampled from the UNSELECTED row's own icon: that row carries no
+        // pill and no rim, so the dominant pixel in its tiny bounding box
+        // is unambiguously the rail's own fill, not a guess about how much
+        // of the selected row's box the pill occupies.
+        await expectInkContrast(
+          tester,
+          find.byIcon(Icons.insert_chart_outlined),
+          rim,
+          floor: 3.0,
+          what: "the SELECTED indicator's RIM against the rail's own "
+              'painted fill (WCAG 1.4.11, non-text)',
+        );
+      });
+
+      testWidgets(
+          'the selected glyph clears 3:1 against the pill it is painted on '
+          '($mode, $railState)', (WidgetTester tester) async {
+        await wrap(tester, _rail(collapsed), themeMode: themeMode);
+        final Finder selectedIcon = find.byIcon(Icons.home_outlined);
+        expect(selectedIcon, findsOneWidget,
+            reason: 'the measurement needs exactly one node to measure.');
+        await expectInkContrast(
+          tester,
+          selectedIcon,
+          iconInk(tester, selectedIcon),
+          floor: 3.0,
+          what: 'the SELECTED rail icon against the pill it sits on (WCAG '
+              '1.4.11, non-text)',
+        );
+      });
+
+      testWidgets(
+          "the unselected glyph clears 3:1 against the rail's own fill "
+          '($mode, $railState)', (WidgetTester tester) async {
+        await wrap(tester, _rail(collapsed), themeMode: themeMode);
+        final Finder unselectedIcon =
+            find.byIcon(Icons.insert_chart_outlined);
+        expect(unselectedIcon, findsOneWidget,
+            reason: 'the measurement needs exactly one node to measure.');
+        await expectInkContrast(
+          tester,
+          unselectedIcon,
+          iconInk(tester, unselectedIcon),
+          floor: 3.0,
+          what: 'the UNSELECTED rail icon (WCAG 1.4.11, non-text)',
+        );
+      });
+
+      testWidgets(
+          'no rail row paints a primary@0.1 selection band ($mode, '
+          '$railState)', (WidgetTester tester) async {
+        await wrap(tester, _rail(collapsed), themeMode: themeMode);
+
+        final BuildContext context =
+            tester.element(find.byType(EdenDesktopLayout));
+        final ThemeData theme = Theme.of(context);
+        final Color band = theme.colorScheme.primary.withValues(alpha: 0.1);
+        final Color railFill = theme.brightness == Brightness.dark
+            ? EdenColors.neutral[900]!
+            : Colors.white;
+        final double ratio =
+            wcagContrast(Color.alphaBlend(band, railFill), railFill);
+
+        final Iterable<Element> bandedBoxes = find
+            .byWidgetPredicate((Widget w) =>
+                w is Container &&
+                w.decoration is BoxDecoration &&
+                (w.decoration! as BoxDecoration).color?.toARGB32() ==
+                    band.toARGB32())
+            .evaluate();
+
+        expect(
+          bandedBoxes,
+          isEmpty,
+          reason: 'a rail row still paints colorScheme.primary at 10% '
+              "alpha as its selection cue. That composites to "
+              '${ratio.toStringAsFixed(2)}:1 against the rail\'s own fill '
+              '(${hexOf(railFill)}), under WCAG 1.4.11\'s 3:1 floor for '
+              "the visual information identifying a component's state. A "
+              'band at that ratio identifies nothing; the rim-carrying '
+              'indicator is the replacement.',
+        );
+      });
+    }
   }
 }
