@@ -4,8 +4,13 @@ on:
   push:
     branches: [main]
 
+# Workflow default is READ. The write scope belongs to the `release` job alone
+# (see below): `test` runs `flutter pub get` and `flutter test`, which execute
+# third-party pub package code and build hooks, and `actions/checkout@v4`
+# defaults to persist-credentials: true -- so a workflow-level write token is
+# written into .git/config on the runner before any dependency code runs.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -13,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Nothing in this job talks to GitHub. Without the credential the
+          # token is not in .git/config at all while dependency code runs.
+          persist-credentials: false
 
       - uses: subosito/flutter-action@v2
         with:
@@ -60,6 +69,9 @@ jobs:
 
   release:
     name: Tag Release
+    # git push origin "v…" and actions/github-script repos.createRelease.
+    permissions:
+      contents: write
     needs: [test]
     runs-on: ubuntu-latest
     steps:
