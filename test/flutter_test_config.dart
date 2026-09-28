@@ -47,6 +47,37 @@
 // the new variant will not be in `test_support/fonts/` and the oracle tests
 // fail LOUDLY with google_fonts' own "was not found in the application
 // assets" message naming the missing file.
+//
+// SECOND JOB — ICON GLYPHS (eden-ui-flutter#52).
+//
+// Everything above is about TEXT. Icons were broken for a DIFFERENT reason
+// and the two fixes must not be confused: `MaterialIcons` is not a
+// google_fonts family and is never fetched. It ships with the framework, and
+// `uses-material-design: true` in pubspec.yaml publishes it into the asset
+// bundle -- including the one `flutter test` builds at
+// `build/unit_test_assets/`, where `fonts/MaterialIcons-Regular.otf` (1.6MB)
+// and a `FontManifest.json` naming it are both present on every run.
+//
+// What is missing is the REGISTRATION. In a real app the engine reads
+// `FontManifest.json` at startup and registers each family with the text
+// shaper. `flutter_tester` does not: nothing in `flutter_test` reads that
+// manifest, so `MaterialIcons` is an unknown family, every `IconData`
+// resolves to the fallback face, and each glyph rasterises as tofu -- the
+// empty square. That square was pinned as correct in all 22 committed golden
+// baselines, which means NO ICON COULD REGRESS: `Icons.close` and
+// `Icons.check` are the same empty box, so swapping, mistheming or deleting
+// an icon moved no baseline. `expectUiSane` cannot cover the gap either --
+// it reads ink from the resolved `TextStyle` and never looks at a rasterised
+// glyph (`painted-ink-not-measured` in ORACLE_COVERAGE.md).
+//
+// [_loadBundledFonts] does the registration `flutter_tester` skips, driven
+// off the manifest rather than a hardcoded path so a font added to
+// pubspec.yaml tomorrow is registered without editing this file. It is
+// asserted non-vacuous: if `MaterialIcons` is not among the families it
+// registered, bootstrap throws rather than letting the suite go green on
+// squares again. The differential control that proves the registration
+// actually reaches the rasteriser is
+// `test/ui_oracle/icon_glyph_rasterises_test.dart`.
 library;
 
 import 'dart:async';
@@ -72,6 +103,11 @@ const String kEdenTestFontSourceDir = 'test_support/fonts';
 /// Asset key the bundle manifest is published under.
 const String _kAssetManifestKey = 'AssetManifest.bin';
 
+/// Asset key the FONT manifest is published under. Generated from
+/// `pubspec.yaml` by the tool and staged into `build/unit_test_assets/` for
+/// every `flutter test` run.
+const String _kFontManifestKey = 'FontManifest.json';
+
 Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   final TestWidgetsFlutterBinding binding =
       TestWidgetsFlutterBinding.ensureInitialized();
@@ -82,9 +118,98 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   GoogleFonts.config.allowRuntimeFetching = false;
 
   _serveEdenTestFonts(binding.defaultBinaryMessenger);
+  await _loadBundledFonts();
   await _warmEdenTypeFamilies();
 
   await testMain();
+}
+
+/// Font families that MUST end up registered, or bootstrap fails.
+///
+/// A gate whose unmeasurable state is indistinguishable from its passing
+/// state is not a gate. If `uses-material-design:` is dropped, or a future
+/// `flutter test` stops staging the framework fonts into
+/// `build/unit_test_assets/`, [_loadBundledFonts] would quietly register
+/// nothing and every icon would silently go back to being an empty square
+/// pinned as correct -- exactly the state #52 was filed about. So the absence
+/// is named here and throws.
+const List<String> kRequiredBundledFontFamilies = <String>['MaterialIcons'];
+
+/// Registers every family declared in the bundle's own `FontManifest.json`.
+///
+/// This is the step `flutter_tester` does not do. See the header: the font
+/// FILE is in the test asset bundle already; only the registration with the
+/// text shaper is absent, and [FontLoader] is the test-side equivalent of the
+/// engine's startup registration.
+///
+/// DRIVEN OFF THE MANIFEST, not off a hardcoded `fonts/MaterialIcons-*.otf`
+/// path. The manifest is generated from `pubspec.yaml`, so a family added
+/// there is registered here with no edit -- and an asset path that moves
+/// between Flutter versions moves in the manifest too.
+///
+/// `testExecutable` is REAL async (it runs before the test binding installs a
+/// fake clock), so [FontLoader.load] actually completes here. The same call
+/// inside a `testWidgets` body would not.
+Future<void> _loadBundledFonts() async {
+  final String manifestJson;
+  try {
+    manifestJson = await rootBundle.loadString(_kFontManifestKey);
+  } on Object catch (error) {
+    throw StateError(
+      'Could not read "$_kFontManifestKey" from the test asset bundle: '
+      '$error. Without it no font family is registered with the text shaper, '
+      'so every IconData rasterises as tofu and no icon in the catalogue can '
+      'regress. See the header of test/flutter_test_config.dart '
+      '(eden-ui-flutter#52).',
+    );
+  }
+
+  final List<String> registered = <String>[];
+  for (final Object? entry in json.decode(manifestJson) as List<Object?>) {
+    if (entry is! Map<Object?, Object?>) {
+      continue;
+    }
+    final Object? family = entry['family'];
+    final Object? fonts = entry['fonts'];
+    if (family is! String || fonts is! List<Object?> || fonts.isEmpty) {
+      continue;
+    }
+    final FontLoader loader = FontLoader(family);
+    int assets = 0;
+    for (final Object? font in fonts) {
+      if (font is! Map<Object?, Object?>) {
+        continue;
+      }
+      final Object? asset = font['asset'];
+      if (asset is! String) {
+        continue;
+      }
+      loader.addFont(rootBundle.load(asset));
+      assets++;
+    }
+    if (assets == 0) {
+      continue;
+    }
+    await loader.load();
+    registered.add(family);
+  }
+
+  final List<String> missing = <String>[
+    for (final String family in kRequiredBundledFontFamilies)
+      if (!registered.contains(family)) family,
+  ];
+  if (missing.isNotEmpty) {
+    throw StateError(
+      'These font families were NOT registered from "$_kFontManifestKey": '
+      '${missing.join(', ')}. The manifest named ${registered.isEmpty ? 'no '
+          'families at all' : 'only: ${registered.join(', ')}'}. '
+      'MaterialIcons reaches the test bundle through '
+      "pubspec.yaml's `uses-material-design: true`; without it every "
+      'IconData rasterises as the empty-square fallback and the golden '
+      'baselines pin squares, so no icon change can ever go red '
+      '(eden-ui-flutter#52). Fix the bundle rather than relaxing this check.',
+    );
+  }
 }
 
 /// Completes every font load `EdenTheme` fires, BEFORE the first test renders.
