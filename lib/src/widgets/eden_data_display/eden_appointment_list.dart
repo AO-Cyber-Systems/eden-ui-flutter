@@ -648,7 +648,8 @@ class _EdenAppointmentStatus extends StatelessWidget {
     // `neutralFg` is left alone: #52525B on `surfaceContainerHigh` is 5.14:1
     // light and the dark palette's own value clears the floor too. It was
     // never part of this class of failure — it is a neutral, not a hue.
-    final Color dot = switch (EdenAppointmentStatusTone.of(status)) {
+    final EdenAppointmentStatusTone tone = EdenAppointmentStatusTone.of(status);
+    final Color dot = switch (tone) {
       EdenAppointmentStatusTone.confirmed =>
         EdenGlyphInk.success(theme.brightness),
       EdenAppointmentStatusTone.neutral => palette.neutralFg,
@@ -667,9 +668,16 @@ class _EdenAppointmentStatus extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Container(
-            // KEYED for the same reason as the truncation icon: the contrast
-            // test measures this dot by name, not by hunting for an 8x8 circle.
-            key: const ValueKey<String>('eden-appointment-status-dot'),
+            // KEYED PER TONE, not one key for both. `eden-appointment-status
+            // -dot` alone was attached to EVERY dot regardless of tone, so a
+            // test finding it with `findsWidgets` + `.first` measured
+            // whichever appointment happened to render first — green on the
+            // fixture order the five stories shipped in (all `confirmed`),
+            // and silently blind to a `confirmed` dot regressing the day a
+            // `neutral` row led the list (eden-ui-flutter#58 code review).
+            // Keying each tone separately lets a test find the CONFIRMED dot
+            // by name, with exact cardinality, regardless of row order.
+            key: ValueKey<String>('eden-appointment-status-dot-${tone.name}'),
             width: _kStatusDotSize,
             height: _kStatusDotSize,
             decoration: BoxDecoration(color: dot, shape: BoxShape.circle),

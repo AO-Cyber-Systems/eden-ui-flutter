@@ -37,6 +37,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:eden_ui_flutter/eden_ui.dart';
 import 'package:eden_ui_flutter/dev_app/registry/eden_story.dart';
 
 import '../../test_support/ui_oracle/measure_ink.dart';
@@ -67,11 +68,40 @@ void main() {
         themeMode: themeMode,
       );
 
-      final Finder dot =
-          find.byKey(const ValueKey<String>('eden-appointment-status-dot'));
-      expect(dot, findsWidgets,
-          reason: 'the fixture must actually render a status dot, or this '
+      // BY KEY, NOT BY MIXING TONES (eden-ui-flutter#58 code review). The
+      // old form (`eden-appointment-status-dot`, `findsWidgets` + `.first`)
+      // was attached to EVERY status dot REGARDLESS OF TONE and took
+      // whichever rendered first — green on fixture 01 because all five of
+      // its real rows are `confirmed`, and blind to a `confirmed` dot
+      // regressing the day a non-confirmed row led the list, because
+      // `.first` would then measure `neutralFg` instead. Keying each tone
+      // separately (`-confirmed` / `-neutral`) makes this finder match ONLY
+      // confirmed dots — five of them, all identical by construction (same
+      // key, same switch arm, same ink) — so `.first` among THEM is no
+      // longer order-dependent on TONE, which is the axis that regressed.
+      // The fixture now carries a synthetic non-confirmed row FIRST (see
+      // `eden_appointment_list.stories.dart`'s header) precisely so this
+      // could not silently keep passing if it were still tone-blind.
+      final Finder confirmedDots = find.byKey(
+        const ValueKey<String>('eden-appointment-status-dot-confirmed'));
+      expect(confirmedDots, findsWidgets,
+          reason: 'the fixture must render at least one CONFIRMED status '
+              'dot, found by its own key regardless of row order, or this '
               'run reports on nothing.');
+      final Finder confirmedDot = confirmedDots.first;
+
+      final Brightness brightness =
+          themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
+      final Color resolvedInk = decorationInk(tester, confirmedDot);
+      // THE RATIO ALONE CANNOT TELL YOU WHICH TONE IT MEASURED — a glyph
+      // that drifted onto `neutralFg` could still clear 3:1 by accident and
+      // this identity check is the one that would catch it. Both together:
+      // the ratio (below) is the conformance floor, the identity is the
+      // spelling check this file exists to enforce.
+      expect(resolvedInk, equals(EdenGlyphInk.success(brightness)),
+          reason: 'the confirmed dot must resolve to exactly '
+              'EdenGlyphInk.success for this brightness, not merely '
+              'something that happens to clear the floor.');
 
       // 2.00:1 light / 5.87:1 dark before #55; 4.32:1 / 5.87:1 after. The
       // dark tone is UNCHANGED — the base hue already cleared the floor
@@ -80,8 +110,8 @@ void main() {
       // 2.72:1 dark). That is why `EdenGlyphInk` is a brightness-split pair.
       await expectInkContrast(
         tester,
-        dot.first,
-        decorationInk(tester, dot.first),
+        confirmedDot,
+        resolvedInk,
         floor: _kNonTextFloor,
         what: 'the appointment status dot (WCAG 1.4.11, non-text)',
       );
