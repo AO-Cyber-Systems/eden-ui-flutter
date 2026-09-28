@@ -256,15 +256,37 @@ jobs:
       # uploaded. A regeneration that rewrote every file byte-identically and
       # one that never ran are the same artifact; this is the line that tells
       # them apart, and it is what a reviewer checks the committed diff
-      # against.
+      # against. It is also the ONLY thing that would surface an orphan
+      # committed baseline riding along inside `regenerated-goldens`, now that
+      # the uniqueness and coverage gates have been moved out of the
+      # regeneration step above.
+      #
+      # THE PATHSPEC IS `test/stories/` AND NOT `'test/stories/**/goldens/'`.
+      # Git pathspecs are not shell globs: `**` is literal without `:(glob)`
+      # magic, and the trailing `/` finishes the job. The first version of this
+      # step shipped that spelling, so it matched NOTHING and printed "NO
+      # baseline changed on disk" on every run -- including a dispatch that had
+      # just blessed 12 new baselines. Reproduced on this tree: append a byte to
+      # a committed PNG and `-- 'test/stories/**/goldens/'` stays empty while
+      # `-- test/stories/` and `-- ':(glob)test/stories/**/goldens/**'` both
+      # report it.
+      #
+      # That is worth spelling out, because of WHAT it broke. This step exists
+      # to tell "wrote identical bytes" from "wrote nothing at all" -- and with
+      # a dead pathspec it reported those two states, and the healthy one, in
+      # the same words. A control that says the same thing whether or not it
+      # looked is the exact defect this whole block was written to remove, and
+      # it was sitting inside the fix for it.
       - name: Report which baselines the regeneration moved
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
         run: |
           echo "regenerate step outcome: ${{ steps.regen.outcome }}"
-          CHANGED="$(git status --porcelain -- 'test/stories/**/goldens/')"
+          CHANGED="$(git status --porcelain -- test/stories/)"
           if [ -z "$CHANGED" ]; then
             echo "NO baseline changed on disk. Either every story already"
             echo "matched its committed bytes, or nothing was written at all."
+            echo "(This message is only meaningful because the pathspec above"
+            echo "is a real one -- see the comment on this step.)"
           else
             echo "baselines changed on disk:"
             echo "$CHANGED"
@@ -274,11 +296,19 @@ jobs:
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
+          # `**` IS a real glob here -- actions/upload-artifact uses @actions/glob,
+          # not git pathspecs. That difference is why the step above needed a
+          # different spelling; the two are not interchangeable even though they
+          # look it.
           name: regenerated-goldens
           path: test/stories/**/goldens/
-          # `error`, not `ignore`. This path cannot legitimately be empty after
-          # a successful regeneration; if it is, the artifact would be an empty
-          # download that reads like a successful one.
+          # `error` rather than `ignore`, but read what it can and cannot see.
+          # It fires only if the baseline DIRECTORY is gone -- it cannot detect
+          # a regeneration that wrote nothing, because this path matches the
+          # COMMITTED baselines, which are present in every checkout. The
+          # earlier comment here claimed that stronger property and was wrong.
+          # "Wrote nothing" is the git-status step's job, which is the step
+          # above, which is why its pathspec had to be a working one.
           if-no-files-found: error
 
       # THE PARTIAL CASE, UNDER A NAME THAT ADMITS IT. Some of what is on disk
