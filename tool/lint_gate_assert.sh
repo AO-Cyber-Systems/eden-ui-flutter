@@ -64,21 +64,48 @@ RULES=(no_raw_color no_magic_spacing text_style_needs_family)
 # macOS workstation. It would have parsed nothing on both, PAIRS would have
 # been empty, and the guard below would have turned every Lint run red for a
 # reason that has nothing to do with the rules. sub() on a copy is portable.
+#
+# STRUCTURE IS MATCHED BY POSITION, AND AN UNRECOGNISED SHAPE IS A HARD FAIL.
+# The first version keyed the rule header on `/^    - [a-z_]+:$/` and simply
+# did not match anything else -- and crucially did NOT reset `rule` when it did
+# not match. So a rule whose name contains a digit (`new_rule2`) fell through,
+# its `enforced_paths` were attributed to the PREVIOUS rule, and the pair count
+# went UP: the control printed "OK -- 7 (rule, scope) pair(s)" while the new
+# rule was probed by nothing. Neither guard below could see it -- MISSING_RULES
+# iterates a hardcoded list, UNKNOWN_RULES iterates what parsed, and the rule
+# was in neither. A higher number that means less coverage is the worst
+# possible failure for a control whose whole output is a number.
+#
+# So every 4-space list item is now matched on POSITION, and a header whose
+# remainder is not `<name>:` emits `!MALFORMED` rather than being skipped. Same
+# for the 6-space key line, which had the identical latent bug one level down.
 PAIRS="$(awk '
   /^custom_lint:[ \t]*$/ { in_cl = 1; next }
   in_cl && /^[^ \t]/     { in_cl = 0 }
   !in_cl { next }
   /^[ \t]*#/ { next }
   # `    - <rule>:`  (4 spaces) starts a new rule and clears the key.
-  /^    - [a-z_]+:[ \t]*$/ {
-    line = $0; sub(/^    - /, "", line); sub(/:[ \t]*$/, "", line)
-    rule = line; key = ""; next
+  /^    - / {
+    line = $0; sub(/^    - /, "", line); sub(/[ \t]+$/, "", line)
+    if (line ~ /^[A-Za-z0-9_]+:$/) {
+      sub(/:$/, "", line); rule = line; key = ""
+    } else {
+      print "!MALFORMED\trule header: " $0
+      rule = ""; key = ""
+    }
+    next
   }
   # `      <key>:`   (6 spaces) selects which list the items below belong to,
   # which is what keeps `legacy_exemptions` entries out of the matrix.
-  /^      [a-z_]+:[ \t]*$/ {
-    line = $0; sub(/^      /, "", line); sub(/:[ \t]*$/, "", line)
-    key = line; next
+  /^      [^ \t]/ {
+    line = $0; sub(/^      /, "", line); sub(/[ \t]+$/, "", line)
+    if (line ~ /^[A-Za-z0-9_]+:$/) {
+      sub(/:$/, "", line); key = line
+    } else {
+      print "!MALFORMED\toption key: " $0
+      key = ""
+    }
+    next
   }
   # `        - <value>` (8 spaces) is an item of the current key.
   /^        - / {
@@ -86,6 +113,18 @@ PAIRS="$(awk '
     if (rule != "" && key == "enforced_paths" && line != "") print rule "\t" line
   }
 ' "$OPTIONS")"
+
+# A SHAPE THE PARSER DOES NOT UNDERSTAND IS NEVER SILENTLY SKIPPED. Skipping is
+# how the digit-in-a-name bug produced a bigger number and less coverage.
+MALFORMED="$(echo "$PAIRS" | grep '^!MALFORMED' || true)"
+if [ -n "$MALFORMED" ]; then
+  echo "lint gate assert: FAILED -- $OPTIONS has custom_lint entries this"
+  echo "control cannot parse, so it cannot prove they are enforced:"
+  echo "$MALFORMED" | sed 's/^!MALFORMED\t/  - /'
+  echo "Rule names and option keys must match [A-Za-z0-9_]+ followed by ':'."
+  echo "Teach this parser the new shape; do NOT leave the entry unproved."
+  exit 1
+fi
 
 if [ -z "$PAIRS" ]; then
   echo "lint gate assert: FAILED -- parsed ZERO (rule, enforced_path) pairs"
