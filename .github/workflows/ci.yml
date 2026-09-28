@@ -16,6 +16,15 @@ on:
         type: boolean
         default: false
 
+# The GITHUB_TOKEN this workflow hands to every step. Set explicitly so the
+# workflow defends itself: the repository default is currently `read`, but that
+# is a repo setting anyone can flip to `write` without touching a file here or
+# opening a diff. None of these jobs writes anything -- they check out, install
+# Flutter, run tests and upload artifacts (which uses its own runtime token, not
+# this one). Flagged by CodeQL actions/missing-workflow-permissions.
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
