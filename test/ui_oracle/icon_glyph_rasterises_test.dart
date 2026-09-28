@@ -25,7 +25,7 @@
 //   case 1  two different icons rasterise to different pixels  (the control)
 //   case 2  the same icon rasterises identically twice         (non-vacuity)
 //   case 3  a real icon differs from an UNDEFINED code point   (not tofu)
-//   case 4  wrap() paints no debug banner
+//   case 4  wrap() builds a MaterialApp and paints no debug banner
 //   case 5  the banner was really painting                     (non-vacuity)
 //
 // Case 2 is what makes case 1 mean something: without it, "the two captures
@@ -186,13 +186,31 @@ void main() {
   );
 
   testWidgets(
-    'case 4: wrap() paints no debug banner over the surface',
+    'case 4: wrap() builds a MaterialApp and paints no debug banner',
     (WidgetTester tester) async {
       await wrap(
         tester,
         const Icon(Icons.close, size: _kProbeIconSize),
         width: _kProbeWidth,
         height: _kProbeHeight,
+      );
+
+      // THE PRECONDITION, FIRST. Without it case 4 is satisfiable by
+      // DELETING the thing it guards: swap wrap()'s MaterialApp for a bare
+      // WidgetsApp or a raw Directionality and there is no CheckedModeBanner
+      // to find, so this passes; case 5 builds its own MaterialApp and passes
+      // too; all 22 baselines move and no control fires. An absence assertion
+      // is only evidence when the thing that would have produced the presence
+      // is proven to still be there.
+      expect(
+        find.byType(MaterialApp),
+        findsOneWidget,
+        reason: "wrap() no longer pumps a MaterialApp, so the assertion "
+            'below -- that no debug banner is in the tree -- is true for the '
+            'wrong reason and proves nothing about the banner. Whatever '
+            'replaced it either paints its own debug overlay (guard that '
+            'instead) or does not, in which case delete this test rather '
+            'than leaving a green check that measures nothing.',
       );
 
       expect(

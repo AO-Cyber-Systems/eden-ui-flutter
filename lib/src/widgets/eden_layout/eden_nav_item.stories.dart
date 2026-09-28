@@ -42,6 +42,16 @@ const String _kLongLabel =
 /// The two children shared by the collapsed and expanded disclosure stories.
 /// Same data both times — `initiallyExpanded` is the ONLY difference, which is
 /// what makes the pair a real before/after of the disclosure behaviour.
+///
+/// THE TWO ICONS BELOW ARE NEARLY THE SAME GLYPH, tracked in
+/// eden-ui-flutter#57. `today_outlined` and
+/// `date_range_outlined` are both an outlined calendar and at the rail's 20px
+/// they read as one icon stacked twice, so a regression that swapped them
+/// would move almost no pixels — this fixture is a weaker before/after than it
+/// looks. It was invisible until #52 registered MaterialIcons, because until
+/// then both were the same empty square. Changing either icon here will move
+/// nav-item_expandable-{collapsed,expanded}.{light,dark}.png; that churn is
+/// the fix, not a regression.
 const List<EdenNavItem> _kGroupChildren = <EdenNavItem>[
   EdenNavItem(id: 'reports-daily', label: 'Daily', icon: Icons.today_outlined),
   EdenNavItem(
