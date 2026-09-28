@@ -7,6 +7,7 @@ import '../eden_field_purpose.dart';
 import '../eden_selectable_region.dart';
 import 'layout_data.dart';
 import 'nav_ink.dart';
+import 'nav_selection_indicator.dart';
 
 /// Standard desktop/web layout with collapsible sidebar, top bar, and content area.
 ///
@@ -759,11 +760,18 @@ class _ExpandableNavHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // NOT colorScheme.primary when selected. The brand gold on the selected
-    // row's 10%-primary band measures 2.05:1 at fontSize 13 in the light
+    // row's 10%-primary band measured 2.05:1 at fontSize 13 in the light
     // theme — the same class of failure the bottom bar (2.20:1) and the
-    // drawer (1.97:1) were fixed for, unchanged here because nothing had
-    // audited the rail. Same ruling as those two: the brand moves OFF the
-    // text. onSurface on the band is 16.49:1 light, 13.72:1 dark.
+    // drawer (1.97:1) were fixed for. Same ruling as those two: the brand
+    // moves OFF the text. onSurface on the rail's own fill is 16.47:1 light,
+    // 13.74:1 dark.
+    //
+    // THE BAND ITSELF IS GONE (eden-ui-flutter#58 code review): at 1.07:1
+    // light / 1.18:1 dark against the rail's own fill it was never a
+    // conformant selection carrier, band or no band beside it, and this row
+    // carried the identical `primary@0.1` band `_NavTile` did. The state is
+    // now carried by `EdenNavSelectionIndicator` on the icon below — see its
+    // dartdoc and the `_NavTile` comment for the measurement.
     final fg = theme.colorScheme.onSurface;
 
     // No Semantics here: the layout publishes exactly one node per row at the
@@ -782,7 +790,6 @@ class _ExpandableNavHeader extends StatelessWidget {
               right: _kNavTileHorizontalPadding,
             ),
             decoration: BoxDecoration(
-              color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
               borderRadius: EdenRadii.borderRadiusMd,
             ),
             child: Row(
@@ -793,14 +800,21 @@ class _ExpandableNavHeader extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: _kExpandableChevronGap),
-                Icon(
-                  isSelected ? (item.activeIcon ?? item.icon) : item.icon,
-                  size: 20,
-                  // THE ICON FOLLOWS THE LABEL, NOT THE INDICATOR. See
-                  // _NavTile for the measurement and the ruling.
-                  color: isSelected
-                      ? theme.colorScheme.onSurface
-                      : theme.colorScheme.onSurfaceVariant,
+                // Insets: 10 horizontal / 5 vertical, the same 40x30 pill
+                // `_NavTile` uses around its 20px glyph — this row is the
+                // same 40px height, so the same clearance applies.
+                EdenNavSelectionIndicator(
+                  isSelected: isSelected,
+                  inset:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: Icon(
+                    isSelected ? (item.activeIcon ?? item.icon) : item.icon,
+                    size: 20,
+                    // THE ICON NOW CARRIES THE INDICATOR, like `_NavTile`'s.
+                    color: isSelected
+                        ? EdenNavSelectionIndicator.selectedGlyph
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -887,19 +901,28 @@ class _NavTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // THE SELECTED ICON FOLLOWS THE LABEL, NOT THE INDICATOR. The brand gold
-    // on the selected row's 10%-primary band measures 2.05:1 in the light
-    // theme, under WCAG 1.4.11's 3:1 floor for non-text — the SAME number the
-    // selected LABEL was fixed for, on the same row, in the same gold. The
-    // label was moved to `onSurface`; the icon beside it was left, and stayed
-    // failing with every gate green, because no instrument in this package
-    // could see icon ink (eden-ui-flutter#55).
+    // THE SELECTED ICON TAKES THE INDICATOR, NOT THE LABEL'S ink. This used
+    // to say the icon was content and the band beside it was the selection
+    // affordance — that claim was the defect (eden-ui-flutter#58 code
+    // review): the band is `primary.withValues(alpha: 0.1)`, and it measures
+    // 1.07:1 light / 1.18:1 dark against the rail's own fill, under WCAG
+    // 1.4.11's 3:1 floor for the visual information identifying a
+    // component's state. In the COLLAPSED rail there is no label either, so
+    // that band was the ONLY thing claiming to identify the selected row,
+    // and it never could.
     //
-    // The icon is CONTENT — which destination this row is — not the selection
-    // affordance. The affordance is the band, which is unchanged and still
-    // brand gold. So the icon takes the content ink: 16.47:1 light, 13.74:1
-    // dark on the band. Unselected is unchanged at `onSurfaceVariant`,
-    // 4.83:1 light / 6.91:1 dark on the rail's own surface.
+    // The band is gone. The state is carried by `EdenNavSelectionIndicator`
+    // — the same pill+rim widget the bottom bar, drawer and "More" sheet
+    // already use — adopted here as the fourth surface. The rim
+    // (`onPrimaryContainer`) is what clears 3:1 against the rail's own fill
+    // (7.45:1 light / 15.21:1 dark); the pill fill alone (brand gold on
+    // white) does not (2.20:1 light). The selected icon sits ON the pill and
+    // takes `EdenNavSelectionIndicator.selectedGlyph` (`neutral[900]`), not
+    // `onSurface` — onSurface inverts with the theme and would read
+    // near-white on the dark theme's gold[400] fill (2.12:1). Measured:
+    // 8.04:1 light / 7.61:1 dark on the pill. Unselected is unchanged at
+    // `onSurfaceVariant`, 4.83:1 light / 6.91:1 dark on the rail's own
+    // surface.
     //
     // Pinned by `test/ui_oracle/desktop_rail_contrast_test.dart`, which
     // COMPUTES the ratio from the resolved colours rather than asserting a
@@ -909,7 +932,7 @@ class _NavTile extends StatelessWidget {
       isSelected ? (item.activeIcon ?? item.icon) : item.icon,
       size: 20,
       color: isSelected
-          ? theme.colorScheme.onSurface
+          ? EdenNavSelectionIndicator.selectedGlyph
           : theme.colorScheme.onSurfaceVariant,
     );
 
@@ -924,13 +947,24 @@ class _NavTile extends StatelessWidget {
               height: 44,
               margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
               decoration: BoxDecoration(
-                color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
                 borderRadius: EdenRadii.borderRadiusMd,
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  icon,
+                  // Insets: 10 horizontal / 5 vertical make the pill 40x30
+                  // around the 20px glyph — 7px clear of the 44px row's top
+                  // and bottom (VERIFIED, not assumed: the mobile bar's
+                  // indicator overflowed its fixed 60px bar by 7px when it
+                  // was sized by layout instead, which is why the pill is
+                  // `Positioned` inside a `Clip.none` stack and takes no
+                  // part in layout here either).
+                  EdenNavSelectionIndicator(
+                    isSelected: isSelected,
+                    inset: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    child: icon,
+                  ),
                   if (item.badge != null)
                     Positioned(
                       top: 6,
@@ -953,12 +987,21 @@ class _NavTile extends StatelessWidget {
             horizontal: _kNavTileHorizontalPadding,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.1) : null,
             borderRadius: EdenRadii.borderRadiusMd,
           ),
           child: Row(
             children: [
-              icon,
+              // Same 40x30 pill as the collapsed branch: in this 40px-high
+              // row it clears 5px top and bottom before the row's own
+              // 2px bottom margin — the closest mobile precedent is the
+              // drawer tile (14px gap, 48 high), sized here to the rail's
+              // shorter row instead.
+              EdenNavSelectionIndicator(
+                isSelected: isSelected,
+                inset:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: icon,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -966,13 +1009,11 @@ class _NavTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    // See _ExpandableHeader: the selected label was brand gold
-                    // on the 10% band at 2.05:1 in the light theme. The state
-                    // is carried by the weight and the band; it is NOT carried
-                    // by the glyph's colour either — that claim was in this
-                    // comment and it was the defect, because the glyph was
-                    // carrying it at the same 2.05:1 the label had been fixed
-                    // for (#55).
+                    // The label stays `onSurface` (16.47:1 light / 13.74:1
+                    // dark on the rail's own fill) and does not move. The
+                    // state is carried by `EdenNavSelectionIndicator` beside
+                    // it — see the icon comment above and the widget's own
+                    // dartdoc (eden-ui-flutter#58 code review).
                     color: theme.colorScheme.onSurface,
                   ),
                   overflow: TextOverflow.ellipsis,
