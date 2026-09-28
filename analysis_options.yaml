@@ -84,9 +84,25 @@ custom_lint:
     - no_raw_color:
       enforced_paths:
         - lib/src/widgets/eden_layout/**
+        # WIDENED for the data-display components (eden-ui-flutter#50).
+        # No legacy_exemptions against it, and none are owed: the
+        # directory is new, so every file in it is gated from its first
+        # commit. A new component built outside the enforced globs would
+        # have run `dart run custom_lint` green while using raw colours
+        # and raw spacing — a gate that reports the same thing for
+        # "clean" and "not looked at".
+        - lib/src/widgets/eden_data_display/**
     - text_style_needs_family:
       enforced_paths:
         - lib/src/widgets/eden_layout/**
+        # WIDENED for the data-display components (eden-ui-flutter#50).
+        # No legacy_exemptions against it, and none are owed: the
+        # directory is new, so every file in it is gated from its first
+        # commit. A new component built outside the enforced globs would
+        # have run `dart run custom_lint` green while using raw colours
+        # and raw spacing — a gate that reports the same thing for
+        # "clean" and "not looked at".
+        - lib/src/widgets/eden_data_display/**
       # LEGACY BASELINE, not an off switch. These two files carry 19
       # pre-existing text_style_needs_family findings between them (measured
       # 2026-09-22). Naming a TextStyle family changes rendered pixels under
@@ -100,6 +116,14 @@ custom_lint:
     - no_magic_spacing:
       enforced_paths:
         - lib/src/widgets/eden_layout/**
+        # WIDENED for the data-display components (eden-ui-flutter#50).
+        # No legacy_exemptions against it, and none are owed: the
+        # directory is new, so every file in it is gated from its first
+        # commit. A new component built outside the enforced globs would
+        # have run `dart run custom_lint` green while using raw colours
+        # and raw spacing — a gate that reports the same thing for
+        # "clean" and "not looked at".
+        - lib/src/widgets/eden_data_display/**
       # LEGACY BASELINE -- 13 pre-existing no_magic_spacing findings across
       # these two files (measured 2026-09-22). Same terms as above.
       legacy_exemptions:
