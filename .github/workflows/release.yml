@@ -4,8 +4,13 @@ on:
   push:
     branches: [main]
 
+# Workflow default is READ. The write scope belongs to the `release` job alone
+# (see below): `test` runs `flutter pub get` and `flutter test`, which execute
+# third-party pub package code and build hooks, and `actions/checkout@v4`
+# defaults to persist-credentials: true -- so a workflow-level write token is
+# written into .git/config on the runner before any dependency code runs.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -13,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Nothing in this job talks to GitHub. Without the credential the
+          # token is not in .git/config at all while dependency code runs.
+          persist-credentials: false
 
       - uses: subosito/flutter-action@v2
         with:
@@ -60,6 +69,9 @@ jobs:
 
   release:
     name: Tag Release
+    # git push origin "v…" and actions/github-script repos.createRelease.
+    permissions:
+      contents: write
     needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -93,7 +105,13 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.repos.createRelease({
+            // AWAITED deliberately. github-script awaits the script body, so an
+            // un-awaited promise means this step never checks the API result: a
+            // 403 from a wrong permissions scope surfaces as a Node unhandled
+            // rejection trace rather than a clean "Resource not accessible by
+            // integration". That is the exact failure this job's permissions
+            // block could introduce, so it must be the one reported clearly.
+            await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: `v${{ steps.version.outputs.version }}`,
