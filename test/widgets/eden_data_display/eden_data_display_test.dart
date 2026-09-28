@@ -19,6 +19,13 @@
 //     be there. These tests are that list.
 
 import 'package:eden_ui_flutter/eden_ui.dart';
+// `rootSemanticsNodeOf` is not on the `testing.dart` show list, and the only
+// other handle on the root node is `tester.binding.pipelineOwner`, which is
+// deprecated. That accessor already lives behind one scoped ignore with the
+// reason, in semantics_geometry.dart; reaching it here keeps this file at
+// zero new analyzer findings rather than adding a second copy of the ignore.
+import 'package:eden_ui_flutter/testing/semantics_geometry.dart'
+    show rootSemanticsNodeOf;
 import 'package:eden_ui_flutter/src/widgets/eden_data_display/eden_appointment_list.stories.dart';
 import 'package:eden_ui_flutter/src/widgets/eden_data_display/eden_refusal.stories.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +47,7 @@ Set<String> _identifiers(WidgetTester tester) {
     });
   }
 
-  visit(tester.binding.pipelineOwner.semanticsOwner!.rootSemanticsNode!);
+  visit(rootSemanticsNodeOf(tester));
   handle.dispose();
   return out;
 }
@@ -57,7 +64,7 @@ int _tapRouteCount(WidgetTester tester) {
     });
   }
 
-  visit(tester.binding.pipelineOwner.semanticsOwner!.rootSemanticsNode!);
+  visit(rootSemanticsNodeOf(tester));
   handle.dispose();
   return count;
 }
