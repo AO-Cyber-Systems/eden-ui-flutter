@@ -37,6 +37,21 @@ import 'package:eden_ui_flutter/eden_ui.dart';
 /// never settles. A child with an infinite/repeating animation must be pumped
 /// by the caller instead — pump a fixed `Duration` after `wrap()` returns
 /// rather than asking `wrap()` to settle it.
+///
+/// NO DEBUG BANNER (eden-ui-flutter#52). `MaterialApp` paints the red
+/// "DEBUG" ribbon across the top-right corner by default, and a widget test
+/// runs in debug mode, so the ribbon went into every golden baseline this
+/// helper produced. It is not merely cosmetic: it is painted OVER the
+/// surface, so whatever occupies the top-right corner of a story is hidden
+/// behind it and the occlusion is what gets blessed as correct. Turning it
+/// off is what lets that corner be a pinned part of the comparison instead of
+/// a region nothing can see into.
+///
+/// ICON GLYPHS come from `test/flutter_test_config.dart`, not from here:
+/// `MaterialIcons` has to be registered with the text shaper before any
+/// widget is pumped, and that bootstrap is the only place in the suite that
+/// is real-async. Without it every `Icon` in a wrapped surface rasterises as
+/// an empty square — see that file's header.
 Future<void> wrap(
   WidgetTester tester,
   Widget child, {
@@ -52,6 +67,9 @@ Future<void> wrap(
 
   await tester.pumpWidget(
     MaterialApp(
+      // See the doc comment: the banner is painted over the surface and was
+      // blessed into every baseline, occluding whatever sat under it.
+      debugShowCheckedModeBanner: false,
       theme: theme ?? EdenTheme.light(),
       darkTheme: EdenTheme.dark(),
       themeMode: themeMode,
