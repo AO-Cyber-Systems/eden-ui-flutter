@@ -230,21 +230,80 @@ jobs:
       # and uniqueness gates write nothing, and they belong to the GATING step
       # above, where a failure is a verdict. Running them here made a gate over
       # the OLD committed bytes a precondition for producing the new ones.
+      # `continue-on-error`, NOT a bare `always()` on the upload below. The
+      # difference is the artifact's NAME meaning what it says.
+      #
+      # `path: test/stories/**/goldens/` matches the COMMITTED baselines
+      # whether or not this step wrote a byte, and `if-no-files-found: ignore`
+      # suppressed the only warning that could have said so. So an `always()`
+      # upload after a step that died BEFORE writing anything -- a failed `pub
+      # get`, a compile error in a story, a crash on the first test -- ships
+      # the unmodified checkout under the name `regenerated-goldens`, and the
+      # next person commits the bytes they already had while believing they
+      # re-blessed them. An empty artifact is a visible dead end; a stale one
+      # labelled fresh is not.
+      #
+      # `outcome` and not `conclusion`: with continue-on-error set, a step's
+      # `conclusion` is success even when it failed, and only `outcome` still
+      # reports what actually happened.
       - name: Regenerate golden baselines (manual dispatch only)
+        id: regen
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        continue-on-error: true
         run: flutter test test/stories/_generated/ --update-goldens
 
-      # `always()`: whatever went wrong above, the baselines that WERE written
-      # are on disk and are the only reason this job was dispatched. A partial
-      # artifact a human can inspect beats an empty run they must re-dispatch
-      # blind -- the failure this block has now hit twice.
-      - name: Upload regenerated goldens
+      # WHICH BASELINES ACTUALLY MOVED, in the log, before anything is
+      # uploaded. A regeneration that rewrote every file byte-identically and
+      # one that never ran are the same artifact; this is the line that tells
+      # them apart, and it is what a reviewer checks the committed diff
+      # against.
+      - name: Report which baselines the regeneration moved
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        run: |
+          echo "regenerate step outcome: ${{ steps.regen.outcome }}"
+          CHANGED="$(git status --porcelain -- 'test/stories/**/goldens/')"
+          if [ -z "$CHANGED" ]; then
+            echo "NO baseline changed on disk. Either every story already"
+            echo "matched its committed bytes, or nothing was written at all."
+          else
+            echo "baselines changed on disk:"
+            echo "$CHANGED"
+          fi
+
+      - name: Upload regenerated goldens
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-goldens
           path: test/stories/**/goldens/
+          # `error`, not `ignore`. This path cannot legitimately be empty after
+          # a successful regeneration; if it is, the artifact would be an empty
+          # download that reads like a successful one.
+          if-no-files-found: error
+
+      # THE PARTIAL CASE, UNDER A NAME THAT ADMITS IT. Some of what is on disk
+      # may be freshly written and some may be the committed bytes, and nothing
+      # here can tell a downloader which is which -- so the name does, and the
+      # step above will not have run.
+      - name: Upload partially regenerated goldens (regeneration FAILED)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: partial-goldens-DO-NOT-COMMIT-UNVERIFIED
+          path: test/stories/**/goldens/
           if-no-files-found: ignore
+
+      # `continue-on-error` must not turn the JOB green. Without this the
+      # dispatch reports success while having produced an artifact explicitly
+      # named unverified.
+      - name: Fail the job when regeneration failed
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'failure' }}
+        run: |
+          echo "Golden regeneration FAILED. The artifact uploaded above is"
+          echo "named partial-goldens-DO-NOT-COMMIT-UNVERIFIED because some of"
+          echo "it may be the unmodified committed baselines. Read the"
+          echo "regenerate step's log, fix the failure, dispatch again."
+          exit 1
 
       # flutter_test writes *_masterImage.png / *_testImage.png under
       # failures/ on a golden mismatch; uploading it is what makes a CI golden
