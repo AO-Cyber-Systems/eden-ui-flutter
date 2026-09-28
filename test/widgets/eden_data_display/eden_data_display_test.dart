@@ -18,6 +18,8 @@
 //     still has its buttons", because the oracle takes no list of what SHOULD
 //     be there. These tests are that list.
 
+import 'dart:math' as math;
+
 import 'package:eden_ui_flutter/eden_ui.dart';
 // `rootSemanticsNodeOf` is not on the `testing.dart` show list, and the only
 // other handle on the root node is `tester.binding.pipelineOwner`, which is
@@ -60,6 +62,55 @@ Future<void> pumpUnbounded(WidgetTester tester, Widget child) async {
     ),
   );
   await tester.pumpAndSettle();
+}
+
+/// Pumps [child] inside a box of exactly [height] logical pixels.
+///
+/// `wrap()` is fixed at 800, which is roomy enough that the card never had to
+/// cope with a short one. The whole of the `Flexible`-collapse defect lived
+/// between 80 and 180.
+Future<void> pumpAtHeight(
+  WidgetTester tester,
+  Widget child, {
+  required double height,
+  double width = 900,
+  ThemeMode themeMode = ThemeMode.light,
+}) async {
+  tester.view.devicePixelRatio = 1.0;
+  tester.view.physicalSize = Size(width, height + 200);
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  await tester.pumpWidget(
+    MaterialApp(
+      theme: EdenTheme.light(),
+      darkTheme: EdenTheme.dark(),
+      themeMode: themeMode,
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(width: width, height: height, child: child),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+/// WCAG 2.x relative luminance of [c], which must be opaque.
+double relativeLuminance(Color c) {
+  double channel(double v) =>
+      v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+  return 0.2126 * channel(c.r) +
+      0.7152 * channel(c.g) +
+      0.0722 * channel(c.b);
+}
+
+/// WCAG contrast ratio between two opaque colours.
+double contrastRatio(Color a, Color b) {
+  final double la = relativeLuminance(a);
+  final double lb = relativeLuminance(b);
+  final double hi = math.max(la, lb);
+  final double lo = math.min(la, lb);
+  return (hi + 0.05) / (lo + 0.05);
 }
 
 /// Every semantics identifier currently published by the pumped surface.
@@ -466,6 +517,150 @@ void main() {
       expect(text.maxLines, isNull, reason: 'no ellipsis on a refusal reason');
       expect(find.byType(Scrollable), findsWidgets);
     });
+
+    // THE ASSERTION THE FIRST VERSION OF THIS GROUP COULD NOT MAKE. It checked
+    // only `find.byType(Scrollable), findsWidgets` -- which a COLLAPSED
+    // viewport satisfies just as well as a working one. Between 80 and 180
+    // logical pixels the `Flexible` handed the reason a 0px viewport and
+    // overflowed anyway, so the reason was absent AND unscrollable while this
+    // assertion stayed green (eden-ui-flutter#53 re-review). Extent is the
+    // thing that distinguishes them.
+    for (final double height in <double>[80, 120, 140, 180]) {
+      testWidgets('at ${height.toInt()}px the reason is still reachable',
+          (WidgetTester tester) async {
+        final String long = List<String>.filled(
+          40,
+          'customer not found in this tenant',
+        ).join(' ');
+        await pumpAtHeight(
+          tester,
+          EdenRefusal(data: EdenRefusalData(reason: long)),
+          height: height,
+        );
+
+        expect(tester.takeException(), isNull,
+            reason: 'no RenderFlex overflow at ${height.toInt()}px');
+
+        final Scrollable scrollable = tester.widget<Scrollable>(
+          find.descendant(
+            of: find.byType(EdenRefusal),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        final ScrollPosition position =
+            (scrollable.controller ?? PrimaryScrollController.of(
+                    tester.element(find.byType(EdenRefusal))))
+                .position;
+
+        // NON-ZERO EXTENT. A viewport that cannot scroll is the collapsed case.
+        expect(
+          position.maxScrollExtent,
+          greaterThan(0),
+          reason: 'the card must be scrollable at ${height.toInt()}px, not '
+              'collapsed to nothing',
+        );
+        expect(position.viewportDimension, greaterThan(0));
+
+        // And the content is genuinely reachable: scroll to the end and the
+        // "nothing to press" footer is on screen.
+        await tester.drag(
+          find.byType(EdenRefusal),
+          Offset(0, -position.maxScrollExtent - 50),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.textContaining('cannot be retried from here'),
+          findsOneWidget,
+        );
+      });
+    }
+
+    testWidgets('at a comfortable height nothing scrolls at all',
+        (WidgetTester tester) async {
+      // The other half of the rule: the normal case must be unchanged, which
+      // is also why the goldens do not move.
+      await wrap(tester, const EdenRefusal(data: kFixtureRefusalBare));
+      final Scrollable scrollable = tester.widget<Scrollable>(
+        find.descendant(
+          of: find.byType(EdenRefusal),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(
+        (scrollable.controller ?? PrimaryScrollController.of(
+                tester.element(find.byType(EdenRefusal))))
+            .position
+            .maxScrollExtent,
+        0,
+      );
+    });
+  });
+
+  group('the neutral tone is legible in BOTH themes', () {
+    // THE BRANCH I ADDED LANDED IN THE GAP I HAD JUST DOCUMENTED.
+    // `EdenStatusPalette.forProfile` takes no Brightness, so light and dark
+    // share ONE palette. The danger values were audited against both surfaces;
+    // the neutral ones had not been, and `neutralFg` on the dark card measures
+    // 2.29:1 -- under the 3:1 non-text floor asserted eight lines above the
+    // branch. Nothing could have caught it: no story or golden exercises
+    // `isError: false`, and the oracle walks only Text/EditableText.
+    //
+    // This computes the WCAG ratio from the RESOLVED colours. It is not a
+    // pixel measurement and would miss a ShaderMask or ColorFiltered ancestor
+    // (ORACLE_COVERAGE.md, `painted-ink-not-measured`) -- but it is a real
+    // floor where there was previously only a comment.
+    for (final bool isError in <bool>[true, false]) {
+      for (final ThemeMode mode in <ThemeMode>[
+        ThemeMode.light,
+        ThemeMode.dark,
+      ]) {
+        testWidgets(
+            'isError=$isError in ${mode.name}: the glyph clears 3:1 and the '
+            'ring is visible', (WidgetTester tester) async {
+          await pumpAtHeight(
+            tester,
+            EdenRefusal(
+              data: EdenRefusalData(
+                reason: 'appointment not found',
+                isError: isError,
+              ),
+            ),
+            height: 400,
+            themeMode: mode,
+          );
+
+          final Container box = tester.widget<Container>(
+            find
+                .descendant(
+                  of: find.byType(EdenRefusal),
+                  matching: find.byType(Container),
+                )
+                .first,
+          );
+          final BoxDecoration decoration = box.decoration! as BoxDecoration;
+          final Color surface = decoration.color!;
+          final Color ring = (decoration.border! as Border).top.color;
+          final Icon icon = tester.widget<Icon>(
+            find.descendant(
+              of: find.byType(EdenRefusal),
+              matching: find.byType(Icon),
+            ),
+          );
+
+          expect(
+            contrastRatio(icon.color!, surface),
+            greaterThanOrEqualTo(3.0),
+            reason: 'WCAG 1.4.11 non-text floor for a meaning-bearing glyph; '
+                'EdenStatusPalette.neutralFg measured 2.29:1 here in dark',
+          );
+          expect(
+            ring,
+            isNot(equals(surface)),
+            reason: 'a ring the same colour as the card is not a ring',
+          );
+        });
+      }
+    }
   });
 
   group('is_error is READ, not merely transcribed', () {
@@ -525,6 +720,51 @@ void main() {
       );
       expect(find.text('No upcoming appointments'), findsOneWidget);
       expect(find.textContaining('Showing the first'), findsNothing);
+    });
+
+    testWidgets('the body does not claim the window is empty',
+        (WidgetTester tester) async {
+      // THE RENDERED ANSWER MUST NOT BE STRONGER THAN THE DATA. Suppressing
+      // "Showing the first 0" fixed a nonsense sentence and left a worse one:
+      // the default body asserts "there is nothing booked in the window that
+      // was asked about" -- a claim of COMPLETENESS -- while `truncated: true`
+      // says the set was cut. An outage rendering as an empty state, one axis
+      // over (eden-ui-flutter#53 re-review).
+      await wrap(
+        tester,
+        const EdenAppointmentList(
+          data: EdenAppointmentListData(
+            appointments: <EdenAppointmentSummary>[],
+            truncated: true,
+          ),
+        ),
+      );
+      expect(
+        find.textContaining('nothing booked in the window that was asked'),
+        findsNothing,
+        reason: 'that sentence claims completeness the payload denies',
+      );
+      expect(find.textContaining('read successfully'), findsOneWidget);
+      expect(find.textContaining('cut short'), findsOneWidget);
+    });
+
+    testWidgets('the UNtruncated empty state keeps its completeness claim',
+        (WidgetTester tester) async {
+      // The other half: nothing about the ordinary fixture-02 rendering moves,
+      // which is also why its golden does not.
+      await wrap(
+        tester,
+        const EdenAppointmentList(
+          data: EdenAppointmentListData(
+            appointments: <EdenAppointmentSummary>[],
+          ),
+        ),
+      );
+      expect(
+        find.textContaining('nothing booked in the window that was asked'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('cut short'), findsNothing);
     });
   });
 }

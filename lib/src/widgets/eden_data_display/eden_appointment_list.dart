@@ -103,7 +103,10 @@ class EdenAppointmentList extends StatelessWidget {
         final bool bounded = constraints.maxHeight.isFinite;
 
         final Widget body = data.appointments.isEmpty
-            ? _EdenAppointmentsEmpty(centred: bounded)
+            ? _EdenAppointmentsEmpty(
+                centred: bounded,
+                truncated: data.truncated,
+              )
             : ListView.separated(
                 // Shrink-wrapped and inert only when there is no height to
                 // scroll within. Inside a bounded parent this stays a real
@@ -166,7 +169,10 @@ class EdenAppointmentList extends StatelessWidget {
 /// point of having a separate `error/refusal` component is that these two are
 /// not the same answer.
 class _EdenAppointmentsEmpty extends StatelessWidget {
-  const _EdenAppointmentsEmpty({required this.centred});
+  const _EdenAppointmentsEmpty({
+    required this.centred,
+    required this.truncated,
+  });
 
   /// True inside a bounded parent, where there is space to centre within.
   ///
@@ -175,6 +181,18 @@ class _EdenAppointmentsEmpty extends StatelessWidget {
   /// also how it should read in a conversational transcript — a block of
   /// prose, not a centred placeholder in a panel that does not exist.
   final bool centred;
+
+  /// Whether the payload ALSO said the result was cut short.
+  ///
+  /// THE RENDERED ANSWER MUST NOT BE STRONGER THAN THE DATA. Suppressing the
+  /// "Showing the first 0" notice fixed a nonsense sentence and left a worse
+  /// one behind: the default body says the schedule "was read successfully and
+  /// there is nothing booked in the window that was asked about", which is a
+  /// claim of COMPLETENESS, while `truncated: true` says the opposite. That is
+  /// an outage rendering as an empty state, one axis over from the failure this
+  /// component's empty copy was written to avoid. Caught in the
+  /// eden-ui-flutter#53 re-review.
+  final bool truncated;
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +216,7 @@ class _EdenAppointmentsEmpty extends StatelessWidget {
           ),
           const SizedBox(height: EdenSpacing.space1),
           Text(
-            _kEmptyBody,
+            truncated ? _kEmptyTruncatedBody : _kEmptyBody,
             textAlign: TextAlign.center,
             style: EdenTypography.bodyMedium(context).copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -716,6 +734,21 @@ const String _kEmptyHeading = 'No upcoming appointments';
 
 /// UI COPY. Says explicitly that this is an ANSWER, because an empty panel and
 /// a failed request look the same otherwise.
+///
+/// It claims COMPLETENESS ("nothing booked in the window that was asked
+/// about"), which is only true when the payload did not also say the result
+/// was cut. See [_kEmptyTruncatedBody].
 const String _kEmptyBody =
     'The schedule was read successfully and there is nothing booked in the '
     'window that was asked about.';
+
+/// UI COPY for `appointments: []` WITH `truncated: true` — reachable only with
+/// `limit: 0`, and recorded by no fixture.
+///
+/// It says the read succeeded (so this is still not an outage) and stops
+/// short of claiming the window is empty, because the payload did not say
+/// that. Two facts, neither of them inflated into the other.
+const String _kEmptyTruncatedBody =
+    'The schedule was read successfully and nothing came back. The result was '
+    'also marked as cut short, so this may not be the whole answer — narrow '
+    'the request and ask again.';
