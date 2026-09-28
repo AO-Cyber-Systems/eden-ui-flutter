@@ -7,12 +7,20 @@
 // Drift between this file and a fresh generation fails test/stories/registry_drift_test.dart.
 
 import 'story_registry.dart';
+import '../../src/widgets/eden_data_display/eden_appointment_list.stories.dart';
+import '../../src/widgets/eden_data_display/eden_refusal.stories.dart';
 import '../../src/widgets/eden_layout/eden_desktop_layout.stories.dart';
 import '../../src/widgets/eden_layout/eden_mobile_layout.stories.dart';
 import '../../src/widgets/eden_layout/eden_nav_item.stories.dart';
 
 void registerGeneratedStories() {
   final registry = StoryRegistry.instance;
+  for (final s in edenAppointmentListStories) {
+    registry.register(s);
+  }
+  for (final s in edenRefusalStories) {
+    registry.register(s);
+  }
   for (final s in edenDesktopLayoutStories) {
     registry.register(s);
   }

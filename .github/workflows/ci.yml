@@ -223,17 +223,126 @@ jobs:
         run: flutter test test/stories/
 
       # The ONLY golden-writing path in the repo, and it runs on Linux.
+      #
+      # `test/stories/_generated/` AND NOT `test/stories/`. The step above was
+      # made conditional because it fails by definition whenever baselines need
+      # regenerating; the SAME trap was still live one directory down.
+      # `test/stories/` also holds golden_uniqueness_test.dart, whose case 1
+      # and case 4 fail whenever the committed baseline set is SHORT of the
+      # catalogue -- which is exactly the state a dispatch is run from when the
+      # reason for it is a NEW story. A failing step ends the job, so the
+      # upload below never ran: run 36427143304, dispatched to bless 6 new
+      # data-display stories, wrote all 34 baselines to disk and uploaded none
+      # of them.
+      #
+      # Only the files under `_generated/` write goldens. The drift, coverage
+      # and uniqueness gates write nothing, and they belong to the GATING step
+      # above, where a failure is a verdict. Running them here made a gate over
+      # the OLD committed bytes a precondition for producing the new ones.
+      # `continue-on-error`, NOT a bare `always()` on the upload below. The
+      # difference is the artifact's NAME meaning what it says.
+      #
+      # `path: test/stories/**/goldens/` matches the COMMITTED baselines
+      # whether or not this step wrote a byte, and `if-no-files-found: ignore`
+      # suppressed the only warning that could have said so. So an `always()`
+      # upload after a step that died BEFORE writing anything -- a failed `pub
+      # get`, a compile error in a story, a crash on the first test -- ships
+      # the unmodified checkout under the name `regenerated-goldens`, and the
+      # next person commits the bytes they already had while believing they
+      # re-blessed them. An empty artifact is a visible dead end; a stale one
+      # labelled fresh is not.
+      #
+      # `outcome` and not `conclusion`: with continue-on-error set, a step's
+      # `conclusion` is success even when it failed, and only `outcome` still
+      # reports what actually happened.
       - name: Regenerate golden baselines (manual dispatch only)
+        id: regen
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
-        run: flutter test test/stories/ --update-goldens
+        continue-on-error: true
+        run: flutter test test/stories/_generated/ --update-goldens
+
+      # WHICH BASELINES ACTUALLY MOVED, in the log, before anything is
+      # uploaded. A regeneration that rewrote every file byte-identically and
+      # one that never ran are the same artifact; this is the line that tells
+      # them apart, and it is what a reviewer checks the committed diff
+      # against. It is also the ONLY thing that would surface an orphan
+      # committed baseline riding along inside `regenerated-goldens`, now that
+      # the uniqueness and coverage gates have been moved out of the
+      # regeneration step above.
+      #
+      # THE PATHSPEC IS `test/stories/` AND NOT `'test/stories/**/goldens/'`.
+      # Git pathspecs are not shell globs: `**` is literal without `:(glob)`
+      # magic, and the trailing `/` finishes the job. The first version of this
+      # step shipped that spelling, so it matched NOTHING and printed "NO
+      # baseline changed on disk" on every run -- including a dispatch that had
+      # just blessed 12 new baselines. Reproduced on this tree: append a byte to
+      # a committed PNG and `-- 'test/stories/**/goldens/'` stays empty while
+      # `-- test/stories/` and `-- ':(glob)test/stories/**/goldens/**'` both
+      # report it.
+      #
+      # That is worth spelling out, because of WHAT it broke. This step exists
+      # to tell "wrote identical bytes" from "wrote nothing at all" -- and with
+      # a dead pathspec it reported those two states, and the healthy one, in
+      # the same words. A control that says the same thing whether or not it
+      # looked is the exact defect this whole block was written to remove, and
+      # it was sitting inside the fix for it.
+      - name: Report which baselines the regeneration moved
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        run: |
+          echo "regenerate step outcome: ${{ steps.regen.outcome }}"
+          CHANGED="$(git status --porcelain -- test/stories/)"
+          if [ -z "$CHANGED" ]; then
+            echo "NO baseline changed on disk. Either every story already"
+            echo "matched its committed bytes, or nothing was written at all."
+            echo "(This message is only meaningful because the pathspec above"
+            echo "is a real one -- see the comment on this step.)"
+          else
+            echo "baselines changed on disk:"
+            echo "$CHANGED"
+          fi
 
       - name: Upload regenerated goldens
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
+          # `**` IS a real glob here -- actions/upload-artifact uses @actions/glob,
+          # not git pathspecs. That difference is why the step above needed a
+          # different spelling; the two are not interchangeable even though they
+          # look it.
           name: regenerated-goldens
           path: test/stories/**/goldens/
+          # `error` rather than `ignore`, but read what it can and cannot see.
+          # It fires only if the baseline DIRECTORY is gone -- it cannot detect
+          # a regeneration that wrote nothing, because this path matches the
+          # COMMITTED baselines, which are present in every checkout. The
+          # earlier comment here claimed that stronger property and was wrong.
+          # "Wrote nothing" is the git-status step's job, which is the step
+          # above, which is why its pathspec had to be a working one.
+          if-no-files-found: error
+
+      # THE PARTIAL CASE, UNDER A NAME THAT ADMITS IT. Some of what is on disk
+      # may be freshly written and some may be the committed bytes, and nothing
+      # here can tell a downloader which is which -- so the name does, and the
+      # step above will not have run.
+      - name: Upload partially regenerated goldens (regeneration FAILED)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: partial-goldens-DO-NOT-COMMIT-UNVERIFIED
+          path: test/stories/**/goldens/
           if-no-files-found: ignore
+
+      # `continue-on-error` must not turn the JOB green. Without this the
+      # dispatch reports success while having produced an artifact explicitly
+      # named unverified.
+      - name: Fail the job when regeneration failed
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens && steps.regen.outcome == 'failure' }}
+        run: |
+          echo "Golden regeneration FAILED. The artifact uploaded above is"
+          echo "named partial-goldens-DO-NOT-COMMIT-UNVERIFIED because some of"
+          echo "it may be the unmodified committed baselines. Read the"
+          echo "regenerate step's log, fix the failure, dispatch again."
+          exit 1
 
       # flutter_test writes *_masterImage.png / *_testImage.png under
       # failures/ on a golden mismatch; uploading it is what makes a CI golden

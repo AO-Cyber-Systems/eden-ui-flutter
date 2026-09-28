@@ -713,6 +713,15 @@ class _BottomItem extends StatelessWidget {
                   ),
                 ),
                 if (item.badge != null)
+                  // GEOMETRY DEFECT, TRACKED IN eden-ui-flutter#56. These
+                  // offsets are meant to push the badge clear of the icon,
+                  // but the icon sits in a pill narrower than they assume, so
+                  // 57 badge-fill pixels land INSIDE the icon's paint rect and
+                  // clip the glyph's top-right corner. It is pinned in
+                  // mobile-layout_default.{light,dark}.png as of #52's
+                  // re-blessing: moving these numbers WILL move those
+                  // baselines, and that churn is expected, not a regression.
+                  // (The badge's colours are fine -- see the note below.)
                   Positioned(
                     top: -4,
                     right: -8,

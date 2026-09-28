@@ -10,6 +10,10 @@
 // co-located nav/layout stories — the FIFTH group, emitted by
 // tool/gen_stories.dart into register_stories.g.dart: 8 nav-item states,
 // 2 desktop-layout states and 1 mobile-layout state.
+// eden-ui-flutter#50 raised it from 60 to 66 with the first DATA-DISPLAY
+// components — 4 `list/appointments` states (populated, empty, large/truncated,
+// narrow) and 2 `error/refusal` states (bare reason, tool-named reason) — also
+// co-located, so the fifth group goes 11 -> 17.
 // This count is a real contract: registering a new story is meant to break it.
 
 import 'package:flutter/material.dart';
@@ -29,10 +33,10 @@ void main() {
   });
 
   test(
-      'registry has exactly 60 stories '
+      'registry has exactly 66 stories '
       '(6 interactive + 4 autofill/selection + 6 galleries + 33 static '
-      '+ 11 co-located)', () {
-    expect(StoryRegistry.instance.all().length, equals(60));
+      '+ 17 co-located)', () {
+    expect(StoryRegistry.instance.all().length, equals(66));
   });
 
   test('all story ids are unique', () {
