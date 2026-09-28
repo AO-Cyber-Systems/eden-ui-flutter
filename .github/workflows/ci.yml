@@ -214,12 +214,32 @@ jobs:
         run: flutter test test/stories/
 
       # The ONLY golden-writing path in the repo, and it runs on Linux.
+      #
+      # `test/stories/_generated/` AND NOT `test/stories/`. The step above was
+      # made conditional because it fails by definition whenever baselines need
+      # regenerating; the SAME trap was still live one directory down.
+      # `test/stories/` also holds golden_uniqueness_test.dart, whose case 1
+      # and case 4 fail whenever the committed baseline set is SHORT of the
+      # catalogue -- which is exactly the state a dispatch is run from when the
+      # reason for it is a NEW story. A failing step ends the job, so the
+      # upload below never ran: run 36427143304, dispatched to bless 6 new
+      # data-display stories, wrote all 34 baselines to disk and uploaded none
+      # of them.
+      #
+      # Only the files under `_generated/` write goldens. The drift, coverage
+      # and uniqueness gates write nothing, and they belong to the GATING step
+      # above, where a failure is a verdict. Running them here made a gate over
+      # the OLD committed bytes a precondition for producing the new ones.
       - name: Regenerate golden baselines (manual dispatch only)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
-        run: flutter test test/stories/ --update-goldens
+        run: flutter test test/stories/_generated/ --update-goldens
 
+      # `always()`: whatever went wrong above, the baselines that WERE written
+      # are on disk and are the only reason this job was dispatched. A partial
+      # artifact a human can inspect beats an empty run they must re-dispatch
+      # blind -- the failure this block has now hit twice.
       - name: Upload regenerated goldens
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.update_goldens }}
         uses: actions/upload-artifact@v4
         with:
           name: regenerated-goldens
