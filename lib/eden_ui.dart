@@ -73,6 +73,9 @@ export 'src/widgets/eden_indicator.dart';
 export 'src/widgets/eden_carousel.dart';
 export 'src/widgets/eden_diagram/eden_diagram_exports.dart';
 export 'src/widgets/eden_layout/eden_layout_exports.dart';
+// Data-display components — the widgets a headless agent addresses by
+// `component_id`. See eden_data_display_exports.dart.
+export 'src/widgets/eden_data_display/eden_data_display_exports.dart';
 export 'src/widgets/support_panel/eden_support_panel_exports.dart';
 
 // Advanced widgets
