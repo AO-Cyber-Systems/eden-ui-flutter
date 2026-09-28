@@ -241,7 +241,7 @@ class _EdenSignUpPageState extends State<EdenSignUpPage> {
                 controller: _emailController,
                 label: 'Email',
                 hint: 'you@example.com',
-                purpose: EdenFieldPurpose.email,
+                purpose: EdenFieldPurpose.loginIdentifier,
                 prefixIcon: Icons.mail_outline,
                 enabled: !_loading,
               ),

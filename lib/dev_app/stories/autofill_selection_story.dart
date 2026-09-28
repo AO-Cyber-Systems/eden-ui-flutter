@@ -264,7 +264,7 @@ class _LoginFormDemoState extends State<_LoginFormDemo> {
                       controller: _email,
                       label: 'Email',
                       hint: 'you@example.com',
-                      purpose: EdenFieldPurpose.email,
+                      purpose: EdenFieldPurpose.loginIdentifier,
                     ),
                     const SizedBox(height: EdenSpacing.space3),
                     EdenInput(

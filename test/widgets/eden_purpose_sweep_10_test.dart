@@ -92,8 +92,13 @@ const List<FieldCase> kLoginFields = <FieldCase>[
   FieldCase(
     hint: 'you@example.com',
     label: 'Email',
-    purpose: EdenFieldPurpose.email,
-    firstHint: AutofillHints.email,
+    // loginIdentifier, NOT email: web reads only hints.first, so `email` would
+    // emit the HTML contact token and a password manager would skip this field
+    // while still filling the password (observed by hand 2026-09-28).
+    // kForgotFields below deliberately keeps `email` — that one IS a contact
+    // address, not a credential.
+    purpose: EdenFieldPurpose.loginIdentifier,
+    firstHint: AutofillHints.username,
     keyboardType: TextInputType.emailAddress,
     obscure: false,
     action: TextInputAction.next,
@@ -122,8 +127,9 @@ const List<FieldCase> kSignUpFields = <FieldCase>[
   FieldCase(
     hint: 'you@example.com',
     label: 'Email',
-    purpose: EdenFieldPurpose.email,
-    firstHint: AutofillHints.email,
+    // Signup identifier — same reasoning as kLoginFields above.
+    purpose: EdenFieldPurpose.loginIdentifier,
+    firstHint: AutofillHints.username,
     keyboardType: TextInputType.emailAddress,
     obscure: false,
     action: TextInputAction.next,

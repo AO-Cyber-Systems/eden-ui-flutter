@@ -64,6 +64,15 @@ const Map<EdenFieldPurpose, List<String>> kExpectedMultiHintOrder =
     AutofillHints.email,
     AutofillHints.username,
   ],
+  // Inverted relative to `email`, deliberately. `email` is the HTML CONTACT
+  // token; a password manager looks for the credential pair
+  // `username` + `current-password`. Since web and iOS read only index 0,
+  // leaving `email` first is what made a real manager fill the password and
+  // skip the identifier field (observed 2026-09-28).
+  EdenFieldPurpose.loginIdentifier: <String>[
+    AutofillHints.username,
+    AutofillHints.email,
+  ],
   EdenFieldPurpose.givenName: <String>[
     AutofillHints.givenName,
     AutofillHints.name,
@@ -211,6 +220,61 @@ void main() {
         reason:
             'autofill.dart:688-694 — iOS and web consume only the FIRST hint. '
             'AutofillHints.username is the Android-only extra and must follow.',
+      );
+    });
+
+    // Case 5a-bis — the regression this member exists to prevent.
+    test(
+        'loginIdentifier emits the CREDENTIAL token to the browser, not the '
+        'contact token', () {
+      final EdenFieldSemantics semantics =
+          EdenFieldPurpose.loginIdentifier.semantics;
+
+      expect(
+        browserTokenFor(semantics.autofillHints!.first),
+        'username',
+        reason:
+            'text_editing.dart:466-468 — web derives element.autocomplete from '
+            'hints.first ALONE. "email" is the HTML contact token; the pair a '
+            'password manager looks for is username + current-password. With '
+            'email first, a real manager filled the password and left the '
+            'identifier alone (observed 2026-09-28).',
+      );
+
+      expect(
+        semantics.keyboardType,
+        TextInputType.emailAddress,
+        reason:
+            'The coupling at editable_text.dart:1855-1858 constrains the '
+            'KEYBOARD GIVEN THE HINT, not the hint given the keyboard. A '
+            'username hint with an email keyboard is legal, and is what a '
+            'login-that-is-an-email wants.',
+      );
+
+      expect(
+        semantics.autofillHints,
+        contains(AutofillHints.email),
+        reason:
+            'Android reads every hint, so email must still follow — dropping '
+            'it would trade a web fix for an Android regression.',
+      );
+    });
+
+    // Case 5a-ter — the two members must not collapse into each other.
+    test('email and loginIdentifier emit DIFFERENT browser tokens', () {
+      final String contact = browserTokenFor(
+          EdenFieldPurpose.email.semantics.autofillHints!.first);
+      final String credential = browserTokenFor(
+          EdenFieldPurpose.loginIdentifier.semantics.autofillHints!.first);
+
+      expect(contact, 'email');
+      expect(credential, 'username');
+      expect(
+        contact,
+        isNot(credential),
+        reason:
+            'If these ever converge, one of the two call sites is wrong: '
+            'forgot-password wants a contact email, login wants a credential.',
       );
     });
 

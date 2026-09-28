@@ -83,6 +83,29 @@ class EdenFieldSemantics {
 
 const List<String> _kUsername = <String>[AutofillHints.username];
 const List<String> _kEmail = <String>[AutofillHints.email, AutofillHints.username];
+
+/// A login identifier that happens to be an email address.
+///
+/// WHY THIS EXISTS SEPARATELY FROM [_kEmail] — measured, not theorised.
+/// Web derives the DOM `autocomplete` token from `hints.first` alone
+/// (`text_editing.dart:466-468`), so `_kEmail` emits `autocomplete="email"` and
+/// `username` never reaches the browser at all. `email` is the HTML *contact*
+/// token; the credential pair a password manager looks for is
+/// `username` + `current-password`. The consequence was confirmed by hand on
+/// 2026-09-28: on a real login form a manager filled the password and left the
+/// email field alone.
+///
+/// Order is therefore inverted relative to [_kEmail]: `username` first so web
+/// and iOS get the credential token, `email` second for Android, which reads
+/// every hint. The keyboard stays `TextInputType.emailAddress` — the coupling
+/// documented at `editable_text.dart:1855-1858` constrains the KEYBOARD GIVEN
+/// THE HINT (`AutofillHints.email` requires the email keyboard), not the hint
+/// given the keyboard, so a `username` hint with an email keyboard is legal and
+/// is exactly what a login-that-is-an-email wants.
+const List<String> _kLoginIdentifier = <String>[
+  AutofillHints.username,
+  AutofillHints.email,
+];
 const List<String> _kCurrentPassword = <String>[AutofillHints.password];
 const List<String> _kNewPassword = <String>[AutofillHints.newPassword];
 const List<String> _kOneTimeCode = <String>[AutofillHints.oneTimeCode];
@@ -131,9 +154,26 @@ enum EdenFieldPurpose {
   /// A login identifier that is not necessarily an email address.
   username,
 
-  /// An email address, usable as a login identifier on Android (which reads all
-  /// hints, so `username` follows as an Android-only extra).
+  /// An email address as CONTACT DETAIL — a profile email, a recipient, the
+  /// address a password-reset link is sent to.
+  ///
+  /// NOT for the identifier field of a login or signup form. On web and iOS
+  /// only `hints.first` is read, so this emits `autocomplete="email"` — the
+  /// HTML *contact* token — and a password manager will not treat the field as
+  /// the credential pair's username. Use [loginIdentifier] there instead.
   email,
+
+  /// The identifier field of a login or signup form, where that identifier is
+  /// an email address.
+  ///
+  /// Emits `username` first so web and iOS get the credential token a password
+  /// manager actually looks for, with `email` following for Android, which
+  /// reads every hint. Keeps the `emailAddress` keyboard.
+  ///
+  /// Added 2026-09-28 after a manual check against a real password manager:
+  /// with [email] on the identifier field the manager filled the password and
+  /// left the identifier alone. See `40-19-SUMMARY.md`.
+  loginIdentifier,
 
   /// An existing password being entered to sign in. Maps to the web
   /// `autocomplete="current-password"` token.
@@ -261,6 +301,12 @@ enum EdenFieldPurpose {
           ),
         EdenFieldPurpose.email => const EdenFieldSemantics(
             autofillHints: _kEmail,
+            keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+            enableSuggestions: false,
+          ),
+        EdenFieldPurpose.loginIdentifier => const EdenFieldSemantics(
+            autofillHints: _kLoginIdentifier,
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
             enableSuggestions: false,

@@ -39,10 +39,15 @@ class EdenDevLoginConfig {
 ///
 /// ## Autofill
 ///
-/// The credential fields carry [EdenFieldPurpose.email] and
+/// The credential fields carry [EdenFieldPurpose.loginIdentifier] and
 /// [EdenFieldPurpose.currentPassword], which resolve the autofill hints and the
 /// keyboard type together so they can never disagree
 /// (`editable_text.dart:1855-1858`).
+///
+/// The identifier field uses [EdenFieldPurpose.loginIdentifier] rather than
+/// [EdenFieldPurpose.email] deliberately: web reads only `hints.first`, so
+/// `email` emits the HTML *contact* token and a password manager fills the
+/// password while leaving this field alone — observed by hand on 2026-09-28.
 ///
 /// This page also owns the SAVE half: it wraps its fields in an
 /// [EdenAutofillScope] and calls `commit()` itself, but ONLY after [onLogin]
@@ -315,7 +320,7 @@ class _EdenLoginPageState extends State<EdenLoginPage> {
                 controller: _emailController,
                 label: 'Email',
                 hint: 'you@example.com',
-                purpose: EdenFieldPurpose.email,
+                purpose: EdenFieldPurpose.loginIdentifier,
                 prefixIcon: Icons.mail_outline,
                 enabled: !_loading,
               ),
