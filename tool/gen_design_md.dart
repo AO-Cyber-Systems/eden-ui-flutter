@@ -362,6 +362,52 @@ const List<(String, String, TokenGroup)> kScannedTokenFiles = [
   ('lib/src/tokens/radii.dart', 'EdenRadii', TokenGroup.radii),
 ];
 
+/// Every `lib/src/tokens/*.dart` this generator DOES NOT read, each with the
+/// reason it is out of scope.
+///
+/// WHY A LIST AND NOT A GLOB. DESIGN.md's header promises the token
+/// reference is generated from `lib/src/tokens/*.dart` "so it can never
+/// quietly drift from the code". [kScannedTokenFiles] is four hardcoded
+/// paths, so the promise was only true of those four: `glyph_ink.dart`
+/// landed as a new PUBLIC token file in eden-ui-flutter#55 and the freshness
+/// gate stayed green with no documentation row for it, because a file the
+/// generator never looks at cannot make the output stale. That is the same
+/// failure shape the gate exists to prevent.
+///
+/// Globbing the directory is NOT the fix. [TokenGroup] is a closed enum of
+/// four, `extractTokens` switches exhaustively over it, and an unmatched
+/// declaration raises `UnrecognizedTokenDeclaration` — so a glob throws on
+/// the first run for four of the eight files here. `EdenGlyphInk`'s members
+/// are `static Color success(Brightness)` METHODS, which no token pattern
+/// matches anyway.
+///
+/// So coverage is ASSERTED instead of derived: this list and
+/// [kScannedTokenFiles] must together account for every file in the
+/// directory, exactly once. Adding a token file and not deciding which side
+/// it belongs on is what fails, which is the decision that was skipped
+/// before. `design_md_fresh_test.dart` holds the partition.
+const Map<String, String> kUnscannedTokenFiles = {
+  'lib/src/tokens/durations.dart':
+      'Motion durations. Not a visual token with a renderable value — a row '
+          'reading "160ms" documents nothing a designer can check against a '
+          'rendered surface.',
+  'lib/src/tokens/shadows.dart':
+      'Elevation shadows. Multi-part BoxShadow lists; the single-value row '
+          'shape this generator emits cannot represent one without lying '
+          'about it.',
+  'lib/src/tokens/springs.dart':
+      'Spring curves. Same reason as durations — a physics constant is not '
+          'a swatch.',
+  'lib/src/tokens/glyph_ink.dart':
+      'Semantic glyph ink (eden-ui-flutter#55). Deliberately excluded: its '
+          'members are METHODS taking a Brightness, not constants, so there '
+          'is no single value to tabulate — each tone is a PAIR, and which '
+          'one applies depends on the theme. Its contrast ratios are '
+          'documented in the class dartdoc and pinned by '
+          'test/ui_oracle/, which measures them on rendered frames rather '
+          'than restating them in a table nothing checks.',
+};
+
 /// Regenerates the full marker-bounded token block by reading the current
 /// `lib/src/tokens/*.dart` files under [repoRoot]. Pure with respect to
 /// DESIGN.md — this never touches the markdown file, only the token sources.

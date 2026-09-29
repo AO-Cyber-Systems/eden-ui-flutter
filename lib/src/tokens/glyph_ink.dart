@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 
 import 'colors.dart';
 
@@ -10,8 +10,23 @@ import 'colors.dart';
 /// on the LIGHT one. Measured on the 34 re-blessed story baselines
 /// (eden-ui-flutter#55):
 ///
-///   selected rail icon, `primary` #D4A853 on the 10% band   2.05:1 light
-///                                                           6.49:1 dark
+///   selected rail icon, `colorScheme.primary` on the 10% band
+///     light  #D4A853              2.05:1
+///     dark   #E59A3C (gold[400])  6.49:1
+///
+///   The hex is split per brightness because `colorScheme.primary` RESOLVES
+///   differently per theme. The dark figure is `gold[400]` on its own
+///   surface, not `#D4A853` re-measured there — that pair is 6.85:1. One row
+///   quoting a single hex against two ratios reads as one colour measured
+///   twice, and it is two colours measured once each.
+///
+///   That rail band is also gone as of eden-ui-flutter#58's review — the
+///   selected row now carries a solid pill and an `onPrimaryContainer` rim
+///   (`EdenNavSelectionIndicator`), because 1.08:1 light / 1.17:1 dark
+///   against the rail's own fill never identified anything. Both ratios
+///   above are unaffected: they measure the same `colorScheme.primary`
+///   against a surface of that same colour either way. The label is updated
+///   so this founding example still names something that exists.
 ///   appointment status dot, `successFg` #10B981
 ///                              on `surfaceContainerHigh`    2.00:1 light
 ///                                                           5.87:1 dark
@@ -60,6 +75,31 @@ import 'colors.dart';
 class EdenGlyphInk {
   EdenGlyphInk._();
 
+  /// The four tones resolved against **the theme's** brightness.
+  ///
+  /// PREFER THIS OVER THE `Brightness` FORMS AT A WIDGET CALL SITE, and the
+  /// reason is a foot-gun with no instrument behind it. The bare
+  /// `Brightness` overloads are correct only if the caller threads the
+  /// THEME's brightness. The obvious-looking alternative —
+  /// `MediaQuery.platformBrightnessOf(context)` — is the PLATFORM's, and it
+  /// disagrees with the theme whenever the app pins `ThemeMode.light`/`dark`
+  /// or a subtree overrides `Theme`. A caller who reaches for it on a light
+  /// surface gets the dark member: `emerald[500]` at 2.00:1, which is the
+  /// exact defect this class was created to fix (eden-ui-flutter#55).
+  ///
+  /// Nothing could see that mistake. It is not a type error, no lint names
+  /// it, and the oracle only measures surfaces a story actually pumps. So
+  /// the fix is to make the right thing the short thing:
+  ///
+  /// ```dart
+  /// EdenGlyphInk.of(context).success   // theme brightness, always
+  /// ```
+  ///
+  /// The `Brightness` forms stay for tests, which pump both themes
+  /// explicitly and have no `BuildContext` to hand.
+  static EdenGlyphInkSet of(BuildContext context) =>
+      EdenGlyphInkSet._(Theme.of(context).brightness);
+
   /// Success/confirmed, as a glyph. `emerald[700]` light, `emerald[500]` dark.
   ///
   ///   light 4.32:1 on `surfaceContainerHigh`, 5.25:1 on `surfaceContainerLow`
@@ -94,4 +134,30 @@ class EdenGlyphInk {
   /// next one added does not start from the base hue by default.
   static Color info(Brightness brightness) =>
       brightness == Brightness.light ? EdenColors.blue[600]! : EdenColors.info;
+}
+
+/// The four glyph tones already resolved against one brightness.
+///
+/// Returned by [EdenGlyphInk.of]; not constructed directly, so a caller
+/// cannot hand it the platform brightness by accident — which is the whole
+/// point of it existing.
+class EdenGlyphInkSet {
+  const EdenGlyphInkSet._(this.brightness);
+
+  /// The brightness these four were resolved against. Exposed so a test can
+  /// assert WHICH brightness a widget resolved, not merely that some colour
+  /// came back.
+  final Brightness brightness;
+
+  /// See [EdenGlyphInk.success].
+  Color get success => EdenGlyphInk.success(brightness);
+
+  /// See [EdenGlyphInk.warning].
+  Color get warning => EdenGlyphInk.warning(brightness);
+
+  /// See [EdenGlyphInk.danger].
+  Color get danger => EdenGlyphInk.danger(brightness);
+
+  /// See [EdenGlyphInk.info].
+  Color get info => EdenGlyphInk.info(brightness);
 }
