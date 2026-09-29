@@ -22,8 +22,23 @@
 // happened to be right by fixture accident (eden-ui-flutter#58 code
 // review). A transcription-only fixture cannot prove that test is not
 // fixture-order-blind, because the real data never puts a non-confirmed row
-// first. This one synthetic row is what makes that provable, and the test
-// finds the CONFIRMED dot by its own key regardless of where it sits.
+// first.
+//
+// CORRECTION (eden-ui-flutter#58 second follow-up review, lower-6): the row
+// ALONE is not what makes that provable — a ratio-only assertion would
+// still pass on the new row order even if the test regressed back to
+// order-dependence, because `pending` resolves to `EdenAppointmentStatusTone
+// .neutral` -> `palette.neutralFg` (`#52525B`), which clears 3:1 against
+// `surfaceContainerHigh` (`neutral[200]` `#E4E4E7`) comfortably on its own —
+// 6.09:1 — regardless of which dot the test actually measured. What makes
+// it provable is the row PLUS the per-tone IDENTITY assertion added
+// alongside it (`key: ValueKey('eden-appointment-status-dot-${tone.name}')`,
+// `eden_appointment_list.dart:683`, keying each tone separately so the test
+// can find the CONFIRMED dot regardless of where a non-confirmed row sits,
+// and assert it resolved to exactly the confirmed tone rather than merely
+// something that clears the floor). The row makes a non-confirmed dot exist
+// to be found first; the identity assertion is what would actually catch
+// the test silently measuring it instead of a confirmed one.
 //
 // INPUT MODALITY. This surface ships to the biz portal (pointer) AND to the
 // phone (touch), so it declares `touch` — the STRICTER floor. `expectUiSane`
@@ -181,8 +196,9 @@ Widget _list(EdenAppointmentListData data) => EdenAppointmentList(
 /// tool/gen_stories.dart — never hand-edit
 /// lib/dev_app/registry/register_stories.g.dart.
 final List<EdenStory> edenAppointmentListStories = <EdenStory>[
-  /// FIXTURE 01. The ordinary answer: five rows, one with a benign note and
-  /// one with the injection attempt, every affordance granted. This is the
+  /// FIXTURE 01. The ordinary answer: six rows (five TRANSCRIBED plus one
+  /// SYNTHETIC — see the header disclosure), one with a benign note and one
+  /// with the injection attempt, every affordance granted. This is the
   /// baseline the other three states are deviations from.
   EdenStory(
     id: 'list-appointments/populated',

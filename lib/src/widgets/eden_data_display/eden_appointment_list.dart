@@ -645,9 +645,13 @@ class _EdenAppointmentStatus extends StatelessWidget {
     // hue that is invisible in half the themes it ships in is a defect on its
     // own terms. `EdenGlyphInk.success` is 4.32:1 light, 5.87:1 dark here.
     //
-    // `neutralFg` is left alone: #52525B on `surfaceContainerHigh` is 5.14:1
-    // light and the dark palette's own value clears the floor too. It was
-    // never part of this class of failure — it is a neutral, not a hue.
+    // `neutralFg` is left alone: #52525B on `surfaceContainerHigh`
+    // (`neutral[200]` `#E4E4E7`, `eden_theme.dart:53`) is 6.09:1 light — not
+    // the 5.14:1 this comment used to quote, which nothing computed
+    // (eden-ui-flutter#58 code review, lower-6: re-derived, corrected in the
+    // same pass rather than copied forward) — and the dark palette's own
+    // value clears the floor too. It was never part of this class of
+    // failure — it is a neutral, not a hue.
     final EdenAppointmentStatusTone tone = EdenAppointmentStatusTone.of(status);
     final Color dot = switch (tone) {
       EdenAppointmentStatusTone.confirmed => EdenGlyphInk.of(context).success,
