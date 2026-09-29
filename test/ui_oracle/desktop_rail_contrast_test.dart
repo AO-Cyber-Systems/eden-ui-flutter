@@ -82,6 +82,7 @@
 library;
 
 import 'package:eden_ui_flutter/eden_ui.dart';
+import 'package:eden_ui_flutter/src/widgets/eden_layout/nav_ink.dart';
 import 'package:eden_ui_flutter/testing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -269,17 +270,29 @@ void main() {
         final BoxDecoration decoration =
             tester.widget<Container>(indicator).decoration! as BoxDecoration;
         final Color rim = decoration.border!.top.color;
-        // Sampled from the UNSELECTED row's own icon: that row carries no
-        // pill and no rim, so the dominant pixel in its tiny bounding box
-        // is unambiguously the rail's own fill, not a guess about how much
-        // of the selected row's box the pill occupies.
-        await expectInkContrast(
-          tester,
-          find.byIcon(Icons.insert_chart_outlined),
-          rim,
-          floor: 3.0,
-          what: "the SELECTED indicator's RIM against the rail's own "
-              'painted fill (WCAG 1.4.11, non-text)',
+        // Sampled from the SELECTED row's OWN box (eden-ui-flutter#58 code
+        // review, lower-2) — not the unselected sibling's. WCAG 1.4.11
+        // asks 3:1 against the ADJACENT colour, and the unselected row is a
+        // DIFFERENT row: a re-introduced selected-row background would not
+        // move that number at all, because it is sampled from a box the
+        // change never touches. Excluding the PILL fill (not the rim) is
+        // what makes the histogram mode the row's own background rather
+        // than the pill itself.
+        final Color pillFill = decoration.color!;
+        final Finder selectedRow =
+            find.byKey(const ValueKey<String>('eden-nav-row-home'));
+        final Color adjacent =
+            await paintedBackgroundOf(tester, selectedRow, pillFill);
+        final double ratio = wcagContrast(rim, adjacent);
+        expect(
+          ratio,
+          greaterThanOrEqualTo(3.0),
+          reason: "the SELECTED indicator's rim is "
+              '${ratio.toStringAsFixed(2)}:1 against the SELECTED row\'s '
+              'own painted background (${hexOf(adjacent)}), sampled with '
+              "the pill's fill excluded so the histogram mode is the row, "
+              'not the pill. WCAG 1.4.11 asks 3:1 for the visual '
+              "information identifying a component's state.",
         );
       });
 
@@ -353,5 +366,150 @@ void main() {
         );
       });
     }
+  }
+
+  // ---------------------------------------------------------------------
+  // THE BADGE'S OWN BOUNDARY (eden-ui-flutter#58 code review, second
+  // follow-up: HIGH-1). Every case above measures the SELECTION carrier —
+  // the pill/rim pair identifying which row is selected. None of them ever
+  // looked at the badge's OWN boundary against whatever it happens to sit
+  // on, which is a SEPARATE adjacency the badge has in every branch it
+  // renders in: on the pill (collapsed, selected) and on the rail's own
+  // fill (expanded, and in `_ExpandableNavHeader`). Fixing one and never
+  // measuring the other is how this whole remediation chain got here.
+  //
+  // Test list:
+  //  1. The overlap is real, not asserted from a comment: the collapsed
+  //     badge's rect actually overlaps the selection pill's rect.
+  //  2. The rim clears 3:1 against the pill's fill, both themes, COMPUTED
+  //     from the pumped theme.
+  //  3. The rim is `edenNavOnFillInk` — identity, so the test cannot drift
+  //     onto some other near-black and still pass.
+  //  5. The EXPANDED branch's adjacency — badge vs the rail's OWN fill, not
+  //     a pill — is MEASURED, not documented: a real, pre-existing 1.4.11
+  //     defect in light (2.20:1) that the rim closes (17.72:1). (Item 4,
+  //     re-pointing the existing rim-vs-fill case at the selected row's own
+  //     background, is inline above at the "RIM clears 3:1" test.)
+  // ---------------------------------------------------------------------
+
+  testWidgets(
+      'the collapsed badge overlaps the selection pill it sits on top of '
+      '(making the rim a requirement, not a preference)',
+      (WidgetTester tester) async {
+    await wrap(tester, _rail(true));
+    final Rect badgeRect =
+        tester.getRect(find.byKey(const ValueKey<String>('eden-nav-badge')));
+    final Rect pillRect = tester.getRect(
+        find.byKey(const ValueKey<String>('eden-nav-selection-indicator')));
+    expect(
+      badgeRect.overlaps(pillRect),
+      isTrue,
+      reason: 'the badge is Positioned(top: 6, right: 10) inside the same '
+          'Clip.none Stack the selection pill occupies around the 56x44 '
+          'collapsed tile, so their rects overlap TODAY. That overlap is '
+          'what makes the rim a REQUIREMENT rather than a preference — a '
+          'future geometry change that separates them should make this '
+          'assertion fail, visibly, instead of leaving a rim nothing '
+          'actually needs any more.',
+    );
+  });
+
+  for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
+    ('light', ThemeMode.light),
+    ('dark', ThemeMode.dark),
+  ]) {
+    testWidgets(
+        "the collapsed badge's RIM clears 3:1 against the pill it overlaps "
+        '($mode)', (WidgetTester tester) async {
+      await wrap(tester, _rail(true), themeMode: themeMode);
+      final BuildContext context =
+          tester.element(find.byType(EdenDesktopLayout));
+      final ThemeData theme = Theme.of(context);
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      expect(
+        decoration.border,
+        isNotNull,
+        reason: "_Badge's decoration carries no border at all on the "
+            'unfixed tree — this is the RED case for the rim.',
+      );
+      final Color rim = decoration.border!.top.color;
+      final double ratio = wcagContrast(rim, theme.colorScheme.primary);
+      expect(
+        ratio,
+        greaterThanOrEqualTo(3.0),
+        reason: 'the badge rim is ${ratio.toStringAsFixed(2)}:1 against the '
+            'pill fill (${hexOf(theme.colorScheme.primary)}) it overlaps — '
+            "WCAG 1.4.11 asks 3:1 for the boundary that carries a "
+            "component's shape against the surface it sits on.",
+      );
+    });
+
+    testWidgets(
+        "the badge's rim IS edenNavOnFillInk, the same token its digit "
+        'already uses ($mode)', (WidgetTester tester) async {
+      await wrap(tester, _rail(true), themeMode: themeMode);
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      expect(decoration.border, isNotNull,
+          reason: 'no border to check identity against.');
+      expect(
+        decoration.border!.top.color,
+        edenNavOnFillInk,
+        reason: 'the rim must be the SAME token the digit already uses — an '
+            'IDENTITY check, not a ratio, so this cannot pass on some other '
+            'near-black that could drift independently of the one the '
+            'digit takes.',
+      );
+    });
+
+    testWidgets(
+        'the EXPANDED badge carries its shape on the rail\'s own fill, rim '
+        'or fill, not just a comment claiming it does ($mode)',
+        (WidgetTester tester) async {
+      await wrap(tester, _rail(false), themeMode: themeMode);
+      final BuildContext context =
+          tester.element(find.byType(EdenDesktopLayout));
+      final ThemeData theme = Theme.of(context);
+      final Color railFill = theme.brightness == Brightness.dark
+          ? EdenColors.neutral[900]!
+          : Colors.white;
+
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      final Color badgeFill = decoration.color!;
+      // No border on the unfixed tree; a fixed one is edenNavOnFillInk.
+      final Color? rim = decoration.border?.top.color;
+
+      final double rimRatio =
+          rim == null ? 0 : wcagContrast(rim, railFill);
+      final double fillRatio = wcagContrast(badgeFill, railFill);
+      final double carried = rimRatio > fillRatio ? rimRatio : fillRatio;
+      final String carrier = rimRatio > fillRatio ? 'rim' : 'fill';
+
+      expect(
+        carried,
+        greaterThanOrEqualTo(3.0),
+        reason: "the EXPANDED badge's boundary against the rail's own "
+            "fill (${hexOf(railFill)}) is carried by its $carrier: rim "
+            '${rimRatio.toStringAsFixed(2)}:1, fill '
+            '${fillRatio.toStringAsFixed(2)}:1. `_Badge` is consumed by '
+            'BOTH `_NavTile` branches, and expanded it sits on the rail\'s '
+            'own fill, not a pill — a distinct adjacency from the collapsed '
+            'case above, with distinct numbers. Neither the rim nor the '
+            'fill alone is required to carry it, but at least one MUST, '
+            'and today (before the rim) the fill alone is the only '
+            'candidate.',
+      );
+    });
   }
 }
