@@ -130,11 +130,29 @@ void main() {
         'kScannedTokenFiles and kUnscannedTokenFiles are a closed partition of '
         'lib/src/tokens/', () {
       final root = _repoRoot();
-      final onDisk = Directory('$root/lib/src/tokens')
-          .listSync()
+      final tokensDir = Directory('$root/lib/src/tokens');
+      // RECURSIVE (eden-ui-flutter#58 second follow-up review, lower-9):
+      // `listSync()` defaults to non-recursive, so a file in a SUBDIRECTORY
+      // of lib/src/tokens/ escaped this partition in BOTH directions — it
+      // was neither scanned by the generator (which also only walks the
+      // directory it is pointed at) nor named on the unscanned list, and
+      // this gate stayed green regardless. `recursive: true`, with each
+      // path made relative to the REPO ROOT (not just the file name, which
+      // would collapse `foo/bar.dart` and a top-level `bar.dart` into the
+      // same partition key) so it still matches the flat
+      // `lib/src/tokens/<file>.dart` strings kScannedTokenFiles and
+      // kUnscannedTokenFiles use today.
+      final String tokensRoot = tokensDir.path.replaceAll(r'\', '/');
+      final onDisk = tokensDir
+          .listSync(recursive: true, followLinks: false)
           .whereType<File>()
-          .map((f) => 'lib/src/tokens/${f.uri.pathSegments.last}')
+          .map((f) => f.path.replaceAll(r'\', '/'))
           .where((p) => p.endsWith('.dart'))
+          .map((p) {
+            var rel = p.substring(tokensRoot.length);
+            if (rel.startsWith('/')) rel = rel.substring(1);
+            return 'lib/src/tokens/$rel';
+          })
           .toSet();
 
       expect(onDisk, isNotEmpty,
