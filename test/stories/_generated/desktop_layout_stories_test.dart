@@ -17,6 +17,30 @@ import '../../../test_support/ui_oracle/story_harness.dart';
 void main() {
   setUp(ensureStoriesRegistered);
 
+  testWidgets('desktop-layout/collapsed-badged-selection — light — expectUiSane', (tester) async {
+    await expectStorySane(tester, storyById('desktop-layout/collapsed-badged-selection'),
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
+  });
+
+  testWidgets('desktop-layout/collapsed-badged-selection — light — golden$kGoldenSkipSuffix',
+      (tester) async {
+    await expectStoryGolden(tester, storyById('desktop-layout/collapsed-badged-selection'),
+        themeMode: ThemeMode.light);
+  }, skip: kGoldenSkip);
+
+  testWidgets('desktop-layout/collapsed-badged-selection — dark — expectUiSane', (tester) async {
+    await expectStorySane(tester, storyById('desktop-layout/collapsed-badged-selection'),
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
+  });
+
+  testWidgets('desktop-layout/collapsed-badged-selection — dark — golden$kGoldenSkipSuffix',
+      (tester) async {
+    await expectStoryGolden(tester, storyById('desktop-layout/collapsed-badged-selection'),
+        themeMode: ThemeMode.dark);
+  }, skip: kGoldenSkip);
+
   testWidgets('desktop-layout/default — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('desktop-layout/default'),
         themeMode: ThemeMode.light,
