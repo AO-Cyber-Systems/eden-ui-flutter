@@ -50,6 +50,60 @@ const double _kNonTextFloor = 3.0;
 void main() {
   ensureStoriesRegistered();
 
+  // -------------------------------------------------------------------
+  // EdenGlyphInk.of(context) — the foot-gun it exists to close.
+  // -------------------------------------------------------------------
+  testWidgets(
+      'EdenGlyphInk.of(context) resolves against the THEME brightness, not '
+      "the platform's, when they disagree", (WidgetTester tester) async {
+    // A LIGHT theme, pinned with ThemeMode.light, under a DARK platform
+    // brightness. `MediaQuery.platformBrightnessOf(context)` would read
+    // Brightness.dark here and hand back the DARK member on a LIGHT
+    // surface — the exact mistake nothing in this package could see before
+    // EdenGlyphInk existed (eden-ui-flutter#55): not a type error, no lint
+    // names it, and the oracle only measures surfaces a story actually
+    // pumps in the brightness it pumps them.
+    tester.platformDispatcher.platformBrightnessTestValue = Brightness.dark;
+    addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+
+    late EdenGlyphInkSet resolved;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EdenTheme.light(),
+        darkTheme: EdenTheme.dark(),
+        themeMode: ThemeMode.light,
+        home: Builder(
+          builder: (BuildContext context) {
+            resolved = EdenGlyphInk.of(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Naming WHICH brightness it resolved, not merely that some colour came
+    // back — a wrong brightness that coincidentally shares a colour with
+    // the right one would pass a colour-only assertion and prove nothing.
+    expect(
+      resolved.brightness,
+      Brightness.light,
+      reason: 'the app pins ThemeMode.light, so Theme.of(context).brightness '
+          'is light even though the PLATFORM brightness is dark. '
+          'EdenGlyphInk.of(context) must resolve against the THEME, not '
+          'MediaQuery.platformBrightnessOf(context).',
+    );
+    expect(
+      resolved.success,
+      EdenGlyphInk.success(Brightness.light),
+      reason: 'the LIGHT member must come back — a caller who reached for '
+          'MediaQuery.platformBrightnessOf(context) instead would get the '
+          'DARK member (emerald[500] at 2.00:1) on a light surface, which is '
+          'the exact defect this class exists to make the short spelling '
+          'avoid.',
+    );
+  });
+
   for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
     ('light', ThemeMode.light),
     ('dark', ThemeMode.dark),
@@ -90,18 +144,22 @@ void main() {
               'run reports on nothing.');
       final Finder confirmedDot = confirmedDots.first;
 
-      final Brightness brightness =
-          themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
       final Color resolvedInk = decorationInk(tester, confirmedDot);
+      // Read through EdenGlyphInk.of(context) — the SAME call the migrated
+      // widget now makes (eden-ui-flutter#58 code review, lower-3) — rather
+      // than the bare Brightness form, so this assertion is checking that
+      // the call site resolves THROUGH .of(context), not merely that the
+      // numbers still happen to agree.
+      final BuildContext glyphContext = tester.element(confirmedDot);
       // THE RATIO ALONE CANNOT TELL YOU WHICH TONE IT MEASURED — a glyph
       // that drifted onto `neutralFg` could still clear 3:1 by accident and
       // this identity check is the one that would catch it. Both together:
       // the ratio (below) is the conformance floor, the identity is the
       // spelling check this file exists to enforce.
-      expect(resolvedInk, equals(EdenGlyphInk.success(brightness)),
+      expect(resolvedInk, equals(EdenGlyphInk.of(glyphContext).success),
           reason: 'the confirmed dot must resolve to exactly '
-              'EdenGlyphInk.success for this brightness, not merely '
-              'something that happens to clear the floor.');
+              'EdenGlyphInk.of(context).success, not merely something that '
+              'happens to clear the floor.');
 
       // 2.00:1 light / 5.87:1 dark before #55; 4.32:1 / 5.87:1 after. The
       // dark tone is UNCHANGED — the base hue already cleared the floor
@@ -137,11 +195,20 @@ void main() {
           reason: 'the truncated fixture must actually render its notice '
               'icon, or this run reports on nothing.');
 
+      // Read through EdenGlyphInk.of(context) — the same call the migrated
+      // widget now makes — so this is checking the call site resolves
+      // THROUGH .of(context), not merely that the numbers still agree.
+      final Color resolvedIcon = iconInk(tester, icon);
+      final BuildContext glyphContext = tester.element(icon);
+      expect(resolvedIcon, equals(EdenGlyphInk.of(glyphContext).warning),
+          reason: 'the truncation-notice icon must resolve to exactly '
+              'EdenGlyphInk.of(context).warning.');
+
       // 2.06:1 light / 8.25:1 dark before #55; 4.81:1 / 8.25:1 after.
       await expectInkContrast(
         tester,
         icon,
-        iconInk(tester, icon),
+        resolvedIcon,
         floor: _kNonTextFloor,
         what: 'the truncation-notice icon (WCAG 1.4.11, non-text)',
       );
