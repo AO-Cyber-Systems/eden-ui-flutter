@@ -275,7 +275,7 @@ class _EdenAppointmentsTruncated extends StatelessWidget {
             key: const ValueKey<String>('eden-appointment-truncated-icon'),
             Icons.filter_list_outlined,
             size: _kTruncatedIconSize,
-            color: EdenGlyphInk.warning(theme.brightness),
+            color: EdenGlyphInk.of(context).warning,
           ),
           const SizedBox(width: EdenSpacing.space2),
           Expanded(
@@ -650,8 +650,7 @@ class _EdenAppointmentStatus extends StatelessWidget {
     // never part of this class of failure — it is a neutral, not a hue.
     final EdenAppointmentStatusTone tone = EdenAppointmentStatusTone.of(status);
     final Color dot = switch (tone) {
-      EdenAppointmentStatusTone.confirmed =>
-        EdenGlyphInk.success(theme.brightness),
+      EdenAppointmentStatusTone.confirmed => EdenGlyphInk.of(context).success,
       EdenAppointmentStatusTone.neutral => palette.neutralFg,
     };
 
