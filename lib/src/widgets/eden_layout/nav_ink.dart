@@ -30,6 +30,19 @@ import '../../tokens/colors.dart';
 /// and 3:1 as a non-text glyph on every preset's fill (worst case slate at
 /// 3.72:1).
 ///
-/// A constant rather than a literal at each site because those four sites must
-/// move together or they are back to disagreeing.
+/// A constant rather than a literal at each site because the INK — not
+/// necessarily the treatment around it — must move together or the four
+/// surfaces are back to disagreeing.
+///
+/// CORRECTION (eden-ui-flutter#58 code review, lower-3): this used to claim
+/// "the bar, the drawer tile, the sheet row, the rail tile and all four
+/// badges must move together". Checked against the code, that overstates
+/// it. The desktop rail's `_Badge` is private to `eden_desktop_layout.dart`
+/// and — since eden-ui-flutter#58's follow-up review — carries a rim the
+/// three mobile badges (`eden_mobile_layout.dart` ~:592, ~:749, ~:874) do
+/// not, because only the desktop rail overlaps its badge with a selection
+/// pill (the mobile ones sit on the rail's own fill, or on a row with no
+/// pill at all). The shared thing across all seven sites is this INK
+/// constant; the visual TREATMENT built around it is allowed to differ per
+/// surface when the surface's own adjacencies call for it.
 Color get edenNavOnFillInk => EdenColors.neutral[900]!;

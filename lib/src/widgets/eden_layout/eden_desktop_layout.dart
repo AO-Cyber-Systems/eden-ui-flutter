@@ -681,7 +681,21 @@ const double _kNavTileHorizontalPadding = 12;
 /// not: a leading pad, the chevron itself, and the gap after it.
 const double _kExpandableHeaderLeftPadding = 4;
 const double _kExpandableChevronSize = 18;
-const double _kExpandableChevronGap = 4;
+
+/// Clearance between the chevron and the selection pill beside it.
+///
+/// MEASURED, not transferred. `_NavTile`'s pill never overlaps its icon
+/// because that row has 12px of horizontal padding and nothing else in the
+/// way; `_ExpandableNavHeader` has a 4px leading pad, an 18px chevron and
+/// only this gap before the icon the pill wraps with a 10px horizontal
+/// inset. The non-overlap invariant, independent of the leading pad (it
+/// cancels): `gap >= inset.left`, i.e. `gap >= 10`. At the OLD gap of 4, the
+/// pill's left edge sits at `4 + 18 + 4 - 10 = 16`, inside the chevron's own
+/// `[4, 22]` box — the pill painted OVER the chevron (`Row` paints the
+/// chevron first). 12 — already this file's spacing vocabulary — puts the
+/// pill's left edge at `4 + 18 + 12 - 10 = 24`, 2px clear of the chevron's
+/// right edge at 22 (eden-ui-flutter#58 code review, lower-1).
+const double _kExpandableChevronGap = 12;
 
 /// Vertical gap a nav row leaves under itself. Named so the containment rule
 /// can stop at the LAST child's bottom edge rather than overhang into it.
@@ -766,8 +780,8 @@ class _ExpandableNavHeader extends StatelessWidget {
     // moves OFF the text. onSurface on the rail's own fill is 16.47:1 light,
     // 13.74:1 dark.
     //
-    // THE BAND ITSELF IS GONE (eden-ui-flutter#58 code review): at 1.07:1
-    // light / 1.18:1 dark against the rail's own fill it was never a
+    // THE BAND ITSELF IS GONE (eden-ui-flutter#58 code review): at 1.08:1
+    // light / 1.17:1 dark against the rail's own fill it was never a
     // conformant selection carrier, band or no band beside it, and this row
     // carried the identical `primary@0.1` band `_NavTile` did. The state is
     // now carried by `EdenNavSelectionIndicator` on the icon below — see its
@@ -789,9 +803,12 @@ class _ExpandableNavHeader extends StatelessWidget {
               left: _kExpandableHeaderLeftPadding,
               right: _kNavTileHorizontalPadding,
             ),
-            decoration: BoxDecoration(
-              borderRadius: EdenRadii.borderRadiusMd,
-            ),
+            // No decoration here: a bare `BoxDecoration(borderRadius: ...)`
+            // with no colour, border or shadow paints nothing — `Container`
+            // does not clip its child (`clipBehavior` defaults to
+            // `Clip.none`) — so the previous `decoration:` was dead code
+            // that cost a `RenderDecoratedBox` in the tree for zero visible
+            // effect (eden-ui-flutter#58 code review, lower-8).
             child: Row(
               children: [
                 Icon(
@@ -905,7 +922,7 @@ class _NavTile extends StatelessWidget {
     // to say the icon was content and the band beside it was the selection
     // affordance — that claim was the defect (eden-ui-flutter#58 code
     // review): the band is `primary.withValues(alpha: 0.1)`, and it measures
-    // 1.07:1 light / 1.18:1 dark against the rail's own fill, under WCAG
+    // 1.08:1 light / 1.17:1 dark against the rail's own fill, under WCAG
     // 1.4.11's 3:1 floor for the visual information identifying a
     // component's state. In the COLLAPSED rail there is no label either, so
     // that band was the ONLY thing claiming to identify the selected row,
@@ -943,12 +960,13 @@ class _NavTile extends StatelessWidget {
           child: GestureDetector(
             onTap: onTap,
             child: Container(
+              key: ValueKey<String>('eden-nav-row-${item.id}'),
               width: double.infinity,
               height: 44,
               margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
-              decoration: BoxDecoration(
-                borderRadius: EdenRadii.borderRadiusMd,
-              ),
+              // No decoration here — see the identical note on
+              // _ExpandableNavHeader's Container above; same dead-code
+              // removal (lower-8).
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -981,14 +999,14 @@ class _NavTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        key: ValueKey<String>('eden-nav-row-${item.id}'),
         height: 40,
           margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
           padding: const EdgeInsets.symmetric(
             horizontal: _kNavTileHorizontalPadding,
           ),
-          decoration: BoxDecoration(
-            borderRadius: EdenRadii.borderRadiusMd,
-          ),
+          // No decoration here — see the identical note on the collapsed
+          // branch's Container above; same dead-code removal (lower-8).
           child: Row(
             children: [
               // Same 40x30 pill as the collapsed branch: in this 40px-high
@@ -1031,6 +1049,62 @@ class _NavTile extends StatelessWidget {
 // Badge
 // ---------------------------------------------------------------------------
 
+/// The count badge a nav row carries.
+///
+/// `_Badge` is consumed by BOTH `_NavTile` branches — collapsed (painted on
+/// top of the selection pill, ~:969 above) and expanded (painted on the
+/// rail's own fill, ~:1022 above) — and by `_ExpandableNavHeader` (also on
+/// the rail's own fill). Its BOUNDARY has to carry its shape against
+/// whichever of those it happens to be sitting on, which is why the rim
+/// below is unconditional rather than gated on `isSelected` or on the
+/// collapsed/expanded branch: fixing the one adjacency in front of you and
+/// never measuring the others is how eden-ui-flutter#58's own fix produced
+/// this regression in the first place (code review).
+///
+/// EVERY ADJACENCY, RE-DERIVED AGAINST THE COMMITTED TOKENS:
+///
+/// | adjacency                              | light   | dark    |
+/// |-----------------------------------------|---------|---------|
+/// | rim vs pill fill (collapsed, selected)   | 8.04:1  | 7.61:1  |
+/// | rim vs badge fill (both branches)        | 8.04:1  | 7.61:1  |
+/// | digit vs badge fill (unchanged)          | 8.04:1  | 7.61:1  |
+/// | rim vs rail fill (expanded)              | 17.72:1 | 1.00:1* |
+/// | badge fill vs rail fill (expanded)       | 2.20:1  | 7.61:1  |
+///
+/// \* same token as the rail fill in dark — the rim is inert there, not
+/// wrong: `edenNavOnFillInk` (`neutral[900]`) IS the dark rail fill, so the
+/// rim simply vanishes into it rather than regressing anything.
+///
+/// Read the last two rows together: the boundary is carried by the rim OR
+/// the fill, and which one carries it SWAPS by theme — light leans on the
+/// rim (17.72 vs the fill's 2.20), dark leans on the fill (7.61 vs the
+/// rim's inert 1.00). The rim is therefore a NET WIN and never a regression:
+/// in light-expanded it replaces a bare 2.20:1 badge-vs-white boundary (a
+/// real, pre-existing 1.4.11 defect nobody had named) with 17.72:1; in
+/// dark-expanded it is harmless because the fill already carries the shape
+/// on its own. Pinned by `desktop_rail_contrast_test.dart`'s test-list item
+/// 5 ("the EXPANDED branch's adjacency is MEASURED, not documented"), which
+/// asserts `max(wcagContrast(rim, railFill), wcagContrast(badgeFill,
+/// railFill)) >= 3.0` and names which side carried it per theme — so a
+/// future swap is visible in a diff instead of silently absorbed by `max`.
+///
+/// TWO ALTERNATIVES WERE REJECTED, recorded so this comment can say why the
+/// obvious choices are wrong:
+///  - `colorScheme.error` fill (the mobile bar's badge token): 1.71:1 light
+///    / 1.62:1 dark against the pill. The 3.76:1 that makes `error` look
+///    right is `error` against the rail's WHITE fill — the wrong surface for
+///    the collapsed-rail adjacency, which is the pill.
+///  - a rim of `onPrimaryContainer` (the pill's OWN rim token): 3.38:1 light
+///    but only 2.00:1 dark — fails dark outright.
+///
+/// RIM WIDTH is 1px, not the pill's 1.5px. `Border` on a `BoxDecoration`
+/// grows the `Container` it decorates (no explicit size is given, so the
+/// widget shrink-wraps content + padding + border): on the ~18x16 badge,
+/// 1.5px would yield ~21x19 — 3/19 = 15.8% of the badge's height is rim,
+/// against the pill's 3/30 = 10%. 1px yields ~20x18 — 2/18 = 11.1%, closer
+/// to the pill's proportion — and still fits the collapsed row's
+/// `Positioned(top: 6, right: 10)` inside the 56x44 tile with room to
+/// spare.
 class _Badge extends StatelessWidget {
   const _Badge({required this.text});
   final String text;
@@ -1039,9 +1113,13 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
+      key: const ValueKey<String>('eden-nav-badge'),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary,
+        // The rim. See the class dartdoc for the full adjacency matrix this
+        // token is measured against, both `_NavTile` branches, both themes.
+        border: Border.all(color: edenNavOnFillInk, width: 1),
         borderRadius: EdenRadii.borderRadiusFull,
       ),
       // Was Colors.white on colorScheme.primary: 2.20:1 light, 2.33:1 dark,

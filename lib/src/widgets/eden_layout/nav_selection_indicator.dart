@@ -11,7 +11,7 @@ import 'nav_ink.dart';
 /// The mobile three were unified first — this class used to be
 /// `_NavSelectionIndicator`, private to `eden_mobile_layout.dart` — while the
 /// rail kept a separate, unaudited mechanism: a `primary@0.1` band with no
-/// rim, which measures 1.07:1 light / 1.18:1 dark against the rail's own
+/// rim, which measures 1.08:1 light / 1.17:1 dark against the rail's own
 /// fill (eden-ui-flutter#58 code review). That is how this regression got
 /// in: the ink WAS unified across four surfaces (`nav_ink.dart`, two files
 /// over) and the INDICATOR was not. Promoting this widget out of the mobile
@@ -35,15 +35,19 @@ import 'nav_ink.dart';
 /// 8.88-10.36, emerald 8.53-9.72, purple 9.28-10.88, red 8.46-10.02, slate
 /// 15.21-17.85 across the light surfaces; 12.5-15.8 across the dark ones.
 ///
-/// KEYED, not found by type. `EdenNavSelectionIndicator` is library-private
-/// — not exported from `eden_ui.dart` or `eden_layout_exports.dart` — so a
-/// test cannot reach it with `find.byType` without exporting it into every
-/// consumer's graph. `ValueKey<String>('eden-nav-selection-indicator')` on
+/// KEYED, not found by type. The reason is NOT that this class is
+/// unreachable by `find.byType` — checked against the code, it is not:
+/// Dart library-privacy needs a leading `_`, this class has none, and 57
+/// test files in this repo already import `package:eden_ui_flutter/src/...`
+/// directly to reach classes exactly like it. The real reason is
+/// CARDINALITY. `ValueKey<String>('eden-nav-selection-indicator')` sits on
 /// the pill's own `Container`, and NOT on the outer `Stack` (present on
-/// every row, selected or not — keying it would match all of them and the
-/// cardinality check below would assert nothing), is how
-/// `test/ui_oracle/desktop_rail_contrast_test.dart` names it — the same
-/// device `eden-appointment-status-dot` already uses.
+/// every row, selected or not — keying THAT would match every row and the
+/// cardinality check in `test/ui_oracle/desktop_rail_contrast_test.dart`
+/// would assert nothing). Keying the pill itself is what makes
+/// `findsOneWidget` there mean "exactly one row is selected" rather than
+/// "at least one `Stack` exists" — the same device
+/// `eden-appointment-status-dot` already uses for the same reason.
 class EdenNavSelectionIndicator extends StatelessWidget {
   const EdenNavSelectionIndicator({
     super.key,
