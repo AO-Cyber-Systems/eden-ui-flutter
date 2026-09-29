@@ -15,6 +15,18 @@
 // because a check that fails loudly gets noticed and a check that passes
 // silently does not — see `check-whose-failure-is-its-success`.
 //
+// (a) AND (b) MEET. Guard (a) exists so a glyph dimmed by an ancestor
+// `IconTheme.opacity` reports its TRUE (translucent) ink instead of its
+// declared one. Guard (b), as first written, then refused to measure ANY
+// translucent ink at all — so the exact case (a) was built to make
+// measurable, (b) converted into a hard `StateError`. The combined group
+// below pumps a dimmed icon over an opaque background and proves the
+// meeting point: (a) still dims correctly, and (b) now resolves the surface
+// instead of throwing on the ink it was handed. That, in turn, is what makes
+// `expectInkContrast`'s `ink.a == 1.0 ? ink : Color.alphaBlend(ink,
+// surface)` branch (`measure_ink.dart:276-277`) live rather than dead code —
+// the second case in the group below proves it actually runs.
+//
 // (c) is a geometry bug: a node whose paintBounds extend past the view's
 // edge is read as if it were fully on-frame, silently sampling the ADJACENT
 // ROW's pixels and answering a number for a node that was never actually
@@ -88,6 +100,126 @@ void main() {
             'destination pixels beneath it — there is no single ink to '
             'report, and answering one anyway is the failure mode this '
             'file exists to close.',
+      );
+    });
+  });
+
+  group('(a)+(b) combined — where the two guards meet', () {
+    testWidgets(
+        'a dimmed icon over an opaque background is measured, not refused',
+        (WidgetTester tester) async {
+      const Color declared = Color(0xFF112233);
+      const Color background = Color(0xFFEEEEEE);
+      await wrap(
+        tester,
+        IconTheme(
+          data: const IconThemeData(opacity: 0.6),
+          child: Container(
+            key: const ValueKey<String>('probe-combined-bg'),
+            color: background,
+            child: const Center(
+              child: Icon(
+                Icons.home,
+                key: ValueKey<String>('probe-combined-icon'),
+                color: declared,
+              ),
+            ),
+          ),
+        ),
+      );
+      final Finder icon =
+          find.byKey(const ValueKey<String>('probe-combined-icon'));
+
+      // Guard (a) still does its job: the reported ink is dimmed.
+      final Color ink = iconInk(tester, icon);
+      expect(
+        ink.a,
+        closeTo(declared.a * 0.6, 0.01),
+        reason: 'guard (a) must still report the ancestor-dimmed alpha; '
+            'this case is only interesting if (a) is doing its job and (b) '
+            'is the one under test.',
+      );
+
+      // Guard (b), unblocked: resolves the surface instead of throwing.
+      final Color surface = await paintedBackgroundOf(tester, icon, ink);
+      expect(
+        surface,
+        background,
+        reason: 'paintedBackgroundOf was handed a translucent ink over an '
+            'opaque background it can actually resolve — the exact case '
+            "guard (a) exists for. It must report that background, not "
+            'throw the StateError the unmodified guard used to raise for '
+            'every translucent ink regardless of whether the surface was '
+            'recoverable.',
+      );
+    });
+
+    testWidgets(
+        'expectInkContrast computes against the alpha-blended ink '
+        '(measure_ink.dart:276-277 goes live)', (WidgetTester tester) async {
+      const Color declared = Color(0xFF112233);
+      const Color background = Color(0xFFEEEEEE);
+      await wrap(
+        tester,
+        IconTheme(
+          data: const IconThemeData(opacity: 0.6),
+          child: Container(
+            key: const ValueKey<String>('probe-blend-bg'),
+            color: background,
+            child: const Center(
+              child: Icon(
+                Icons.home,
+                key: ValueKey<String>('probe-blend-icon'),
+                color: declared,
+              ),
+            ),
+          ),
+        ),
+      );
+      final Finder icon =
+          find.byKey(const ValueKey<String>('probe-blend-icon'));
+      final Color ink = iconInk(tester, icon);
+      final Color expectedBlend = Color.alphaBlend(ink, background);
+      expect(
+        hexOf(expectedBlend),
+        isNot(equals(hexOf(declared))),
+        reason: 'the probe is only useful if blending the dimmed ink over '
+            "the background lands on a DIFFERENT RGB than the declared, "
+            'undimmed colour — otherwise this cannot distinguish "reported '
+            'the blended ink" from "reported the declared one".',
+      );
+
+      // An unreachable floor forces expectInkContrast's own `expect` to
+      // fail, surfacing its `reason` string — the only place that names
+      // which ink it actually measured against.
+      Object? failure;
+      try {
+        await expectInkContrast(
+          tester,
+          icon,
+          ink,
+          floor: 100,
+          what: 'probe',
+        );
+      } catch (e) {
+        failure = e;
+      }
+      expect(
+        failure,
+        isNotNull,
+        reason: 'floor: 100 is unreachable by construction, so '
+            'expectInkContrast must fail and its reason string must be '
+            'inspectable — if this is null, the guard threw before ever '
+            'reaching the comparison and dead code is still dead.',
+      );
+      expect(
+        failure.toString(),
+        contains(hexOf(expectedBlend)),
+        reason: 'expectInkContrast must report the ratio computed against '
+            'Color.alphaBlend(ink, surface) (measure_ink.dart:276-277) — '
+            'previously dead code, because paintedBackgroundOf always threw '
+            'before this branch could run for a translucent ink — not the '
+            'declared, fully-opaque colour.',
       );
     });
   });

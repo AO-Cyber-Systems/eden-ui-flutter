@@ -60,34 +60,6 @@ Future<Color> paintedBackgroundOf(
   Finder finder,
   Color ink,
 ) async {
-  // GUARD (b): `_isNear` below compares ALL FOUR bytes of a candidate pixel
-  // against `ink`'s own raw bytes, INCLUDING alpha. A rasterised frame is
-  // opaque — every captured pixel's alpha byte is ~255 — so a translucent
-  // `ink` (alpha < 1.0) can never be "near" anything the exclusion sees, the
-  // exclusion never fires, and the ink's OWN composited pixels stay in the
-  // histogram and can win the mode as "the background". The caller
-  // (`expectInkContrast`) then does `Color.alphaBlend(ink, surface)` on TOP
-  // of that already-composited value — blending the same translucent ink a
-  // second time over its own appearance — and reports a ratio near 1.0:1
-  // against a colour that was never the real surface. Refusing here, rather
-  // than guessing, is the same principle `iconInk`'s `blendMode` guard
-  // applies below: there is no single background this can recover from a
-  // region that may be entirely the ink's own translucent fill, so it does
-  // not answer one. Composite the ink against its actual background first
-  // (`Color.alphaBlend`) and pass that OPAQUE colour instead.
-  if (ink.a < 1.0) {
-    throw StateError(
-      'paintedBackgroundOf was asked to exclude a translucent ink '
-      '(${hexOf(ink)}, alpha ${ink.a.toStringAsFixed(2)}). A translucent '
-      "ink's own composited pixels never match its raw (unblended) bytes "
-      'in a rasterised frame, so the exclusion cannot find them and they '
-      'can win the histogram mode as "the background" — which reports a '
-      'spurious near-1.0:1 ratio once the caller blends the same ink over '
-      'it a second time. Composite the ink over its actual background '
-      '(Color.alphaBlend) and pass that opaque colour instead.',
-    );
-  }
-
   final Element element = finder.evaluate().single;
   final RenderBox box = element.renderObject! as RenderBox;
   RenderObject? node = box;
@@ -156,10 +128,77 @@ Future<Color> paintedBackgroundOf(
     }
   }
 
+  // GUARD (b): the surface is resolved BEFORE a translucent ink is rejected.
+  // The old guard threw for EVERY translucent ink up front, on the theory
+  // that `_isNear` below compares ALL FOUR bytes of a candidate pixel
+  // against `ink`'s own raw bytes, INCLUDING alpha — and a rasterised frame
+  // is opaque (every captured pixel's alpha byte is ~255), so a translucent
+  // ink can never be "near" anything the exclusion sees. That reasoning is
+  // right about WHY the opaque-ink exclusion can't be reused unmodified for
+  // a translucent one; it is wrong that the case is therefore unmeasurable.
+  // A glyph dimmed by an ancestor `IconTheme.opacity` (`iconInk`'s guard
+  // (a), directly below) is exactly the case this refused: the surface IS
+  // recoverable, because the ink's own composited appearance is explainable
+  // as itself painted over some OTHER colour also present in the frame.
+  //
+  // So the exclusion is made ink-aware instead of the entry gate refusing
+  // the call outright:
+  //
+  //  - OPAQUE ink (`ink.a == 1.0`) — `_isNear(entry.key, inkArgb)`,
+  //    byte-identical to the original exclusion. This path does not move.
+  //  - TRANSLUCENT ink — a candidate entry `e` is excluded when some OTHER
+  //    entry `b` in the SAME histogram satisfies
+  //    `_isNear(Color.alphaBlend(ink, Color(b)).toARGB32(), e)`: `e` is
+  //    explainable as the ink painted over a colour that is ALSO present in
+  //    this box, i.e. the ink's own composited appearance, not the surface.
+  //
+  // That still leaves the genuinely unmeasurable box: a region that is
+  // ENTIRELY one translucent fill has no second colour to explain the first
+  // one against, so "this is the surface" and "this is the ink over an
+  // unseen surface" are indistinguishable, and answering either is a guess.
+  // The check below — every histogram entry within rasteriser rounding of
+  // the leading (most common) one — is what keeps that case throwing: with
+  // one colour present there is nothing to distinguish fill from surface.
+  // Proven by `test/ui_oracle/measure_ink_guards_test.dart` group "(a)+(b)
+  // combined" (the unblocked, measurable case — and that
+  // `expectInkContrast`'s `ink.a == 1.0 ? ink : Color.alphaBlend(ink,
+  // surface)` branch, `measure_ink.dart:276-277` below, is now LIVE) and
+  // group "(b)" (the still-unmeasurable single-colour box, which must stay
+  // throwing).
+  final bool translucent = ink.a < 1.0;
+  if (translucent) {
+    final MapEntry<int, int> leading =
+        histogram.entries.reduce((MapEntry<int, int> a, MapEntry<int, int> b) => b.value > a.value ? b : a);
+    final bool allOneColour =
+        histogram.keys.every((int k) => _isNear(k, leading.key));
+    if (allOneColour) {
+      throw StateError(
+        'the node found by $finder is entirely one composited colour '
+        '(${hexOf(Color(leading.key))}) and ink '
+        '(${hexOf(ink)}, alpha ${ink.a.toStringAsFixed(2)}) is translucent. '
+        'There is no second colour in the frame to explain that one '
+        "colour as \"the ink painted over a visible surface\", so this "
+        "cannot distinguish the box's own fill from the ink's composited "
+        'appearance over an unseen surface. Answering either would be a '
+        'guess, not a measurement.',
+      );
+    }
+  }
+
   int? best;
   int bestCount = 0;
   for (final MapEntry<int, int> entry in histogram.entries) {
-    if (_isNear(entry.key, inkArgb)) {
+    final bool excluded = translucent
+        ? histogram.keys.any(
+            (int b) =>
+                b != entry.key &&
+                _isNear(
+                  Color.alphaBlend(ink, Color(b)).toARGB32(),
+                  entry.key,
+                ),
+          )
+        : _isNear(entry.key, inkArgb);
+    if (excluded) {
       continue;
     }
     if (entry.value > bestCount) {
@@ -169,9 +208,9 @@ Future<Color> paintedBackgroundOf(
   }
   if (best == null) {
     throw StateError(
-      'every pixel inside ${element.widget.runtimeType} is the ink '
-      '${hexOf(ink)} — there is no background to measure against. That is '
-      '1.00:1, not an unmeasurable node.',
+      'every pixel inside ${element.widget.runtimeType} is explainable as '
+      'the ink ${hexOf(ink)} — there is no background to measure against. '
+      'That is 1.00:1, not an unmeasurable node.',
     );
   }
   return Color(best);
