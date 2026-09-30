@@ -93,3 +93,4 @@ Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downst
 | 8 | close #58 review Task 3 — glyph_ink context form, per-brightness hex, token-coverage partition | 2026-09-29 | 0b28cf6 | eden-ui-contrast |
 | 9 | re-bless the 22 story baselines the rail indicator and the pending-status fixture moved (#58) | 2026-09-29 | c3e1b9b | eden-ui-contrast |
 | 11 | update the two story-count gates for the collapsed-rail story (66 -> 67) | 2026-09-29 | f4459ba | eden-ui-contrast |
+| 12 | correct the fifth stale ratio: onSurface on the rail fill is 17.72/16.12, not the deleted band's 16.47/13.74 | 2026-09-30 | 0d49f59 | eden-ui-contrast |
