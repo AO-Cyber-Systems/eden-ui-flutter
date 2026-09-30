@@ -566,6 +566,9 @@ export 'src/widgets/eden_field_purpose.dart';
 // finishAutofillContext. eden_tsv exists because SelectionArea concatenates
 // fragments in tree order with no cell delimiters, so drag-copying a table is
 // unusable and tabular surfaces need an explicit TSV action as well.
+// Web apps await edenPrepareSelectableRegionForWeb() before runApp so no
+// SelectableRegion (the app's own included) sees BrowserContextMenu.enabled
+// flip after its first build.
 export 'src/widgets/eden_selectable_region.dart';
 export 'src/widgets/eden_autofill_scope.dart';
 export 'src/utils/eden_tsv.dart';

@@ -1,5 +1,65 @@
 # Changelog
 
+## 2.2.1
+
+### Fixed — "Null check operator used on a null value" from `SelectableRegion` on web
+
+`EdenSelectableRegion` disabled the browser context menu fire-and-forget from `initState` and built
+its `SelectionArea` in the same frame. `BrowserContextMenu.enabled` only turns false after a
+platform-channel round trip, so every `SelectableRegion` on screen at first load — the library's own
+and any the app owns — was built with the web context-menu wrapper and rebuilt without it.
+`SelectableRegion` does not key its `SelectionContainer`, so that rebuild re-inflates it and
+registers the new container in the region's single `_selectable` slot while the old one is still
+there: `assert(_selectable == null)` in debug, and in profile/release the slot is later nulled
+under the new container and its next `remove()` dereferences `_selectable!`. Found in eden-biz's web
+console (one error per page load); every web app using the Eden layouts or pages is exposed.
+
+### Added
+
+- **`Future<void> edenPrepareSelectableRegionForWeb()`** (exported from `eden_ui.dart`). Await it
+  after `WidgetsFlutterBinding.ensureInitialized()` and before `runApp`, so the menu is already
+  disabled when anything builds:
+
+  ```dart
+  Future<void> main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await edenPrepareSelectableRegionForWeb();
+    runApp(const MyApp());
+  }
+  ```
+
+  No-op off web. Idempotent and shared with every `EdenSelectableRegion` (concurrent callers join
+  one in-flight attempt; regions never re-issue the call once it has succeeded; if the app already
+  awaited `BrowserContextMenu.disableContextMenu()` itself it returns at once). Never completes with
+  an error: a failure is reported through `FlutterError.reportError`, is not latched, and the next
+  call retries. **This is the only thing that protects a `SelectionArea` the app owns** (e.g. one
+  around its shell).
+- `edenResetSelectableRegionForTest()` and `debugEdenBrowserContextMenuDisableOverride`
+  (`@visibleForTesting`; the override is honoured in debug builds only) so the web path is testable
+  under the VM runner.
+
+### Changed
+
+- On web, until the disable has completed, `EdenSelectableRegion` builds its child **without** a
+  `SelectionArea` and installs one when the disable lands — so its own region is never built under
+  the old flag value. The child is moved (GlobalKey), not re-created, so its State survives; text is
+  briefly not selectable. It prints a one-time debug warning naming
+  `edenPrepareSelectableRegionForWeb` the first time a region builds on web before the app prepared.
+  Non-web platforms, and web apps that prepared, build exactly the tree they built before.
+- A failed disable started by a region is now reported through `FlutterError.reportError` (was a
+  debug-only `debugPrint`), matching the new API.
+- `test/flutter_test_config.dart` skips its dart:io font bootstrap under
+  `flutter test --platform chrome`, so browser-only tests can run. The VM run is unchanged.
+
+### Tests
+
+- `test/widgets/eden_selectable_region_web_test.dart` (`@TestOn('browser')`, run with
+  `flutter test --platform chrome`): reproduces the framework assert with an app-owned
+  `SelectionArea` (a CONTROL that pins why the pre-runApp call exists), proves it is gone when the
+  app awaits the new API, and that a region owning its text survives the flip without it.
+- `test/widgets/eden_selectable_region_web_prep_test.dart` (VM): deferral, child-State preservation,
+  nesting, latch sharing, concurrent callers, failure reporting/retry, and non-web byte-identity.
+
 ## 2.2.0
 
 Password-manager autofill and universal copy/paste, plus a UI correctness oracle, a co-located

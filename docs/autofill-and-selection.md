@@ -90,6 +90,23 @@ EdenSelectableRegion(
 It is **already on by default** in `EdenDesktopLayout` and `EdenMobileLayout` and in the 10 library
 pages. See section 6.
 
+**On web, await `edenPrepareSelectableRegionForWeb()` before `runApp`:**
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await edenPrepareSelectableRegionForWeb(); // no-op off web; never throws
+  runApp(const MyApp());
+}
+```
+
+`BrowserContextMenu.disableContextMenu()` lands asynchronously, and `SelectableRegion` builds a
+different, unkeyed subtree depending on whether it has. A region built before the flag flips and
+rebuilt after it double-registers its `SelectionContainer` — "Null check operator used on a null
+value" in release, `assert(_selectable == null)` in debug. Without the call, `EdenSelectableRegion`
+defers its own `SelectionArea` until the disable lands (and warns once in debug), but it cannot
+protect a `SelectionArea` the app owns.
+
 ### TSV table copy
 
 `edenCopyTsv`, `edenRowsToTsv`, `edenTsvRow` and `edenTsvCell` in `lib/src/utils/eden_tsv.dart`,
@@ -636,10 +653,12 @@ broken flow.
 
 ### Untested-by-automation: the web right-click menu
 
-`BrowserContextMenu.disableContextMenu()` has **zero automated coverage** in this package, and cannot
-have any: `kIsWeb` is a compile-time constant that is `false` under `flutter test`, so the web branch
-is unreachable from the test suite. The claim "right-click shows Flutter's Copy menu on web" is
-**reasoned from the engine source, not measured**. It wants a manual check in a real browser. If you
+The TIMING of `BrowserContextMenu.disableContextMenu()` is covered:
+`test/widgets/eden_selectable_region_web_test.dart` runs under `flutter test --platform chrome`
+(pinned to a desktop target platform — flutter_test's default android target never shows the web
+wrapper) and reproduces the double-registration assert. It is not part of the default VM run.
+What remains unmeasured is the menu itself: the claim "right-click shows Flutter's Copy menu on web"
+is **reasoned from the engine source, not measured**. It wants a manual check in a real browser. If you
 find it does not behave as described, that is a genuine gap in our verification, not a documented
 guarantee being broken.
 
