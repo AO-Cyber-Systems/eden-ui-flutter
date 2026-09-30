@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.2.1
 
 ### Fixed — "Null check operator used on a null value" from `SelectableRegion` on web
 
