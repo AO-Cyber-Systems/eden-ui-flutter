@@ -86,6 +86,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:eden_ui_flutter/eden_ui.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -118,6 +119,17 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
   // still tries the 400-ing HttpOverrides on every theme construction: 264
   // failed fetches per full suite run, and ~60s of wall clock.
   GoogleFonts.config.allowRuntimeFetching = false;
+
+  // `flutter test --platform chrome` has no file system: the font bootstrap
+  // below reads `test_support/fonts/` through dart:io and throws on web. The
+  // browser-only tests (`@TestOn('browser')`, e.g.
+  // widgets/eden_selectable_region_web_test.dart) render with the default
+  // Material theme and never run the UI oracle, so they need none of it. The
+  // VM run -- the only one CI makes -- is unchanged.
+  if (kIsWeb) {
+    await testMain();
+    return;
+  }
 
   _serveEdenTestFonts(binding.defaultBinaryMessenger);
   await _loadBundledFonts();
