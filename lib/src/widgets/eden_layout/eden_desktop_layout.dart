@@ -777,8 +777,13 @@ class _ExpandableNavHeader extends StatelessWidget {
     // row's 10%-primary band measured 2.05:1 at fontSize 13 in the light
     // theme — the same class of failure the bottom bar (2.20:1) and the
     // drawer (1.97:1) were fixed for. Same ruling as those two: the brand
-    // moves OFF the text. onSurface on the rail's own fill is 16.47:1 light,
-    // 13.74:1 dark.
+    // moves OFF the text. onSurface on the rail's own fill is 17.72:1 light,
+    // 16.12:1 dark.
+    //
+    // (Was "16.47:1 / 13.74:1" here — those are onSurface against the
+    // 10%-primary BAND, which this branch deleted. Measuring the old surface
+    // is how a comment keeps a number long after the thing it measured is
+    // gone.)
     //
     // THE BAND ITSELF IS GONE (eden-ui-flutter#58 code review): at 1.08:1
     // light / 1.17:1 dark against the rail's own fill it was never a
@@ -1027,7 +1032,7 @@ class _NavTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    // The label stays `onSurface` (16.47:1 light / 13.74:1
+                    // The label stays `onSurface` (17.72:1 light / 16.12:1
                     // dark on the rail's own fill) and does not move. The
                     // state is carried by `EdenNavSelectionIndicator` beside
                     // it — see the icon comment above and the widget's own

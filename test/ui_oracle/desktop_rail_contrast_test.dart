@@ -188,10 +188,13 @@ void main() {
                 'contrast — is what this run would be reporting on.');
       }
 
-      // SELECTED. The row carries the 10%-primary band, and it is the band —
-      // not the glyph — that is the selection affordance. Both inks are
-      // therefore `onSurface`: 16.47:1 light, 13.74:1 dark at the branch
-      // point. The icon read 2.05:1 light / 6.49:1 dark before #55.
+      // SELECTED. The selection affordance is `EdenNavSelectionIndicator`'s
+      // pill and rim — not the glyph, and no longer the 10%-primary band,
+      // which #58's review deleted at 1.08:1 light / 1.17:1 dark. Both inks
+      // are therefore `onSurface`: 17.72:1 light, 16.12:1 dark on the rail's
+      // own fill. (Those were "16.47 / 13.74" — the same ink measured
+      // against the DELETED band.) The icon read 2.05:1 light / 6.49:1 dark
+      // before #55.
       await expectInkContrast(
         tester,
         selectedIcon,
