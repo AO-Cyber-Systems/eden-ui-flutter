@@ -150,24 +150,22 @@ class AwaitingCIBaseline {
 /// file actually exists on disk, which is the signal to delete the entry
 /// rather than leave a permanent hole in the floor.
 ///
-/// `desktop-layout/collapsed-badged-selection` (eden-ui-flutter#58 second
-/// follow-up review, Task 3): the story that pumps the COLLAPSED rail with
-/// the SELECTED row also badged — the fixture that would have caught HIGH-1.
-/// Registered here, on a macOS worktree that cannot generate its golden
-/// pixels; CI's `update_goldens` dispatch is what commits the two PNGs this
-/// list names.
-const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[
-  AwaitingCIBaseline(
-    'desktop-layout_collapsed-badged-selection.light.png',
-    'awaiting the CI update_goldens dispatch for the new '
-        'desktop-layout/collapsed-badged-selection story (light).',
-  ),
-  AwaitingCIBaseline(
-    'desktop-layout_collapsed-badged-selection.dark.png',
-    'awaiting the CI update_goldens dispatch for the new '
-        'desktop-layout/collapsed-badged-selection story (dark).',
-  ),
-];
+/// EMPTY, and that is the resting state. An entry exists only in the window
+/// between registering a story on a machine that cannot generate goldens and
+/// CI committing its pixels.
+///
+/// The window this list was built for is now CLOSED:
+/// `desktop-layout/collapsed-badged-selection` (eden-ui-flutter#58, the story
+/// that pumps the COLLAPSED rail with the SELECTED row also badged — the
+/// fixture that would have caught the 1.00:1 invisible badge) had its two
+/// baselines committed by CI's `update_goldens` dispatch, so both entries
+/// were deleted in the same change that landed the PNGs. That pairing is the
+/// point: case "awaiting-4" fails the instant a named file exists, so an
+/// entry cannot outlive its baseline.
+///
+/// Leaving an entry here after its PNG lands would be a permanent hole in the
+/// floor wearing a temporary label.
+const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[];
 
 /// Every committed baseline, keyed by file name, with its bytes base64'd so
 /// two files can be compared by one map lookup.
