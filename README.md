@@ -114,6 +114,23 @@ and `EdenMobileLayout`, because a `SelectionArea` over a subtree containing a Na
 deep-link to a nested route (flutter#151536). Pass `selectableBody: true` on surfaces whose body is
 not a Navigator, or wrap a specific text subtree in an `EdenSelectableRegion`.
 
+**Web apps: disable the browser context menu before `runApp`.** `EdenSelectableRegion` turns the
+browser's native menu off so Flutter's "Copy" menu appears, but that call lands asynchronously, and
+any `SelectableRegion` built before it lands and rebuilt after it double-registers its selection
+container ("Null check operator used on a null value" in release builds). Await the library's
+call before the first frame — it is a no-op off web, idempotent, and never throws:
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await edenPrepareSelectableRegionForWeb();
+  runApp(const MyApp());
+}
+```
+
+Without it, an `EdenSelectableRegion` protects itself (it waits for the disable before installing
+its `SelectionArea`, and warns once in debug), but a `SelectionArea` your app owns is not protected.
+
 iOS needs an Associated Domains entitlement and a published AASA file before any of it works in a
 real app — see [docs/autofill-and-selection.md](docs/autofill-and-selection.md).
 
