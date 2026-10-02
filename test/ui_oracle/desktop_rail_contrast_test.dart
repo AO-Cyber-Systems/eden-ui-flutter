@@ -563,4 +563,153 @@ void main() {
       }
     });
   }
+
+  // ---------------------------------------------------------------------
+  // THE BADGE'S OTHER TWO UNMEASURED CONTEXTS (eden-ui-flutter#63 item 3).
+  // `_Badge` has three call sites; only collapsed-SELECTED (on the pill) and
+  // expanded-selected (above, on the rail's own fill) had a fixture before
+  // this. Collapsed-UNSELECTED (on the rail's own fill — no pill underneath
+  // it, because `EdenNavSelectionIndicator` paints nothing when
+  // `isSelected` is false) and `_ExpandableNavHeader` (also on the rail's
+  // own fill) are covered here, each against a MEASURED background.
+  // ---------------------------------------------------------------------
+
+  for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
+    ('light', ThemeMode.light),
+    ('dark', ThemeMode.dark),
+  ]) {
+    testWidgets(
+        "an UNSELECTED collapsed row's badge carries its shape on the "
+        "rail's own fill — no pill underneath it, unlike the collapsed "
+        'SELECTED case above ($mode)', (WidgetTester tester) async {
+      const List<EdenNavItem> items = <EdenNavItem>[
+        EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
+        EdenNavItem(
+            id: 'reports',
+            label: 'Reports',
+            icon: Icons.insert_chart_outlined,
+            badge: '5'),
+      ];
+      await wrap(
+        tester,
+        EdenDesktopLayout(
+          navItems: items,
+          selectedId: 'home',
+          onNavChanged: (_) {},
+          user: _user,
+          initiallyCollapsed: true,
+          body: const SizedBox.shrink(),
+        ),
+        themeMode: themeMode,
+      );
+
+      final Finder row =
+          find.byKey(const ValueKey<String>('eden-nav-row-reports'));
+
+      // Scoped to THIS row — `home` is selected and carries its own pill, so
+      // an unscoped search for the key would find that one and prove
+      // nothing about Reports.
+      expect(
+        find.descendant(
+            of: row,
+            matching: find
+                .byKey(const ValueKey<String>('eden-nav-selection-indicator'))),
+        findsNothing,
+        reason: 'precondition: the badged row (Reports) is not selected, so '
+            'no pill exists under its badge — `_railItems` elsewhere in '
+            'this file only ever badges the SELECTED row, which is why '
+            'this context had no fixture at all.',
+      );
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      final Color badgeFill = decoration.color!;
+      final Color? rim = decoration.border?.top.color;
+      final Color railFill =
+          await paintedBackgroundOf(tester, row, badgeFill);
+
+      final double rimRatio = rim == null ? 0 : wcagContrast(rim, railFill);
+      final double fillRatio = wcagContrast(badgeFill, railFill);
+      final double carried = rimRatio > fillRatio ? rimRatio : fillRatio;
+      final String carrier = rimRatio > fillRatio ? 'rim' : 'fill';
+
+      expect(
+        carried,
+        greaterThanOrEqualTo(3.0),
+        reason: "the UNSELECTED collapsed badge's boundary against the "
+            "rail's own fill (${hexOf(railFill)}, measured) is carried by "
+            'its $carrier: rim ${rimRatio.toStringAsFixed(2)}:1, fill '
+            '${fillRatio.toStringAsFixed(2)}:1.',
+      );
+    });
+
+    testWidgets(
+        "an _ExpandableNavHeader's badge carries its shape on the rail's "
+        'own fill — the THIRD `_Badge` call site, which had no test, no '
+        'story and no golden before eden-ui-flutter#63 ($mode)',
+        (WidgetTester tester) async {
+      const List<EdenNavItem> items = <EdenNavItem>[
+        EdenNavItem(
+          id: 'proj-aurora',
+          label: 'Aurora',
+          icon: Icons.folder_outlined,
+          badge: '2',
+          expandable: true,
+          children: <EdenNavItem>[
+            EdenNavItem(
+                id: 'conv-kickoff',
+                label: 'Kickoff notes',
+                icon: Icons.chat_bubble_outline),
+          ],
+        ),
+      ];
+      await wrap(
+        tester,
+        EdenDesktopLayout(
+          navItems: items,
+          selectedId: 'none',
+          onNavChanged: (_) {},
+          user: _user,
+          body: const SizedBox.shrink(),
+        ),
+        themeMode: themeMode,
+      );
+
+      expect(find.text('2'), findsOneWidget,
+          reason: "the measurement needs the header's badge actually "
+              'rendered — nothing in this suite pumped this call site '
+              'before.');
+
+      final Finder row =
+          find.byKey(const ValueKey<String>('eden-nav-row-proj-aurora'));
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      final Color badgeFill = decoration.color!;
+      final Color? rim = decoration.border?.top.color;
+      final Color railFill =
+          await paintedBackgroundOf(tester, row, badgeFill);
+
+      final double rimRatio = rim == null ? 0 : wcagContrast(rim, railFill);
+      final double fillRatio = wcagContrast(badgeFill, railFill);
+      final double carried = rimRatio > fillRatio ? rimRatio : fillRatio;
+      final String carrier = rimRatio > fillRatio ? 'rim' : 'fill';
+
+      expect(
+        carried,
+        greaterThanOrEqualTo(3.0),
+        reason: "the _ExpandableNavHeader badge's boundary against the "
+            "rail's own fill (${hexOf(railFill)}, measured) is carried by "
+            'its $carrier: rim ${rimRatio.toStringAsFixed(2)}:1, fill '
+            '${fillRatio.toStringAsFixed(2)}:1. Named in the `_Badge` '
+            'dartdoc (`eden_desktop_layout.dart:~1055`) but never pumped: '
+            '`_railItems` has no expandable item, and neither generated '
+            "`nav-item/expandable-*` story sets a badge.",
+      );
+    });
+  }
 }

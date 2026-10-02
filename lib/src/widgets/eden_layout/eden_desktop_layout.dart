@@ -802,6 +802,12 @@ class _ExpandableNavHeader extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Container(
+            // Same keying convention as `_NavTile`'s row
+            // (eden-ui-flutter#63 item 3): without a stable key on this row,
+            // nothing can measure what its badge — `:854` below — is
+            // actually painted on, and the only instrument that sampled this
+            // adjacency was a dartdoc.
+            key: ValueKey<String>('eden-nav-row-${item.id}'),
             height: 40,
             margin: const EdgeInsets.only(bottom: _kNavRowBottomMargin),
             padding: const EdgeInsets.only(
