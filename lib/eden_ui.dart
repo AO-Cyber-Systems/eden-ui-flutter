@@ -10,6 +10,7 @@ export 'src/a11y/eden_input_modality.dart';
 
 // Tokens
 export 'src/tokens/colors.dart';
+export 'src/tokens/glyph_ink.dart';
 export 'src/tokens/spacing.dart';
 export 'src/tokens/radii.dart';
 export 'src/tokens/shadows.dart';

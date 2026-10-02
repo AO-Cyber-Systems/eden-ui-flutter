@@ -29,6 +29,7 @@ from `lib/src/tokens/`.
 | `red` | `0xFFEF4444` |
 | `slate` | `0xFF64748B` |
 | `neutral` | `0xFF71717A` |
+| `amber` | `0xFFF59E0B` |
 | `success` | `0xFF10B981` |
 | `successBg` | `0x1A10B981` |
 | `warning` | `0xFFF59E0B` |

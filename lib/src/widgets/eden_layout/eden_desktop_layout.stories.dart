@@ -80,13 +80,14 @@ const Widget _kBody = Padding(
   ),
 );
 
-EdenDesktopLayout _shell() => EdenDesktopLayout(
+EdenDesktopLayout _shell({bool collapsed = false}) => EdenDesktopLayout(
       navItems: kSharedShellNavItems,
       selectedId: 'orders',
       onNavChanged: (_) {},
       topBar: kShellTopBar,
       user: kShellUser,
       body: _kBody,
+      initiallyCollapsed: collapsed,
     );
 
 /// The desktop shell fixtures. Registered by tool/gen_stories.dart.
@@ -118,5 +119,31 @@ final List<EdenStory> edenDesktopLayoutStories = <EdenStory>[
     inputModality: EdenInputModality.pointer,
     viewportWidth: _kNarrowShellViewport,
     build: (context, _) => _shell(),
+  ),
+
+  /// The COLLAPSED 72px rail with the SELECTED row also carrying a badge —
+  /// the fixture that would have caught HIGH-1 (eden-ui-flutter#58's own
+  /// follow-up review). Neither `default` nor `narrow` above pumps this
+  /// combination: `narrow` renders at 720px, which is still above the
+  /// rail's collapse breakpoint (there is no width breakpoint at all — see
+  /// this file's own `narrow` story, which stays EXPANDED at 720px), and
+  /// `default` never sets `initiallyCollapsed`. `_shell()` already selects
+  /// `'orders'`, and `'orders'` already carries `badge: '3'`, so this story
+  /// changes nothing about the dataset — only the rail's own collapse state.
+  ///
+  /// Before the badge gained its rim, the selected row's pill and its badge
+  /// were BOTH `colorScheme.primary`, and the badge overlaps the pill on 15
+  /// of its 16 vertical pixels: 1.00:1, with only the near-black digit
+  /// surviving. Every CI check was green on that defect because no story
+  /// rendered a collapsed rail with a badged selection at all — a badge
+  /// sitting on top of a same-coloured pill was simply never on screen.
+  EdenStory(
+    id: 'desktop-layout/collapsed-badged-selection',
+    component: 'desktop-layout',
+    name: 'Collapsed, badged selection',
+    icon: Icons.view_sidebar_outlined,
+    knobs: const [],
+    inputModality: EdenInputModality.pointer,
+    build: (context, _) => _shell(collapsed: true),
   ),
 ];

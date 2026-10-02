@@ -31,12 +31,14 @@ void main() {
       StoryRegistry.instance.all().length,
       reason: 'one manifest entry per registered story',
     );
-    expect(entries.length, 66,
+    expect(entries.length, 67,
         reason: '38-05 registers 45 stories; Objective 40 adds 4 '
             'autofill/selection stories; Objective 23 (TRD 23-05) adds the 11 '
             'co-located nav/layout stories; eden-ui-flutter#50 adds the 6 '
             'co-located data-display stories (4 list/appointments states, '
-            '2 error/refusal states)');
+            '2 error/refusal states); eden-ui-flutter#58 adds 1 '
+            'collapsed-rail story with a badged selection — the state no '
+            'story rendered, which is why a 1.00:1 badge shipped green');
   });
 
   test('every entry matches the eden-docs flutter ManifestEntry contract', () {

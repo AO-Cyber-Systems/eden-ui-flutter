@@ -118,6 +118,32 @@ class EdenColors {
   // Status colors
   // ---------------------------------------------------------------------------
 
+  /// The amber ramp [warning] was sampled from — `warning` IS `amber[500]`.
+  ///
+  /// It exists because a hue that reads as a *word* on the light surface does
+  /// not read as a *glyph* on it: `amber[500]` is 2.06:1 against
+  /// `surfaceContainerLow` in the light theme, under WCAG 1.4.11's 3:1 floor
+  /// for non-text, and there was no darker amber in this file to reach for.
+  /// `amber[700]` is 4.81:1 on that surface. See `glyph_ink.dart`.
+  ///
+  /// The other semantic hues already had their ramps here ([emerald], [red],
+  /// [blue]); amber was the one that did not, which is why a warning glyph
+  /// had nowhere to go.
+  static const MaterialColor amber = MaterialColor(0xFFF59E0B, <int, Color>{
+    50: Color(0xFFFFFBEB),
+    100: Color(0xFFFEF3C7),
+    200: Color(0xFFFDE68A),
+    300: Color(0xFFFCD34D),
+    400: Color(0xFFFBBF24),
+    500: Color(0xFFF59E0B),
+    600: Color(0xFFD97706),
+    700: Color(0xFFB45309),
+    800: Color(0xFF92400E),
+    900: Color(0xFF78350F),
+    950: Color(0xFF451A03),
+  });
+
+
   static const Color success = Color(0xFF10B981);
   static const Color successBg = Color(0x1A10B981);
   static const Color warning = Color(0xFFF59E0B);

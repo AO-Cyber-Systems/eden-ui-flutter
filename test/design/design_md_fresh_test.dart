@@ -107,4 +107,91 @@ void main() {
         reason: 'DESIGN.md must be clean after the freshness test runs — '
             'it compares, it never writes');
   });
+
+  // ---------------------------------------------------------------------------
+  // Token-file COVERAGE, which the freshness test above cannot see.
+  //
+  // Everything above regenerates from `kScannedTokenFiles` and compares. That
+  // proves the four listed files are documented and current. It says nothing
+  // about a FIFTH file, because a file the generator never opens cannot make
+  // the output stale — so the gate stays green and the header's promise
+  // ("generated straight from lib/src/tokens/*.dart so it can never quietly
+  // drift from the code") quietly stops being true. That is exactly what
+  // happened: `glyph_ink.dart` landed as a new public token file in #55 with
+  // this suite green and no row anywhere (eden-ui-flutter#58 review).
+  //
+  // The rule below closes it by making the DECISION mandatory rather than the
+  // documentation: every file in the directory is either scanned or listed as
+  // deliberately unscanned WITH a reason. Adding a token file and skipping
+  // that choice is the failure.
+  // ---------------------------------------------------------------------------
+  group('token-file coverage', () {
+    test(
+        'kScannedTokenFiles and kUnscannedTokenFiles are a closed partition of '
+        'lib/src/tokens/', () {
+      final root = _repoRoot();
+      final tokensDir = Directory('$root/lib/src/tokens');
+      // RECURSIVE (eden-ui-flutter#58 second follow-up review, lower-9):
+      // `listSync()` defaults to non-recursive, so a file in a SUBDIRECTORY
+      // of lib/src/tokens/ escaped this partition in BOTH directions — it
+      // was neither scanned by the generator (which also only walks the
+      // directory it is pointed at) nor named on the unscanned list, and
+      // this gate stayed green regardless. `recursive: true`, with each
+      // path made relative to the REPO ROOT (not just the file name, which
+      // would collapse `foo/bar.dart` and a top-level `bar.dart` into the
+      // same partition key) so it still matches the flat
+      // `lib/src/tokens/<file>.dart` strings kScannedTokenFiles and
+      // kUnscannedTokenFiles use today.
+      final String tokensRoot = tokensDir.path.replaceAll(r'\', '/');
+      final onDisk = tokensDir
+          .listSync(recursive: true, followLinks: false)
+          .whereType<File>()
+          .map((f) => f.path.replaceAll(r'\', '/'))
+          .where((p) => p.endsWith('.dart'))
+          .map((p) {
+            var rel = p.substring(tokensRoot.length);
+            if (rel.startsWith('/')) rel = rel.substring(1);
+            return 'lib/src/tokens/$rel';
+          })
+          .toSet();
+
+      expect(onDisk, isNotEmpty,
+          reason: 'lib/src/tokens/ resolved to nothing — if this directory '
+              'moved, this whole gate is vacuous and the partition below '
+              'would pass trivially');
+
+      final scanned = kScannedTokenFiles.map((e) => e.$1).toSet();
+      final unscanned = kUnscannedTokenFiles.keys.toSet();
+
+      final overlap = scanned.intersection(unscanned);
+      expect(overlap, isEmpty,
+          reason: 'a token file is listed as BOTH scanned and unscanned: '
+              '$overlap');
+
+      final accounted = scanned.union(unscanned);
+
+      final undecided = onDisk.difference(accounted);
+      expect(undecided, isEmpty,
+          reason: 'new token file(s) with no decision recorded: $undecided\n'
+              'A file the generator does not read cannot make DESIGN.md '
+              'stale, so the freshness test above will NOT catch this.\n'
+              'Either add it to kScannedTokenFiles (and regenerate DESIGN.md '
+              'with `dart run tool/gen_design_md.dart`), or add it to '
+              'kUnscannedTokenFiles with the reason it is out of scope.');
+
+      final ghosts = accounted.difference(onDisk);
+      expect(ghosts, isEmpty,
+          reason: 'token file(s) listed but not on disk: $ghosts — renamed '
+              'or deleted without updating gen_design_md.dart');
+    });
+
+    test('every unscanned entry carries a real reason, not a placeholder', () {
+      for (final entry in kUnscannedTokenFiles.entries) {
+        expect(entry.value.trim().length, greaterThanOrEqualTo(40),
+            reason: '${entry.key} is excluded with a reason too short to '
+                'describe a mechanism. "TODO"/"n/a" is how an exclusion '
+                'outlives the thing that justified it.');
+      }
+    });
+  });
 }

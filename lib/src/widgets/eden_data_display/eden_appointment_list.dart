@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/eden_status_palette.dart';
+import '../../tokens/glyph_ink.dart';
 import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../../tokens/typography.dart';
@@ -246,8 +247,6 @@ class _EdenAppointmentsTruncated extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final EdenStatusPalette palette =
-        theme.extension<EdenStatusPalette>() ?? EdenStatusPalette.commercial();
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: EdenSpacing.space4,
@@ -261,10 +260,22 @@ class _EdenAppointmentsTruncated extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
+          // GLYPH TONE, NOT THE BASE HUE. `palette.warningFg` (#F59E0B) on
+          // `surfaceContainerLow` is 2.06:1 in the light theme against WCAG
+          // 1.4.11's 3:1 floor for non-text — and 8.25:1 in dark, which is
+          // why it read as fine. The hue is tuned against the dark surface;
+          // see `EdenGlyphInk`. The icon keeps the warning hue (nothing else
+          // on this row carries it) and takes the tone that clears the floor
+          // on the surface it is actually painted on: 4.81:1 light, 8.25:1
+          // dark.
           Icon(
+            // KEYED so a contrast test can name THIS glyph rather than find
+            // it by icon data or by geometry. A finder that matches the wrong
+            // node reports "fine" and "did not look" identically.
+            key: const ValueKey<String>('eden-appointment-truncated-icon'),
             Icons.filter_list_outlined,
             size: _kTruncatedIconSize,
-            color: palette.warningFg,
+            color: EdenGlyphInk.of(context).warning,
           ),
           const SizedBox(width: EdenSpacing.space2),
           Expanded(
@@ -626,8 +637,24 @@ class _EdenAppointmentStatus extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final EdenStatusPalette palette =
         theme.extension<EdenStatusPalette>() ?? EdenStatusPalette.commercial();
-    final Color dot = switch (EdenAppointmentStatusTone.of(status)) {
-      EdenAppointmentStatusTone.confirmed => palette.successFg,
+    // GLYPH TONE, NOT THE BASE HUE — the comment above says the colour moved
+    // onto the dot precisely so the WORD could stay legible, and then the dot
+    // was painted in a hue that is 2.00:1 on this chip in the light theme
+    // (5.87:1 dark). Under 1.4.11's 3:1 floor. The dot is redundant with the
+    // word beside it and so arguably exempt; it is fixed anyway, because a
+    // hue that is invisible in half the themes it ships in is a defect on its
+    // own terms. `EdenGlyphInk.success` is 4.32:1 light, 5.87:1 dark here.
+    //
+    // `neutralFg` is left alone: #52525B on `surfaceContainerHigh`
+    // (`neutral[200]` `#E4E4E7`, `eden_theme.dart:53`) is 6.09:1 light — not
+    // the 5.14:1 this comment used to quote, which nothing computed
+    // (eden-ui-flutter#58 code review, lower-6: re-derived, corrected in the
+    // same pass rather than copied forward) — and the dark palette's own
+    // value clears the floor too. It was never part of this class of
+    // failure — it is a neutral, not a hue.
+    final EdenAppointmentStatusTone tone = EdenAppointmentStatusTone.of(status);
+    final Color dot = switch (tone) {
+      EdenAppointmentStatusTone.confirmed => EdenGlyphInk.of(context).success,
       EdenAppointmentStatusTone.neutral => palette.neutralFg,
     };
 
@@ -644,6 +671,16 @@ class _EdenAppointmentStatus extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Container(
+            // KEYED PER TONE, not one key for both. `eden-appointment-status
+            // -dot` alone was attached to EVERY dot regardless of tone, so a
+            // test finding it with `findsWidgets` + `.first` measured
+            // whichever appointment happened to render first — green on the
+            // fixture order the five stories shipped in (all `confirmed`),
+            // and silently blind to a `confirmed` dot regressing the day a
+            // `neutral` row led the list (eden-ui-flutter#58 code review).
+            // Keying each tone separately lets a test find the CONFIRMED dot
+            // by name, with exact cardinality, regardless of row order.
+            key: ValueKey<String>('eden-appointment-status-dot-${tone.name}'),
             width: _kStatusDotSize,
             height: _kStatusDotSize,
             decoration: BoxDecoration(color: dot, shape: BoxShape.circle),

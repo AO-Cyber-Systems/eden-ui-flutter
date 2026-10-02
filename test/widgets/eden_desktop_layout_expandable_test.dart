@@ -622,10 +622,13 @@ void main() {
       final headerLabelDx = tester.getTopLeft(find.text('Aurora')).dx;
       final childLabelDx = tester.getTopLeft(find.text('Kickoff notes')).dx;
 
-      // The header sits behind a 4px pad + an 18px chevron + a 4px gap, so its
-      // icon starts at 38 inside a sidebar whose ListView pads by 12.
-      expect(headerIconDx, 38.0, reason: 'header geometry is the baseline');
-      expect(headerLabelDx, 70.0);
+      // The header sits behind a 4px pad + an 18px chevron + a 12px gap, so
+      // its icon starts at 46 inside a sidebar whose ListView pads by 12.
+      // The gap grew from 4 to 12 (eden-ui-flutter#58 code review, lower-1):
+      // at 4 the pill painted over the chevron (measured invariant
+      // `gap >= inset.left`, i.e. `gap >= 10`); 12 leaves 2px of clearance.
+      expect(headerIconDx, 46.0, reason: 'header geometry is the baseline');
+      expect(headerLabelDx, 78.0);
 
       // RECLAIMED. 20-02 originally paid for containment with a 14px indent
       // (children at 38/70, lined up under their own header's icon). Horizontal

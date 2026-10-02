@@ -3,7 +3,7 @@ import '../../tokens/radii.dart';
 import '../../tokens/spacing.dart';
 import '../eden_selectable_region.dart';
 import 'layout_data.dart';
-import 'nav_ink.dart';
+import 'nav_selection_indicator.dart';
 
 /// Standard mobile layout with app bar, bottom navigation, and drawer.
 ///
@@ -561,14 +561,14 @@ class EdenMobileLayout extends StatelessWidget {
                     // Insets: 8 horizontal / 4 vertical makes the pill 40x32
                     // around ListTile's 24px glyph — inside the 40px leading
                     // slot, and 24px clear of the title.
-                    leading: _NavSelectionIndicator(
+                    leading: EdenNavSelectionIndicator(
                       isSelected: item.id == selectedId,
                       inset:
                           const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       child: Icon(
                         item.id == selectedId ? (item.activeIcon ?? item.icon) : item.icon,
                         color: item.id == selectedId
-                            ? _NavSelectionIndicator.selectedGlyph
+                            ? EdenNavSelectionIndicator.selectedGlyph
                             : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -593,7 +593,7 @@ class EdenMobileLayout extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: _NavSelectionIndicator.selectedGlyph,
+                                  color: EdenNavSelectionIndicator.selectedGlyph,
                                 )),
                           )
                         : null,
@@ -684,7 +684,7 @@ class _BottomItem extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 // The indicator is POSITIONED inside
-                // [_NavSelectionIndicator], so it paints around the glyph
+                // [EdenNavSelectionIndicator], so it paints around the glyph
                 // without taking part in layout.
                 //
                 // MEASURED, not stylistic: the bar is a fixed 60px and the
@@ -701,14 +701,14 @@ class _BottomItem extends StatelessWidget {
                 // Insets: 3 vertical keeps the pill 1px clear of the label's
                 // box across the 4px gap; 13 horizontal makes it 48 wide,
                 // which fits five tabs on a 320px viewport.
-                _NavSelectionIndicator(
+                EdenNavSelectionIndicator(
                   isSelected: isSelected,
                   inset: const EdgeInsets.symmetric(horizontal: 13, vertical: 3),
                   child: Icon(
                     isSelected ? (item.activeIcon ?? item.icon) : item.icon,
                     size: 22,
                     color: isSelected
-                        ? _NavSelectionIndicator.selectedGlyph
+                        ? EdenNavSelectionIndicator.selectedGlyph
                         : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -750,7 +750,7 @@ class _BottomItem extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: _NavSelectionIndicator.selectedGlyph,
+                            color: EdenNavSelectionIndicator.selectedGlyph,
                           )),
                     ),
                   ),
@@ -838,14 +838,14 @@ class _DrawerTile extends StatelessWidget {
             // the left and 4px clear of the label across the 14px gap, and
             // 9px clear of the row above and below — so it cannot collide
             // with an adjacent row's target.
-            _NavSelectionIndicator(
+            EdenNavSelectionIndicator(
               isSelected: isSelected,
               inset: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               child: Icon(
                 isSelected ? (item.activeIcon ?? item.icon) : item.icon,
                 size: 20,
                 color: isSelected
-                    ? _NavSelectionIndicator.selectedGlyph
+                    ? EdenNavSelectionIndicator.selectedGlyph
                     : theme.colorScheme.onSurfaceVariant,
               ),
             ),
@@ -875,7 +875,7 @@ class _DrawerTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
-                      color: _NavSelectionIndicator.selectedGlyph,
+                      color: EdenNavSelectionIndicator.selectedGlyph,
                     )),
               ),
           ],
@@ -885,92 +885,10 @@ class _DrawerTile extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Selected-state indicator — ONE definition, three surfaces
-// ---------------------------------------------------------------------------
-
-/// Paints the mobile shell's "this row is selected" indicator behind [child].
-///
-/// WHY THIS IS ONE WIDGET AND NOT THREE COPIES. The bottom bar, the drawer and
-/// the "More" sheet are three renderings of the same nav row, and for a while
-/// they DISAGREED about what selected looks like: the bar was fixed to move
-/// the brand gold off the label and onto an indicator (c828c87) while
-/// `_DrawerTile` and the sheet's `ListTile` kept the gold on the text at
-/// 1.97:1 and 2.11:1. Two selection languages in one app, and the second one
-/// unobservable because no test ever opened those surfaces. A single widget is
-/// what stops them drifting apart again: a change to the indicator is a change
-/// everywhere, and a surface that opts out has to say so at its call site.
-///
-/// The pill is [Positioned] with NEGATIVE insets inside a [Clip.none] stack,
-/// so it paints around the glyph without taking part in layout. That is
-/// measured, not stylistic — an indicator that sized the bottom bar's column
-/// overflowed the bar's fixed 60px by 7px (see `_BottomItem`). [inset] is how
-/// far the pill extends beyond the glyph on each side, so each surface sizes
-/// it to its own glyph without duplicating the mechanism.
-///
-/// The rim is load-bearing. WCAG 1.4.11 asks 3:1 for the visual information
-/// that identifies a component's state, against the ADJACENT colour, and in
-/// the light theme the gold fill never clears it (2.11:1 on the drawer,
-/// 2.20:1 on the bar). `onPrimaryContainer` does, for every EdenColors preset
-/// and in both themes — gold 7.14, blue 8.88, emerald 8.53, purple 9.28, red
-/// 8.46, slate 15.21 on the light drawer; 12.5-13.8 across the dark one.
-class _NavSelectionIndicator extends StatelessWidget {
-  const _NavSelectionIndicator({
-    required this.isSelected,
-    required this.inset,
-    required this.child,
-  });
-
-  /// Whether to paint the indicator at all. An indicator on every row
-  /// indicates nothing, so this is never defaulted.
-  final bool isSelected;
-
-  /// How far the pill extends BEYOND [child] on each side, in logical pixels.
-  final EdgeInsets inset;
-
-  /// The glyph the indicator sits behind. Sizes the stack; the pill does not.
-  final Widget child;
-
-  /// The colour a glyph takes when it sits ON the indicator's fill.
-  ///
-  /// `EdenColors.neutral[900]` and NOT `colorScheme.onSurface`: onSurface
-  /// inverts with the theme, and neutral[100] on gold[400] is 2.12:1 — the
-  /// dark theme would gain a new failure. A near-black glyph clears 3:1 on
-  /// every preset's fill (worst case slate at 3.72:1) and 4.5:1 as text on
-  /// the badge (worst case slate, still above the floor).
-  ///
-  /// One getter rather than a literal at each site: the bar, the drawer tile,
-  /// the sheet row and all three badges must move together or they are back to
-  /// disagreeing. The definition moved to `nav_ink.dart` when the DESKTOP
-  /// RAIL turned out to be the fourth surface carrying the same defect — a
-  /// getter in a private widget of the mobile layout could not reach it.
-  static Color get selectedGlyph => edenNavOnFillInk;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        if (isSelected)
-          Positioned(
-            left: -inset.left,
-            right: -inset.right,
-            top: -inset.top,
-            bottom: -inset.bottom,
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                border: Border.all(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  width: 1.5,
-                ),
-                borderRadius: EdenRadii.borderRadiusFull,
-              ),
-            ),
-          ),
-        child,
-      ],
-    );
-  }
-}
+// Selected-state indicator: `EdenNavSelectionIndicator` in
+// `nav_selection_indicator.dart`, beside `nav_ink.dart`. It used to be a
+// leading-underscore private class in this file — promoted when the desktop
+// rail turned out to be the fourth surface carrying the mobile three's
+// defect (eden-ui-flutter#58 code review): the ink was unified across four
+// surfaces here already, and the indicator was not, which is how the rail's
+// selection state ended up with no colour-bearing carrier at all.
