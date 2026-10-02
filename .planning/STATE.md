@@ -95,3 +95,4 @@ Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downst
 | 11 | update the two story-count gates for the collapsed-rail story (66 -> 67) | 2026-09-29 | f4459ba | eden-ui-contrast |
 | 12 | correct the fifth stale ratio: onSurface on the rail fill is 17.72/16.12, not the deleted band's 16.47/13.74 | 2026-09-30 | 0d49f59 | eden-ui-contrast |
 | 13 | land the 12 regenerated baselines and retire kAwaitingCIBaseline | 2026-10-01 | 3cac754 | eden-ui-contrast |
+| 11 | finding H: source railFill from a reference row, not by excluding the badge's own fill | 2026-10-02 | fae6332 | issue-63 |
