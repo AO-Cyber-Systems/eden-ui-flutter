@@ -128,6 +128,28 @@ Future<Color> paintedBackgroundOf(
     }
   }
 
+  // GUARD (d): a zero-area node (empty histogram) must name itself, not
+  // crash. Without this check, EMPIRICALLY (not assumed — both reproduced
+  // live by `measure_ink_guards_test.dart` group "(d)" with this guard
+  // disabled): the TRANSLUCENT branch below calls
+  // `histogram.entries.reduce(...)` on an empty map and surfaces Dart's bare
+  // `Bad state: No element`, naming nothing a caller could act on; the
+  // OPAQUE path falls through to the `best == null` throw further down, and
+  // CRASHES WHILE CONSTRUCTING that error's own message
+  // (`element.widget.runtimeType`, a null-check failure) rather than ever
+  // raising it — so neither path answers the caller with a usable refusal
+  // (eden-ui-flutter#63 item 5).
+  if (histogram.isEmpty) {
+    throw StateError(
+      'the node found by $finder has zero area to measure: its rect is '
+      '$region. There are no pixels to read a background out of, so this '
+      'refuses by name rather than falling into the translucent branch\'s '
+      'bare "No element" crash, or the opaque path\'s attempt to build its '
+      'own "every pixel is explainable as the ink" message — which itself '
+      'crashes on a zero-area node rather than ever being raised.',
+    );
+  }
+
   // GUARD (b): the surface is resolved BEFORE a translucent ink is rejected.
   // The old guard threw for EVERY translucent ink up front, on the theory
   // that `_isNear` below compares ALL FOUR bytes of a candidate pixel

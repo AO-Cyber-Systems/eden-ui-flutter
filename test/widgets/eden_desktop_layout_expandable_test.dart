@@ -643,7 +643,10 @@ void main() {
       expect(tester.getTopLeft(find.text('Retro')).dx, 56.0);
 
       // 20-02's original invariant was `child >= header`. It is RETIRED here,
-      // deliberately: it is now false by design (24 < 38), because the thing it
+      // deliberately: it is now false by design (24 < 46 — the header icon is
+      // 46, not the 38 an earlier revision of this comment named, from before
+      // eden-ui-flutter#58's review widened `_kExpandableChevronGap` 4 -> 12),
+      // because the thing it
       // was standing in for — "these rows belong to the group above them" — is
       // carried by the rule instead of by the inset. Retiring it without
       // replacing it would leave case 22 green on exactly the layout 20-02 was
