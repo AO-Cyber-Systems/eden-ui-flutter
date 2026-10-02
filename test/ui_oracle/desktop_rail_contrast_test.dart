@@ -417,6 +417,60 @@ void main() {
     );
   });
 
+  testWidgets(
+      "a SELECTED expandable header's selection pill does not overlap its "
+      "own chevron — the MIRROR of the badge overlap check above, for the "
+      'invariant eden-ui-flutter#63 item 4 found living only in a dartdoc',
+      (WidgetTester tester) async {
+    await wrap(
+      tester,
+      EdenDesktopLayout(
+        navItems: const <EdenNavItem>[
+          EdenNavItem(
+            id: 'proj-aurora',
+            label: 'Aurora',
+            icon: Icons.folder_outlined,
+            expandable: true,
+            children: <EdenNavItem>[
+              EdenNavItem(
+                  id: 'conv-kickoff',
+                  label: 'Kickoff notes',
+                  icon: Icons.chat_bubble_outline),
+            ],
+          ),
+        ],
+        // The group's OWN id as selectedId: `_ExpandableNavHeader` reads
+        // `isSelected` from `item.id == widget.selectedId`, so this selects
+        // the HEADER itself and paints its pill — no story renders this
+        // state (both generated `nav-item/expandable-*` stories select
+        // 'home' while the group is 'reports').
+        selectedId: 'proj-aurora',
+        onNavChanged: (_) {},
+        user: _user,
+        body: const SizedBox.shrink(),
+      ),
+    );
+
+    final Rect chevronRect =
+        tester.getRect(find.byIcon(Icons.keyboard_arrow_right));
+    final Rect pillRect = tester.getRect(
+        find.byKey(const ValueKey<String>('eden-nav-selection-indicator')));
+    expect(
+      pillRect.overlaps(chevronRect),
+      isFalse,
+      reason: 'the non-overlap invariant `gap >= inset.left` '
+          '(eden_desktop_layout.dart:685-697, `_kExpandableChevronGap` vs '
+          "`_ExpandableNavHeader`'s indicator inset) lives only in a "
+          'dartdoc today. `headerIconDx == 46` '
+          '(eden_desktop_layout_expandable_test.dart) pins `leftPad + '
+          'chevron + gap` and says nothing about the inset half of the '
+          'invariant: at the OLD gap of 4 the pill\'s left edge sat at '
+          "4 + 18 + 4 - 10 = 16, inside the chevron's own [4, 22] box — "
+          'the pill painted OVER the chevron, with that geometry test still '
+          'green. This is the assertion that should have caught it.',
+    );
+  });
+
   for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
     ('light', ThemeMode.light),
     ('dark', ThemeMode.dark),
