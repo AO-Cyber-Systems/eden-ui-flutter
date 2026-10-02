@@ -474,15 +474,31 @@ void main() {
 
     testWidgets(
         'the EXPANDED badge carries its shape on the rail\'s own fill, rim '
-        'or fill, not just a comment claiming it does ($mode)',
+        'or fill, MEASURED from the frame rather than sourced from the '
+        'token the layout happens to use ($mode)',
         (WidgetTester tester) async {
       await wrap(tester, _rail(false), themeMode: themeMode);
       final BuildContext context =
           tester.element(find.byType(EdenDesktopLayout));
       final ThemeData theme = Theme.of(context);
-      final Color railFill = theme.brightness == Brightness.dark
-          ? EdenColors.neutral[900]!
-          : Colors.white;
+
+      // MEASURED, not `theme.brightness == dark ? neutral[900] : white` — a
+      // transcription of `eden_desktop_layout.dart:317` that is blind to
+      // anything painting BETWEEN the badge and the rail (eden-ui-flutter#63
+      // item 1). Same mechanism as the RIM case ~200 lines up, against the
+      // same keyed row: excluding the pill's fill (which is the same
+      // `colorScheme.primary` token the badge's own fill uses) leaves the
+      // histogram's mode as the row's own painted background, selected or
+      // not.
+      final Finder selectedRow =
+          find.byKey(const ValueKey<String>('eden-nav-row-home'));
+      final Finder indicator = find
+          .byKey(const ValueKey<String>('eden-nav-selection-indicator'));
+      final BoxDecoration pillDecoration =
+          tester.widget<Container>(indicator).decoration! as BoxDecoration;
+      final Color pillFill = pillDecoration.color!;
+      final Color railFill =
+          await paintedBackgroundOf(tester, selectedRow, pillFill);
 
       final BoxDecoration decoration = tester
               .widget<Container>(
@@ -503,8 +519,8 @@ void main() {
         carried,
         greaterThanOrEqualTo(3.0),
         reason: "the EXPANDED badge's boundary against the rail's own "
-            "fill (${hexOf(railFill)}) is carried by its $carrier: rim "
-            '${rimRatio.toStringAsFixed(2)}:1, fill '
+            "fill (${hexOf(railFill)}, measured) is carried by its "
+            '$carrier: rim ${rimRatio.toStringAsFixed(2)}:1, fill '
             '${fillRatio.toStringAsFixed(2)}:1. `_Badge` is consumed by '
             'BOTH `_NavTile` branches, and expanded it sits on the rail\'s '
             'own fill, not a pill — a distinct adjacency from the collapsed '
@@ -513,6 +529,38 @@ void main() {
             'and today (before the rim) the fill alone is the only '
             'candidate.',
       );
+
+      // CARRIER IDENTITY (eden-ui-flutter#63 item 2). `reason:` above fires
+      // only on FAILURE, so a PASS never recorded which side carried the
+      // boundary — the `_Badge` dartdoc's claim that a carrier swap is
+      // "visible in a diff instead of silently absorbed by `max`" was not
+      // true until this asserts it directly. Verified ground truth,
+      // re-derived rather than trusted: light rim 17.72 / fill 2.20; dark
+      // rim 1.00 (the same token as the dark rail fill, so it is inert
+      // there, not wrong) / fill 7.61 — the carrier SWAPS by theme, and this
+      // pins which one per theme as an identity a future swap must visibly
+      // break, rather than being absorbed by `max`.
+      if (theme.brightness == Brightness.light) {
+        expect(
+          rimRatio,
+          greaterThan(fillRatio),
+          reason: 'in LIGHT the rim must carry the boundary: rim '
+              '${rimRatio.toStringAsFixed(2)}:1 vs fill '
+              '${fillRatio.toStringAsFixed(2)}:1. If the fill ever '
+              'overtakes it, the carrier has swapped silently and this is '
+              'what is supposed to make that visible.',
+        );
+      } else {
+        expect(
+          fillRatio,
+          greaterThan(rimRatio),
+          reason: 'in DARK the fill must carry the boundary: fill '
+              '${fillRatio.toStringAsFixed(2)}:1 vs rim '
+              '${rimRatio.toStringAsFixed(2)}:1. The rim is the same token '
+              'as the dark rail fill, so it is inert there, and the fill '
+              'is the only candidate left to carry it.',
+        );
+      }
     });
   }
 }
