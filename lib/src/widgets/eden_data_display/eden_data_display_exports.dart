@@ -11,3 +11,45 @@
 export 'agent_intent_data.dart';
 export 'eden_appointment_list.dart';
 export 'eden_refusal.dart';
+
+// IMPORTED as well as exported, deliberately: a barrel that only re-exports
+// cannot SEE the symbols it names, and [kDataDisplayComponents] below has to
+// reference them.
+import 'eden_appointment_list.dart';
+import 'eden_refusal.dart';
+
+/// Every `component_id` this package can actually render, paired with the
+/// widget that renders it.
+///
+/// THE FIRST AUTHORITATIVE LIST, and until now there was none on either side
+/// of the seam. A headless agent names a surface by `component_id` and this
+/// package draws it; eden-biz carries 15 recorded fixtures using 10 distinct
+/// ids, and its own integrity test (`go/internal/agentintent/
+/// fixtures_integrity_test.go`) asserts only that the field is NON-EMPTY. So
+/// an agent could emit `summary/pipeline`, the Go fixture test would pass,
+/// and nothing anywhere knew the renderer cannot draw it. An unknown
+/// `component_id` was an UNDETECTABLE condition; this list is what makes it
+/// a detectable one.
+///
+/// TWO ENTRIES TODAY, AND THAT IS THE POINT. Eight of eden-biz's ten ids have
+/// no renderer here — `card/proposal`, `detail/appointment`,
+/// `detail/customer-history`, `list/customers`, `list/services`,
+/// `list/availability-slots`, `summary/pipeline`, `summary/scheduling`. An
+/// honest list of two plus a working refusal path beats a hand-maintained
+/// list of ten, eight of which would be lies. [EdenRefusal] is the declared
+/// destination for an id that is not here.
+///
+/// DIRECTION OF THE DEPENDENCY: this declares what eden-ui CAN RENDER, and
+/// eden-biz checks its fixtures against it. The reverse — hard-coding
+/// eden-biz's fixture ids here — would invert the dependency and make the
+/// component library track the agent's test data.
+///
+/// THE ID COMES FROM THE WIDGET'S OWN STATIC, never a re-typed literal. A
+/// re-typed string is a second list, and a second list is the drift this
+/// exists to close. `test/tool/emit_component_manifest_test.dart` holds the
+/// closed partition: every `componentId` declared under this directory must
+/// appear here, and every entry here must still exist in source.
+const List<(String, Type)> kDataDisplayComponents = <(String, Type)>[
+  (EdenAppointmentList.componentId, EdenAppointmentList),
+  (EdenRefusal.componentId, EdenRefusal),
+];
