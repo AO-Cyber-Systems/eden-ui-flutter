@@ -97,3 +97,4 @@ Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downst
 | 13 | land the 12 regenerated baselines and retire kAwaitingCIBaseline | 2026-10-01 | 3cac754 | eden-ui-contrast |
 | 11 | finding H: source railFill from a reference row, not by excluding the badge's own fill | 2026-10-02 | fae6332 | issue-63 |
 | 12 | issue 63 remainder: restore independent EdenGlyphInk oracle, precondition note | 2026-10-03 | ee59c75 | issue-63 |
+| 13 | finding D: story for a selected expandable header with a badge | 2026-10-03 | 5684171 | issue-63 |
