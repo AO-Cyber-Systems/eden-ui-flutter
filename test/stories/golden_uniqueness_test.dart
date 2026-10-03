@@ -165,7 +165,20 @@ class AwaitingCIBaseline {
 ///
 /// Leaving an entry here after its PNG lands would be a permanent hole in the
 /// floor wearing a temporary label.
-const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[];
+const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[
+  AwaitingCIBaseline(
+    'nav-item_expandable-selected-badged.light.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'nav-item/expandable-selected-badged story (light) — the SELECTED '
+        'expandable header, which no story rendered before '
+        'eden-ui-flutter#63, and whose badge is `_Badge`s third call site.',
+  ),
+  AwaitingCIBaseline(
+    'nav-item_expandable-selected-badged.dark.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'nav-item/expandable-selected-badged story (dark).',
+  ),
+];
 
 /// Every committed baseline, keyed by file name, with its bytes base64'd so
 /// two files can be compared by one map lookup.
