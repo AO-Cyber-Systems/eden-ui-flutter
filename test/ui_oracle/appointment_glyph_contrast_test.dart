@@ -145,21 +145,39 @@ void main() {
       final Finder confirmedDot = confirmedDots.first;
 
       final Color resolvedInk = decorationInk(tester, confirmedDot);
-      // Read through EdenGlyphInk.of(context) — the SAME call the migrated
-      // widget now makes (eden-ui-flutter#58 code review, lower-3) — rather
-      // than the bare Brightness form, so this assertion is checking that
-      // the call site resolves THROUGH .of(context), not merely that the
-      // numbers still happen to agree.
-      final BuildContext glyphContext = tester.element(confirmedDot);
+
+      // THE EXPECTATION IS DERIVED FROM THIS TEST'S OWN LOOP VARIABLE, not
+      // from the widget's context — and the difference is the whole value of
+      // the assertion (eden-ui-flutter#63 §4).
+      //
+      // This read `EdenGlyphInk.of(glyphContext).success` and claimed to be
+      // "checking that the call site resolves THROUGH .of(context)". It
+      // could not. `EdenGlyphInk.of` is `EdenGlyphInkSet._(Theme.of(context)
+      // .brightness)` and the widget's own `theme` is `Theme.of(context)`,
+      // so both sides computed the SAME expression and agreed for every
+      // context. Reverting the product to the bare `EdenGlyphInk.success(
+      // theme.brightness)` spelling left both assertions passing — an
+      // assertion that cannot fail for the reason it names.
+      //
+      // Worse, it was a net WEAKENING: the form before the #58 migration
+      // derived brightness from `themeMode` here, independently, which is
+      // what makes the check an oracle rather than a mirror. If
+      // `EdenGlyphInk.of` ever regressed to
+      // `MediaQuery.platformBrightnessOf`, a context-derived expectation
+      // would move with it and go blind; this one would not.
+      final Brightness expectedBrightness =
+          themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
+
       // THE RATIO ALONE CANNOT TELL YOU WHICH TONE IT MEASURED — a glyph
       // that drifted onto `neutralFg` could still clear 3:1 by accident and
       // this identity check is the one that would catch it. Both together:
       // the ratio (below) is the conformance floor, the identity is the
       // spelling check this file exists to enforce.
-      expect(resolvedInk, equals(EdenGlyphInk.of(glyphContext).success),
-          reason: 'the confirmed dot must resolve to exactly '
-              'EdenGlyphInk.of(context).success, not merely something that '
-              'happens to clear the floor.');
+      expect(resolvedInk, equals(EdenGlyphInk.success(expectedBrightness)),
+          reason: 'the confirmed dot must resolve to exactly the $mode '
+              'member of EdenGlyphInk.success, not merely something that '
+              'happens to clear the floor. (Expected value derived from this '
+              "test's themeMode, NOT from the widget's context — see above.)");
 
       // 2.00:1 light / 5.87:1 dark before #55; 4.32:1 / 5.87:1 after. The
       // dark tone is UNCHANGED — the base hue already cleared the floor
@@ -195,14 +213,17 @@ void main() {
           reason: 'the truncated fixture must actually render its notice '
               'icon, or this run reports on nothing.');
 
-      // Read through EdenGlyphInk.of(context) — the same call the migrated
-      // widget now makes — so this is checking the call site resolves
-      // THROUGH .of(context), not merely that the numbers still agree.
       final Color resolvedIcon = iconInk(tester, icon);
-      final BuildContext glyphContext = tester.element(icon);
-      expect(resolvedIcon, equals(EdenGlyphInk.of(glyphContext).warning),
-          reason: 'the truncation-notice icon must resolve to exactly '
-              'EdenGlyphInk.of(context).warning.');
+
+      // Derived from THIS test's themeMode, not from the widget's context —
+      // same reason as the dot above (eden-ui-flutter#63 §4). A
+      // context-derived expectation computes the identical expression the
+      // product does and therefore cannot fail for the reason it names.
+      final Brightness expectedBrightness =
+          themeMode == ThemeMode.light ? Brightness.light : Brightness.dark;
+      expect(resolvedIcon, equals(EdenGlyphInk.warning(expectedBrightness)),
+          reason: 'the truncation-notice icon must resolve to exactly the '
+              '$mode member of EdenGlyphInk.warning.');
 
       // 2.06:1 light / 8.25:1 dark before #55; 4.81:1 / 8.25:1 after.
       await expectInkContrast(
