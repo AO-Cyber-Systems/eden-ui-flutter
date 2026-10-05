@@ -99,3 +99,5 @@ Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downst
 | 12 | issue 63 remainder: restore independent EdenGlyphInk oracle, precondition note | 2026-10-03 | ee59c75 | issue-63 |
 | 13 | finding D: story for a selected expandable header with a badge | 2026-10-03 | 5684171 | issue-63 |
 | 14 | land the 2 new baselines for the selected-expandable story and retire kAwaitingCIBaseline | 2026-10-05 | 003de3f | issue-63 |
+| 15 | agent-component manifest: declare and verify the renderable component_id set (3 files, inline per cost review) | 2026-10-02 | 7ab1ca3 | eden-ui-contrast |
+| 17 | close #64 review findings: duplicate ids, lib-wide scan, tautological case 5, regex fail-open | 2026-10-05 | 14427b4 | eden-ui-contrast |
