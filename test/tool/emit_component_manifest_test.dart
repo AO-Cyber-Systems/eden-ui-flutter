@@ -25,19 +25,63 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../tool/emit_component_manifest.dart';
 
-/// Where the data-display components live, relative to the package root.
+/// Where the data-display components live. Used for the "add it here"
+/// guidance and for the vacuity guard, NOT for membership — see [_kScanDir].
 const String _kComponentDir = 'lib/src/widgets/eden_data_display';
 
-/// Matches `static const String componentId = '<id>';`.
+/// THE SCAN IS LIB-WIDE, and the reason is a gate that would otherwise report
+/// the same thing for "clean" and "not looked at".
 ///
-/// TEXTUAL, not a Dart parse — so a COMMENTED-OUT declaration is a false
-/// positive. That is the same trade `tool/gen_design_md.dart` already makes
-/// and it is stated rather than hidden: the alternative is a Dart parser,
-/// which is a great deal of machinery to guard a directory of this size, and
-/// a parser has its own silent-failure modes. A false positive here fails
-/// LOUDLY (an id in source with no declaration), which is the safe direction.
-final RegExp _componentIdPattern =
-    RegExp(r"static\s+const\s+String\s+componentId\s*=\s*'([^']*)'\s*;");
+/// This scanned `_kComponentDir` only. Nothing in the repo requires a
+/// `componentId` widget to live there, and the escape is not hypothetical:
+/// `summary/pipeline` is one of eden-biz's ten ids and
+/// `lib/src/widgets/eden_pipeline_graph.dart` already exists at the TOP
+/// level. Adding the declaration to that existing file — the natural place
+/// for it — meant the scan never read it, cases 1/3/4 all stayed green, and
+/// the manifest silently omitted a renderable surface. That is the direction
+/// this whole gate calls unsafe.
+///
+/// The repo's own lint config documents the identical escape one level down,
+/// on its `enforced_paths` globs: "A new component built outside the enforced
+/// globs would have run `dart run custom_lint` green while using raw colours
+/// and raw spacing — a gate that reports the same thing for 'clean' and 'not
+/// looked at'." Same shape, reproduced one level up.
+///
+/// Measured cost of closing it: 542 `.dart` files under `lib/`, 22ms to read
+/// them all, and the same two ids come back today — so widening is zero-risk
+/// and strictly stronger.
+const String _kScanDir = 'lib';
+
+/// Matches a `componentId` string declaration, in the spellings that analyze
+/// and lint clean in THIS repo.
+///
+/// `static const String componentId = '…';` is the house style, but neither
+/// `prefer_single_quotes` nor any type-annotation lint is enabled here
+/// (`analysis_options.yaml` includes only `flutter_lints` → `lints`
+/// recommended), so `"double quoted"` and an un-annotated `static const`
+/// both pass every gate in the repo. A strict pattern therefore fails OPEN on
+/// the two most plausible ways the next component gets written. Hence the
+/// optional type, either quote character, and an optional `r` prefix.
+///
+/// TEXTUAL, not a Dart parse. The trade is stated in both directions rather
+/// than only the flattering one:
+///
+///  - FAIL LOUD (safe): a commented-out or doc-comment declaration is a false
+///    positive — an id "in source" with no entry, so case 1 reds with a
+///    message naming the file. Same trade `tool/gen_design_md.dart` makes.
+///  - FAIL OPEN (unsafe): an id built by concatenation or interpolation, a
+///    `static final`, or a `static String get componentId =>` is invisible to
+///    this pattern. [_kLooseIdPattern] is the tripwire for exactly that —
+///    anything that mentions `componentId =` but does not parse as a literal
+///    makes case "regex-coverage" red, so a style this cannot read fails
+///    loudly instead of silently.
+final RegExp _componentIdPattern = RegExp(
+    r"""static\s+const\s+(?:String\s+)?componentId\s*=\s*r?['"]([^'"]*)['"]\s*;""");
+
+/// Deliberately loose: anything that assigns to a `componentId`. Counted
+/// against [_componentIdPattern]'s matches so a declaration style the strict
+/// pattern cannot read is reported rather than skipped.
+final RegExp _kLooseIdPattern = RegExp(r'\bcomponentId\s*=');
 
 String _repoRoot() {
   final String root = Directory.current.path;
@@ -50,29 +94,66 @@ String _repoRoot() {
   return root;
 }
 
-/// Every `component_id` declared in source under [_kComponentDir], mapped to
-/// the file that declares it (for failure messages that name a path).
-Map<String, String> _idsInSource(String root) {
-  final Directory dir = Directory('$root/$_kComponentDir');
+/// Every `component_id` declared anywhere under [_kScanDir], mapped to EVERY
+/// file that declares it.
+///
+/// A `List` of paths per id, not one path. Keyed single-valued this silently
+/// dropped a second declaration of the same id — map size stayed 1, cases 1
+/// and 3 compared equal sets, and two widgets claiming one id was
+/// undetectable. The list is what lets case "source-duplicates" name both
+/// files.
+///
+/// Paths are ROOT-RELATIVE, not basenames: across 542 files a bare file name
+/// is ambiguous.
+Map<String, List<String>> _idsInSource(String root) {
+  final Directory dir = Directory('$root/$_kScanDir');
   if (!dir.existsSync()) {
-    fail('$_kComponentDir does not exist. If the components moved, this '
-        'whole gate is vacuous and every case below would pass trivially.');
+    fail('$_kScanDir does not exist. If the package layout moved, this whole '
+        'gate is vacuous and every case below would pass trivially.');
   }
-  final Map<String, String> found = <String, String>{};
+  final Map<String, List<String>> found = <String, List<String>>{};
   for (final File file in dir
       .listSync(recursive: true, followLinks: false)
       .whereType<File>()
       .where((File f) => f.path.endsWith('.dart'))) {
     final String source = file.readAsStringSync();
+    final String rel = file.path.replaceAll(r'\', '/').replaceFirst(
+          '${root.replaceAll(r'\', '/')}/',
+          '',
+        );
     for (final RegExpMatch m in _componentIdPattern.allMatches(source)) {
-      found[m.group(1)!] = file.uri.pathSegments.last;
+      found.putIfAbsent(m.group(1)!, () => <String>[]).add(rel);
     }
   }
   return found;
 }
 
-Set<String> _declaredIds() =>
-    kDataDisplayComponents.map(((String, Type) e) => e.$1).toSet();
+/// Files whose `componentId =` the strict pattern could not read, with the
+/// count of each. Feeds the regex-coverage tripwire.
+Map<String, (int loose, int strict)> _idPatternCoverage(String root) {
+  final Map<String, (int, int)> out = <String, (int, int)>{};
+  for (final File file in Directory('$root/$_kScanDir')
+      .listSync(recursive: true, followLinks: false)
+      .whereType<File>()
+      .where((File f) => f.path.endsWith('.dart'))) {
+    final String source = file.readAsStringSync();
+    final int loose = _kLooseIdPattern.allMatches(source).length;
+    if (loose == 0) continue;
+    final int strict = _componentIdPattern.allMatches(source).length;
+    if (loose != strict) {
+      out[file.path.replaceAll(r'\', '/').replaceFirst(
+            '${root.replaceAll(r'\', '/')}/',
+            '',
+          )] = (loose, strict);
+    }
+  }
+  return out;
+}
+
+List<String> _declaredIdList() =>
+    kDataDisplayComponents.map(((String, Type) e) => e.$1).toList();
+
+Set<String> _declaredIds() => _declaredIdList().toSet();
 
 void main() {
   group('closed partition', () {
@@ -100,7 +181,7 @@ void main() {
     });
 
     test('case 1 (happy): every component_id in source is declared', () {
-      final Map<String, String> inSource = _idsInSource(_repoRoot());
+      final Map<String, List<String>> inSource = _idsInSource(_repoRoot());
       final Set<String> declared = _declaredIds();
 
       final Set<String> undeclared =
@@ -108,7 +189,7 @@ void main() {
       expect(undeclared, isEmpty,
           reason: 'component_id(s) declared in source but missing from '
               'kDataDisplayComponents: '
-              '${undeclared.map((String id) => '$id (${inSource[id]})').join(', ')}\n'
+              '${undeclared.map((String id) => '$id (${inSource[id]!.join(', ')})').join('; ')}\n'
               'A component the manifest does not name is a surface the agent '
               'will be told this package cannot render, while the widget sits '
               'right there. Add it to kDataDisplayComponents in '
@@ -118,14 +199,71 @@ void main() {
     });
 
     test('case 3 (ghost): every declared entry still exists in source', () {
-      final Map<String, String> inSource = _idsInSource(_repoRoot());
+      final Map<String, List<String>> inSource = _idsInSource(_repoRoot());
 
-      final Set<String> ghosts = _declaredIds().difference(inSource.keys.toSet());
+      final Set<String> ghosts =
+          _declaredIds().difference(inSource.keys.toSet());
       expect(ghosts, isEmpty,
           reason: 'kDataDisplayComponents names component_id(s) that no '
               'source file declares: ${ghosts.join(', ')}. A component was '
               'renamed or deleted without updating the declaration, so the '
               'manifest promises the agent a surface that no longer exists.');
+    });
+
+    test('source-duplicates: no component_id is declared by two widgets', () {
+      final Map<String, List<String>> inSource = _idsInSource(_repoRoot());
+
+      final Map<String, List<String>> dupes = <String, List<String>>{
+        for (final MapEntry<String, List<String>> e in inSource.entries)
+          if (e.value.length > 1) e.key: e.value,
+      };
+      expect(dupes, isEmpty,
+          reason: 'component_id(s) declared by more than one widget: '
+              '${dupes.entries.map((MapEntry<String, List<String>> e) => '${e.key} -> ${e.value.join(' AND ')}').join('; ')}\n'
+              'WHICH WIDGET RENDERS AN ID is the entire product of this '
+              'seam, so two claimants is the undetectable condition the '
+              'manifest exists to remove. The emitted JSON would carry two '
+              'objects with one component_id, and a Go consumer '
+              'unmarshalling into a map keeps whichever lands last.');
+    });
+
+    test('declaration-duplicates: kDataDisplayComponents names each id once',
+        () {
+      final List<String> all = _declaredIdList();
+
+      // LENGTH AGAINST SET SIZE, because every other assertion in this file
+      // compares Sets and a duplicate collapses invisibly in all of them:
+      // case 1 and case 3 would see equal sets, case 5 equal sets, case 6
+      // would sort [a, a, b] and find it sorted, and case 7 iterates each
+      // entry on its own. Green everywhere, two entries emitted.
+      expect(all.length, _declaredIds().length,
+          reason: 'kDataDisplayComponents lists ${all.length} entries but '
+              'only ${_declaredIds().length} distinct component_id(s). A '
+              'duplicate collapses in every Set comparison in this file, so '
+              'this length check is the only place it can surface.');
+    });
+
+    test(
+        'regex-coverage: no `componentId =` in lib/ is invisible to the '
+        'strict pattern', () {
+      final Map<String, (int, int)> unreadable =
+          _idPatternCoverage(_repoRoot());
+
+      // THE TRIPWIRE. `_componentIdPattern` reads the spellings that lint
+      // clean here, but it cannot read an id built by concatenation or
+      // interpolation, a `static final`, or a getter. Those fail OPEN — the
+      // component simply never appears in the scan — which is the one
+      // direction this gate must not fail in. Counting a deliberately loose
+      // match against the strict one turns that silence into a failure.
+      expect(unreadable, isEmpty,
+          reason: 'file(s) mention `componentId =` in a form the strict '
+              'pattern cannot read (loose vs strict match counts): '
+              '${unreadable.entries.map((MapEntry<String, (int, int)> e) => '${e.key} ${e.value.$1} vs ${e.value.$2}').join('; ')}\n'
+              'Either write the declaration as a plain literal '
+              '(`static const String componentId = \'x/y\';`) or widen '
+              '_componentIdPattern — but do NOT delete this case: a style '
+              'the scan cannot read is a component that escapes the '
+              'partition silently.');
     });
 
     // Case 2 — the undeclared-component failure mode — is NOT asserted here.
@@ -144,10 +282,21 @@ void main() {
           .map((Map<String, Object> e) => e['component_id']! as String)
           .toSet();
 
-      // DERIVED on both sides. A hardcoded `{'list/appointments',
-      // 'error/refusal'}` would need editing every time a component lands,
-      // and would pass while asserting nothing about the emitter.
-      expect(fromManifest, equals(_declaredIds()),
+      // AGAINST THE SOURCE SCAN, not against kDataDisplayComponents.
+      //
+      // This compared `fromManifest` to `_declaredIds()`. Both derived from
+      // kDataDisplayComponents, so it was the same expression on each side —
+      // a tautology with a `map()` in the middle, and the identical defect a
+      // review found in PR #58's `expect(resolvedInk,
+      // EdenGlyphInk.of(ctx).success)`. All it could detect was a filter or
+      // a constant added inside buildComponentManifestEntries's eight lines,
+      // and a key rename already fails case 7.
+      //
+      // Pointed at the scan it closes EMITTER -> SOURCE directly: the
+      // artifact a consumer reads is tied to the widgets on disk, and the
+      // hand-written declaration becomes a cross-checked third party rather
+      // than the single root all five assertions grew from.
+      expect(fromManifest, equals(_idsInSource(_repoRoot()).keys.toSet()),
           reason: 'the emitted manifest and kDataDisplayComponents disagree. '
               'buildComponentManifestEntries() must emit exactly the declared '
               'set — no filtering, no additions.');

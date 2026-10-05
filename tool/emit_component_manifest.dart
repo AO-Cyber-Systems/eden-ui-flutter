@@ -75,8 +75,19 @@ const List<String> kComponentManifestKeys = <String>[
 ///
 /// Sorted by `component_id` so the emitted bytes are stable regardless of
 /// declaration order, and a diff of the manifest shows only real changes.
-/// `compareTo` on the id is a total order (ids are unique — the closed
-/// partition test proves it), so the sort needs no tiebreak.
+///
+/// UNIQUENESS IS ASSERTED, NOT ASSUMED. This comment used to claim the sort
+/// "needs no tiebreak" because "ids are unique — the closed partition test
+/// proves it". It did not: the source scan keys a `Map` by id so a second
+/// declaration of the same id overwrote the first, and both the declaration
+/// side and the manifest side compared `Set`s, so a duplicate collapsed on
+/// every path and every case stayed green while the emitted JSON carried two
+/// objects with one id. A Go consumer unmarshalling that into a map keeps
+/// whichever lands last — and "which widget renders this id" is the entire
+/// product of this seam. The uniqueness cases in
+/// `test/tool/emit_component_manifest_test.dart` are what make the claim
+/// true; until they existed it was a stated safety property with nothing
+/// behind it.
 List<Map<String, Object>> buildComponentManifestEntries() {
   final List<Map<String, Object>> entries = <Map<String, Object>>[
     for (final (String id, Type widget) in kDataDisplayComponents)
