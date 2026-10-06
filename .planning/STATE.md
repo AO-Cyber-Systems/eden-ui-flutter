@@ -95,5 +95,9 @@ Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downst
 | 11 | update the two story-count gates for the collapsed-rail story (66 -> 67) | 2026-09-29 | f4459ba | eden-ui-contrast |
 | 12 | correct the fifth stale ratio: onSurface on the rail fill is 17.72/16.12, not the deleted band's 16.47/13.74 | 2026-09-30 | 0d49f59 | eden-ui-contrast |
 | 13 | land the 12 regenerated baselines and retire kAwaitingCIBaseline | 2026-10-01 | 3cac754 | eden-ui-contrast |
+| 11 | finding H: source railFill from a reference row, not by excluding the badge's own fill | 2026-10-02 | fae6332 | issue-63 |
+| 12 | issue 63 remainder: restore independent EdenGlyphInk oracle, precondition note | 2026-10-03 | ee59c75 | issue-63 |
+| 13 | finding D: story for a selected expandable header with a badge | 2026-10-03 | 5684171 | issue-63 |
+| 14 | land the 2 new baselines for the selected-expandable story and retire kAwaitingCIBaseline | 2026-10-05 | 003de3f | issue-63 |
 | 15 | agent-component manifest: declare and verify the renderable component_id set (3 files, inline per cost review) | 2026-10-02 | 7ab1ca3 | eden-ui-contrast |
 | 17 | close #64 review findings: duplicate ids, lib-wide scan, tautological case 5, regex fail-open | 2026-10-05 | 14427b4 | eden-ui-contrast |

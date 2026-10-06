@@ -160,6 +160,53 @@ final List<EdenStory> edenNavItemStories = <EdenStory>[
     ),
   ),
 
+  /// Pins the SELECTED expandable header — the state no story rendered until
+  /// eden-ui-flutter#63, and the reason a pill-over-chevron overprint shipped
+  /// invisible.
+  ///
+  /// `_ExpandableNavHeader` paints `EdenNavSelectionIndicator` only when
+  /// `isSelected`, and both `expandable-*` stories above select `'home'`
+  /// while their group is `'reports'` — so the selected header was in no
+  /// golden, and the pill's left edge sitting inside the chevron's box
+  /// (`inset.left` 10 against a 4px gap) was pinned by nothing. The
+  /// executable form of that invariant lives in
+  /// `test/ui_oracle/desktop_rail_contrast_test.dart`; this story is what
+  /// puts the rendered pixels under the oracle.
+  ///
+  /// BADGED, deliberately. `_Badge`'s third call site is this header, and it
+  /// sits on the rail's own fill rather than on the pill — a distinct
+  /// adjacency from the collapsed-selected case, and the one that had no
+  /// test, no story and no golden at all (#63 item 3). Selecting the group by
+  /// its own id is what makes the header selected rather than a child.
+  EdenStory(
+    id: 'nav-item/expandable-selected-badged',
+    component: 'nav-item',
+    name: 'Expandable selected badged',
+    icon: Icons.label_important_outline,
+    knobs: const [],
+    inputModality: EdenInputModality.pointer,
+    build: (context, _) => _shell(
+      const <EdenNavItem>[
+        EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
+        EdenNavItem(
+          id: 'reports',
+          label: 'Reports',
+          icon: Icons.insert_chart_outlined,
+          badge: '4',
+          expandable: true,
+          initiallyExpanded: true,
+          children: _kGroupChildren,
+        ),
+        // Unbadged, unselected sibling: the rail-fill reference the badge's
+        // boundary is read against, and the row the disclosed children must
+        // not spill onto.
+        EdenNavItem(
+            id: 'settings', label: 'Settings', icon: Icons.settings_outlined),
+      ],
+      selectedId: 'reports',
+    ),
+  ),
+
   /// Pins a caption as a PASSIVE label: uppercase section text, no icon, and —
   /// per EdenNavItem.caption's contract — no tap target and no button role, so
   /// `expectUiSane` sees zero tap actions on it, which is correct.

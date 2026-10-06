@@ -417,6 +417,60 @@ void main() {
     );
   });
 
+  testWidgets(
+      "a SELECTED expandable header's selection pill does not overlap its "
+      "own chevron — the MIRROR of the badge overlap check above, for the "
+      'invariant eden-ui-flutter#63 item 4 found living only in a dartdoc',
+      (WidgetTester tester) async {
+    await wrap(
+      tester,
+      EdenDesktopLayout(
+        navItems: const <EdenNavItem>[
+          EdenNavItem(
+            id: 'proj-aurora',
+            label: 'Aurora',
+            icon: Icons.folder_outlined,
+            expandable: true,
+            children: <EdenNavItem>[
+              EdenNavItem(
+                  id: 'conv-kickoff',
+                  label: 'Kickoff notes',
+                  icon: Icons.chat_bubble_outline),
+            ],
+          ),
+        ],
+        // The group's OWN id as selectedId: `_ExpandableNavHeader` reads
+        // `isSelected` from `item.id == widget.selectedId`, so this selects
+        // the HEADER itself and paints its pill — no story renders this
+        // state (both generated `nav-item/expandable-*` stories select
+        // 'home' while the group is 'reports').
+        selectedId: 'proj-aurora',
+        onNavChanged: (_) {},
+        user: _user,
+        body: const SizedBox.shrink(),
+      ),
+    );
+
+    final Rect chevronRect =
+        tester.getRect(find.byIcon(Icons.keyboard_arrow_right));
+    final Rect pillRect = tester.getRect(
+        find.byKey(const ValueKey<String>('eden-nav-selection-indicator')));
+    expect(
+      pillRect.overlaps(chevronRect),
+      isFalse,
+      reason: 'the non-overlap invariant `gap >= inset.left` '
+          '(eden_desktop_layout.dart:685-697, `_kExpandableChevronGap` vs '
+          "`_ExpandableNavHeader`'s indicator inset) lives only in a "
+          'dartdoc today. `headerIconDx == 46` '
+          '(eden_desktop_layout_expandable_test.dart) pins `leftPad + '
+          'chevron + gap` and says nothing about the inset half of the '
+          'invariant: at the OLD gap of 4 the pill\'s left edge sat at '
+          "4 + 18 + 4 - 10 = 16, inside the chevron's own [4, 22] box — "
+          'the pill painted OVER the chevron, with that geometry test still '
+          'green. This is the assertion that should have caught it.',
+    );
+  });
+
   for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
     ('light', ThemeMode.light),
     ('dark', ThemeMode.dark),
@@ -474,15 +528,31 @@ void main() {
 
     testWidgets(
         'the EXPANDED badge carries its shape on the rail\'s own fill, rim '
-        'or fill, not just a comment claiming it does ($mode)',
+        'or fill, MEASURED from the frame rather than sourced from the '
+        'token the layout happens to use ($mode)',
         (WidgetTester tester) async {
       await wrap(tester, _rail(false), themeMode: themeMode);
       final BuildContext context =
           tester.element(find.byType(EdenDesktopLayout));
       final ThemeData theme = Theme.of(context);
-      final Color railFill = theme.brightness == Brightness.dark
-          ? EdenColors.neutral[900]!
-          : Colors.white;
+
+      // MEASURED, not `theme.brightness == dark ? neutral[900] : white` — a
+      // transcription of `eden_desktop_layout.dart:317` that is blind to
+      // anything painting BETWEEN the badge and the rail (eden-ui-flutter#63
+      // item 1). Same mechanism as the RIM case ~200 lines up, against the
+      // same keyed row: excluding the pill's fill (which is the same
+      // `colorScheme.primary` token the badge's own fill uses) leaves the
+      // histogram's mode as the row's own painted background, selected or
+      // not.
+      final Finder selectedRow =
+          find.byKey(const ValueKey<String>('eden-nav-row-home'));
+      final Finder indicator = find
+          .byKey(const ValueKey<String>('eden-nav-selection-indicator'));
+      final BoxDecoration pillDecoration =
+          tester.widget<Container>(indicator).decoration! as BoxDecoration;
+      final Color pillFill = pillDecoration.color!;
+      final Color railFill =
+          await paintedBackgroundOf(tester, selectedRow, pillFill);
 
       final BoxDecoration decoration = tester
               .widget<Container>(
@@ -503,8 +573,8 @@ void main() {
         carried,
         greaterThanOrEqualTo(3.0),
         reason: "the EXPANDED badge's boundary against the rail's own "
-            "fill (${hexOf(railFill)}) is carried by its $carrier: rim "
-            '${rimRatio.toStringAsFixed(2)}:1, fill '
+            "fill (${hexOf(railFill)}, measured) is carried by its "
+            '$carrier: rim ${rimRatio.toStringAsFixed(2)}:1, fill '
             '${fillRatio.toStringAsFixed(2)}:1. `_Badge` is consumed by '
             'BOTH `_NavTile` branches, and expanded it sits on the rail\'s '
             'own fill, not a pill — a distinct adjacency from the collapsed '
@@ -512,6 +582,262 @@ void main() {
             'fill alone is required to carry it, but at least one MUST, '
             'and today (before the rim) the fill alone is the only '
             'candidate.',
+      );
+
+      // CARRIER IDENTITY (eden-ui-flutter#63 item 2). `reason:` above fires
+      // only on FAILURE, so a PASS never recorded which side carried the
+      // boundary — the `_Badge` dartdoc's claim that a carrier swap is
+      // "visible in a diff instead of silently absorbed by `max`" was not
+      // true until this asserts it directly. Verified ground truth,
+      // re-derived rather than trusted: light rim 17.72 / fill 2.20; dark
+      // rim 1.00 (the same token as the dark rail fill, so it is inert
+      // there, not wrong) / fill 7.61 — the carrier SWAPS by theme, and this
+      // pins which one per theme as an identity a future swap must visibly
+      // break, rather than being absorbed by `max`.
+      if (theme.brightness == Brightness.light) {
+        expect(
+          rimRatio,
+          greaterThan(fillRatio),
+          reason: 'in LIGHT the rim must carry the boundary: rim '
+              '${rimRatio.toStringAsFixed(2)}:1 vs fill '
+              '${fillRatio.toStringAsFixed(2)}:1. If the fill ever '
+              'overtakes it, the carrier has swapped silently and this is '
+              'what is supposed to make that visible.',
+        );
+      } else {
+        expect(
+          fillRatio,
+          greaterThan(rimRatio),
+          reason: 'in DARK the fill must carry the boundary: fill '
+              '${fillRatio.toStringAsFixed(2)}:1 vs rim '
+              '${rimRatio.toStringAsFixed(2)}:1. The rim is the same token '
+              'as the dark rail fill, so it is inert there, and the fill '
+              'is the only candidate left to carry it.',
+        );
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // THE BADGE'S OTHER TWO UNMEASURED CONTEXTS (eden-ui-flutter#63 item 3).
+  // `_Badge` has three call sites; only collapsed-SELECTED (on the pill) and
+  // expanded-selected (above, on the rail's own fill) had a fixture before
+  // this. Collapsed-UNSELECTED (on the rail's own fill — no pill underneath
+  // it, because `EdenNavSelectionIndicator` paints nothing when
+  // `isSelected` is false) and `_ExpandableNavHeader` (also on the rail's
+  // own fill) are covered here, each against a MEASURED background.
+  // ---------------------------------------------------------------------
+
+  for (final (String mode, ThemeMode themeMode) in <(String, ThemeMode)>[
+    ('light', ThemeMode.light),
+    ('dark', ThemeMode.dark),
+  ]) {
+    testWidgets(
+        "an UNSELECTED collapsed row's badge carries its shape on the "
+        "rail's own fill — no pill underneath it, unlike the collapsed "
+        'SELECTED case above ($mode)', (WidgetTester tester) async {
+      const List<EdenNavItem> items = <EdenNavItem>[
+        EdenNavItem(id: 'home', label: 'Home', icon: Icons.home_outlined),
+        EdenNavItem(
+            id: 'reports',
+            label: 'Reports',
+            icon: Icons.insert_chart_outlined,
+            badge: '5'),
+        // THE RAIL-FILL REFERENCE ROW. Carries neither a badge nor a pill,
+        // so its box is rail fill plus one glyph and its mode is the rail's
+        // own fill unambiguously. See the sourcing note below for why the
+        // background cannot be read off the badged row itself.
+        EdenNavItem(
+            id: 'reference', label: 'Settings', icon: Icons.settings_outlined),
+      ];
+      await wrap(
+        tester,
+        EdenDesktopLayout(
+          navItems: items,
+          selectedId: 'home',
+          onNavChanged: (_) {},
+          user: _user,
+          initiallyCollapsed: true,
+          body: const SizedBox.shrink(),
+        ),
+        themeMode: themeMode,
+      );
+
+      final Finder row =
+          find.byKey(const ValueKey<String>('eden-nav-row-reports'));
+
+      // Scoped to THIS row — `home` is selected and carries its own pill, so
+      // an unscoped search for the key would find that one and prove
+      // nothing about Reports.
+      expect(
+        find.descendant(
+            of: row,
+            matching: find
+                .byKey(const ValueKey<String>('eden-nav-selection-indicator'))),
+        findsNothing,
+        reason: 'precondition: the badged row (Reports) is not selected, so '
+            'no pill exists under its badge — `_railItems` elsewhere in '
+            'this file only ever badges the SELECTED row, which is why '
+            'this context had no fixture at all.',
+      );
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      final Color badgeFill = decoration.color!;
+      final Color? rim = decoration.border?.top.color;
+
+      // SOURCED FROM A REFERENCE ROW, NOT BY EXCLUDING THE BADGE'S OWN FILL
+      // FROM ITS OWN ROW. The earlier form was
+      // `paintedBackgroundOf(tester, row, badgeFill)`, and it is a false
+      // PASS exactly when the test matters most — measured, not feared
+      // (eden-ui-flutter#63 finding H): force the badge's fill and rim to
+      // pure white, a genuine 1:1 adjacency failure against the light
+      // theme's white rail, and excluding badge-white also excludes the
+      // real background. The histogram then falls through to the next most
+      // common colour rather than refusing, which here is the row's own
+      // icon glyph `onSurfaceVariant` #71717A, and the test reports a
+      // comfortable 4.83:1 "carried by fill" while the badge is in fact
+      // invisible.
+      //
+      // The EXPANDED test above does not have this hole because it excludes
+      // the PILL's fill — a different element from the one under
+      // measurement. This mirrors that: the reference row has no badge and
+      // no pill, so excluding its icon ink leaves the rail's own fill as an
+      // unambiguous mode, and nothing about the badge can influence the
+      // background it is compared against.
+      final Finder referenceRow =
+          find.byKey(const ValueKey<String>('eden-nav-row-reference'));
+      final Color railFill = await paintedBackgroundOf(
+        tester,
+        referenceRow,
+        iconInk(
+          tester,
+          find.descendant(
+              of: referenceRow, matching: find.byIcon(Icons.settings_outlined)),
+        ),
+      );
+
+      // The guard the old form needed and could not have: if the badge's
+      // fill and the measured rail fill are the same colour, the pair is
+      // 1.00:1 and no exclusion arithmetic can rescue it. Stated as its own
+      // assertion so the failure names the collision rather than arriving
+      // as a confusing ratio.
+      expect(badgeFill, isNot(equals(railFill)),
+          reason: 'the badge fill and the rail fill measured identical '
+              '(${hexOf(badgeFill)}). The badge has no boundary at all '
+              'there, and any contrast figure computed from this frame '
+              'would be describing something other than the badge.');
+
+      final double rimRatio = rim == null ? 0 : wcagContrast(rim, railFill);
+      final double fillRatio = wcagContrast(badgeFill, railFill);
+      final double carried = rimRatio > fillRatio ? rimRatio : fillRatio;
+      final String carrier = rimRatio > fillRatio ? 'rim' : 'fill';
+
+      expect(
+        carried,
+        greaterThanOrEqualTo(3.0),
+        reason: "the UNSELECTED collapsed badge's boundary against the "
+            "rail's own fill (${hexOf(railFill)}, measured from the "
+            'reference row) is carried by its $carrier: rim '
+            '${rimRatio.toStringAsFixed(2)}:1, fill '
+            '${fillRatio.toStringAsFixed(2)}:1.',
+      );
+    });
+
+    testWidgets(
+        "an _ExpandableNavHeader's badge carries its shape on the rail's "
+        'own fill — the THIRD `_Badge` call site, which had no test, no '
+        'story and no golden before eden-ui-flutter#63 ($mode)',
+        (WidgetTester tester) async {
+      const List<EdenNavItem> items = <EdenNavItem>[
+        EdenNavItem(
+          id: 'proj-aurora',
+          label: 'Aurora',
+          icon: Icons.folder_outlined,
+          badge: '2',
+          expandable: true,
+          children: <EdenNavItem>[
+            EdenNavItem(
+                id: 'conv-kickoff',
+                label: 'Kickoff notes',
+                icon: Icons.chat_bubble_outline),
+          ],
+        ),
+        // THE RAIL-FILL REFERENCE ROW — see the sourcing note below. Plain,
+        // unselected, unbadged, not expandable: its box is rail fill plus
+        // one glyph, so the background is unambiguous.
+        EdenNavItem(
+            id: 'reference', label: 'Settings', icon: Icons.settings_outlined),
+      ];
+      await wrap(
+        tester,
+        EdenDesktopLayout(
+          navItems: items,
+          selectedId: 'none',
+          onNavChanged: (_) {},
+          user: _user,
+          body: const SizedBox.shrink(),
+        ),
+        themeMode: themeMode,
+      );
+
+      expect(find.text('2'), findsOneWidget,
+          reason: "the measurement needs the header's badge actually "
+              'rendered — nothing in this suite pumped this call site '
+              'before.');
+
+      // The header row's own key is no longer needed: the background comes
+      // from the reference row below, and there is exactly one badge in
+      // this fixture so the badge finder needs no scoping.
+      final BoxDecoration decoration = tester
+              .widget<Container>(
+                  find.byKey(const ValueKey<String>('eden-nav-badge')))
+              .decoration!
+          as BoxDecoration;
+      final Color badgeFill = decoration.color!;
+      final Color? rim = decoration.border?.top.color;
+
+      // SOURCED FROM A REFERENCE ROW — same reason as the unselected-
+      // collapsed case above (eden-ui-flutter#63 finding H). Excluding the
+      // badge's own fill from its own row is a false PASS precisely when
+      // the badge matches the background: the exclusion removes the real
+      // background too and the histogram falls through to the row's glyph
+      // ink instead of refusing.
+      final Finder referenceRow =
+          find.byKey(const ValueKey<String>('eden-nav-row-reference'));
+      final Color railFill = await paintedBackgroundOf(
+        tester,
+        referenceRow,
+        iconInk(
+          tester,
+          find.descendant(
+              of: referenceRow, matching: find.byIcon(Icons.settings_outlined)),
+        ),
+      );
+
+      expect(badgeFill, isNot(equals(railFill)),
+          reason: 'the badge fill and the rail fill measured identical '
+              '(${hexOf(badgeFill)}) — the badge has no boundary there, and '
+              'any ratio from this frame describes something else.');
+
+      final double rimRatio = rim == null ? 0 : wcagContrast(rim, railFill);
+      final double fillRatio = wcagContrast(badgeFill, railFill);
+      final double carried = rimRatio > fillRatio ? rimRatio : fillRatio;
+      final String carrier = rimRatio > fillRatio ? 'rim' : 'fill';
+
+      expect(
+        carried,
+        greaterThanOrEqualTo(3.0),
+        reason: "the _ExpandableNavHeader badge's boundary against the "
+            "rail's own fill (${hexOf(railFill)}, measured from the "
+            'reference row) is carried by its $carrier: rim '
+            '${rimRatio.toStringAsFixed(2)}:1, fill '
+            '${fillRatio.toStringAsFixed(2)}:1. Named in the `_Badge` '
+            'dartdoc (`eden_desktop_layout.dart:~1055`) but never pumped: '
+            '`_railItems` has no expandable item, and neither generated '
+            "`nav-item/expandable-*` story sets a badge.",
       );
     });
   }

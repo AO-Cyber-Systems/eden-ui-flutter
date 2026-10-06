@@ -161,6 +161,30 @@ void main() {
         themeMode: ThemeMode.dark);
   }, skip: kGoldenSkip);
 
+  testWidgets('nav-item/expandable-selected-badged — light — expectUiSane', (tester) async {
+    await expectStorySane(tester, storyById('nav-item/expandable-selected-badged'),
+        themeMode: ThemeMode.light,
+        inputModality: EdenInputModality.pointer);
+  });
+
+  testWidgets('nav-item/expandable-selected-badged — light — golden$kGoldenSkipSuffix',
+      (tester) async {
+    await expectStoryGolden(tester, storyById('nav-item/expandable-selected-badged'),
+        themeMode: ThemeMode.light);
+  }, skip: kGoldenSkip);
+
+  testWidgets('nav-item/expandable-selected-badged — dark — expectUiSane', (tester) async {
+    await expectStorySane(tester, storyById('nav-item/expandable-selected-badged'),
+        themeMode: ThemeMode.dark,
+        inputModality: EdenInputModality.pointer);
+  });
+
+  testWidgets('nav-item/expandable-selected-badged — dark — golden$kGoldenSkipSuffix',
+      (tester) async {
+    await expectStoryGolden(tester, storyById('nav-item/expandable-selected-badged'),
+        themeMode: ThemeMode.dark);
+  }, skip: kGoldenSkip);
+
   testWidgets('nav-item/long-label — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('nav-item/long-label'),
         themeMode: ThemeMode.light,

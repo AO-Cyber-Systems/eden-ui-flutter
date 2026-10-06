@@ -128,6 +128,28 @@ Future<Color> paintedBackgroundOf(
     }
   }
 
+  // GUARD (d): a zero-area node (empty histogram) must name itself, not
+  // crash. Without this check, EMPIRICALLY (not assumed — both reproduced
+  // live by `measure_ink_guards_test.dart` group "(d)" with this guard
+  // disabled): the TRANSLUCENT branch below calls
+  // `histogram.entries.reduce(...)` on an empty map and surfaces Dart's bare
+  // `Bad state: No element`, naming nothing a caller could act on; the
+  // OPAQUE path falls through to the `best == null` throw further down, and
+  // CRASHES WHILE CONSTRUCTING that error's own message
+  // (`element.widget.runtimeType`, a null-check failure) rather than ever
+  // raising it — so neither path answers the caller with a usable refusal
+  // (eden-ui-flutter#63 item 5).
+  if (histogram.isEmpty) {
+    throw StateError(
+      'the node found by $finder has zero area to measure: its rect is '
+      '$region. There are no pixels to read a background out of, so this '
+      'refuses by name rather than falling into the translucent branch\'s '
+      'bare "No element" crash, or the opaque path\'s attempt to build its '
+      'own "every pixel is explainable as the ink" message — which itself '
+      'crashes on a zero-area node rather than ever being raised.',
+    );
+  }
+
   // GUARD (b): the surface is resolved BEFORE a translucent ink is rejected.
   // The old guard threw for EVERY translucent ink up front, on the theory
   // that `_isNear` below compares ALL FOUR bytes of a candidate pixel
@@ -165,6 +187,24 @@ Future<Color> paintedBackgroundOf(
   // surface)` branch, `measure_ink.dart:276-277` below, is now LIVE) and
   // group "(b)" (the still-unmeasurable single-colour box, which must stay
   // throwing).
+  //
+  // THE PRECONDITION, stated because the paragraphs above read as an
+  // unconditional proof and are not one (eden-ui-flutter#63 item 5).
+  // Blending always moves a colour TOWARD the ink, so the surface survives
+  // the exclusion only while it is the histogram's extreme point in the
+  // direction AWAY from the ink — which is the normal case, and is why a
+  // glyph's mostly-background box is reliable. It fails when the box
+  // contains a colour FURTHER from the ink than the surface is: a light
+  // translucent ink over a mid-grey surface in a box that also holds a dark
+  // border, where `alphaBlend(ink, border)` lands within rounding of the
+  // surface. The surface is then excluded as "the ink over the border" and
+  // the mode becomes something else, silently.
+  //
+  // No current caller hits it (every box measured here is glyph-on-surface),
+  // and the general fix needs the surface known a priori — which is the
+  // thing this function exists to discover. So it is recorded rather than
+  // guarded: a reader who widens this to a bordered or multi-fill region
+  // needs to know the proof above has a boundary, and where it is.
   final bool translucent = ink.a < 1.0;
   if (translucent) {
     final MapEntry<int, int> leading =

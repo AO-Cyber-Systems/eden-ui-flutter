@@ -154,7 +154,13 @@ class AwaitingCIBaseline {
 /// between registering a story on a machine that cannot generate goldens and
 /// CI committing its pixels.
 ///
-/// The window this list was built for is now CLOSED:
+/// Two windows have opened and closed through this list so far, both in the
+/// eden-ui-flutter#58 lineage — `nav-item/expandable-selected-badged` (#63,
+/// the SELECTED expandable header, whose badge is `_Badge`'s third call site
+/// and which no story rendered) was the second, and its pair of entries was
+/// deleted in the same change that landed its PNGs.
+///
+/// The first:
 /// `desktop-layout/collapsed-badged-selection` (eden-ui-flutter#58, the story
 /// that pumps the COLLAPSED rail with the SELECTED row also badged — the
 /// fixture that would have caught the 1.00:1 invisible badge) had its two

@@ -252,10 +252,14 @@ void main() {
             'the caller (expectInkContrast) then double-blends the SAME '
             'ink a second time over its own already-composited appearance '
             'and reports ~1.0:1 against the WRONG colour — a spurious '
-            'failure pointing at nothing. paintedBackgroundOf must refuse a '
-            'translucent ink rather than silently mis-measure one; the '
-            'caller composites it against its actual background '
-            '(Color.alphaBlend) and passes that opaque colour instead.',
+            'failure pointing at nothing. This box is ENTIRELY one '
+            'composited colour, so paintedBackgroundOf must refuse it — '
+            'not because the ink is translucent (the "(a)+(b) combined" '
+            'group above measures a translucent ink successfully, against '
+            'a box with a second colour to explain it against), but '
+            'because there is no second colour HERE to distinguish the '
+            "box's own fill from the ink's composited appearance over an "
+            'unseen surface. Answering either would be a guess.',
       );
     });
   });
@@ -300,6 +304,67 @@ void main() {
             'whose paintBounds leave the view must throw, naming the '
             "node's rect and the view's, rather than answering a number "
             'for a node that was only partially measured.',
+      );
+    });
+  });
+
+  group('(d) paintedBackgroundOf given a zero-area node', () {
+    testWidgets(
+        'throws its own named refusal rather than the bare "No element" a '
+        "translucent ink's reduce would otherwise hit", (WidgetTester tester) async {
+      await wrap(
+        tester,
+        const SizedBox(
+          key: ValueKey<String>('probe-zero-area'),
+          width: 0,
+          height: 0,
+        ),
+      );
+      final Finder probe =
+          find.byKey(const ValueKey<String>('probe-zero-area'));
+      // Translucent ink: the regressed path — without the GUARD (d) early
+      // check, this falls straight into `histogram.entries.reduce(...)` on
+      // an empty map and Dart's bare `Bad state: No element` surfaces
+      // instead (eden-ui-flutter#63 item 5).
+      expect(
+        () => paintedBackgroundOf(tester, probe, const Color(0x1A10B981)),
+        throwsA(isA<StateError>().having(
+          (StateError e) => e.message,
+          'message',
+          contains('zero area'),
+        )),
+        reason: 'a node with no painted pixels must refuse by NAME — '
+            '"zero area to measure" — not by falling through to a crash '
+            'that names nothing this caller could act on.',
+      );
+    });
+
+    testWidgets(
+        'throws the SAME named refusal for an opaque ink, not the '
+        '"explainable as the ink" message a non-empty box with no '
+        'background would get', (WidgetTester tester) async {
+      await wrap(
+        tester,
+        const SizedBox(
+          key: ValueKey<String>('probe-zero-area-opaque'),
+          width: 0,
+          height: 0,
+        ),
+      );
+      final Finder probe =
+          find.byKey(const ValueKey<String>('probe-zero-area-opaque'));
+      expect(
+        () => paintedBackgroundOf(tester, probe, const Color(0xFF000000)),
+        throwsA(isA<StateError>().having(
+          (StateError e) => e.message,
+          'message',
+          contains('zero area'),
+        )),
+        reason: 'the opaque path falls through to "every pixel is '
+            'explainable as the ink" on an EMPTY histogram too — that '
+            'message is simply wrong for a node with no pixels at all, so '
+            'the zero-area case must be named before either branch is '
+            'reached.',
       );
     });
   });
