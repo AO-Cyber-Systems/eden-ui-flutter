@@ -239,3 +239,65 @@ enum EdenAppointmentStatusTone {
   static EdenAppointmentStatusTone of(String status) =>
       status.toLowerCase() == 'confirmed' ? confirmed : neutral;
 }
+
+// ---------------------------------------------------------------------------
+// list/customers
+// ---------------------------------------------------------------------------
+
+/// One row of a `list/customers` payload.
+///
+/// FIXTURE: `intent.data.customers[]` in eden-biz
+/// `go/internal/agentintent/testdata/11-find_customer-populated.json`, recorded
+/// from `find_customer(query: "Priya")`. Two rows, three keys each, and the
+/// keys below are transcribed from that recording rather than designed.
+@immutable
+class EdenCustomerSummary {
+  const EdenCustomerSummary({
+    required this.id,
+    required this.name,
+    required this.emailHint,
+  });
+
+  /// Wire key: `id`. A UUID. Carried so an action can name the row it was
+  /// fired against — see [EdenCustomerActionCallback].
+  final String id;
+
+  /// Wire key: `name`.
+  final String name;
+
+  /// Wire key: `email_hint`. **ALREADY MASKED BY THE TOOL**, and that is the
+  /// whole point of the field's name.
+  ///
+  /// The recording carries `p***@example.test`, not an address. The tool
+  /// decided what a caller with these scopes may see, and the renderer's job
+  /// is to display exactly that — never to unmask it, never to linkify it,
+  /// never to validate it as an email and style it as malformed because it
+  /// is not one. `find_customer` is a SEARCH surface: the hint exists to let
+  /// a human disambiguate two people called Priya without the payload
+  /// carrying either address.
+  ///
+  /// It is also why this is `emailHint` and not `email`. A field called
+  /// `email` invites a `mailto:` the data cannot support, and invites the
+  /// next component to expect a real address here.
+  final String emailHint;
+}
+
+/// The `intent.data` of a `list/customers` payload.
+///
+/// ONE KEY, and no truncation flag — unlike [EdenAppointmentListData]. The
+/// recording has no `truncated`, and `find_customer` is a query surface
+/// rather than a window over a known set, so there is no recorded signal
+/// that a result was cut. Adding a flag the payload never sends would be
+/// inventing a state no observation can produce.
+@immutable
+class EdenCustomerListData {
+  const EdenCustomerListData({required this.customers});
+
+  /// Wire key: `customers`.
+  ///
+  /// An empty LIST means "nobody matched" — a real answer, the same way
+  /// fixture 02's empty `appointments` does. There is no recorded
+  /// customers-empty fixture (eden-biz records one for appointments only),
+  /// so the empty STORY for this component is synthetic and says so.
+  final List<EdenCustomerSummary> customers;
+}

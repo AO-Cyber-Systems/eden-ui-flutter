@@ -171,7 +171,38 @@ class AwaitingCIBaseline {
 ///
 /// Leaving an entry here after its PNG lands would be a permanent hole in the
 /// floor wearing a temporary label.
-const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[];
+const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[
+  AwaitingCIBaseline(
+    'list-customers_populated.light.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'list-customers/populated story (light) — the recorded two-Priya disambiguation case with `open` granted.',
+  ),
+  AwaitingCIBaseline(
+    'list-customers_populated.dark.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'list-customers/populated story (dark) — the recorded two-Priya disambiguation case with `open` granted.',
+  ),
+  AwaitingCIBaseline(
+    'list-customers_read-only.light.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'list-customers/read-only story (light) — the SAME data with `intent.actions` emptied — the withheld-affordance half of the pair.',
+  ),
+  AwaitingCIBaseline(
+    'list-customers_read-only.dark.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'list-customers/read-only story (dark) — the SAME data with `intent.actions` emptied — the withheld-affordance half of the pair.',
+  ),
+  AwaitingCIBaseline(
+    'list-customers_empty.light.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'list-customers/empty story (light) — the synthetic `customers: []` state, where a blank card and a broken card look identical.',
+  ),
+  AwaitingCIBaseline(
+    'list-customers_empty.dark.png',
+    'awaiting the CI update_goldens dispatch for the new '
+        'list-customers/empty story (dark) — the synthetic `customers: []` state, where a blank card and a broken card look identical.',
+  ),
+];
 
 /// Every committed baseline, keyed by file name, with its bytes base64'd so
 /// two files can be compared by one map lookup.
