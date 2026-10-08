@@ -12,6 +12,7 @@ export 'agent_intent_data.dart';
 export 'eden_appointment_list.dart';
 export 'eden_customer_list.dart';
 export 'eden_refusal.dart';
+export 'eden_service_list.dart';
 
 // IMPORTED as well as exported, deliberately: a barrel that only re-exports
 // cannot SEE the symbols it names, and [kDataDisplayComponents] below has to
@@ -19,6 +20,7 @@ export 'eden_refusal.dart';
 import 'eden_appointment_list.dart';
 import 'eden_customer_list.dart';
 import 'eden_refusal.dart';
+import 'eden_service_list.dart';
 
 /// Every `component_id` this package can actually render, paired with the
 /// widget that renders it.
@@ -33,13 +35,13 @@ import 'eden_refusal.dart';
 /// `component_id` was an UNDETECTABLE condition; this list is what makes it
 /// a detectable one.
 ///
-/// THREE ENTRIES, AND THE COUNT IS THE POINT. Seven of eden-biz's ten ids
+/// FOUR ENTRIES, AND THE COUNT IS THE POINT. Six of eden-biz's ten ids
 /// still have no renderer here — `card/proposal`, `detail/appointment`,
-/// `detail/customer-history`, `list/services`,
-/// `list/availability-slots`, `summary/pipeline`, `summary/scheduling`. An
-/// honest list of two plus a working refusal path beats a hand-maintained
-/// list of ten, eight of which would be lies. [EdenRefusal] is the declared
-/// destination for an id that is not here.
+/// `detail/customer-history`, `list/availability-slots`,
+/// `summary/pipeline`, `summary/scheduling`. An honest list of four plus a
+/// working refusal path beats a hand-maintained list of ten, six of which
+/// would be lies. [EdenRefusal] is the declared destination for an id that
+/// is not here.
 ///
 /// DIRECTION OF THE DEPENDENCY: this declares what eden-ui CAN RENDER, and
 /// eden-biz checks its fixtures against it. The reverse — hard-coding
@@ -55,4 +57,5 @@ const List<(String, Type)> kDataDisplayComponents = <(String, Type)>[
   (EdenAppointmentList.componentId, EdenAppointmentList),
   (EdenRefusal.componentId, EdenRefusal),
   (EdenCustomerList.componentId, EdenCustomerList),
+  (EdenServiceList.componentId, EdenServiceList),
 ];

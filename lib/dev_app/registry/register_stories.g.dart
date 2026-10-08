@@ -10,6 +10,7 @@ import 'story_registry.dart';
 import '../../src/widgets/eden_data_display/eden_appointment_list.stories.dart';
 import '../../src/widgets/eden_data_display/eden_customer_list.stories.dart';
 import '../../src/widgets/eden_data_display/eden_refusal.stories.dart';
+import '../../src/widgets/eden_data_display/eden_service_list.stories.dart';
 import '../../src/widgets/eden_layout/eden_desktop_layout.stories.dart';
 import '../../src/widgets/eden_layout/eden_mobile_layout.stories.dart';
 import '../../src/widgets/eden_layout/eden_nav_item.stories.dart';
@@ -23,6 +24,9 @@ void registerGeneratedStories() {
     registry.register(s);
   }
   for (final s in edenRefusalStories) {
+    registry.register(s);
+  }
+  for (final s in edenServiceListStories) {
     registry.register(s);
   }
   for (final s in edenDesktopLayoutStories) {

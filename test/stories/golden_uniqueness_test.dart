@@ -154,6 +154,13 @@ class AwaitingCIBaseline {
 /// between registering a story on a machine that cannot generate goldens and
 /// CI committing its pixels.
 ///
+/// The THIRD window, `list/services`' ten baselines (eden-ui-flutter#50),
+/// opened and closed the way it is supposed to: the PNGs and these ten
+/// entries' deletion are one commit. The second window did not — d1178d3
+/// landed six baselines and dropped the retirement, because the commit took
+/// staged changes and that edit was not staged. CI caught it and f0855e5
+/// fixed it, which is case "awaiting-4" doing its job.
+///
 /// Two windows have opened and closed through this list so far, both in the
 /// eden-ui-flutter#58 lineage — `nav-item/expandable-selected-badged` (#63,
 /// the SELECTED expandable header, whose badge is `_Badge`'s third call site

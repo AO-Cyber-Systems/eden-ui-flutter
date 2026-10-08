@@ -301,3 +301,53 @@ class EdenCustomerListData {
   /// so the empty STORY for this component is synthetic and says so.
   final List<EdenCustomerSummary> customers;
 }
+
+/// One row of a `list/services` payload.
+///
+/// FIXTURE: eden-biz testdata 08 (`list_services`, `arguments: {}`). The
+/// tool's `OutputSchema` makes all four of these REQUIRED
+/// (`tool_catalog.go:80`), so none of them is nullable here.
+@immutable
+class EdenServiceSummary {
+  const EdenServiceSummary({
+    required this.id,
+    required this.name,
+    required this.durationMinutes,
+    required this.priceCents,
+  });
+
+  /// Wire key: `id`.
+  final String id;
+
+  /// Wire key: `name`.
+  final String name;
+
+  /// Wire key: `duration_minutes`.
+  final int durationMinutes;
+
+  /// Wire key: `price_cents` — "List price in minor units."
+  ///
+  /// THE PAYLOAD CARRIES NO CURRENCY. `appointment_types`, the table
+  /// `list_services` reads, has `price` and `price_cents` and no `currency`
+  /// column, while eleven other eden-biz tables (`payments`, `invoices`,
+  /// `orders`, …) each carry one. So money has a currency everywhere it is
+  /// collected and none where it is quoted: eden-biz#860.
+  ///
+  /// That is why [EdenServiceList.currencyCode] is a REQUIRED parameter
+  /// rather than a defaulted one — see its doc for why no default is
+  /// acceptable here.
+  final int priceCents;
+}
+
+/// A `list/services` payload's `intent.data`.
+///
+/// NO `truncated` FLAG, for the same reason [EdenCustomerListData] has none:
+/// the recording carries none, and `list_services` takes no arguments — it
+/// is the whole catalogue, not a window onto it.
+@immutable
+class EdenServiceListData {
+  const EdenServiceListData({required this.services});
+
+  /// Wire key: `services`. Empty is a real answer — an empty catalogue.
+  final List<EdenServiceSummary> services;
+}
