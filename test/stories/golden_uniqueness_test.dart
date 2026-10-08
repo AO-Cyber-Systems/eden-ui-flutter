@@ -151,8 +151,8 @@ class AwaitingCIBaseline {
 /// rather than leave a permanent hole in the floor.
 ///
 /// EMPTY IS THE RESTING STATE, and this list is NOT empty right now: a third
-/// window is open, for `list/services`' eight baselines. It closes in the
-/// commit that lands those PNGs, which must also delete these eight entries
+/// window is open, for `list/services`' ten baselines. It closes in the
+/// commit that lands those PNGs, which must also delete these ten entries
 /// — see the warning at the end of this doc, and see what happened when that
 /// pairing was broken (d1178d3 landed six baselines and dropped the
 /// retirement, because the commit took staged changes and that edit was not
@@ -234,6 +234,22 @@ const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[
   ),
   AwaitingCIBaseline(
     'list-services_catalogue.dark.png',
+    'eden-ui-flutter#50 `list/services`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/list-services, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'list-services_narrow.light.png',
+    'eden-ui-flutter#50 `list/services`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/list-services, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'list-services_narrow.dark.png',
     'eden-ui-flutter#50 `list/services`: registered on a macOS '
     'workstation, where kGoldenSkipReason is non-null so no golden '
     'can be blessed locally. Closed by the update_goldens dispatch '

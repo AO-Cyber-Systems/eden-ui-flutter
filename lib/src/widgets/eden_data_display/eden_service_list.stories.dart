@@ -6,7 +6,9 @@
 //   populated  -> 08-list_services-populated.json
 //   read-only  -> 08, with `intent.actions` emptied
 //   empty      -> SYNTHETIC; eden-biz records no services-empty case
-//   catalogue  -> SYNTHETIC; see below, and it is the one that earns its keep
+//   catalogue  -> SYNTHETIC; three rows, see below
+//   narrow     -> SYNTHETIC; the same three rows at 390, where the name
+//                 actually has to yield — see below
 //
 // EXCEPTION 1, `empty`. eden-biz records an empty case for appointments
 // (fixture 02) and not for services, so `services: []` is constructed. It is
@@ -15,16 +17,25 @@
 // that failed to draw — so it needs a baseline even though no recording
 // produces it.
 //
-// EXCEPTION 2, `catalogue`, AND WHY A FIXTURE-ONLY SET WOULD BE A GAP.
-// Fixture 08 records exactly ONE service. A single-row render cannot show
-// anything about the treatment BETWEEN rows: whether prices align on the
-// decimal, whether a long name pushes the price off the row, whether two
-// rows of different name lengths keep the same baseline. Those are the
-// defects this component is most likely to have, and a one-row baseline is
-// green for all of them. So this story is synthetic and says so, and the
-// rows are built to stress exactly those three things — a long name, a
-// price an order of magnitude larger, and a duration that crosses the hour
-// boundary the formatter branches on.
+// EXCEPTION 2, `catalogue` AND `narrow`, AND WHY A FIXTURE-ONLY SET WOULD
+// BE A GAP. Fixture 08 records exactly ONE service. A single-row render
+// cannot show anything about the treatment BETWEEN rows: whether prices
+// align on the decimal, whether a long name pushes the price off the row,
+// whether rows of different name lengths keep the same baseline. Those are
+// the defects this component is most likely to have, and a one-row baseline
+// is green for all of them.
+//
+// WHY IT TAKES TWO STORIES AND NOT ONE. `catalogue` at the default 1280
+// covers decimal alignment across three magnitudes and the hour boundary
+// the duration formatter branches on. It does NOT cover name-versus-price
+// competition, and the first rendered baseline is what showed that: at
+// 1280 there is so much free width that the 49-character name does not
+// come close to the price, so a truncation defect would render identically
+// to correct behaviour. `narrow` carries the same three rows at 390 —
+// where the name genuinely has to yield — so the claim and the check
+// match. A story that merely ASSERTS it stresses truncation, while
+// rendering untruncated, is the failure mode this catalogue exists to
+// prevent.
 //
 // INPUT MODALITY IS LEFT AT THE DEFAULT, deliberately, and the default is
 // the strict one: `EdenStory.inputModality` defaults to
@@ -152,6 +163,28 @@ final List<EdenStory> edenServiceListStories = <EdenStory>[
     name: 'Catalogue',
     icon: Icons.list_alt_outlined,
     knobs: const [],
+    build: (BuildContext context, _) => const EdenServiceList(
+      data: kFixtureServicesCatalogue,
+      currencyCode: 'USD',
+      actions: kFixtureServiceActions,
+      onAction: _noop,
+    ),
+  ),
+
+  /// SYNTHETIC, and the one that actually tests truncation.
+  ///
+  /// The same three rows at 390, the companion-app width. Here the
+  /// 49-character name has to yield to the price and the chevron, so the
+  /// `TextOverflow.ellipsis` on the name is load-bearing rather than
+  /// decorative — at the default 1280 it never engages, which is exactly
+  /// what the first `catalogue` baseline showed.
+  EdenStory(
+    id: 'list-services/narrow',
+    component: 'list-services',
+    name: 'Narrow',
+    icon: Icons.smartphone_outlined,
+    knobs: const [],
+    viewportWidth: 390,
     build: (BuildContext context, _) => const EdenServiceList(
       data: kFixtureServicesCatalogue,
       currencyCode: 'USD',

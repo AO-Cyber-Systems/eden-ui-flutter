@@ -65,6 +65,34 @@ void main() {
         themeMode: ThemeMode.dark);
   }, skip: kGoldenSkip);
 
+  testWidgets('list-services/narrow — light — expectUiSane', (tester) async {
+    await expectStorySane(tester, storyById('list-services/narrow'),
+        themeMode: ThemeMode.light,
+        width: 390,
+        inputModality: EdenInputModality.touch);
+  });
+
+  testWidgets('list-services/narrow — light — golden$kGoldenSkipSuffix',
+      (tester) async {
+    await expectStoryGolden(tester, storyById('list-services/narrow'),
+        themeMode: ThemeMode.light,
+        width: 390);
+  }, skip: kGoldenSkip);
+
+  testWidgets('list-services/narrow — dark — expectUiSane', (tester) async {
+    await expectStorySane(tester, storyById('list-services/narrow'),
+        themeMode: ThemeMode.dark,
+        width: 390,
+        inputModality: EdenInputModality.touch);
+  });
+
+  testWidgets('list-services/narrow — dark — golden$kGoldenSkipSuffix',
+      (tester) async {
+    await expectStoryGolden(tester, storyById('list-services/narrow'),
+        themeMode: ThemeMode.dark,
+        width: 390);
+  }, skip: kGoldenSkip);
+
   testWidgets('list-services/populated — light — expectUiSane', (tester) async {
     await expectStorySane(tester, storyById('list-services/populated'),
         themeMode: ThemeMode.light,

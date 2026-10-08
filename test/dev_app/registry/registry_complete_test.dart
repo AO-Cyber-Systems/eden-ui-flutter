@@ -33,9 +33,9 @@ void main() {
   });
 
   test(
-      'registry has exactly 75 stories '
+      'registry has exactly 76 stories '
       '(6 interactive + 4 autofill/selection + 6 galleries + 33 static '
-      '+ 26 co-located)', () {
+      '+ 27 co-located)', () {
     // 66 -> 67: eden-ui-flutter#58's third remediation adds
     // `desktop-layout/collapsed-badged-selection`. That story exists because
     // NOTHING rendered a collapsed rail — `_collapsed` is only ever
@@ -43,14 +43,18 @@ void main() {
     // `desktop-layout/narrow` at 720px still renders the EXPANDED rail. A
     // badge painted on the selection pill in the identical token (1.00:1,
     // invisible) therefore shipped with all seven checks green.
-    // 71 -> 75: eden-ui-flutter#50's `list/services` adds four states.
+    // 71 -> 76: eden-ui-flutter#50's `list/services` adds five states.
     // THREE come from one recorded fixture and the fourth is synthetic and
     // says so: fixture 08 records exactly ONE service, and a one-row render
     // is green for every defect that only exists BETWEEN rows — price
     // decimal alignment, a long name shoving the price off, baseline drift
     // across rows of differing name length. `list-services/catalogue` is
-    // three rows built to stress precisely those.
-    expect(StoryRegistry.instance.all().length, equals(75));
+    // three rows built to stress precisely those, and `list-services/narrow`
+    // is those same rows at 390 — because the FIRST rendered baseline showed
+    // that at 1280 the long name never comes near the price, so the
+    // truncation the catalogue story claimed to cover was not being covered
+    // at all.
+    expect(StoryRegistry.instance.all().length, equals(76));
   });
 
   test('all story ids are unique', () {
