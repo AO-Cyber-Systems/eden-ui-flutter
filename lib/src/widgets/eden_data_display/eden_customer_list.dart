@@ -159,7 +159,12 @@ class _CustomerRow extends StatelessWidget {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                // `space1` (4), not a tighter hand-picked 2: the sibling
+                // `eden_appointment_list.dart` sets exactly this label/value
+                // pair at `space1`, and the design rule refuses an
+                // `// ignore:` precisely because an exempted magic number is
+                // indistinguishable from real debt.
+                const SizedBox(height: EdenSpacing.space1),
                 Text(
                   // DISPLAYED AS GIVEN. The tool already masked this; see
                   // EdenCustomerSummary.emailHint. No unmasking, no mailto,
