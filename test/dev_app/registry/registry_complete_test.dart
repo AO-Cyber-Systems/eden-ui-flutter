@@ -33,9 +33,9 @@ void main() {
   });
 
   test(
-      'registry has exactly 68 stories '
+      'registry has exactly 71 stories '
       '(6 interactive + 4 autofill/selection + 6 galleries + 33 static '
-      '+ 19 co-located)', () {
+      '+ 22 co-located)', () {
     // 66 -> 67: eden-ui-flutter#58's third remediation adds
     // `desktop-layout/collapsed-badged-selection`. That story exists because
     // NOTHING rendered a collapsed rail — `_collapsed` is only ever
@@ -43,7 +43,7 @@ void main() {
     // `desktop-layout/narrow` at 720px still renders the EXPANDED rail. A
     // badge painted on the selection pill in the identical token (1.00:1,
     // invisible) therefore shipped with all seven checks green.
-    expect(StoryRegistry.instance.all().length, equals(68));
+    expect(StoryRegistry.instance.all().length, equals(71));
   });
 
   test('all story ids are unique', () {
