@@ -154,6 +154,14 @@ class AwaitingCIBaseline {
 /// between registering a story on a machine that cannot generate goldens and
 /// CI committing its pixels.
 ///
+/// FOUR windows have opened and closed through this list. The third
+/// (`list/services`, ten baselines) and the fourth (`card/proposal`, eight)
+/// each landed their PNGs and their entries' deletion in ONE commit, which
+/// is the only correct shape. The second did not — d1178d3 landed six
+/// baselines and dropped the retirement, because the commit took staged
+/// changes and that edit was not staged. CI caught it and f0855e5 fixed it,
+/// which is case "awaiting-4" doing exactly its job.
+///
 /// The THIRD window, `list/services`' ten baselines (eden-ui-flutter#50),
 /// opened and closed the way it is supposed to: the PNGs and these ten
 /// entries' deletion are one commit. The second window did not — d1178d3

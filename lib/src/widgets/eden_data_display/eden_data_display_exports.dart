@@ -11,6 +11,7 @@
 export 'agent_intent_data.dart';
 export 'eden_appointment_list.dart';
 export 'eden_customer_list.dart';
+export 'eden_proposal_card.dart';
 export 'eden_refusal.dart';
 export 'eden_service_list.dart';
 
@@ -19,6 +20,7 @@ export 'eden_service_list.dart';
 // reference them.
 import 'eden_appointment_list.dart';
 import 'eden_customer_list.dart';
+import 'eden_proposal_card.dart';
 import 'eden_refusal.dart';
 import 'eden_service_list.dart';
 
@@ -35,11 +37,11 @@ import 'eden_service_list.dart';
 /// `component_id` was an UNDETECTABLE condition; this list is what makes it
 /// a detectable one.
 ///
-/// FOUR ENTRIES, AND THE COUNT IS THE POINT. Six of eden-biz's ten ids
-/// still have no renderer here — `card/proposal`, `detail/appointment`,
+/// FIVE ENTRIES, AND THE COUNT IS THE POINT. Five of eden-biz's ten ids
+/// still have no renderer here — `detail/appointment`,
 /// `detail/customer-history`, `list/availability-slots`,
-/// `summary/pipeline`, `summary/scheduling`. An honest list of four plus a
-/// working refusal path beats a hand-maintained list of ten, six of which
+/// `summary/pipeline`, `summary/scheduling`. An honest list of five plus a
+/// working refusal path beats a hand-maintained list of ten, five of which
 /// would be lies. [EdenRefusal] is the declared destination for an id that
 /// is not here.
 ///
@@ -58,4 +60,5 @@ const List<(String, Type)> kDataDisplayComponents = <(String, Type)>[
   (EdenRefusal.componentId, EdenRefusal),
   (EdenCustomerList.componentId, EdenCustomerList),
   (EdenServiceList.componentId, EdenServiceList),
+  (EdenProposalCard.componentId, EdenProposalCard),
 ];

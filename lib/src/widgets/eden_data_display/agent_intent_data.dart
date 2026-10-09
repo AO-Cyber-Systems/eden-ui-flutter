@@ -351,3 +351,116 @@ class EdenServiceListData {
   /// Wire key: `services`. Empty is a real answer — an empty catalogue.
   final List<EdenServiceSummary> services;
 }
+
+/// An action that decides a PROPOSAL rather than invoking a tool.
+///
+/// WHY THIS IS A SEPARATE TYPE FROM [EdenIntentAction], when eden-biz sends
+/// both through one struct. `agentintent.Action` is:
+///
+/// ```go
+/// type Action struct {
+///   ID         string `json:"id"`
+///   ToolID     string `json:"tool_id,omitempty"`
+///   ProposalID string `json:"proposal_id,omitempty"`
+///   Decision   string `json:"decision,omitempty"`
+/// }
+/// ```
+///
+/// Every binding field is `omitempty`, so the wire type permits an action
+/// that binds to NOTHING (`{"id": "approve"}` decodes cleanly) and an action
+/// that binds to BOTH. Collapsing that into one Dart class would let a list
+/// component be handed a proposal decision, and this card be handed a tool
+/// invocation, with nothing stopping either until runtime. Two types make
+/// the mismatch a compile error and leave the unbindable case to the
+/// adapter, which is the only layer that sees the raw envelope.
+///
+/// Approving is not reading. The cost of rendering a control bound to the
+/// wrong thing is not a wrong pixel, it is a mutation the user did not
+/// intend to authorize.
+@immutable
+class EdenProposalAction {
+  const EdenProposalAction({
+    required this.id,
+    required this.proposalId,
+    required this.decision,
+  });
+
+  /// Wire key: `id`. Fixture 05 records `approve` and `reject`.
+  final String id;
+
+  /// Wire key: `proposal_id`. eden-biz's own integrity test asserts this
+  /// equals `intent.data.action_id` for every `card/proposal` fixture
+  /// (`fixtures_integrity_test.go:172`). [EdenProposalCard] re-checks it
+  /// rather than assuming it — see that widget's doc.
+  final String proposalId;
+
+  /// Wire key: `decision`. Fixture 05 records `approve` and `reject`.
+  ///
+  /// THIS, NOT [id], IS THE BINDING. The id is a free label; the decision is
+  /// what the caller sends back. An action carrying an empty decision binds
+  /// to nothing and must not be rendered as a control.
+  final String decision;
+
+  @override
+  bool operator ==(Object other) =>
+      other is EdenProposalAction &&
+      other.id == id &&
+      other.proposalId == proposalId &&
+      other.decision == decision;
+
+  @override
+  int get hashCode => Object.hash(id, proposalId, decision);
+
+  @override
+  String toString() =>
+      'EdenProposalAction($id -> $proposalId/$decision)';
+}
+
+/// A `card/proposal` payload's `intent.data`.
+///
+/// FIXTURE: eden-biz testdata 05 (`create_lead` routed through the real
+/// `actionsink.NewMCPProposer`). All four keys are present in the recording.
+///
+/// WHAT IS NOT HERE, AND IT IS THE WHOLE PROBLEM: nothing says what is being
+/// proposed. The recording's `source.tool` is `create_lead` and its
+/// `source.arguments` name Jordan Lee — but `source` is the FIXTURE's own
+/// metadata and does not exist in a production envelope. `intent.data` is
+/// the proposer's return value and carries exactly these four keys. See
+/// [EdenProposalCard.subject].
+@immutable
+class EdenProposalData {
+  const EdenProposalData({
+    required this.actionId,
+    required this.applied,
+    required this.status,
+    required this.expiresAt,
+  });
+
+  /// Wire key: `action_id`. The proposal's own id, which every action's
+  /// `proposal_id` must equal.
+  final String actionId;
+
+  /// Wire key: `applied`. `false` in the recording.
+  ///
+  /// PAYLOAD-CARRIED STATE, so it is allowed to suppress affordances — see
+  /// [EdenProposalCard].
+  final bool applied;
+
+  /// Wire key: `status`. `pending_approval` in the recording.
+  ///
+  /// Stays a String rather than becoming an enum, for the reason
+  /// [EdenAppointmentSummary.status] gives: one observed value is not a
+  /// closed set, and a closed set that guesses wrong fails at the worst
+  /// moment.
+  final String status;
+
+  /// Wire key: `expires_at`, an RFC3339 instant. The recording's proposal
+  /// TTL is exactly 30 minutes from the anchor.
+  ///
+  /// Same timezone rule as [EdenAppointmentSummary.startsAt]: the renderer
+  /// reads the calendar fields it is handed and never calls `toLocal()`.
+  final DateTime expiresAt;
+}
+
+/// The only `status` value any recording has produced for a live proposal.
+const String kEdenProposalPendingStatus = 'pending_approval';
