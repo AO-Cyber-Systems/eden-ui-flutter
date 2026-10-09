@@ -31,7 +31,7 @@ void main() {
       StoryRegistry.instance.all().length,
       reason: 'one manifest entry per registered story',
     );
-    expect(entries.length, 76,
+    expect(entries.length, 80,
         reason: '38-05 registers 45 stories; Objective 40 adds 4 '
             'autofill/selection stories; Objective 23 (TRD 23-05) adds the 11 '
             'co-located nav/layout stories; eden-ui-flutter#50 adds the 6 '
@@ -42,7 +42,9 @@ void main() {
             'eden-ui-flutter#50 adds the 5 `list/services` stories '
             '(populated, read-only, empty, a 3-row synthetic catalogue the '
             '1-row fixture cannot stand in for, and that catalogue again at '
-            '390 where the long name actually has to yield) -> 76');
+            '390 where the long name actually has to yield); '
+            'eden-ui-flutter#50 adds the 4 `card/proposal` stories '
+            '(pending, read-only, applied, narrow) -> 80');
   });
 
   test('every entry matches the eden-docs flutter ManifestEntry contract', () {

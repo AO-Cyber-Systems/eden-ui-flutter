@@ -33,9 +33,9 @@ void main() {
   });
 
   test(
-      'registry has exactly 76 stories '
+      'registry has exactly 80 stories '
       '(6 interactive + 4 autofill/selection + 6 galleries + 33 static '
-      '+ 27 co-located)', () {
+      '+ 31 co-located)', () {
     // 66 -> 67: eden-ui-flutter#58's third remediation adds
     // `desktop-layout/collapsed-badged-selection`. That story exists because
     // NOTHING rendered a collapsed rail — `_collapsed` is only ever
@@ -54,7 +54,14 @@ void main() {
     // that at 1280 the long name never comes near the price, so the
     // truncation the catalogue story claimed to cover was not being covered
     // at all.
-    expect(StoryRegistry.instance.all().length, equals(76));
+    // 76 -> 80: eden-ui-flutter#50's `card/proposal` adds four states, and
+    // three of them exist because this is the first component whose
+    // controls MUTATE. `read-only` and `applied` are the two ways the
+    // decision controls must be absent — one because the payload withheld
+    // them, one because the payload says it is already committed — and
+    // `narrow` is the Row of two buttons at 390, which at 1280 occupies a
+    // fraction of the width where an overflow would be invisible.
+    expect(StoryRegistry.instance.all().length, equals(80));
   });
 
   test('all story ids are unique', () {

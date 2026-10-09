@@ -150,9 +150,9 @@ class AwaitingCIBaseline {
 /// file actually exists on disk, which is the signal to delete the entry
 /// rather than leave a permanent hole in the floor.
 ///
-/// EMPTY, and that is the resting state. An entry exists only in the window
-/// between registering a story on a machine that cannot generate goldens and
-/// CI committing its pixels.
+/// EMPTY IS THE RESTING STATE, and a FOURTH window is open right now, for
+/// `card/proposal`'s eight baselines. It closes in the commit that lands
+/// those PNGs, which must also delete these eight entries.
 ///
 /// The THIRD window, `list/services`' ten baselines (eden-ui-flutter#50),
 /// opened and closed the way it is supposed to: the PNGs and these ten
@@ -178,7 +178,72 @@ class AwaitingCIBaseline {
 ///
 /// Leaving an entry here after its PNG lands would be a permanent hole in the
 /// floor wearing a temporary label.
-const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[];
+const List<AwaitingCIBaseline> kAwaitingCIBaseline = <AwaitingCIBaseline>[
+  AwaitingCIBaseline(
+    'card-proposal_pending.light.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_pending.dark.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_read-only.light.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_read-only.dark.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_applied.light.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_applied.dark.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_narrow.light.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+  AwaitingCIBaseline(
+    'card-proposal_narrow.dark.png',
+    'eden-ui-flutter#50 `card/proposal`: registered on a macOS '
+    'workstation, where kGoldenSkipReason is non-null so no golden '
+    'can be blessed locally. Closed by the update_goldens dispatch '
+    'on feat/card-proposal, landing the PNG and DELETING this entry '
+    'in one commit.',
+  ),
+];
 
 /// Every committed baseline, keyed by file name, with its bytes base64'd so
 /// two files can be compared by one map lookup.
