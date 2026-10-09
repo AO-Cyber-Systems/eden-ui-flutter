@@ -530,6 +530,9 @@ export 'src/widgets/eden_store_transfer.dart';
 
 // ─────────── Objective 019 — Trades polish + Fuel quick wins Wave 1 ───────────
 export 'src/widgets/eden_price_book_builder.dart';
+// The agent-intent composition layer -- wire payload -> typed data ->
+// component. See its barrel for the contract it enforces.
+export 'src/agent_intent/agent_intent_exports.dart';
 export 'src/widgets/eden_dispatch_page.dart';
 export 'src/widgets/eden_route_optimization_result.dart';
 export 'src/widgets/eden_delivery_variance_card.dart';

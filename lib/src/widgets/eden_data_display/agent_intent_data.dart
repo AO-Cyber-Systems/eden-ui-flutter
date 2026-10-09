@@ -31,11 +31,21 @@
 // some recordings and present in others, that absence is modelled (nullable,
 // or defaulted) rather than smoothed over.
 //
-// NO JSON DECODER LIVES HERE, DELIBERATELY. A `fromJson` in this package would
-// be a second, untested transcription of the wire format sitting next to the
-// first; the mapping from `StructuredContent` to these classes belongs to
-// whichever consumer owns the transport, where it can be tested against the
-// recordings themselves. What this file owns is the SHAPE.
+// NO JSON DECODER LIVES IN THIS FILE, AND THE REASON HAS NOW BEEN MET
+// RATHER THAN ABANDONED. The original note said a `fromJson` here would be a
+// second, untested transcription of the wire format sitting next to the
+// first, and that the mapping belongs to whichever consumer owns the
+// transport, where it can be tested against the recordings themselves.
+//
+// That condition is satisfied as of objective 024: `lib/src/agent_intent/`
+// is the transport owner, and its decoder is tested against the 14 eden-biz
+// recordings vendored at `test/fixtures/agentintent/` — gated by set hash
+// against eden-biz `origin/main`, so the recordings cannot drift out from
+// under it unnoticed.
+//
+// So the decoder lives THERE, not here, and this file still owns only the
+// SHAPE. If you came looking for `fromJson`, it is
+// `decodeAgentIntent()` in `eden_intent_decoder.dart`.
 
 import 'package:flutter/foundation.dart';
 
