@@ -93,7 +93,7 @@ Map<String, dynamic> loadAgentIntentManifest() =>
 /// Recompute the set hash by the manifest's own stated recipe.
 ///
 ///   *.json except manifest.json, names sorted bytewise (LC_ALL=C), one line
-///   per file "<sha256 hex of the file bytes><two spaces><filename>\n",
+///   per file `"<sha256 hex of the file bytes><two spaces><filename>\n"`,
 ///   set hash = sha256 hex of the concatenated lines.
 ///
 /// Reimplemented here rather than trusted, because the point of the gate is

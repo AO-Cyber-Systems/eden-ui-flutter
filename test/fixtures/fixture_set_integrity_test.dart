@@ -122,8 +122,8 @@ void main() {
       final Map<String, dynamic> intent =
           loadAgentIntentFixture(name)['intent'] as Map<String, dynamic>;
       final Object? id = intent['component_id'];
-      expect(id, isA<String>(), reason: '$name');
-      expect((id as String).isNotEmpty, isTrue, reason: '$name');
+      expect(id, isA<String>(), reason: name);
+      expect((id as String).isNotEmpty, isTrue, reason: name);
     }
   });
 
