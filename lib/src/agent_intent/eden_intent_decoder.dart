@@ -1,11 +1,10 @@
 import 'package:flutter/foundation.dart';
 
-import '../widgets/eden_data_display/agent_intent_data.dart';
-// FOR THE `componentId` STATICS ONLY. The decoder needs no widget to do its
-// job, but keying `kIntentDataDecoders` off each widget's own static is what
-// keeps the map from becoming a second list of re-typed id literals — the
-// drift `kDataDisplayComponents` and its closed-partition test exist to
-// close.
+// The barrel, for the typed data classes AND each widget's `componentId`
+// static. The decoder needs no widget to do its job; it keys
+// `kIntentDataDecoders` off those statics so the map cannot become a second
+// list of re-typed id literals — the drift `kDataDisplayComponents` and its
+// closed-partition test exist to close.
 import '../widgets/eden_data_display/eden_data_display_exports.dart';
 import 'eden_agent_intent.dart';
 
@@ -149,7 +148,11 @@ DateTime _instant(Map<String, dynamic> m, String field) {
   return parsed;
 }
 
-typedef _DataDecoder = Object Function(Map<String, dynamic> data);
+/// Decodes one component's `intent.data` into its typed data class.
+///
+/// PUBLIC because [kIntentDataDecoders] is, and a public map typed by a
+/// private typedef is a type a caller can hold but cannot name.
+typedef EdenIntentDataDecoder = Object Function(Map<String, dynamic> data);
 
 EdenAppointmentListData _appointments(Map<String, dynamic> d) {
   final List<EdenAppointmentSummary> rows = <EdenAppointmentSummary>[];
@@ -218,7 +221,8 @@ EdenProposalData _proposal(Map<String, dynamic> d) => EdenProposalData(
 ///
 /// Keyed off each widget's OWN `componentId` static, never a re-typed
 /// literal: a re-typed string is a second list, and a second list drifts.
-final Map<String, _DataDecoder> kIntentDataDecoders = <String, _DataDecoder>{
+final Map<String, EdenIntentDataDecoder> kIntentDataDecoders =
+    <String, EdenIntentDataDecoder>{
   EdenAppointmentList.componentId: _appointments,
   EdenRefusal.componentId: _refusal,
   EdenCustomerList.componentId: _customers,
@@ -239,7 +243,8 @@ EdenIntentDecodeResult decodeAgentIntent(Map<String, dynamic> json) {
     return EdenIntentRefused(reason: e.message, field: 'component_id');
   }
 
-  final _DataDecoder? decoder = kIntentDataDecoders[intent.componentId];
+  final EdenIntentDataDecoder? decoder =
+      kIntentDataDecoders[intent.componentId];
   if (decoder == null) {
     return EdenIntentRefused(
       componentId: intent.componentId,

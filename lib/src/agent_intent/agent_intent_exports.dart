@@ -21,3 +21,6 @@ library;
 
 export 'eden_agent_intent.dart';
 export 'eden_intent_decoder.dart';
+export 'eden_intent_dispatcher.dart';
+export 'eden_intent_egress.dart';
+export 'eden_intent_host_context.dart';
