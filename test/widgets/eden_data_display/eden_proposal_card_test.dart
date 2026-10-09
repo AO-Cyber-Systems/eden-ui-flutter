@@ -149,6 +149,15 @@ void main() {
     expect(find.text(_kSubject), findsOneWidget,
         reason: 'the card still states what WAS proposed; it is the controls '
             'that go, not the record.');
+
+    // AND THE EXPIRY IS DROPPED. Once applied it is moot, and the first
+    // rendered baseline read "applied · expired or expires 07/01/2030
+    // 00:30" — not a sentence to make a reader parse on a card about a
+    // committed mutation.
+    final Text line = tester.widget<Text>(
+      find.byKey(const ValueKey<String>('eden-proposal-status')),
+    );
+    expect(line.data, 'pending_approval · applied');
   });
 
   testWidgets('case 6: a status other than pending renders NO controls',

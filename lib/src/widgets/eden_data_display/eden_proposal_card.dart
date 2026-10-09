@@ -177,7 +177,12 @@ String _statusLine(EdenProposalData d) {
   final String when = '${_two(d.expiresAt.day)}/${_two(d.expiresAt.month)}/'
       '${d.expiresAt.year} ${_two(d.expiresAt.hour)}:'
       '${_two(d.expiresAt.minute)}';
-  if (d.applied) return '${d.status} · applied · expired or expires $when';
+  // ONCE APPLIED, THE EXPIRY IS MOOT and printing it invites the reader to
+  // work out whether it still matters. The first rendered baseline said
+  // "applied · expired or expires 07/01/2030 00:30", which is not a
+  // sentence anyone should have to parse on a card about a committed
+  // mutation.
+  if (d.applied) return '${d.status} · applied';
   return '${d.status} · expires $when';
 }
 

@@ -44,6 +44,15 @@ final EdenProposalData kFixtureProposalPending = EdenProposalData(
 );
 
 /// SYNTHETIC: the same proposal after it was committed.
+///
+/// `status` STAYS `pending_approval` ON PURPOSE. `pending_approval` is the
+/// only value any recording has produced, and inventing an `applied` status
+/// here would be asserting a value eden-biz has not been observed to emit.
+/// So this is deliberately a payload that disagrees with itself — `applied`
+/// says committed, `status` still says pending — and the card resolves it
+/// the safe way: `applied` wins and the controls go. A payload CAN arrive
+/// self-contradictory, and the state worth pinning is the one where the
+/// resolution errs away from offering a second commit.
 final EdenProposalData kFixtureProposalApplied = EdenProposalData(
   actionId: '00000000-0000-4000-8000-000000000001',
   applied: true,
