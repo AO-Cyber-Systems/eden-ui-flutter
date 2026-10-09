@@ -38,6 +38,20 @@ dev_dependencies:
   custom_lint: ^0.8.1
   eden_lints:
     path: lints
+  # DEV-ONLY for the same reason as custom_lint above, and a PROMOTION rather
+  # than a new package: `crypto` was already resolved transitively at 3.0.7,
+  # so the resolve moves it from `transitive` to `"direct dev"` with no
+  # version change and no package added. (pubspec.lock is gitignored here --
+  # this is a library -- so that line is not in any diff; `flutter pub get`
+  # then `grep -A1 '^  crypto:' pubspec.lock` is how to see it.)
+  #
+  # It backs `test/fixtures/agent_intent_fixtures.dart`, which recomputes the
+  # vendored eden-biz recordings' set hash. That recipe is SPECIFIED by
+  # eden-biz's manifest in terms of sha256 and is computed by Go code in
+  # another repo, so the function cannot be substituted the way
+  # `golden_uniqueness_test.dart` substitutes base64 for comparing two local
+  # files to each other.
+  crypto: ^3.0.7
 
 flutter:
   uses-material-design: true
