@@ -2,7 +2,7 @@
 number: 024
 name: Agent-intent composition layer
 slug: agent-intent-composition-layer
-status: in_progress
+status: complete
 mode: quick-build
 tdd: required
 roadmap: none (quick-build; roadmap deliberately untouched)
@@ -46,11 +46,11 @@ components first would mean ten things nothing can call.
 
 ## TRDs
 
-| # | TRD | type | depends |
-|---|---|---|---|
-| 024-01 | Vendored fixtures + set-hash drift gate | tdd | — |
-| 024-02 | `EdenAgentIntent` envelope + per-component decoders | tdd | 024-01 |
-| 024-03 | Dispatcher factory + host context + action egress | tdd | 024-02 |
+| # | TRD | type | depends | done |
+|---|---|---|---|---|
+| 024-01 | Vendored fixtures + set-hash drift gate | tdd | — | ✓ |
+| 024-02 | `EdenAgentIntent` envelope + per-component decoders | tdd | 024-01 | ✓ |
+| 024-03 | Dispatcher factory + host context + action egress | tdd | 024-02 | ✓ |
 
 ## Out of scope
 
