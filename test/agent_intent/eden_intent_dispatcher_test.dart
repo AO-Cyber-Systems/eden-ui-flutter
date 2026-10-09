@@ -65,15 +65,39 @@ void main() {
       expect(find.text('Create a lead for Jordan Lee'), findsOneWidget);
     });
 
-    testWidgets('case 2: ALL 14 recordings dispatch to a widget, none throws',
-        (WidgetTester tester) async {
+    testWidgets(
+        'case 2: ALL 14 recordings dispatch — the 5 unbuilt ids land on a '
+        'refusal, and none throws', (WidgetTester tester) async {
+      // THE DEFINITION OF DONE SAYS "the RIGHT widget", and for an id with
+      // no renderer the right widget is a REFUSAL. Asserting only that
+      // nothing throws would pass on a dispatcher that silently drew an
+      // empty box for five of the fourteen.
+      const Set<String> unrenderable = <String>{
+        'detail/appointment',
+        'detail/customer-history',
+        'list/availability-slots',
+        'summary/scheduling',
+        'summary/pipeline',
+      };
+
       final List<String> names = agentIntentFixtureNames();
+      int refusals = 0;
       for (final String name in names) {
+        final String id = agentIntentOf(name)['component_id'] as String;
         await _pump(tester, name, context: _full);
         expect(tester.takeException(), isNull, reason: name);
+
+        if (unrenderable.contains(id)) {
+          expect(find.byType(EdenRefusal), findsOneWidget, reason: name);
+          expect(find.textContaining(id), findsOneWidget,
+              reason: '$name: the refusal must NAME the missing surface');
+          refusals++;
+        }
       }
       expect(names, hasLength(14),
           reason: 'the loop must cover the whole set, not an empty one');
+      expect(refusals, 5,
+          reason: 'all five unbuilt components were actually exercised');
     });
 
     testWidgets('case 3: an unknown component_id lands on a refusal naming it',
