@@ -1,0 +1,96 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "populated",
+  "source": {
+    "tool": "find_availability",
+    "arguments": {
+      "date": "2030-01-07",
+      "staff_id": "00000000-0000-4000-8000-000000000001"
+    },
+    "observed": "structured_content",
+    "output_schema_sha256": "b3c3eeebd08a04ad6759d43727686eca7e333208a92b3c1dac88e317e557e94c",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyScheduling",
+      "scopes": [
+        "scheduling:read",
+        "scheduling:read:summary",
+        "scheduling:read:appointments",
+        "scheduling:book"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "list/availability-slots",
+    "data": {
+      "date": "2030-01-07",
+      "slots": [
+        {
+          "end_at": "2030-01-07T09:30:00Z",
+          "start_at": "2030-01-07T09:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T10:00:00Z",
+          "start_at": "2030-01-07T09:30:00Z"
+        },
+        {
+          "end_at": "2030-01-07T10:30:00Z",
+          "start_at": "2030-01-07T10:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T11:00:00Z",
+          "start_at": "2030-01-07T10:30:00Z"
+        },
+        {
+          "end_at": "2030-01-07T11:30:00Z",
+          "start_at": "2030-01-07T11:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T12:00:00Z",
+          "start_at": "2030-01-07T11:30:00Z"
+        },
+        {
+          "end_at": "2030-01-07T13:30:00Z",
+          "start_at": "2030-01-07T13:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T14:00:00Z",
+          "start_at": "2030-01-07T13:30:00Z"
+        },
+        {
+          "end_at": "2030-01-07T14:30:00Z",
+          "start_at": "2030-01-07T14:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T15:00:00Z",
+          "start_at": "2030-01-07T14:30:00Z"
+        },
+        {
+          "end_at": "2030-01-07T15:30:00Z",
+          "start_at": "2030-01-07T15:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T16:00:00Z",
+          "start_at": "2030-01-07T15:30:00Z"
+        },
+        {
+          "end_at": "2030-01-07T16:30:00Z",
+          "start_at": "2030-01-07T16:00:00Z"
+        },
+        {
+          "end_at": "2030-01-07T17:00:00Z",
+          "start_at": "2030-01-07T16:30:00Z"
+        }
+      ],
+      "timezone": "UTC"
+    },
+    "actions": [
+      {
+        "id": "book",
+        "tool_id": "book_appointment"
+      }
+    ]
+  }
+}

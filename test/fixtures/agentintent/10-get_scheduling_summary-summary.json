@@ -1,0 +1,38 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "summary",
+  "source": {
+    "tool": "get_scheduling_summary",
+    "arguments": {},
+    "observed": "structured_content",
+    "output_schema_sha256": "aef650dc63d5d1f0a2f28bfde023f6888907be5d001eff0108bb188d9f74e72d",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyScheduling",
+      "scopes": [
+        "scheduling:read",
+        "scheduling:read:summary",
+        "scheduling:read:appointments",
+        "scheduling:book"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "summary/scheduling",
+    "data": {
+      "cancelled_count": 0,
+      "completed_count": 1,
+      "total_appointments": 62,
+      "total_revenue_cents": 5000,
+      "upcoming_count": 61
+    },
+    "actions": [
+      {
+        "id": "view_upcoming",
+        "tool_id": "list_upcoming_appointments"
+      }
+    ]
+  }
+}

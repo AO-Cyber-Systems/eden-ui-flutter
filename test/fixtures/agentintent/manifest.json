@@ -1,0 +1,108 @@
+{
+  "format": "agentintent-fixture-manifest/v0",
+  "set_sha256": "9c4520d9e07e54fe29d0a19016bbac3b6c91d271159985d57dd201a2bd508fd2",
+  "recipe": "*.json in this directory except manifest.json, file names sorted bytewise (LC_ALL=C), one line per file \"<sha256 hex of the file bytes><two spaces><filename>\\n\", set hash = sha256 hex of the concatenated lines",
+  "recorder": "UPDATE_INTENT_FIXTURES=1 TEST_REQUIRE_DB=1 go test ./internal/mcpserver/ -run '^TestRecordIntentFixtures$' -count=1",
+  "fixtures": [
+    {
+      "file": "01-list_upcoming_appointments-populated.json",
+      "tool": "list_upcoming_appointments",
+      "case": "populated",
+      "component_id": "list/appointments",
+      "sha256": "b4bdb1048c62dba36b63f3d4ba6b8128cc8ef149787e1878fb28620756cee6cb"
+    },
+    {
+      "file": "02-list_upcoming_appointments-empty.json",
+      "tool": "list_upcoming_appointments",
+      "case": "empty",
+      "component_id": "list/appointments",
+      "sha256": "9e8c6849a75e89aac4b63b65daad69ef7c6d63a38fd856f209d104ffa8a4f712"
+    },
+    {
+      "file": "03-get_appointment-wrong-tenant-refusal.json",
+      "tool": "get_appointment",
+      "case": "error/refusal",
+      "component_id": "error/refusal",
+      "sha256": "19b9ae1f1ecd7d6657363f92012ccdb5e7c843190c263eeb129db91df5c2039f"
+    },
+    {
+      "file": "04-list_upcoming_appointments-large.json",
+      "tool": "list_upcoming_appointments",
+      "case": "large",
+      "component_id": "list/appointments",
+      "sha256": "e6356fee5c3fd3fa5b7b4164f89b2cf6474ae61630cd6d8929210c06bf9a299e",
+      "note": "61 seeded, 50 returned, truncated"
+    },
+    {
+      "file": "05-create_lead-proposal.json",
+      "tool": "create_lead",
+      "case": "proposal",
+      "component_id": "card/proposal",
+      "sha256": "a6787e38b275089dd3b74b7f93e255a8eadd0096a88c30d82765f477726fc191"
+    },
+    {
+      "file": "06-list_upcoming_appointments-unexpected-field.json",
+      "tool": "list_upcoming_appointments",
+      "case": "unexpected-field",
+      "component_id": "list/appointments",
+      "sha256": "ae6a0d405413335ce6b286d69afac4d22176c600bc07836c3d4b8ccbc838ac95",
+      "synthetic": true
+    },
+    {
+      "file": "07-get_appointment-detail.json",
+      "tool": "get_appointment",
+      "case": "detail",
+      "component_id": "detail/appointment",
+      "sha256": "5dc6111599cd202d810ae63e2aa08b20473950c61a800457fdc5457c7fc60c4a"
+    },
+    {
+      "file": "08-list_services-populated.json",
+      "tool": "list_services",
+      "case": "populated",
+      "component_id": "list/services",
+      "sha256": "543b06b2820cc104fba241635f32a4b2718b442cdd71705b3177837aad5c0792"
+    },
+    {
+      "file": "09-find_availability-populated.json",
+      "tool": "find_availability",
+      "case": "populated",
+      "component_id": "list/availability-slots",
+      "sha256": "66a361d35f6ac65fc49786453ea34533aeed8297d3d6700f957bd95d86c957c5"
+    },
+    {
+      "file": "10-get_scheduling_summary-summary.json",
+      "tool": "get_scheduling_summary",
+      "case": "summary",
+      "component_id": "summary/scheduling",
+      "sha256": "fc87654e79e75ac9c97fa827d4f66aa78e9603b0975c438a4f6c5a85ee37714c"
+    },
+    {
+      "file": "11-find_customer-populated.json",
+      "tool": "find_customer",
+      "case": "populated",
+      "component_id": "list/customers",
+      "sha256": "2d1bde206049fe0d65e314e2f3a55309675561086e70ed3376bef3e3f1b5359d"
+    },
+    {
+      "file": "12-list_pipeline-summary.json",
+      "tool": "list_pipeline",
+      "case": "summary",
+      "component_id": "summary/pipeline",
+      "sha256": "aeefc2f0066086021a5eed614893007481146c6d2e27640e5e8c67657becb67e"
+    },
+    {
+      "file": "13-get_customer_history-detail.json",
+      "tool": "get_customer_history",
+      "case": "detail",
+      "component_id": "detail/customer-history",
+      "sha256": "646fd088b5eb1519d6dce5ff0b50df3f8c8fc63463095b94217b72eff86c277e"
+    },
+    {
+      "file": "14-get_customer_history-wrong-tenant-refusal.json",
+      "tool": "get_customer_history",
+      "case": "error/refusal",
+      "component_id": "error/refusal",
+      "sha256": "8dc6512a814506cda07eba569f0d38bf4f7b5a3cce350fb1a0877bd26ba57acc"
+    }
+  ]
+}

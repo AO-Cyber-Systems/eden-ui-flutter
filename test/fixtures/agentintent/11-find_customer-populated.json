@@ -1,0 +1,46 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "populated",
+  "source": {
+    "tool": "find_customer",
+    "arguments": {
+      "query": "Priya"
+    },
+    "observed": "structured_content",
+    "output_schema_sha256": "f16510c64611d5bec33ba79006ae1d99225932601dba53e2860b5931a427078e",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyCRM",
+      "scopes": [
+        "crm:write",
+        "crm:read",
+        "scheduling:read"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "list/customers",
+    "data": {
+      "customers": [
+        {
+          "email_hint": "p***@example.test",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "name": "Priya Raman"
+        },
+        {
+          "email_hint": "p***@example.test",
+          "id": "00000000-0000-4000-8000-000000000002",
+          "name": "Priya Shah"
+        }
+      ]
+    },
+    "actions": [
+      {
+        "id": "open",
+        "tool_id": "get_customer_history"
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "error/refusal",
+  "source": {
+    "tool": "get_customer_history",
+    "arguments": {
+      "customer_id": "00000000-0000-4000-8000-000000000001"
+    },
+    "observed": "tool_error",
+    "output_schema_sha256": "db0ae882f945e727c452a7180a103692b93dcae049d9236f2beb24c0563a6bbb",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyCRM",
+      "scopes": [
+        "crm:write",
+        "crm:read",
+        "scheduling:read"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "error/refusal",
+    "data": {
+      "is_error": true,
+      "text": "get_customer_history: customer not found"
+    },
+    "actions": []
+  }
+}

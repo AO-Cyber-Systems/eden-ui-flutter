@@ -1,0 +1,41 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "populated",
+  "source": {
+    "tool": "list_services",
+    "arguments": {},
+    "observed": "structured_content",
+    "output_schema_sha256": "0407f2dba6bea4ad02115ef3ba8b08ddcbd1f82c702ec86d1265a016012e1425",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyScheduling",
+      "scopes": [
+        "scheduling:read",
+        "scheduling:read:summary",
+        "scheduling:read:appointments",
+        "scheduling:book"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "list/services",
+    "data": {
+      "services": [
+        {
+          "duration_minutes": 30,
+          "id": "00000000-0000-4000-8000-000000000001",
+          "name": "Fixture Consultation",
+          "price_cents": 5000
+        }
+      ]
+    },
+    "actions": [
+      {
+        "id": "check_availability",
+        "tool_id": "find_availability"
+      }
+    ]
+  }
+}

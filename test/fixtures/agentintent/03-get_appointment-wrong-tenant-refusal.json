@@ -1,0 +1,32 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "error/refusal",
+  "source": {
+    "tool": "get_appointment",
+    "arguments": {
+      "appointment_id": "00000000-0000-4000-8000-000000000001"
+    },
+    "observed": "tool_error",
+    "output_schema_sha256": "00a16f3ce116c8b59aa51cda69196de84825dcc195d2a01f4ff3c4d998b470a4",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyScheduling",
+      "scopes": [
+        "scheduling:read",
+        "scheduling:read:summary",
+        "scheduling:read:appointments",
+        "scheduling:book"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "error/refusal",
+    "data": {
+      "is_error": true,
+      "text": "appointment not found"
+    },
+    "actions": []
+  }
+}

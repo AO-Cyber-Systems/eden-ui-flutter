@@ -1,0 +1,47 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "proposal",
+  "source": {
+    "tool": "create_lead",
+    "arguments": {
+      "email": "jordan.lee@example.test",
+      "first_name": "Jordan",
+      "last_name": "Lee",
+      "source": "inbound-call"
+    },
+    "observed": "structured_content",
+    "output_schema_sha256": "c6556af36d101a63e1155ebdb0f0e124cf40f3f28dc62748a7636641b0883b4c",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyCRM",
+      "scopes": [
+        "crm:write",
+        "crm:read",
+        "scheduling:read"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "card/proposal",
+    "data": {
+      "action_id": "00000000-0000-4000-8000-000000000001",
+      "applied": false,
+      "expires_at": "2030-01-07T00:30:00Z",
+      "status": "pending_approval"
+    },
+    "actions": [
+      {
+        "id": "approve",
+        "proposal_id": "00000000-0000-4000-8000-000000000001",
+        "decision": "approve"
+      },
+      {
+        "id": "reject",
+        "proposal_id": "00000000-0000-4000-8000-000000000001",
+        "decision": "reject"
+      }
+    ]
+  }
+}

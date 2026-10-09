@@ -1,0 +1,52 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "summary",
+  "source": {
+    "tool": "list_pipeline",
+    "arguments": {},
+    "observed": "structured_content",
+    "output_schema_sha256": "150f03c9f59c8c5035f47465eae7c100bf30cd62e264a4e843e40dc5c3eaf148",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyCRM",
+      "scopes": [
+        "crm:write",
+        "crm:read",
+        "scheduling:read"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "summary/pipeline",
+    "data": {
+      "pipeline_name": "Default Pipeline",
+      "stages": [
+        {
+          "name": "New",
+          "open_count": 1,
+          "open_value_cents": 50000
+        },
+        {
+          "name": "Qualified",
+          "open_count": 0,
+          "open_value_cents": 0
+        },
+        {
+          "name": "Won",
+          "open_count": 0,
+          "open_value_cents": 0
+        }
+      ],
+      "total_open_count": 1,
+      "total_open_value_cents": 50000
+    },
+    "actions": [
+      {
+        "id": "add_lead",
+        "tool_id": "create_lead"
+      }
+    ]
+  }
+}

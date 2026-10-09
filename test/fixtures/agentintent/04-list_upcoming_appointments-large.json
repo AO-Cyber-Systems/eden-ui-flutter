@@ -1,0 +1,493 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "large",
+  "source": {
+    "tool": "list_upcoming_appointments",
+    "arguments": {
+      "limit": 50
+    },
+    "observed": "structured_content",
+    "output_schema_sha256": "f09e24a906e4e4cc4d1816cade5ef5da92195bd285be1eb4e1d682083f21e250",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyScheduling",
+      "scopes": [
+        "scheduling:read",
+        "scheduling:read:summary",
+        "scheduling:read:appointments",
+        "scheduling:book"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "list/appointments",
+    "data": {
+      "appointments": [
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-08T10:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000001",
+          "notes": "Please call ahead if running a few minutes late.",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T09:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-08T11:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000002",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T10:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-08T14:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000003",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T13:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-08T16:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000004",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T15:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-08T17:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000005",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T16:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-08T18:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000006",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T17:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-08T19:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000007",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T18:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-08T20:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000008",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T19:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-08T21:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000009",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T20:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-08T22:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000010",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T21:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-08T23:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000011",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T22:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-09T00:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000012",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-08T23:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-09T01:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000013",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T00:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-09T02:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000014",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T01:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-09T03:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000015",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T02:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-09T04:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000016",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T03:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-09T05:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000017",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T04:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-09T06:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000018",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T05:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-09T07:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000019",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T06:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-09T08:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000020",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T07:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-09T09:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000021",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T08:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-09T10:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000022",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T09:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-09T11:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000023",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T10:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-09T12:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000024",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T11:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-09T13:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000025",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T12:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-09T14:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000026",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T13:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-09T15:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000027",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T14:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-09T16:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000028",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T15:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-09T17:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000029",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T16:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-09T18:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000030",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T17:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-09T19:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000031",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T18:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-09T20:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000032",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T19:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-09T21:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000033",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T20:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-09T22:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000034",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T21:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-09T23:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000035",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T22:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-10T00:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000036",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-09T23:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-10T01:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000037",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T00:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-10T02:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000038",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T01:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-10T03:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000039",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T02:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-10T04:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000040",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T03:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-10T05:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000041",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T04:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-10T06:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000042",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T05:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-10T07:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000043",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T06:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-10T08:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000044",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T07:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-10T09:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000045",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T08:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-10T10:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000046",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T09:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Mei Chen",
+          "ends_at": "2030-01-10T11:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000047",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T10:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Kwame Mensah",
+          "ends_at": "2030-01-10T12:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000048",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T11:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Priya Raman",
+          "ends_at": "2030-01-10T13:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000049",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T12:00:00Z",
+          "status": "confirmed"
+        },
+        {
+          "client_name": "Tomás Ortega",
+          "ends_at": "2030-01-10T14:00:00Z",
+          "id": "00000000-0000-4000-8000-000000000050",
+          "service_name": "Fixture Consultation",
+          "staff_name": "Ada Lovelace",
+          "starts_at": "2030-01-10T13:00:00Z",
+          "status": "confirmed"
+        }
+      ],
+      "truncated": true
+    },
+    "actions": [
+      {
+        "id": "open",
+        "tool_id": "get_appointment"
+      },
+      {
+        "id": "cancel",
+        "tool_id": "cancel_appointment"
+      }
+    ]
+  }
+}

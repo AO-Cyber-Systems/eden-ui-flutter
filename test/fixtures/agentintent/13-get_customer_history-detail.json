@@ -1,0 +1,39 @@
+{
+  "format": "agentintent-fixture/v0",
+  "case": "detail",
+  "source": {
+    "tool": "get_customer_history",
+    "arguments": {
+      "customer_id": "00000000-0000-4000-8000-000000000001"
+    },
+    "observed": "structured_content",
+    "output_schema_sha256": "db0ae882f945e727c452a7180a103692b93dcae049d9236f2beb24c0563a6bbb",
+    "principal": {
+      "company": "A",
+      "seed": "SeedTwoCompanyCRM",
+      "scopes": [
+        "crm:write",
+        "crm:read",
+        "scheduling:read"
+      ],
+      "role": "not applied: NewHandlerForToolIDs skips the catalog scope/role gate"
+    },
+    "canonicalization": "v1"
+  },
+  "intent": {
+    "component_id": "detail/customer-history",
+    "data": {
+      "lifetime_value_cents": 0,
+      "open_deal_count": 0,
+      "open_deal_value_cents": 0,
+      "purchase_count": 0,
+      "recent": []
+    },
+    "actions": [
+      {
+        "id": "add_note",
+        "tool_id": "add_customer_note"
+      }
+    ]
+  }
+}
