@@ -1,0 +1,61 @@
+# .github/workflows/oss-mirror.yml — OSS-01: keep the public copy of this repository in step with it.
+#
+# Rendered by scripts/cutover/install-mirror-workflows.sh (runbook step 19) and scripts/stage/oss/mirror-canary.sh
+# from data/cutover/mirror/oss-mirror.yml.tmpl; do not edit the installed copy, change the template.
+#
+# This repository (in AOCyberAI) is the source of truth. The public copy is the legacy repository of the same name,
+# which keeps its history through the org rename, so each run pushes only the new commits and tags.
+#   - The App token comes from the aocyber-oss-mirror GitHub App (client id in the variable, private key in the
+#     secret; both are shared from the AOCyberAI org to this repository only).
+#   - vars.OSS_MIRROR_OWNER names the org that holds the public copy: the legacy org's name until the rename, the
+#     renamed org after it. The same file therefore serves the canary and the real run.
+#   - It pushes the default branch to the same branch name and the tags, by explicit refspec, so a pull-request ref
+#     or a branch that exists only at the public copy is never pushed or deleted, and nothing is forced.
+#   - The guard below keeps the job from running inside the public copy: this file is mirrored with everything else.
+# The token stays in the step environment: the credential helper reads it when git calls it (never argv, never the URL).
+# fetch-depth 0 is the safe value: a shallow checkout holds no other tags or remote-tracking branches, so it is only
+# valid for a repository the canary-style test has shown to work with it.
+name: oss-mirror
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One push at a time: a branch push and a tag push that land together would otherwise race on the same refs.
+concurrency:
+  group: oss-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: github.repository_owner == 'AOCyberAI'
+    runs-on: ubuntu-latest
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.OSS_MIRROR_WRITE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.OSS_MIRROR_WRITE_APP_PRIVATE_KEY }}
+          owner: ${{ vars.OSS_MIRROR_OWNER }}
+          repositories: eden-ui-flutter
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: push the default branch and the tags
+        env:
+          TOKEN: ${{ steps.app.outputs.token }}
+          OWNER: ${{ vars.OSS_MIRROR_OWNER }}
+          # a literal, not expanded here: git runs it as a shell function and its shell expands $1 and $TOKEN
+          HELPER: '!f() { test "$1" = get || exit 0; while IFS= read -r l && test -n "$l"; do :; done; echo username=x-access-token; echo "password=$TOKEN"; }; f'
+        run: |
+          git config --local --replace-all credential.helper ''
+          git config --local --add credential.helper "$HELPER"
+          # the default branch comes from its remote-tracking ref: a tag-triggered run checks out the tag, not the branch
+          git push "${{ github.server_url }}/$OWNER/eden-ui-flutter.git" \
+            "refs/remotes/origin/main:refs/heads/main" 'refs/tags/*:refs/tags/*'
