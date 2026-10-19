@@ -31,7 +31,7 @@ void main() {
       StoryRegistry.instance.all().length,
       reason: 'one manifest entry per registered story',
     );
-    expect(entries.length, 68,
+    expect(entries.length, 71,
         reason: '38-05 registers 45 stories; Objective 40 adds 4 '
             'autofill/selection stories; Objective 23 (TRD 23-05) adds the 11 '
             'co-located nav/layout stories; eden-ui-flutter#50 adds the 6 '

@@ -101,3 +101,5 @@ Push `feat/eden-page-header-responsive` + open PR to `main`. Once merged, downst
 | 14 | land the 2 new baselines for the selected-expandable story and retire kAwaitingCIBaseline | 2026-10-05 | 003de3f | issue-63 |
 | 15 | agent-component manifest: declare and verify the renderable component_id set (3 files, inline per cost review) | 2026-10-02 | 7ab1ca3 | eden-ui-contrast |
 | 17 | close #64 review findings: duplicate ids, lib-wide scan, tautological case 5, regex fail-open | 2026-10-05 | 14427b4 | eden-ui-contrast |
+| 18 | list/customers component: the second of eden-biz's ten demanded component_ids | 2026-10-07 | 8cf8f62 | eden-ui-contrast |
+| 19 | land the 6 list/customers baselines and retire kAwaitingCIBaseline | 2026-10-08 | d1178d3 | eden-ui-contrast |

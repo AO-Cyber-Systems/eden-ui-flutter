@@ -55,3 +55,6 @@ pubspec.lock
 # DevFlow local runtime state
 .planning/.skill-active
 .planning/.awareness-cache.json
+
+# DevFlow runtime state (migration 0008)
+.planning/.progress-guard.json

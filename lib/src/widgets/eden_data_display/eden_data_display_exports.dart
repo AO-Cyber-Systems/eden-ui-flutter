@@ -10,12 +10,14 @@
 
 export 'agent_intent_data.dart';
 export 'eden_appointment_list.dart';
+export 'eden_customer_list.dart';
 export 'eden_refusal.dart';
 
 // IMPORTED as well as exported, deliberately: a barrel that only re-exports
 // cannot SEE the symbols it names, and [kDataDisplayComponents] below has to
 // reference them.
 import 'eden_appointment_list.dart';
+import 'eden_customer_list.dart';
 import 'eden_refusal.dart';
 
 /// Every `component_id` this package can actually render, paired with the
@@ -31,9 +33,9 @@ import 'eden_refusal.dart';
 /// `component_id` was an UNDETECTABLE condition; this list is what makes it
 /// a detectable one.
 ///
-/// TWO ENTRIES TODAY, AND THAT IS THE POINT. Eight of eden-biz's ten ids have
-/// no renderer here — `card/proposal`, `detail/appointment`,
-/// `detail/customer-history`, `list/customers`, `list/services`,
+/// THREE ENTRIES, AND THE COUNT IS THE POINT. Seven of eden-biz's ten ids
+/// still have no renderer here — `card/proposal`, `detail/appointment`,
+/// `detail/customer-history`, `list/services`,
 /// `list/availability-slots`, `summary/pipeline`, `summary/scheduling`. An
 /// honest list of two plus a working refusal path beats a hand-maintained
 /// list of ten, eight of which would be lies. [EdenRefusal] is the declared
@@ -52,4 +54,5 @@ import 'eden_refusal.dart';
 const List<(String, Type)> kDataDisplayComponents = <(String, Type)>[
   (EdenAppointmentList.componentId, EdenAppointmentList),
   (EdenRefusal.componentId, EdenRefusal),
+  (EdenCustomerList.componentId, EdenCustomerList),
 ];
